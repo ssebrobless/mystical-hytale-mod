@@ -15,7 +15,12 @@
           "cooldown_seconds": 3,
           "effect": "deafen",
           "categories": ["debuff"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "cone",
+          "target_type": "cone",
+          "range": 10,
+          "cone_angle": 70,
+          "duration_seconds": 4
         },
         {
           "id": "sonic_boom",
@@ -25,7 +30,13 @@
           "cooldown_seconds": 4,
           "effect": "stun",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "wave_line",
+          "target_type": "line",
+          "range": 14,
+          "width": 6,
+          "knockback_force": 3.5,
+          "travel_type": "sonic_wave"
         },
         {
           "id": "battle_cry",
@@ -35,7 +46,11 @@
           "cooldown_seconds": 5,
           "effect": "attack_buff+speed",
           "categories": ["buff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 6,
+          "terrain_effect": "resonant_aura"
         }
       ]
     },
@@ -55,7 +70,14 @@
           "effect": "knockback",
           "categories": ["damage", "crowd_control", "dash"],
           "charges": 3,
-          "resource_cost": 1
+          "resource_cost": 1,
+          "cast_type": "dash",
+          "target_type": "enemy",
+          "range": 10,
+          "dash_distance": 10,
+          "launch_height": 2.5,
+          "knockup": true,
+          "travel_type": "jet_burst"
         },
         {
           "id": "afterburner",
@@ -65,7 +87,14 @@
           "cooldown_seconds": 4,
           "effect": "burn",
           "categories": ["dot", "dash"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "dash",
+          "target_type": "line",
+          "range": 14,
+          "dash_distance": 14,
+          "duration_seconds": 3,
+          "travel_type": "afterburner_dash",
+          "terrain_effect": "ember_trail"
         },
         {
           "id": "mach_punch",
@@ -75,7 +104,13 @@
           "cooldown_seconds": 3,
           "effect": "stun_if_wall",
           "categories": ["damage", "crowd_control", "dash"],
-          "resource_cost": 1
+          "resource_cost": 1,
+          "cast_type": "dash_strike",
+          "target_type": "enemy",
+          "range": 8,
+          "dash_distance": 8,
+          "knockback_force": 4.5,
+          "travel_type": "mach_punch"
         }
       ]
     },
@@ -94,7 +129,12 @@
           "cooldown_seconds": 4,
           "effect": "stun+shocked",
           "categories": ["crowd_control", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_burst",
+          "target_type": "self_centered",
+          "radius": 5,
+          "duration_seconds": 2.5,
+          "terrain_effect": "thunderclap"
         },
         {
           "id": "smite",
@@ -105,7 +145,12 @@
           "effect": "lightning",
           "categories": ["damage"],
           "charges": 2,
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "projectile",
+          "target_type": "enemy",
+          "range": 18,
+          "projectile_speed": 30,
+          "travel_type": "lightning_bolt"
         },
         {
           "id": "chain_lightning",
@@ -115,7 +160,13 @@
           "cooldown_seconds": 5,
           "effect": "dot",
           "categories": ["dot", "aoe"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "chain",
+          "target_type": "enemy_cluster",
+          "range": 16,
+          "radius": 8,
+          "duration_seconds": 4,
+          "travel_type": "chain_lightning"
         }
       ]
     },
@@ -134,7 +185,14 @@
           "cooldown_seconds": 3,
           "effect": "knockback",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 3,
+          "duration_seconds": 4,
+          "knockback_force": 4,
+          "travel_type": "twister"
         },
         {
           "id": "funnel_cloud",
@@ -144,7 +202,14 @@
           "cooldown_seconds": 5,
           "effect": "dot",
           "categories": ["dot", "aoe"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 14,
+          "radius": 5,
+          "duration_seconds": 6,
+          "pull_force": 3,
+          "terrain_effect": "funnel_cloud"
         },
         {
           "id": "eye_of_the_storm",
@@ -156,7 +221,11 @@
           "categories": ["healing", "shielding"],
           "heal_percent": 10,
           "shield_percent": 15,
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 6,
+          "terrain_effect": "eye_of_the_storm"
         }
       ]
     },
@@ -176,7 +245,14 @@
           "effect": "knockback+vulnerability",
           "categories": ["damage", "crowd_control", "debuff", "dash"],
           "charges": 2,
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "leap",
+          "target_type": "enemy",
+          "range": 10,
+          "dash_distance": 10,
+          "launch_height": 6,
+          "radius": 3,
+          "travel_type": "jump_arc"
         },
         {
           "id": "divebomb",
@@ -186,7 +262,15 @@
           "cooldown_seconds": 6,
           "effect": "slow",
           "categories": ["damage", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "dive_strike",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 4,
+          "launch_height": 8,
+          "delay_seconds": 0.5,
+          "knockback_force": 4.5,
+          "travel_type": "divebomb"
         },
         {
           "id": "hang_time",
@@ -197,7 +281,12 @@
           "effect": "evasion",
           "categories": ["evasion"],
           "charges": 2,
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "air_stall",
+          "target_type": "self",
+          "duration_seconds": 3,
+          "launch_height": 5,
+          "travel_type": "hang_time"
         }
       ]
     },
@@ -216,7 +305,13 @@
           "cooldown_seconds": 2,
           "effect": "",
           "categories": ["damage"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "projectile_line",
+          "target_type": "enemy",
+          "range": 16,
+          "width": 2,
+          "projectile_speed": 28,
+          "travel_type": "wind_blade"
         },
         {
           "id": "gale_cutter",
@@ -226,7 +321,14 @@
           "cooldown_seconds": 5,
           "effect": "knockback",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "projectile_line",
+          "target_type": "enemy",
+          "range": 18,
+          "width": 3,
+          "projectile_speed": 30,
+          "knockback_force": 4,
+          "travel_type": "gale_cutter"
         },
         {
           "id": "razor_wind",
@@ -236,7 +338,10 @@
           "cooldown_seconds": 6,
           "effect": "attack_buff",
           "categories": ["buff"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 8
         }
       ]
     },
@@ -255,7 +360,13 @@
           "cooldown_seconds": 5,
           "effect": "slow+attack_buff",
           "categories": ["debuff", "buff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 10,
+          "radius": 4,
+          "duration_seconds": 6,
+          "terrain_effect": "smoke_bomb"
         },
         {
           "id": "vanish",
@@ -265,7 +376,11 @@
           "cooldown_seconds": 6,
           "effect": "stealth",
           "categories": ["stealth"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 5,
+          "terrain_effect": "vanish"
         },
         {
           "id": "smoke_form",
@@ -275,7 +390,11 @@
           "cooldown_seconds": 7,
           "effect": "evasion",
           "categories": ["evasion"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "transformation",
+          "target_type": "self",
+          "duration_seconds": 5,
+          "travel_type": "smoke_form"
         }
       ]
     },
@@ -294,7 +413,13 @@
           "cooldown_seconds": 4,
           "effect": "knockback",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "projectile",
+          "target_type": "enemy",
+          "range": 16,
+          "projectile_speed": 26,
+          "knockback_force": 4,
+          "travel_type": "gust_blast"
         },
         {
           "id": "cyclone_shield",
@@ -305,7 +430,11 @@
           "effect": "defense_buff+shield",
           "categories": ["buff", "shielding"],
           "shield_percent": 15,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 6,
+          "terrain_effect": "cyclone_shield"
         },
         {
           "id": "tempest",
@@ -315,7 +444,14 @@
           "cooldown_seconds": 8,
           "effect": "stun",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 14,
+          "radius": 6,
+          "duration_seconds": 4,
+          "pull_force": 3,
+          "terrain_effect": "tempest"
         }
       ]
     },
@@ -334,7 +470,12 @@
           "cooldown_seconds": 3,
           "effect": "",
           "categories": ["damage"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "projectile",
+          "target_type": "enemy",
+          "range": 18,
+          "projectile_speed": 32,
+          "travel_type": "compressed_air_shot"
         },
         {
           "id": "bullet_storm",
@@ -344,7 +485,13 @@
           "cooldown_seconds": 5,
           "effect": "slow",
           "categories": ["damage", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "projectile_volley",
+          "target_type": "enemy",
+          "range": 18,
+          "width": 4,
+          "projectile_speed": 34,
+          "travel_type": "air_bullets"
         },
         {
           "id": "pressure_burst",
@@ -354,7 +501,12 @@
           "cooldown_seconds": 7,
           "effect": "knockback",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "self_burst",
+          "target_type": "self_centered",
+          "radius": 5,
+          "knockback_force": 5,
+          "terrain_effect": "pressure_burst"
         }
       ]
     },
@@ -373,7 +525,13 @@
           "cooldown_seconds": 5,
           "effect": "dot+slow",
           "categories": ["dot", "debuff", "aoe"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 5,
+          "duration_seconds": 6,
+          "terrain_effect": "smog_cloud"
         },
         {
           "id": "toxic_breath",
@@ -383,7 +541,13 @@
           "cooldown_seconds": 6,
           "effect": "dot+vulnerability",
           "categories": ["dot", "debuff"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "cone",
+          "target_type": "cone",
+          "range": 10,
+          "cone_angle": 75,
+          "duration_seconds": 5,
+          "terrain_effect": "toxic_breath"
         },
         {
           "id": "acid_rain",
@@ -393,7 +557,13 @@
           "cooldown_seconds": 8,
           "effect": "dot+vulnerability",
           "categories": ["dot", "debuff", "aoe"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 14,
+          "radius": 6,
+          "duration_seconds": 7,
+          "terrain_effect": "acid_rain"
         }
       ]
     }
