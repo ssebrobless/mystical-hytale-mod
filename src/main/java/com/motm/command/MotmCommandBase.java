@@ -19,6 +19,11 @@ public class MotmCommandBase extends CommandBase {
     }
 
     @Override
+    protected boolean canGeneratePermission() {
+        return false;
+    }
+
+    @Override
     public void executeSync(CommandContext context) {
         if (!context.isPlayer()) {
             context.sendMessage(Message.raw("[MOTM] This command can only be used by an in-game player."));
