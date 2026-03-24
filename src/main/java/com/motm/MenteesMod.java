@@ -3,6 +3,8 @@ package com.motm;
 import com.motm.command.MotmCommand;
 import com.motm.command.MotmCommandBase;
 import com.motm.manager.*;
+import com.motm.system.MotmMobRuntimeSystem;
+import com.motm.system.MotmServerTickSystem;
 import com.motm.util.DataLoader;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
@@ -111,9 +113,8 @@ public class MenteesMod extends JavaPlugin {
         );
 
         getCommandRegistry().registerCommand(new MotmCommandBase(this));
-
-        // TODO: Register mob spawn / death hooks once the correct runtime events are mapped.
-        // TODO: Register a ticking system or scheduled task to call onServerTick() every server tick.
+        getEntityStoreRegistry().registerSystem(new MotmServerTickSystem(this));
+        getEntityStoreRegistry().registerSystem(new MotmMobRuntimeSystem(this));
     }
 
     /**
