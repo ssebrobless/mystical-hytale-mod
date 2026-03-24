@@ -114,7 +114,7 @@ public class MotmCommand {
         sb.append("Class: ").append(player.getPlayerClass())
                 .append(" | Style: ").append(getSelectedStyleName(player))
                 .append(" | Level: ").append(player.getLevel()).append("\n");
-        sb.append("Perks are separate from styles.\n");
+        sb.append("Styles grant abilities. Perks are passive augments and synergies.\n");
 
         if (pm.hasPendingPerkSelection(player)) {
             int pendingTier = pm.getPendingSelectionTier(player);
@@ -124,9 +124,9 @@ public class MotmCommand {
                 Perk perk = available.get(i);
                 sb.append("[").append(i + 1).append("] ").append(perk.getName()).append("\n");
                 sb.append("  ").append(compactText(perk.getDescription(), 60)).append("\n");
-                sb.append("  ID: ").append(perk.getId()).append("\n");
             }
-            sb.append("\nUse: /motm select <id1> <id2> <id3>");
+            sb.append("\nUse: /motm select <choice1> <choice2> <choice3>");
+            sb.append("\nExample: /motm select 1 4 7");
         } else {
             sb.append("Selected: ").append(player.getSelectedPerks().size()).append(" perks\n");
             int nextMilestone = ((player.getLevel() / 10) + 1) * 10;
@@ -175,10 +175,17 @@ public class MotmCommand {
         }
 
         if (args.length < 4) {
-            return "[MOTM] Usage: /motm select <perkId1> <perkId2> <perkId3>";
+            return "[MOTM] Usage: /motm select <choice1> <choice2> <choice3>";
         }
 
-        List<String> selectedIds = List.of(args[1], args[2], args[3]);
+        List<Perk> available = pm.getAvailablePerks(player);
+        SelectionResolution selectionResolution = resolvePerkSelections(available, List.of(args[1], args[2], args[3]));
+        if (!selectionResolution.invalidSelections().isEmpty()) {
+            return "[MOTM] Invalid perk choice(s): " + String.join(", ", selectionResolution.invalidSelections())
+                    + "\nUse /motm perks to see the numbered options.";
+        }
+
+        List<String> selectedIds = selectionResolution.resolvedIds();
 
         PerkManager.ValidationResult validation = pm.validatePerkSelection(player, selectedIds);
         if (!validation.isValid()) {
@@ -690,7 +697,7 @@ public class MotmCommand {
                 + "  /motm abilities         - View ability IDs and cooldowns\n"
                 + "  /motm cast <abilityId>  - Test-cast a style ability\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
-                + "  /motm select ...        - Select 3 perks\n"
+                + "  /motm select ...        - Select 3 perks by number\n"
                 + "  /motm resources         - View class resources\n"
                 + "  /motm stats             - View your statistics\n"
                 + "  /motm level             - View XP progress\n"
@@ -767,6 +774,36 @@ public class MotmCommand {
                 .map(AbilityData::getName)
                 .reduce((left, right) -> left + ", " + right)
                 .orElse("None");
+    }
+
+    private SelectionResolution resolvePerkSelections(List<Perk> available, List<String> selections) {
+        List<String> resolvedIds = new java.util.ArrayList<>();
+        List<String> invalidSelections = new java.util.ArrayList<>();
+
+        for (String selection : selections) {
+            Integer numericChoice = parseInteger(selection);
+            if (numericChoice != null) {
+                int index = numericChoice - 1;
+                if (index >= 0 && index < available.size()) {
+                    resolvedIds.add(available.get(index).getId());
+                } else {
+                    invalidSelections.add(selection);
+                }
+                continue;
+            }
+
+            Perk matchedPerk = available.stream()
+                    .filter(perk -> perk.getId().equalsIgnoreCase(selection))
+                    .findFirst()
+                    .orElse(null);
+            if (matchedPerk != null) {
+                resolvedIds.add(matchedPerk.getId());
+            } else {
+                invalidSelections.add(selection);
+            }
+        }
+
+        return new SelectionResolution(resolvedIds, invalidSelections);
     }
 
     private String buildAbilityEffectSummary(AbilityData ability) {
@@ -891,4 +928,6 @@ public class MotmCommand {
     private int clampLevel(int level) {
         return Math.max(1, Math.min(LevelingManager.MAX_LEVEL, level));
     }
+
+    private record SelectionResolution(List<String> resolvedIds, List<String> invalidSelections) {}
 }
