@@ -482,7 +482,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             setText(commands, "#Ability" + (index + 1) + "Summary.Text",
                     compactText(buildAbilitySummary(ability), 110));
             setText(commands, "#Ability" + (index + 1) + "Meta.Text",
-                    compactText(buildAbilityMeta(player, ability), 140));
+                    compactText(buildAbilityMeta(player, style, ability), 160));
         }
     }
 
@@ -580,7 +580,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#CodexFlowValue.Text", "Class -> Style -> 3 abilities -> Level milestones -> Perk tiers -> Synergies");
         setText(commands, "#CodexReactionsValue.Text", "Elemental reactions and status marks will live here as the combat execution layer grows.");
         setText(commands, "#CodexScalingValue.Text", "Enemies scale with progression and may gain elite titles based on zone and conditions.");
-        setText(commands, "#CodexFocusValue.Text", "Current focus: spellbook UI, passive perk execution, and stronger ability runtime hooks.");
+        setText(commands, "#CodexFocusValue.Text", "Current focus: spellbook UI, passive perk execution, ability controls, and real playback for the mapped Hytale animations/VFX/models.");
     }
 
     private void applyJournal(UICommandBuilder commands, PlayerData player) {
@@ -766,11 +766,17 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         return classData.getPassiveAbility().getDescription() + " | " + summary;
     }
 
-    private String buildAbilityMeta(PlayerData player, AbilityData ability) {
+    private String buildAbilityMeta(PlayerData player, StyleData style, AbilityData ability) {
         StringBuilder meta = new StringBuilder();
         String profile = AbilityPresentation.buildSpatialSummary(ability);
         if (!profile.isBlank()) {
             meta.append(profile).append(" | ");
+        }
+        if (player != null && style != null && player.getPlayerClass() != null) {
+            String visuals = AbilityPresentation.buildVisualSummary(player.getPlayerClass(), style.getId(), ability);
+            if (!visuals.isBlank()) {
+                meta.append(visuals).append(" | ");
+            }
         }
         meta.append("Cost ").append(ability.getResourceCost())
                 .append(" | Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s")

@@ -168,6 +168,10 @@ public class SpellbookManager {
             if (!profile.isBlank()) {
                 sb.append("    ").append(profile).append("\n");
             }
+            String visuals = AbilityPresentation.buildVisualSummary(player.getPlayerClass(), style.getId(), ability);
+            if (!visuals.isBlank()) {
+                sb.append("    ").append(visuals).append("\n");
+            }
             sb.append("    Cost ").append(ability.getResourceCost())
                     .append(" | Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s");
             if (cooldown > 0) {
@@ -244,10 +248,12 @@ public class SpellbookManager {
         sb.append("  class -> style -> 3 abilities -> level -> perks -> synergies\n");
         sb.append("Reaction System:\n");
         sb.append("  marks, status effects, and elemental cross-effects live here.\n");
+        sb.append("Action Presentation:\n");
+        sb.append("  every style ability now resolves to built-in Hytale animation, VFX, and optional model assets.\n");
         sb.append("Mob Scaling:\n");
         sb.append("  enemies scale from player progression and may gain elite titles.\n");
         sb.append("Current Focus:\n");
-        sb.append("  spellbook UI, real perk effect hooks, and stronger ability execution.\n");
+        sb.append("  spellbook UI, real perk effect hooks, input binding, and stronger ability execution.\n");
         return sb.toString();
     }
 

@@ -79,6 +79,14 @@ public final class AbilityPresentation {
         return String.join(" | ", parts);
     }
 
+    public static String buildVisualSummary(String classId, String styleId, AbilityData ability) {
+        return HytaleAssetResolver.buildCompactSummary(classId, styleId, ability);
+    }
+
+    public static String buildVisualDetail(String classId, String styleId, AbilityData ability) {
+        return HytaleAssetResolver.buildDetailedSummary(classId, styleId, ability);
+    }
+
     public static String compactText(String value, int maxLength) {
         if (value == null) {
             return "";

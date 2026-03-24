@@ -331,12 +331,16 @@ public class MotmCommand {
         sb.append("Abilities:\n");
         for (AbilityData ability : selectedStyle.getAbilities()) {
             String profile = buildAbilityProfileSummary(ability);
+            String visuals = buildAbilityVisualSummary(player.getPlayerClass(), selectedStyle.getId(), ability);
             sb.append("  ").append(ability.getName())
                     .append(" (").append(ability.getCooldownSeconds()).append("s)")
                     .append(" - ").append(compactText(
                             profile.isBlank() ? ability.getDescription() : profile,
                             58))
                     .append("\n");
+            if (!visuals.isBlank()) {
+                sb.append("    Visuals: ").append(compactText(visuals, 64)).append("\n");
+            }
         }
         mod.getResourceManager().synchronizePersistentState(player);
         mod.getResourceManager().initializeForPlayer(player.getPlayerId(), player.getPlayerClass());
@@ -434,6 +438,10 @@ public class MotmCommand {
             if (!profile.isBlank()) {
                 sb.append("  ").append(profile).append("\n");
             }
+            String visuals = buildAbilityVisualSummary(player.getPlayerClass(), style.getId(), ability);
+            if (!visuals.isBlank()) {
+                sb.append("  Visuals: ").append(visuals).append("\n");
+            }
             sb.append("  Cost: ").append(formatResourceCost(style, ability))
                     .append(" | CD: ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
                     .append(" | Status: ")
@@ -496,6 +504,10 @@ public class MotmCommand {
         if (!profile.isBlank()) {
             sb.append("Profile: ").append(profile).append("\n");
         }
+        String visuals = buildAbilityVisualDetail(player.getPlayerClass(), style.getId(), activated);
+        if (!visuals.isBlank()) {
+            sb.append("Assets: ").append(visuals).append("\n");
+        }
         sb.append("Cooldown: ").append(formatDecimal(activated.getCooldownSeconds())).append("s");
 
         if (activated.getResourceCost() > 0) {
@@ -505,7 +517,9 @@ public class MotmCommand {
         }
 
         sb.append("\nRuntime note: cooldowns and resource spending are live, but the")
-                .append(" physical Hytale combat effect for this ability is not wired yet.");
+                .append(" physical Hytale combat effect for this ability is not wired yet.\n")
+                .append("Presentation note: this ability now resolves to built-in Hytale")
+                .append(" animations, particles, and optional summon/form models.");
         return sb.toString();
     }
 
@@ -845,6 +859,14 @@ public class MotmCommand {
 
     private String buildAbilityProfileSummary(AbilityData ability) {
         return AbilityPresentation.buildSpatialSummary(ability);
+    }
+
+    private String buildAbilityVisualSummary(String classId, String styleId, AbilityData ability) {
+        return AbilityPresentation.buildVisualSummary(classId, styleId, ability);
+    }
+
+    private String buildAbilityVisualDetail(String classId, String styleId, AbilityData ability) {
+        return AbilityPresentation.buildVisualDetail(classId, styleId, ability);
     }
 
     private String formatResourceCost(StyleData style, AbilityData ability) {
