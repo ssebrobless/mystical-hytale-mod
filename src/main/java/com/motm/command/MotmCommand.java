@@ -13,6 +13,7 @@ import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
+import com.motm.util.PassivePresentation;
 
 import java.util.List;
 
@@ -71,7 +72,8 @@ public class MotmCommand {
                     + "Theme: " + classData.getTheme() + " | Element: " + classData.getElement() + "\n"
                     + "Style: " + styleSummary + "\n"
                     + "Passive: " + classData.getPassiveAbility().getName() + " - "
-                    + classData.getPassiveAbility().getDescription();
+                    + classData.getPassiveAbility().getDescription()
+                    + "\nPassive Flow: " + PassivePresentation.buildPassiveSummary(classData.getPassiveAbility());
         }
 
         if (args.length < 2) {

@@ -21,6 +21,7 @@ import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
+import com.motm.util.PassivePresentation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -380,7 +381,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 ? safe(classData.getPassiveAbility().getName())
                 : "Unawakened");
         setText(commands, "#JourneyPassiveDescValue.Text", classData != null && classData.getPassiveAbility() != null
-                ? compactText(classData.getPassiveAbility().getDescription(), 150)
+                ? compactText(buildPassiveDetails(classData), 220)
                 : "Your class passive will appear here.");
         setText(commands, "#JourneyClassActionValue.Text", player != null && player.getPlayerClass() != null
                 ? "Class is currently locked to " + displayClass(player) + ". Use dev reset or dev class clear if you need to change it while testing."
@@ -752,6 +753,17 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     private String buildAbilitySummary(AbilityData ability) {
         String summary = AbilityPresentation.buildEffectSummary(ability);
         return summary.isBlank() ? compactText(ability.getDescription(), 90) : summary;
+    }
+
+    private String buildPassiveDetails(ClassData classData) {
+        if (classData == null || classData.getPassiveAbility() == null) {
+            return "Your class passive will appear here.";
+        }
+        String summary = PassivePresentation.buildPassiveSummary(classData.getPassiveAbility());
+        if (summary.isBlank()) {
+            return classData.getPassiveAbility().getDescription();
+        }
+        return classData.getPassiveAbility().getDescription() + " | " + summary;
     }
 
     private String buildAbilityMeta(PlayerData player, AbilityData ability) {

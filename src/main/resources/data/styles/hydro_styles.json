@@ -15,7 +15,13 @@
           "cooldown_seconds": 2,
           "effect": "slow_stack",
           "categories": ["damage", "debuff"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "projectile_volley",
+          "target_type": "enemy",
+          "range": 18,
+          "width": 3,
+          "projectile_speed": 28,
+          "travel_type": "ice_shard_volley"
         },
         {
           "id": "stalactite_crash",
@@ -25,7 +31,14 @@
           "cooldown_seconds": 5,
           "effect": "slow",
           "categories": ["damage", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_strike",
+          "target_type": "ground_target",
+          "range": 14,
+          "radius": 3,
+          "height": 6,
+          "delay_seconds": 0.8,
+          "terrain_effect": "stalactite_crash"
         },
         {
           "id": "skate",
@@ -35,7 +48,13 @@
           "cooldown_seconds": 4,
           "effect": "evasion_buff",
           "categories": ["evasion"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "dash_buff",
+          "target_type": "self",
+          "dash_distance": 8,
+          "duration_seconds": 4,
+          "travel_type": "ice_slide",
+          "terrain_effect": "ice_skate_trail"
         }
       ]
     },
@@ -54,7 +73,13 @@
           "cooldown_seconds": 5,
           "effect": "summon",
           "categories": ["summon", "damage"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "summon",
+          "target_type": "ground_target",
+          "range": 10,
+          "duration_seconds": 18,
+          "summon_name": "snow_imp",
+          "terrain_effect": "snow_imp_summon"
         },
         {
           "id": "snowstorm",
@@ -64,7 +89,13 @@
           "cooldown_seconds": 5,
           "effect": "attack_slow",
           "categories": ["damage", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 5,
+          "duration_seconds": 6,
+          "terrain_effect": "snowstorm"
         },
         {
           "id": "frosty",
@@ -74,7 +105,13 @@
           "cooldown_seconds": 8,
           "effect": "summon_tank",
           "categories": ["summon"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "summon",
+          "target_type": "ground_target",
+          "range": 10,
+          "duration_seconds": 20,
+          "summon_name": "frosty_golem",
+          "terrain_effect": "frozen_guardian"
         }
       ]
     },
@@ -93,7 +130,13 @@
           "cooldown_seconds": 3,
           "effect": "knockback",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "wave_line",
+          "target_type": "line",
+          "range": 14,
+          "width": 5,
+          "knockback_force": 4.5,
+          "travel_type": "tidal_surge"
         },
         {
           "id": "waverider",
@@ -104,7 +147,12 @@
           "effect": "shield+speed",
           "categories": ["shielding", "buff"],
           "shield_percent": 20,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 5,
+          "dash_distance": 10,
+          "travel_type": "surf_ride"
         },
         {
           "id": "riptide",
@@ -114,7 +162,12 @@
           "cooldown_seconds": 5,
           "effect": "vulnerability",
           "categories": ["damage", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "line_control",
+          "target_type": "enemy",
+          "range": 15,
+          "pull_force": 5,
+          "travel_type": "rip_current"
         }
       ]
     },
@@ -133,7 +186,13 @@
           "cooldown_seconds": 6,
           "effect": "dot+attack_buff",
           "categories": ["dot", "buff", "aoe"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 14,
+          "radius": 6,
+          "duration_seconds": 6,
+          "terrain_effect": "piercing_rain"
         },
         {
           "id": "rainbow",
@@ -144,7 +203,13 @@
           "effect": "heal",
           "categories": ["healing"],
           "heal_percent": 10,
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "support_zone",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 5,
+          "duration_seconds": 6,
+          "terrain_effect": "healing_rainbow"
         },
         {
           "id": "splash",
@@ -155,7 +220,13 @@
           "effect": "shield",
           "categories": ["damage", "shielding"],
           "shield_percent": 20,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "projectile_burst",
+          "target_type": "enemy",
+          "range": 12,
+          "radius": 3,
+          "projectile_speed": 20,
+          "travel_type": "splash_burst"
         }
       ]
     },
@@ -174,7 +245,13 @@
           "cooldown_seconds": 3,
           "effect": "burn+knockback",
           "categories": ["dot", "crowd_control"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "projectile",
+          "target_type": "enemy",
+          "range": 14,
+          "projectile_speed": 24,
+          "knockback_force": 3,
+          "travel_type": "boiling_jet"
         },
         {
           "id": "geyser",
@@ -184,7 +261,16 @@
           "cooldown_seconds": 5,
           "effect": "burn",
           "categories": ["dot"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_strike",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 3,
+          "height": 6,
+          "launch_height": 4,
+          "knockup": true,
+          "delay_seconds": 0.7,
+          "terrain_effect": "geyser"
         },
         {
           "id": "overheat",
@@ -194,7 +280,11 @@
           "cooldown_seconds": 7,
           "effect": "attack_buff+self_burn",
           "categories": ["buff", "self_damage"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 8,
+          "terrain_effect": "steam_pressure"
         }
       ]
     },
@@ -213,7 +303,11 @@
           "cooldown_seconds": 5,
           "effect": "evasion",
           "categories": ["evasion"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 5,
+          "terrain_effect": "mist_shroud"
         },
         {
           "id": "dispersion",
@@ -224,7 +318,12 @@
           "effect": "",
           "categories": ["damage"],
           "charges": 3,
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "dash",
+          "target_type": "enemy",
+          "range": 11,
+          "dash_distance": 11,
+          "travel_type": "mist_reform"
         },
         {
           "id": "hidrosis",
@@ -234,7 +333,11 @@
           "cooldown_seconds": 6,
           "effect": "evasion",
           "categories": ["evasion"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 7,
+          "terrain_effect": "condensation_veil"
         }
       ]
     },
@@ -254,7 +357,11 @@
           "effect": "shield+stun",
           "categories": ["shielding", "crowd_control"],
           "shield_percent": 25,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 6,
+          "terrain_effect": "ice_shell"
         },
         {
           "id": "glacier",
@@ -264,7 +371,14 @@
           "cooldown_seconds": 7,
           "effect": "defense_buff",
           "categories": ["buff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "barrier",
+          "target_type": "line",
+          "range": 8,
+          "width": 8,
+          "height": 4,
+          "duration_seconds": 7,
+          "terrain_effect": "glacier_wall"
         },
         {
           "id": "ice_shelf",
@@ -274,7 +388,14 @@
           "cooldown_seconds": 8,
           "effect": "stun+slow",
           "categories": ["damage", "crowd_control", "debuff"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "ground_strike",
+          "target_type": "ground_target",
+          "range": 14,
+          "width": 6,
+          "length": 8,
+          "delay_seconds": 0.8,
+          "terrain_effect": "ice_shelf_collapse"
         }
       ]
     },
@@ -293,7 +414,13 @@
           "cooldown_seconds": 6,
           "effect": "slow+attack_buff",
           "categories": ["buff", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 10,
+          "radius": 4,
+          "duration_seconds": 6,
+          "terrain_effect": "tide_pool"
         },
         {
           "id": "abyssal_assist",
@@ -303,7 +430,13 @@
           "cooldown_seconds": 5,
           "effect": "stun+vulnerability",
           "categories": ["damage", "crowd_control", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_burst",
+          "target_type": "enemy",
+          "range": 14,
+          "radius": 3,
+          "duration_seconds": 2.5,
+          "terrain_effect": "abyssal_pressure"
         },
         {
           "id": "rip_current",
@@ -313,7 +446,13 @@
           "cooldown_seconds": 4,
           "effect": "slow",
           "categories": ["damage", "debuff"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "line_control",
+          "target_type": "enemy",
+          "range": 16,
+          "pull_force": 4,
+          "duration_seconds": 2,
+          "travel_type": "undertow_stream"
         }
       ]
     },
@@ -333,7 +472,13 @@
           "effect": "vulnerability",
           "categories": ["damage", "debuff", "dash"],
           "charges": 2,
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "dash",
+          "target_type": "enemy",
+          "range": 9,
+          "dash_distance": 9,
+          "launch_height": 2,
+          "travel_type": "river_leap"
         },
         {
           "id": "river_rapids",
@@ -343,7 +488,12 @@
           "cooldown_seconds": 6,
           "effect": "attack_buff",
           "categories": ["buff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 8,
+          "dash_distance": 12,
+          "travel_type": "rapids_ride"
         },
         {
           "id": "swamp_monster",
@@ -353,7 +503,13 @@
           "cooldown_seconds": 8,
           "effect": "summon",
           "categories": ["summon"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "summon",
+          "target_type": "ground_target",
+          "range": 10,
+          "duration_seconds": 20,
+          "summon_name": "swamp_monster",
+          "terrain_effect": "swamp_spawn"
         }
       ]
     },
@@ -372,7 +528,13 @@
           "cooldown_seconds": 5,
           "effect": "dot+slow",
           "categories": ["dot", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "cone",
+          "target_type": "cone",
+          "range": 10,
+          "cone_angle": 70,
+          "duration_seconds": 5,
+          "terrain_effect": "bilge_spray"
         },
         {
           "id": "anchor_haul",
@@ -382,7 +544,14 @@
           "cooldown_seconds": 6,
           "effect": "knockback",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "projectile_line",
+          "target_type": "enemy",
+          "range": 14,
+          "width": 3,
+          "projectile_speed": 18,
+          "knockback_force": 4,
+          "travel_type": "anchor_drag"
         },
         {
           "id": "oil_spill",
@@ -392,7 +561,11 @@
           "cooldown_seconds": 7,
           "effect": "defense_buff+attack_buff",
           "categories": ["buff"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 8,
+          "terrain_effect": "oily_sheen"
         }
       ]
     }

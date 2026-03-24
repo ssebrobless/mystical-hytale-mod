@@ -71,10 +71,37 @@ public class ClassData {
         private double value;
         @SerializedName("value_type")
         private String valueType;
+        private String resource;
+        private String trigger;
+        private double max;
+        private double duration;
+        private String buff;
+        @SerializedName("damage_type")
+        private String damageType;
+        private String debuff;
+        @SerializedName("max_stacks")
+        private int maxStacks;
+        @SerializedName("restore_health")
+        private double restoreHealth;
+        @SerializedName("restore_mana")
+        private double restoreMana;
+        @SerializedName("consumes_resource")
+        private boolean consumesResource;
 
         public String getType() { return type; }
         public String getCondition() { return condition; }
         public double getValue() { return value; }
         public String getValueType() { return valueType; }
+        public String getResource() { return resource; }
+        public String getTrigger() { return trigger; }
+        public double getMax() { return max; }
+        public double getDuration() { return duration; }
+        public String getBuff() { return buff; }
+        public String getDamageType() { return damageType; }
+        public String getDebuff() { return debuff; }
+        public int getMaxStacks() { return maxStacks; }
+        public double getRestoreHealth() { return restoreHealth; }
+        public double getRestoreMana() { return restoreMana; }
+        public boolean isConsumesResource() { return consumesResource; }
     }
 }

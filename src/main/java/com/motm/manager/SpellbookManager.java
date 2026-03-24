@@ -7,6 +7,7 @@ import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
+import com.motm.util.PassivePresentation;
 import com.motm.util.DataLoader;
 
 import java.util.ArrayList;
@@ -115,6 +116,11 @@ public class SpellbookManager {
                 sb.append("Theme: ").append(classData.getTheme()).append("\n");
                 sb.append("Element: ").append(classData.getElement()).append("\n");
                 sb.append("Passive: ").append(classData.getPassiveAbility().getName()).append("\n");
+                sb.append("  ").append(classData.getPassiveAbility().getDescription()).append("\n");
+                String passiveSummary = PassivePresentation.buildPassiveSummary(classData.getPassiveAbility());
+                if (!passiveSummary.isBlank()) {
+                    sb.append("  ").append(passiveSummary).append("\n");
+                }
             }
         }
         sb.append("Race: ").append(displayRace(player)).append("\n");
