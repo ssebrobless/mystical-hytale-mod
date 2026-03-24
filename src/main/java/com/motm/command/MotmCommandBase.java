@@ -16,6 +16,7 @@ public class MotmCommandBase extends CommandBase {
     public MotmCommandBase(MenteesMod mod) {
         super("motm", "Mentees of the Mystical main command");
         this.mod = mod;
+        setAllowsExtraArguments(true);
     }
 
     @Override
