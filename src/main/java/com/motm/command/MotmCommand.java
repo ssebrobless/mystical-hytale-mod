@@ -711,7 +711,7 @@ public class MotmCommand {
                 + "  /motm class [id]        - View/select class\n"
                 + "  /motm race [id]         - View/select race\n"
                 + "  /motm style [id]        - View/select your combat style\n"
-                + "  /motm spellbook [page]  - Open the spellbook sections\n"
+                + "  /motm spellbook [page]  - Open the visual spellbook\n"
                 + "  /motm abilities         - View ability IDs and cooldowns\n"
                 + "  /motm cast <abilityId>  - Test-cast a style ability\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
