@@ -12,6 +12,7 @@ import com.motm.model.Perk;
 import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StyleData;
+import com.motm.util.AbilityPresentation;
 
 import java.util.List;
 
@@ -327,9 +328,13 @@ public class MotmCommand {
         sb.append("Theme: ").append(selectedStyle.getTheme()).append("\n");
         sb.append("Abilities:\n");
         for (AbilityData ability : selectedStyle.getAbilities()) {
+            String profile = buildAbilityProfileSummary(ability);
             sb.append("  ").append(ability.getName())
                     .append(" (").append(ability.getCooldownSeconds()).append("s)")
-                    .append(" - ").append(compactText(ability.getDescription(), 46)).append("\n");
+                    .append(" - ").append(compactText(
+                            profile.isBlank() ? ability.getDescription() : profile,
+                            58))
+                    .append("\n");
         }
         mod.getResourceManager().synchronizePersistentState(player);
         mod.getResourceManager().initializeForPlayer(player.getPlayerId(), player.getPlayerClass());
@@ -423,6 +428,10 @@ public class MotmCommand {
 
             sb.append(ability.getId()).append(" - ").append(ability.getName()).append("\n");
             sb.append("  ").append(buildAbilityEffectSummary(ability)).append("\n");
+            String profile = buildAbilityProfileSummary(ability);
+            if (!profile.isBlank()) {
+                sb.append("  ").append(profile).append("\n");
+            }
             sb.append("  Cost: ").append(formatResourceCost(style, ability))
                     .append(" | CD: ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
                     .append(" | Status: ")
@@ -481,6 +490,10 @@ public class MotmCommand {
 
         StringBuilder sb = new StringBuilder("[MOTM] Cast ").append(activated.getName()).append("!\n");
         sb.append("Effect: ").append(buildAbilityEffectSummary(activated)).append("\n");
+        String profile = buildAbilityProfileSummary(activated);
+        if (!profile.isBlank()) {
+            sb.append("Profile: ").append(profile).append("\n");
+        }
         sb.append("Cooldown: ").append(formatDecimal(activated.getCooldownSeconds())).append("s");
 
         if (activated.getResourceCost() > 0) {
@@ -825,30 +838,11 @@ public class MotmCommand {
     }
 
     private String buildAbilityEffectSummary(AbilityData ability) {
-        StringBuilder sb = new StringBuilder();
-        boolean hasSummary = false;
+        return AbilityPresentation.buildEffectSummary(ability);
+    }
 
-        if (ability.getDamagePercent() > 0) {
-            sb.append(formatDecimal(ability.getDamagePercent())).append("% damage");
-            hasSummary = true;
-        }
-        if (ability.getHealPercent() > 0) {
-            if (hasSummary) sb.append(" | ");
-            sb.append(formatDecimal(ability.getHealPercent())).append("% heal");
-            hasSummary = true;
-        }
-        if (ability.getShieldPercent() > 0) {
-            if (hasSummary) sb.append(" | ");
-            sb.append(formatDecimal(ability.getShieldPercent())).append("% shield");
-            hasSummary = true;
-        }
-        if (ability.getEffect() != null && !ability.getEffect().isBlank()) {
-            if (hasSummary) sb.append(" | ");
-            sb.append("Effect: ").append(ability.getEffect());
-            hasSummary = true;
-        }
-
-        return hasSummary ? sb.toString() : "Utility / special ability";
+    private String buildAbilityProfileSummary(AbilityData ability) {
+        return AbilityPresentation.buildSpatialSummary(ability);
     }
 
     private String formatResourceCost(StyleData style, AbilityData ability) {

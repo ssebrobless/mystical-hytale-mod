@@ -20,6 +20,7 @@ import com.motm.model.Perk;
 import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StyleData;
+import com.motm.util.AbilityPresentation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -477,11 +478,10 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             AbilityData ability = abilities.get(index);
             setText(commands, "#Ability" + (index + 1) + "Name.Text", safe(ability.getName()));
             setText(commands, "#Ability" + (index + 1) + "Id.Text", safe(ability.getId()));
-            setText(commands, "#Ability" + (index + 1) + "Summary.Text", buildAbilitySummary(ability));
+            setText(commands, "#Ability" + (index + 1) + "Summary.Text",
+                    compactText(buildAbilitySummary(ability), 110));
             setText(commands, "#Ability" + (index + 1) + "Meta.Text",
-                    "Cost " + ability.getResourceCost()
-                            + " | Cooldown " + formatDecimal(ability.getCooldownSeconds()) + "s"
-                            + " | Ready in " + formatDecimal(getRemainingCooldown(player, ability)) + "s");
+                    compactText(buildAbilityMeta(player, ability), 140));
         }
     }
 
@@ -750,32 +750,20 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     }
 
     private String buildAbilitySummary(AbilityData ability) {
-        StringBuilder summary = new StringBuilder();
-        appendStat(summary, ability.getDamagePercent(), "% dmg");
-        appendStat(summary, ability.getHealPercent(), "% heal");
-        appendStat(summary, ability.getShieldPercent(), "% shield");
-
-        if (ability.getEffect() != null && !ability.getEffect().isBlank()) {
-            if (!summary.isEmpty()) {
-                summary.append(" | ");
-            }
-            summary.append(compactText(ability.getEffect(), 70));
-        }
-
-        if (!summary.isEmpty()) {
-            return summary.toString();
-        }
-        return compactText(ability.getDescription(), 90);
+        String summary = AbilityPresentation.buildEffectSummary(ability);
+        return summary.isBlank() ? compactText(ability.getDescription(), 90) : summary;
     }
 
-    private void appendStat(StringBuilder summary, double value, String suffix) {
-        if (value <= 0) {
-            return;
+    private String buildAbilityMeta(PlayerData player, AbilityData ability) {
+        StringBuilder meta = new StringBuilder();
+        String profile = AbilityPresentation.buildSpatialSummary(ability);
+        if (!profile.isBlank()) {
+            meta.append(profile).append(" | ");
         }
-        if (!summary.isEmpty()) {
-            summary.append(" | ");
-        }
-        summary.append(formatDecimal(value)).append(suffix);
+        meta.append("Cost ").append(ability.getResourceCost())
+                .append(" | Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
+                .append(" | Ready in ").append(formatDecimal(getRemainingCooldown(player, ability))).append("s");
+        return meta.toString();
     }
 
     private double getRemainingCooldown(PlayerData player, AbilityData ability) {
@@ -844,10 +832,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     }
 
     private String formatDecimal(double value) {
-        if (Math.abs(value - Math.rint(value)) < 0.0001) {
-            return String.valueOf((int) Math.rint(value));
-        }
-        return String.format(Locale.US, "%.1f", value);
+        return AbilityPresentation.formatDecimal(value);
     }
 
     private String toPascalCase(String rawValue) {

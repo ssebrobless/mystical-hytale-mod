@@ -3,6 +3,7 @@ package com.motm.manager;
 import com.motm.model.AbilityData;
 import com.motm.model.PlayerData;
 import com.motm.model.StyleData;
+import com.motm.util.AbilityPresentation;
 import com.motm.util.DataLoader;
 
 import java.util.*;
@@ -223,7 +224,8 @@ public class StyleManager {
             if (ability.getCharges() > 0) {
                 sb.append(" x").append(ability.getCharges());
             }
-            sb.append("\n    ").append(ability.getDescription()).append("\n");
+            String profile = AbilityPresentation.buildSpatialSummary(ability);
+            sb.append("\n    ").append(profile.isBlank() ? ability.getDescription() : profile).append("\n");
         }
         return sb.toString();
     }

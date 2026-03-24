@@ -6,6 +6,7 @@ import com.motm.model.Perk;
 import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StyleData;
+import com.motm.util.AbilityPresentation;
 import com.motm.util.DataLoader;
 
 import java.util.ArrayList;
@@ -157,6 +158,10 @@ public class SpellbookManager {
             double cooldown = styleManager.getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
             sb.append("  ").append(ability.getName()).append(" [").append(ability.getId()).append("]\n");
             sb.append("    ").append(abilitySummary(ability)).append("\n");
+            String profile = AbilityPresentation.buildSpatialSummary(ability);
+            if (!profile.isBlank()) {
+                sb.append("    ").append(profile).append("\n");
+            }
             sb.append("    Cost ").append(ability.getResourceCost())
                     .append(" | Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s");
             if (cooldown > 0) {
@@ -320,26 +325,10 @@ public class SpellbookManager {
     }
 
     private String abilitySummary(AbilityData ability) {
-        List<String> parts = new ArrayList<>();
-        if (ability.getDamagePercent() > 0) {
-            parts.add(formatDecimal(ability.getDamagePercent()) + "% dmg");
-        }
-        if (ability.getHealPercent() > 0) {
-            parts.add(formatDecimal(ability.getHealPercent()) + "% heal");
-        }
-        if (ability.getShieldPercent() > 0) {
-            parts.add(formatDecimal(ability.getShieldPercent()) + "% shield");
-        }
-        if (ability.getEffect() != null && !ability.getEffect().isBlank()) {
-            parts.add("effect: " + ability.getEffect());
-        }
-        return parts.isEmpty() ? "utility effect" : String.join(" | ", parts);
+        return AbilityPresentation.buildEffectSummary(ability);
     }
 
     private String formatDecimal(double value) {
-        if (Math.abs(value - Math.rint(value)) < 0.0001) {
-            return String.valueOf((int) Math.rint(value));
-        }
-        return String.format(Locale.US, "%.1f", value);
+        return AbilityPresentation.formatDecimal(value);
     }
 }
