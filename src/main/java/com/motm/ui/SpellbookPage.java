@@ -21,6 +21,7 @@ import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StyleData;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -33,9 +34,14 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     private static final String PAGE_DOCUMENT = "Pages/MOTM_Spellbook.ui";
     private static final int MAX_PERK_ROWS = 10;
     private static final int MAX_ABILITY_ROWS = 3;
+    private static final int MAX_RACE_BUTTONS = 12;
+    private static final int MAX_STYLE_BUTTONS = 10;
+    private static final List<String> CLASS_ORDER = List.of("terra", "hydro", "aero", "corruptus");
 
     private final MenteesMod mod;
+    private final List<Integer> queuedPerkChoices = new ArrayList<>();
     private SpellbookManager.Section currentSection;
+    private String statusMessage = "";
 
     public SpellbookPage(PlayerRef playerRef, MenteesMod mod, SpellbookManager.Section initialSection) {
         super(playerRef, CustomPageLifetime.CanDismiss, SpellbookPageEventData.CODEC);
@@ -50,6 +56,9 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                       Store<EntityStore> store) {
         commands.append(PAGE_DOCUMENT);
         bindNavigation(events);
+        bindJourneyActions(events);
+        bindGrimoireActions(events);
+        bindPerkActions(events);
         render(commands);
     }
 
@@ -57,16 +66,21 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     public void handleDataEvent(Ref<EntityStore> playerEntityRef,
                                 Store<EntityStore> store,
                                 SpellbookPageEventData data) {
-        if (data == null || data.section == null || data.section.isBlank()) {
+        if (data == null || data.action == null || data.action.isBlank()) {
             return;
         }
 
-        SpellbookManager.Section parsedSection = mod.getSpellbookManager().parseSection(data.section);
-        if (parsedSection == null) {
-            return;
+        switch (data.action) {
+            case "Navigate" -> navigate(data.section);
+            case "ChooseClass" -> chooseClass(data.value);
+            case "ChooseRaceSlot" -> chooseRaceSlot(data.value);
+            case "ChooseStyleSlot" -> chooseStyleSlot(data.value);
+            case "TogglePerkSlot" -> togglePerkSlot(data.value);
+            case "ConfirmPerks" -> confirmPerks();
+            case "ClearPerks" -> clearQueuedPerks();
+            default -> statusMessage = "Unknown spellbook action.";
         }
 
-        currentSection = parsedSection;
         UICommandBuilder commands = new UICommandBuilder();
         render(commands);
         sendUpdate(commands);
@@ -82,6 +96,31 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         bindSection(events, "#NavJournalButton", SpellbookManager.Section.JOURNAL);
     }
 
+    private void bindJourneyActions(UIEventBuilder events) {
+        bindAction(events, "#ClassTerraButton", "ChooseClass", "terra");
+        bindAction(events, "#ClassHydroButton", "ChooseClass", "hydro");
+        bindAction(events, "#ClassAeroButton", "ChooseClass", "aero");
+        bindAction(events, "#ClassCorruptusButton", "ChooseClass", "corruptus");
+
+        for (int index = 1; index <= MAX_RACE_BUTTONS; index++) {
+            bindAction(events, "#RaceButton" + index, "ChooseRaceSlot", String.valueOf(index));
+        }
+    }
+
+    private void bindGrimoireActions(UIEventBuilder events) {
+        for (int index = 1; index <= MAX_STYLE_BUTTONS; index++) {
+            bindAction(events, "#StyleButton" + index, "ChooseStyleSlot", String.valueOf(index));
+        }
+    }
+
+    private void bindPerkActions(UIEventBuilder events) {
+        for (int index = 1; index <= MAX_PERK_ROWS; index++) {
+            bindAction(events, "#PerkButton" + index, "TogglePerkSlot", String.valueOf(index));
+        }
+        bindAction(events, "#PerksConfirmButton", "ConfirmPerks", "confirm");
+        bindAction(events, "#PerksClearButton", "ClearPerks", "clear");
+    }
+
     private void bindSection(UIEventBuilder events, String selector, SpellbookManager.Section section) {
         events.addEventBinding(
                 CustomUIEventBindingType.Activating,
@@ -93,8 +132,155 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         );
     }
 
+    private void bindAction(UIEventBuilder events, String selector, String action, String value) {
+        events.addEventBinding(
+                CustomUIEventBindingType.Activating,
+                selector,
+                new EventData()
+                        .append("Action", action)
+                        .append("Value", value != null ? value : ""),
+                false
+        );
+    }
+
+    private void navigate(String rawSection) {
+        SpellbookManager.Section parsedSection = mod.getSpellbookManager().parseSection(rawSection);
+        if (parsedSection != null) {
+            currentSection = parsedSection;
+        }
+    }
+
+    private void chooseClass(String classId) {
+        if (classId == null || classId.isBlank()) {
+            statusMessage = "Class selection is unavailable right now.";
+            return;
+        }
+
+        runCommand("class", classId);
+
+        PlayerData player = currentPlayer();
+        if (player != null && classId.equalsIgnoreCase(player.getPlayerClass())) {
+            queuedPerkChoices.clear();
+            currentSection = player.getRace() == null
+                    ? SpellbookManager.Section.JOURNEY
+                    : SpellbookManager.Section.GRIMOIRE;
+        }
+    }
+
+    private void chooseRaceSlot(String rawSlot) {
+        PlayerData player = currentPlayer();
+        int slot = parseSlot(rawSlot);
+        List<RaceData> races = mod.getDataLoader().getAllRaces();
+        if (player == null || slot < 1 || slot > races.size()) {
+            statusMessage = "That race slot is not available.";
+            return;
+        }
+
+        RaceData race = races.get(slot - 1);
+        runCommand("race", race.getId());
+
+        player = currentPlayer();
+        if (player != null && race.getId().equalsIgnoreCase(player.getRace())) {
+            currentSection = SpellbookManager.Section.GRIMOIRE;
+        }
+    }
+
+    private void chooseStyleSlot(String rawSlot) {
+        PlayerData player = currentPlayer();
+        if (player == null || player.getPlayerClass() == null) {
+            statusMessage = "Choose a class first to unlock style selection.";
+            return;
+        }
+
+        int slot = parseSlot(rawSlot);
+        List<StyleData> styles = mod.getDataLoader().getStylesForClass(player.getPlayerClass());
+        if (slot < 1 || slot > styles.size()) {
+            statusMessage = "That style slot is not available.";
+            return;
+        }
+
+        StyleData style = styles.get(slot - 1);
+        runCommand("style", style.getId());
+
+        player = currentPlayer();
+        if (player != null && player.getSelectedStyles().contains(style.getId())) {
+            currentSection = SpellbookManager.Section.GRIMOIRE;
+        }
+    }
+
+    private void togglePerkSlot(String rawSlot) {
+        PlayerData player = currentPlayer();
+        List<Perk> available = player != null && hasPendingPerks(player)
+                ? perkManager().getAvailablePerks(player)
+                : Collections.emptyList();
+        int slot = parseSlot(rawSlot);
+        if (slot < 1 || slot > available.size()) {
+            statusMessage = "That perk slot is not available.";
+            return;
+        }
+
+        if (queuedPerkChoices.contains(slot)) {
+            queuedPerkChoices.remove(Integer.valueOf(slot));
+            statusMessage = "Removed perk [" + slot + "] from the selection queue.";
+            return;
+        }
+
+        if (queuedPerkChoices.size() >= PerkManager.PERKS_TO_SELECT) {
+            statusMessage = "You can queue only 3 perks at a time. Confirm or clear first.";
+            return;
+        }
+
+        queuedPerkChoices.add(slot);
+        queuedPerkChoices.sort(Integer::compareTo);
+        statusMessage = "Queued [" + slot + "] " + safe(available.get(slot - 1).getName()) + ".";
+    }
+
+    private void confirmPerks() {
+        PlayerData player = currentPlayer();
+        if (player == null || !hasPendingPerks(player)) {
+            queuedPerkChoices.clear();
+            statusMessage = "No pending perk tier is ready right now.";
+            return;
+        }
+
+        if (queuedPerkChoices.size() != PerkManager.PERKS_TO_SELECT) {
+            statusMessage = "Queue exactly 3 perks before confirming.";
+            return;
+        }
+
+        int beforeCount = player.getSelectedPerks().size();
+        int beforeHistory = player.getPerkSelectionHistory().size();
+
+        runCommand(
+                "select",
+                String.valueOf(queuedPerkChoices.get(0)),
+                String.valueOf(queuedPerkChoices.get(1)),
+                String.valueOf(queuedPerkChoices.get(2))
+        );
+
+        player = currentPlayer();
+        if (player != null
+                && player.getSelectedPerks().size() > beforeCount
+                && player.getPerkSelectionHistory().size() > beforeHistory) {
+            queuedPerkChoices.clear();
+            currentSection = SpellbookManager.Section.PERKS;
+        }
+    }
+
+    private void clearQueuedPerks() {
+        queuedPerkChoices.clear();
+        statusMessage = "Cleared queued perk choices.";
+    }
+
+    private String runCommand(String... args) {
+        String response = mod.getMotmCommand().execute(playerRef.getUuid().toString(), args);
+        statusMessage = summarizeStatus(response);
+        return response;
+    }
+
     private void render(UICommandBuilder commands) {
-        PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(playerRef.getUuid().toString());
+        PlayerData player = currentPlayer();
+        syncTransientUiState(player);
 
         applyNavigationState(commands);
         applyHero(commands, player);
@@ -106,6 +292,20 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         applyCodex(commands, player);
         applyJournal(commands, player);
         applySectionVisibility(commands);
+    }
+
+    private PlayerData currentPlayer() {
+        return mod.getPlayerDataManager().getOnlinePlayer(playerRef.getUuid().toString());
+    }
+
+    private void syncTransientUiState(PlayerData player) {
+        if (player == null || !hasPendingPerks(player)) {
+            queuedPerkChoices.clear();
+            return;
+        }
+
+        List<Perk> available = perkManager().getAvailablePerks(player);
+        queuedPerkChoices.removeIf(choice -> choice < 1 || choice > available.size());
     }
 
     private void applyNavigationState(UICommandBuilder commands) {
@@ -125,6 +325,9 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         boolean selected = currentSection == section;
         commands.set(buttonSelector + ".Visible", !selected);
         commands.set(selectedSelector + ".Visible", selected);
+        if (selected) {
+            setText(commands, selectedSelector + ".Text", "> " + sectionTitle(section));
+        }
     }
 
     private void applySectionVisibility(UICommandBuilder commands) {
@@ -148,6 +351,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 : "Unknown");
         setText(commands, "#HeroProgress.Text", buildXpLine(player));
         setText(commands, "#HeroNextStep.Text", "Next Step: " + getNextStep(player));
+        setText(commands, "#ActionStatus.Text", statusMessage.isBlank() ? buildDefaultStatus(player) : statusMessage);
     }
 
     private void applyOverview(UICommandBuilder commands, PlayerData player) {
@@ -161,7 +365,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 ? String.valueOf(player.getActiveSynergyBonuses().size())
                 : "0");
         setText(commands, "#OverviewPathResourceValue.Text", currentResourceLine(player));
-        setText(commands, "#OverviewPathTipValue.Text", "Use the sidebar to inspect abilities, perks, resources, and lore.");
+        setText(commands, "#OverviewPathTipValue.Text", "Journey chooses class and race. Grimoire chooses style. Perk Web confirms 3 passive picks.");
     }
 
     private void applyJourney(UICommandBuilder commands, PlayerData player) {
@@ -177,6 +381,10 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#JourneyPassiveDescValue.Text", classData != null && classData.getPassiveAbility() != null
                 ? compactText(classData.getPassiveAbility().getDescription(), 150)
                 : "Your class passive will appear here.");
+        setText(commands, "#JourneyClassActionValue.Text", player != null && player.getPlayerClass() != null
+                ? "Class is currently locked to " + displayClass(player) + ". Use dev reset or dev class clear if you need to change it while testing."
+                : "Choose your class here. This becomes your permanent path in normal play.");
+        applyClassButtons(commands, player);
 
         setText(commands, "#JourneyRaceValue.Text", displayRace(player));
         setText(commands, "#JourneyRacePassiveValue.Text", raceData != null
@@ -185,6 +393,10 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#JourneyRaceSpecialValue.Text", raceData != null
                 ? compactText(raceData.getSpecial(), 120)
                 : "Race specialties appear here.");
+        setText(commands, "#JourneyRaceActionValue.Text", player != null && player.getRace() != null
+                ? "Race is currently locked to " + displayRace(player) + ". Use dev race clear if you want to retest another one."
+                : "Choose your race here. This is your long-term identity bonus.");
+        applyRaceButtons(commands, player);
 
         setText(commands, "#JourneyStyleValue.Text", displayStyle(player));
         setText(commands, "#JourneyProgressValue.Text", player != null
@@ -194,21 +406,63 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#JourneyPromptValue.Text", getNextStep(player));
     }
 
+    private void applyClassButtons(UICommandBuilder commands, PlayerData player) {
+        for (String classId : CLASS_ORDER) {
+            String selector = "#Class" + toPascalCase(classId) + "Button.Text";
+            ClassData classData = mod.getDataLoader().getClassData(classId);
+            String label = classData != null ? safe(classData.getDisplayName()) : toPascalCase(classId);
+            if (player != null && classId.equalsIgnoreCase(player.getPlayerClass())) {
+                label += " *";
+            }
+            setText(commands, selector, label);
+        }
+    }
+
+    private void applyRaceButtons(UICommandBuilder commands, PlayerData player) {
+        List<RaceData> races = mod.getDataLoader().getAllRaces();
+        for (int index = 0; index < MAX_RACE_BUTTONS; index++) {
+            String selector = "#RaceButton" + (index + 1);
+            boolean visible = index < races.size();
+            commands.set(selector + ".Visible", visible);
+            if (!visible) {
+                continue;
+            }
+
+            RaceData race = races.get(index);
+            String label = safe(race.getName());
+            if (player != null && race.getId().equalsIgnoreCase(player.getRace())) {
+                label += " *";
+            }
+            setText(commands, selector + ".Text", label);
+        }
+    }
+
     private void applyGrimoire(UICommandBuilder commands, PlayerData player) {
         StyleData style = getSelectedStyle(player);
+        boolean hasClass = player != null && player.getPlayerClass() != null;
         boolean hasStyle = style != null;
 
-        commands.set("#GrimoireEmpty.Visible", !hasStyle);
-        commands.set("#GrimoireDetails.Visible", hasStyle);
+        commands.set("#GrimoireEmpty.Visible", !hasClass);
+        commands.set("#GrimoireDetails.Visible", hasClass);
+        commands.set("#StyleButtonsContainer.Visible", hasClass);
 
-        setText(commands, "#GrimoireEmpty.Text", player == null || player.getPlayerClass() == null
-                ? "Choose a class first, then a style, to awaken your grimoire."
-                : "Choose a style to reveal your three active abilities.");
+        setText(commands, "#GrimoireEmpty.Text", "Choose a class in Journey to awaken your grimoire.");
+        setText(commands, "#GrimoireStyleActionValue.Text", !hasClass
+                ? "Choose a class first."
+                : hasStyle
+                ? "Choose a different style here if you want to reshuffle your 3 active abilities."
+                : "Choose a style here. Styles grant all 3 active abilities immediately.");
+
+        if (hasClass) {
+            applyStyleButtons(commands, player);
+        } else {
+            hideStyleButtons(commands);
+        }
 
         setText(commands, "#GrimoireStyleValue.Text", hasStyle ? safe(style.getName()) : "Unchosen");
         setText(commands, "#GrimoireThemeValue.Text", hasStyle ? safe(style.getTheme()) : "No theme yet");
         setText(commands, "#GrimoireResourceValue.Text", hasStyle ? safe(style.getResourceType()) : "No class resource");
-        setText(commands, "#GrimoireAbilityRule.Text", "Styles grant all 3 active abilities immediately. Perks modify them later.");
+        setText(commands, "#GrimoireAbilityRule.Text", "Styles grant all 3 active abilities immediately. Perks stay passive and modify those abilities later.");
 
         List<AbilityData> abilities = hasStyle && style.getAbilities() != null ? style.getAbilities() : Collections.emptyList();
         for (int index = 0; index < MAX_ABILITY_ROWS; index++) {
@@ -228,6 +482,31 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                     "Cost " + ability.getResourceCost()
                             + " | Cooldown " + formatDecimal(ability.getCooldownSeconds()) + "s"
                             + " | Ready in " + formatDecimal(getRemainingCooldown(player, ability)) + "s");
+        }
+    }
+
+    private void applyStyleButtons(UICommandBuilder commands, PlayerData player) {
+        List<StyleData> styles = mod.getDataLoader().getStylesForClass(player.getPlayerClass());
+        for (int index = 0; index < MAX_STYLE_BUTTONS; index++) {
+            String selector = "#StyleButton" + (index + 1);
+            boolean visible = index < styles.size();
+            commands.set(selector + ".Visible", visible);
+            if (!visible) {
+                continue;
+            }
+
+            StyleData style = styles.get(index);
+            String label = safe(style.getName());
+            if (player.getSelectedStyles().contains(style.getId())) {
+                label += " *";
+            }
+            setText(commands, selector + ".Text", label);
+        }
+    }
+
+    private void hideStyleButtons(UICommandBuilder commands) {
+        for (int index = 1; index <= MAX_STYLE_BUTTONS; index++) {
+            commands.set("#StyleButton" + index + ".Visible", false);
         }
     }
 
@@ -253,7 +532,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         } else if (!hasStyle) {
             statusText = "Choose a style first. Styles give abilities; perks reshape them.";
         } else if (pending) {
-            statusText = "Tier " + perkManager().getPendingSelectionTier(player) + " is ready. Pick 3 by number with /motm select 1 4 7.";
+            statusText = "Tier " + perkManager().getPendingSelectionTier(player) + " is ready. Queue 3 perks, then confirm them here.";
         } else {
             statusText = nextPerkUnlockLine(player);
         }
@@ -271,16 +550,20 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
             hasVisibleRows = true;
             Perk perk = available.get(index);
+            boolean queued = queuedPerkChoices.contains(index + 1);
             setText(commands, "#Perk" + (index + 1) + "Index.Text", "[" + (index + 1) + "]");
-            setText(commands, "#Perk" + (index + 1) + "Name.Text", safe(perk.getName()));
+            setText(commands, "#Perk" + (index + 1) + "Name.Text", safe(perk.getName()) + (queued ? " *" : ""));
             setText(commands, "#Perk" + (index + 1) + "Desc.Text", compactText(perk.getDescription(), 140));
+            setText(commands, "#PerkButton" + (index + 1) + ".Text", queued ? "Queued" : "Queue");
         }
 
         commands.set("#PerksChoicesContainer.Visible", hasVisibleRows);
+        commands.set("#PerksControls.Visible", hasVisibleRows);
         commands.set("#PerksEmpty.Visible", !hasVisibleRows);
         setText(commands, "#PerksEmpty.Text", hasVisibleRows
                 ? ""
                 : "No pending perk choices right now. Reach the next milestone to open another tier.");
+        setText(commands, "#PerksSelectionValue.Text", queuedChoiceLine());
     }
 
     private void applyResources(UICommandBuilder commands, PlayerData player) {
@@ -324,6 +607,47 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     private String displayStyle(PlayerData player) {
         StyleData style = getSelectedStyle(player);
         return style != null ? safe(style.getName()) : "Unchosen";
+    }
+
+    private String queuedChoiceLine() {
+        if (queuedPerkChoices.isEmpty()) {
+            return "Queued Choices: none";
+        }
+
+        StringBuilder line = new StringBuilder("Queued Choices: ");
+        for (int index = 0; index < queuedPerkChoices.size(); index++) {
+            if (index > 0) {
+                line.append(", ");
+            }
+            line.append("[").append(queuedPerkChoices.get(index)).append("]");
+        }
+        line.append(" / ").append(PerkManager.PERKS_TO_SELECT);
+        return line.toString();
+    }
+
+    private String buildDefaultStatus(PlayerData player) {
+        return "Spellbook ready. " + getNextStep(player);
+    }
+
+    private String summarizeStatus(String rawMessage) {
+        String cleaned = safe(rawMessage)
+                .replace("[MOTM]", "")
+                .replaceAll("\\s*\\n\\s*", " | ")
+                .replaceAll("\\s{2,}", " ")
+                .trim();
+        return cleaned.isEmpty() ? "Action complete." : compactText(cleaned, 240);
+    }
+
+    private int parseSlot(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return -1;
+        }
+
+        try {
+            return Integer.parseInt(rawValue.trim());
+        } catch (NumberFormatException ignored) {
+            return -1;
+        }
     }
 
     private ClassData getClassData(PlayerData player) {
@@ -461,10 +785,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         return mod.getStyleManager().getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
     }
 
-    private SpellbookManager.Section perkManagerSection() {
-        return currentSection;
-    }
-
     private PerkManager perkManager() {
         return mod.getPerkManager();
     }
@@ -528,5 +848,19 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             return String.valueOf((int) Math.rint(value));
         }
         return String.format(Locale.US, "%.1f", value);
+    }
+
+    private String toPascalCase(String rawValue) {
+        StringBuilder builder = new StringBuilder();
+        for (String part : rawValue.split("_")) {
+            if (part.isBlank()) {
+                continue;
+            }
+            builder.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                builder.append(part.substring(1));
+            }
+        }
+        return builder.toString();
     }
 }

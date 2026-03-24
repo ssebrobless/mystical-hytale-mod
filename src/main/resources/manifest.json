@@ -16,5 +16,5 @@
   "OptionalDependencies": {},
   "DisabledByDefault": false,
   "Main": "com.motm.MenteesMod",
-  "IncludesAssetPack": false
+  "IncludesAssetPack": true
 }

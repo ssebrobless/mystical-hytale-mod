@@ -19,8 +19,13 @@ public class SpellbookPageEventData {
                             (data, value) -> data.section = value != null ? value : "",
                             data -> data.section != null ? data.section : "")
                     .add()
+                    .append(new KeyedCodec<>("Value", Codec.STRING),
+                            (data, value) -> data.value = value != null ? value : "",
+                            data -> data.value != null ? data.value : "")
+                    .add()
                     .build();
 
     public String action;
     public String section;
+    public String value;
 }
