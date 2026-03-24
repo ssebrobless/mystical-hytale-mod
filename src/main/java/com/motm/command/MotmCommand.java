@@ -43,6 +43,8 @@ public class MotmCommand {
             case "perks" -> handlePerks(player);
             case "select" -> handleSelect(player, args);
             case "style" -> handleStyle(player, args);
+            case "abilities" -> handleAbilities(player);
+            case "cast" -> handleCast(player, args);
             case "race" -> handleRace(player, args);
             case "resources" -> handleResources(player);
             case "stats" -> handleStats(player);
@@ -371,6 +373,104 @@ public class MotmCommand {
                 + "  Special: " + race.getSpecial();
     }
 
+    // --- /motm abilities ---
+
+    private String handleAbilities(PlayerData player) {
+        if (player.getPlayerClass() == null) {
+            return "[MOTM] Select a class first with /motm class <classId>";
+        }
+
+        StyleData style = getSelectedStyle(player);
+        if (style == null) {
+            return "[MOTM] Choose your style first with /motm style <styleId>";
+        }
+
+        List<AbilityData> abilities = mod.getStyleManager().getAvailableAbilities(player);
+        if (abilities.isEmpty()) {
+            return "[MOTM] No abilities available for your current style.";
+        }
+
+        StringBuilder sb = new StringBuilder("[MOTM] === Abilities ===\n");
+        sb.append("Style: ").append(style.getName())
+                .append(" | Resource: ").append(style.getResourceType()).append("\n\n");
+
+        for (AbilityData ability : abilities) {
+            double remainingCooldown = mod.getStyleManager()
+                    .getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
+
+            sb.append(ability.getId()).append(" - ").append(ability.getName()).append("\n");
+            sb.append("  ").append(buildAbilityEffectSummary(ability)).append("\n");
+            sb.append("  Cost: ").append(formatResourceCost(style, ability))
+                    .append(" | CD: ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
+                    .append(" | Status: ")
+                    .append(remainingCooldown > 0
+                            ? "Cooldown " + formatDecimal(remainingCooldown) + "s"
+                            : "Ready")
+                    .append("\n");
+            sb.append("  ").append(compactText(ability.getDescription(), 58)).append("\n\n");
+        }
+
+        sb.append("Use: /motm cast <abilityId>");
+        return sb.toString();
+    }
+
+    // --- /motm cast <abilityId> ---
+
+    private String handleCast(PlayerData player, String[] args) {
+        if (player.getPlayerClass() == null) {
+            return "[MOTM] Select a class first with /motm class <classId>";
+        }
+
+        StyleData style = getSelectedStyle(player);
+        if (style == null) {
+            return "[MOTM] Choose your style first with /motm style <styleId>";
+        }
+
+        if (args.length < 2) {
+            return "[MOTM] Usage: /motm cast <abilityId>";
+        }
+
+        String abilityId = args[1].toLowerCase();
+        StyleManager styleManager = mod.getStyleManager();
+        AbilityData ability = styleManager.findAbility(player, abilityId);
+        if (ability == null) {
+            return "[MOTM] Unknown ability. Use /motm abilities to see valid IDs.";
+        }
+
+        double remainingCooldown = styleManager.getRemainingCooldownSeconds(player.getPlayerId(), abilityId);
+        if (remainingCooldown > 0) {
+            return "[MOTM] " + ability.getName() + " is on cooldown for "
+                    + formatDecimal(remainingCooldown) + "s.";
+        }
+
+        if (ability.getResourceCost() > 0) {
+            int currentResource = mod.getResourceManager().getAmount(player.getPlayerId(), style.getResourceType());
+            if (currentResource < ability.getResourceCost()) {
+                return "[MOTM] Not enough " + style.getResourceType() + ". Need "
+                        + ability.getResourceCost() + ", have " + currentResource + ".";
+            }
+        }
+
+        AbilityData activated = styleManager.useAbility(player, abilityId);
+        if (activated == null) {
+            return "[MOTM] Could not use that ability right now.";
+        }
+
+        StringBuilder sb = new StringBuilder("[MOTM] Cast ").append(activated.getName()).append("!\n");
+        sb.append("Effect: ").append(buildAbilityEffectSummary(activated)).append("\n");
+        sb.append("Cooldown: ").append(formatDecimal(activated.getCooldownSeconds())).append("s");
+
+        if (activated.getResourceCost() > 0) {
+            int remainingResource = mod.getResourceManager().getAmount(player.getPlayerId(), style.getResourceType());
+            sb.append(" | ").append(style.getResourceType()).append(": ")
+                    .append(remainingResource).append(" remaining");
+        }
+
+        sb.append("\nRuntime note: cooldowns and resource spending are live, but the")
+                .append(" physical Hytale combat effect for this ability is not wired yet.");
+        return sb.toString();
+    }
+
     // --- /motm dev ... ---
 
     private String handleDev(PlayerData player, String[] args) {
@@ -581,12 +681,14 @@ public class MotmCommand {
                 + "Flow:\n"
                 + "  1. /motm class <id>\n"
                 + "  2. /motm style <id>\n"
-                + "  3. Use style abilities and level up\n"
+                + "  3. /motm abilities and /motm cast <abilityId>\n"
                 + "  4. /motm perks at Lv. 10+\n\n"
                 + "Commands:\n"
                 + "  /motm class [id]        - View/select class\n"
                 + "  /motm race [id]         - View/select race\n"
                 + "  /motm style [id]        - View/select your combat style\n"
+                + "  /motm abilities         - View ability IDs and cooldowns\n"
+                + "  /motm cast <abilityId>  - Test-cast a style ability\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
                 + "  /motm select ...        - Select 3 perks\n"
                 + "  /motm resources         - View class resources\n"
@@ -667,6 +769,40 @@ public class MotmCommand {
                 .orElse("None");
     }
 
+    private String buildAbilityEffectSummary(AbilityData ability) {
+        StringBuilder sb = new StringBuilder();
+        boolean hasSummary = false;
+
+        if (ability.getDamagePercent() > 0) {
+            sb.append(formatDecimal(ability.getDamagePercent())).append("% damage");
+            hasSummary = true;
+        }
+        if (ability.getHealPercent() > 0) {
+            if (hasSummary) sb.append(" | ");
+            sb.append(formatDecimal(ability.getHealPercent())).append("% heal");
+            hasSummary = true;
+        }
+        if (ability.getShieldPercent() > 0) {
+            if (hasSummary) sb.append(" | ");
+            sb.append(formatDecimal(ability.getShieldPercent())).append("% shield");
+            hasSummary = true;
+        }
+        if (ability.getEffect() != null && !ability.getEffect().isBlank()) {
+            if (hasSummary) sb.append(" | ");
+            sb.append("Effect: ").append(ability.getEffect());
+            hasSummary = true;
+        }
+
+        return hasSummary ? sb.toString() : "Utility / special ability";
+    }
+
+    private String formatResourceCost(StyleData style, AbilityData ability) {
+        if (ability.getResourceCost() <= 0 || style == null || style.getResourceType() == null) {
+            return "none";
+        }
+        return ability.getResourceCost() + " " + style.getResourceType();
+    }
+
     private String compactText(String text, int maxLength) {
         if (text == null) {
             return "";
@@ -743,6 +879,13 @@ public class MotmCommand {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private String formatDecimal(double value) {
+        if (Math.abs(value - Math.rint(value)) < 0.0001) {
+            return String.valueOf((int) Math.rint(value));
+        }
+        return String.format("%.1f", value);
     }
 
     private int clampLevel(int level) {
