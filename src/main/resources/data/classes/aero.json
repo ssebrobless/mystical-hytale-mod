@@ -1,0 +1,76 @@
+{
+  "id": "aero",
+  "name": "Aero",
+  "display_name": "Aero - The Storm Dancer",
+  "theme": "Air",
+  "element": "Speed, lightning, evasion",
+  "description": "Swift as the wind and deadly as lightning, Aero fighters strike with blinding speed and vanish before retaliation. They command the storm itself, channeling electricity through their attacks and outmaneuvering any foe.",
+  "lore": "Children of the eternal tempest, the Aero bloodline dances between raindrops and rides the lightning. They are messengers of the sky gods, delivering judgment with thunderous fury. No cage can hold them, no enemy can catch them.",
+  "color_primary": "#9370DB",
+  "color_secondary": "#FFD700",
+  "color_accent": "#E6E6FA",
+  "icon": "assets/textures/ui/aero_icon.png",
+  "starting_stats": {
+    "health": 85,
+    "mana": 100,
+    "stamina": 120,
+    "armor": 6,
+    "magic_resist": 8,
+    "attack_damage": 14,
+    "ability_power": 12,
+    "movement_speed": 1.15,
+    "health_regen": 1.2,
+    "mana_regen": 1.8
+  },
+  "stat_growth_per_level": {
+    "health": 4,
+    "mana": 5,
+    "stamina": 6,
+    "armor": 0.4,
+    "magic_resist": 0.6,
+    "attack_damage": 1.1,
+    "ability_power": 0.9,
+    "health_regen": 0.08,
+    "mana_regen": 0.12
+  },
+  "passive_ability": {
+    "id": "aero_passive_storm_surge",
+    "name": "Storm Surge",
+    "description": "Moving builds Storm Charge (max 100). At full charge, next attack deals bonus lightning damage equal to 20% of attack damage and grants 30% movement speed for 2 seconds.",
+    "effects": [
+      {
+        "type": "resource_generation",
+        "resource": "storm_charge",
+        "trigger": "movement",
+        "value": 5,
+        "value_type": "per_second_moving",
+        "max": 100
+      },
+      {
+        "type": "conditional_bonus_damage",
+        "condition": "storm_charge >= 100",
+        "damage_type": "lightning",
+        "value": 0.20,
+        "value_type": "percent_attack_damage",
+        "consumes_resource": true
+      },
+      {
+        "type": "conditional_buff",
+        "condition": "storm_charge_consumed",
+        "buff": "movement_speed",
+        "value": 0.30,
+        "duration": 2.0
+      }
+    ]
+  },
+  "innate_resistances": {
+    "lightning": 0.20,
+    "air": 0.15,
+    "physical": -0.05,
+    "earth": -0.10
+  },
+  "playstyle_tags": ["assassin", "speed", "burst", "evasion", "skirmisher"],
+  "recommended_for": "Players who enjoy high mobility, hit-and-run tactics, and explosive damage windows.",
+  "difficulty": "advanced",
+  "synergy_elements": ["lightning", "wind", "speed", "storm", "evasion"]
+}

@@ -1,0 +1,70 @@
+{
+  "id": "hydro",
+  "name": "Hydro",
+  "display_name": "Hydro - The Tidal Sage",
+  "theme": "Water",
+  "element": "Flow, healing, ice",
+  "description": "Wielders of water's dual nature, Hydro practitioners command both the soothing embrace of healing waters and the devastating force of frozen storms. They adapt to any situation, flowing around obstacles like the tide.",
+  "lore": "From the deepest trenches to the highest glaciers, the Hydro lineage has always followed the water's path. They are healers and destroyers, gentle as morning dew and relentless as the tsunami. Their power waxes with the moon and flows through all living things.",
+  "color_primary": "#1E90FF",
+  "color_secondary": "#00CED1",
+  "color_accent": "#87CEEB",
+  "icon": "assets/textures/ui/hydro_icon.png",
+  "starting_stats": {
+    "health": 95,
+    "mana": 120,
+    "stamina": 90,
+    "armor": 8,
+    "magic_resist": 15,
+    "attack_damage": 8,
+    "ability_power": 14,
+    "movement_speed": 1.0,
+    "health_regen": 1.5,
+    "mana_regen": 2.5
+  },
+  "stat_growth_per_level": {
+    "health": 5,
+    "mana": 8,
+    "stamina": 3,
+    "armor": 0.5,
+    "magic_resist": 1.2,
+    "attack_damage": 0.5,
+    "ability_power": 1.2,
+    "health_regen": 0.1,
+    "mana_regen": 0.2
+  },
+  "passive_ability": {
+    "id": "hydro_passive_tidal_flow",
+    "name": "Tidal Flow",
+    "description": "Abilities heal you for 3% of damage dealt. When below 50% mana, abilities cost 15% less but deal 10% reduced damage.",
+    "effects": [
+      {
+        "type": "spell_vamp",
+        "value": 0.03,
+        "value_type": "percent_damage_dealt"
+      },
+      {
+        "type": "conditional_cost_reduction",
+        "condition": "current_mana_percent < 0.50",
+        "value": 0.15,
+        "value_type": "percent_reduction"
+      },
+      {
+        "type": "conditional_damage_modifier",
+        "condition": "current_mana_percent < 0.50",
+        "value": -0.10,
+        "value_type": "percent_modifier"
+      }
+    ]
+  },
+  "innate_resistances": {
+    "water": 0.20,
+    "ice": 0.15,
+    "fire": 0.10,
+    "lightning": -0.10
+  },
+  "playstyle_tags": ["healer", "support", "mage", "control", "hybrid"],
+  "recommended_for": "Players who enjoy supporting allies, controlling the battlefield, and adapting their strategy mid-fight.",
+  "difficulty": "intermediate",
+  "synergy_elements": ["water", "ice", "healing", "flow", "restoration"]
+}

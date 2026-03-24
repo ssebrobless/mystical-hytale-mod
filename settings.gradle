@@ -1,0 +1,11 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = "Hytale"
+            url = "https://server.hytale.com/maven"
+        }
+    }
+}
+
+rootProject.name = 'mentees-of-the-mystical'

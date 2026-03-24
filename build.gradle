@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+}
+
+group = project.mod_group
+version = project.mod_version
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    def appData = System.getenv('APPDATA')
+    if (appData == null || appData.isBlank()) {
+        throw new GradleException('APPDATA is not set; cannot locate the installed Hytale server jar.')
+    }
+
+    def hytaleServerJar = file("${appData}/Hytale/install/release/package/game/latest/Server/HytaleServer.jar")
+    if (!hytaleServerJar.exists()) {
+        throw new GradleException("Could not find HytaleServer.jar at ${hytaleServerJar}")
+    }
+
+    compileOnly files(hytaleServerJar)
+    implementation 'com.google.code.gson:gson:2.11.0'
+}
+
+processResources {
+    filesMatching('manifest.json') {
+        expand(
+            'mod_id': project.mod_id,
+            'mod_name': project.mod_name,
+            'mod_version': project.mod_version,
+            'mod_group': project.mod_group,
+            'mod_description': project.mod_description,
+            'server_version': project.findProperty('server_version') ?: '*'
+        )
+    }
+}
+
+jar {
+    archiveBaseName = project.mod_id
+}
+
+tasks.register('installMod', Copy) {
+    dependsOn jar
+
+    def appData = System.getenv('APPDATA')
+    if (appData == null || appData.isBlank()) {
+        throw new GradleException('APPDATA is not set; cannot locate the Hytale Mods directory.')
+    }
+
+    from(tasks.named('jar'))
+    into(file("${appData}/Hytale/UserData/Mods"))
+}

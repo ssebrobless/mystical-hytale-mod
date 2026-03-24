@@ -1,0 +1,165 @@
+{
+  "xp_scaling_formula": {
+    "description": "XP scales with mob level",
+    "formula": "actual_xp = base_xp * (1 + mob_level * 0.1)",
+    "example_level_1": "50 * (1 + 1 * 0.1) = 55 XP",
+    "example_level_10": "50 * (1 + 10 * 0.1) = 100 XP",
+    "example_level_50": "50 * (1 + 50 * 0.1) = 300 XP",
+    "example_level_100": "50 * (1 + 100 * 0.1) = 550 XP"
+  },
+  "mob_categories": {
+    "passive": {
+      "description": "Non-aggressive creatures that flee from players",
+      "base_xp_range": [5, 10],
+      "examples": ["sheep", "chicken", "rabbit", "cow", "pig", "deer"]
+    },
+    "neutral": {
+      "description": "Creatures that only attack when provoked",
+      "base_xp_range": [15, 25],
+      "examples": ["wolf", "bear", "boar", "spider", "bee_swarm"]
+    },
+    "hostile": {
+      "description": "Aggressive creatures that attack on sight",
+      "base_xp_range": [50, 100],
+      "examples": ["zombie", "skeleton", "goblin", "trork", "kweebec_hostile"]
+    },
+    "elite": {
+      "description": "Stronger variants of regular hostile mobs",
+      "base_xp_range": [150, 300],
+      "spawn_rate": "rare",
+      "examples": ["elite_zombie", "goblin_chieftain", "armored_skeleton"]
+    },
+    "mini_boss": {
+      "description": "Rare powerful enemies with special mechanics",
+      "base_xp_range": [500, 1000],
+      "spawn_rate": "very_rare",
+      "examples": ["cave_troll", "forest_guardian", "corrupted_knight", "frost_giant"]
+    },
+    "boss": {
+      "description": "Major enemies found in dungeons or events",
+      "base_xp_range": [5000, 15000],
+      "spawn_type": "scripted",
+      "examples": ["dungeon_boss", "world_boss", "raid_boss", "event_boss"]
+    },
+    "world_boss": {
+      "description": "Massive open-world bosses with many participants",
+      "base_xp_range": [10000, 50000],
+      "spawn_type": "timed_event",
+      "examples": ["ancient_dragon", "void_titan", "elemental_lord"]
+    }
+  },
+  "mob_xp_table": {
+    "passive": {
+      "sheep": { "base_xp": 5 },
+      "chicken": { "base_xp": 5 },
+      "rabbit": { "base_xp": 5 },
+      "cow": { "base_xp": 8 },
+      "pig": { "base_xp": 7 },
+      "deer": { "base_xp": 10 },
+      "fish": { "base_xp": 5 },
+      "bird": { "base_xp": 6 }
+    },
+    "neutral": {
+      "wolf": { "base_xp": 20 },
+      "bear": { "base_xp": 25 },
+      "boar": { "base_xp": 18 },
+      "spider": { "base_xp": 15 },
+      "bee_swarm": { "base_xp": 22 },
+      "giant_crab": { "base_xp": 25 }
+    },
+    "hostile": {
+      "zombie": { "base_xp": 50 },
+      "skeleton": { "base_xp": 55 },
+      "skeleton_archer": { "base_xp": 60 },
+      "goblin": { "base_xp": 45 },
+      "goblin_shaman": { "base_xp": 70 },
+      "trork": { "base_xp": 80 },
+      "trork_warrior": { "base_xp": 90 },
+      "wraith": { "base_xp": 75 },
+      "imp": { "base_xp": 55 },
+      "slime": { "base_xp": 40 },
+      "large_slime": { "base_xp": 65 },
+      "bandit": { "base_xp": 60 },
+      "bandit_leader": { "base_xp": 85 },
+      "corrupted_villager": { "base_xp": 50 },
+      "harpy": { "base_xp": 70 },
+      "sand_worm": { "base_xp": 100 },
+      "ice_elemental": { "base_xp": 85 },
+      "fire_elemental": { "base_xp": 85 },
+      "earth_elemental": { "base_xp": 85 },
+      "air_elemental": { "base_xp": 85 }
+    },
+    "elite": {
+      "elite_zombie": { "base_xp": 150 },
+      "elite_skeleton": { "base_xp": 165 },
+      "goblin_chieftain": { "base_xp": 200 },
+      "armored_skeleton": { "base_xp": 180 },
+      "trork_champion": { "base_xp": 250 },
+      "shadow_wraith": { "base_xp": 220 },
+      "corrupted_knight": { "base_xp": 280 },
+      "giant_spider_queen": { "base_xp": 300 }
+    },
+    "mini_boss": {
+      "cave_troll": { "base_xp": 500 },
+      "forest_guardian": { "base_xp": 600 },
+      "frost_giant": { "base_xp": 750 },
+      "necromancer": { "base_xp": 700 },
+      "demon_knight": { "base_xp": 850 },
+      "sand_wyrm": { "base_xp": 800 },
+      "corrupted_treant": { "base_xp": 650 },
+      "crystal_golem": { "base_xp": 900 },
+      "vampire_lord": { "base_xp": 1000 }
+    },
+    "boss": {
+      "lich_king": { "base_xp": 5000 },
+      "dragon_whelp": { "base_xp": 6000 },
+      "trork_warlord": { "base_xp": 5500 },
+      "goblin_king": { "base_xp": 5000 },
+      "shadow_demon": { "base_xp": 7500 },
+      "ice_queen": { "base_xp": 8000 },
+      "volcanic_titan": { "base_xp": 10000 },
+      "void_herald": { "base_xp": 12000 },
+      "ancient_guardian": { "base_xp": 15000 }
+    },
+    "world_boss": {
+      "ancient_dragon": { "base_xp": 25000 },
+      "void_titan": { "base_xp": 35000 },
+      "elemental_lord_terra": { "base_xp": 40000 },
+      "elemental_lord_hydro": { "base_xp": 40000 },
+      "elemental_lord_aero": { "base_xp": 40000 },
+      "elemental_lord_corruptus": { "base_xp": 50000 }
+    }
+  },
+  "xp_penalties": {
+    "level_difference_penalty": {
+      "description": "XP penalty when mob is much lower level than player",
+      "formula": "penalty = max(0, (player_level - mob_level - 10) * 0.05)",
+      "max_penalty": 0.90,
+      "example": "Player level 50 killing level 30 mob: penalty = (50-30-10)*0.05 = 0.50 (50% XP reduction)"
+    },
+    "repeat_kill_penalty": {
+      "description": "XP reduction for killing same mob type repeatedly in short time",
+      "threshold": 10,
+      "penalty_per_kill_over_threshold": 0.05,
+      "max_penalty": 0.50,
+      "reset_time_minutes": 30
+    }
+  },
+  "xp_bonuses": {
+    "rare_mob_bonus": {
+      "description": "Bonus XP for killing rare spawn variants",
+      "bonus": 2.0
+    },
+    "first_encounter_bonus": {
+      "description": "Bonus XP for first time killing a mob type",
+      "bonus": 5.0
+    },
+    "combo_kill_bonus": {
+      "description": "Bonus XP for killing multiple mobs quickly",
+      "kills_required": 5,
+      "time_window_seconds": 10,
+      "bonus_per_combo_tier": 0.10,
+      "max_combo_tier": 10
+    }
+  }
+}

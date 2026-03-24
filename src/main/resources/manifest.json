@@ -1,0 +1,20 @@
+{
+  "Group": "${mod_group}",
+  "Name": "${mod_name}",
+  "Version": "${mod_version}",
+  "Description": "${mod_description}",
+  "Authors": [
+    {
+      "Name": "fishe",
+      "Email": "",
+      "Url": ""
+    }
+  ],
+  "Website": "",
+  "ServerVersion": "${server_version}",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main": "com.motm.MenteesMod",
+  "IncludesAssetPack": false
+}

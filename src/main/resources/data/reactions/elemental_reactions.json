@@ -1,0 +1,64 @@
+{
+  "reactions": [
+    {
+      "id": "storm_surge",
+      "name": "Storm Surge",
+      "element_a": "aero",
+      "element_b": "hydro",
+      "bonus_damage_percent": 12,
+      "applied_effects": ["stun", "shocked"],
+      "color": "#7DF9FF",
+      "description": "Wind meets water in a devastating electrical storm"
+    },
+    {
+      "id": "mud_snare",
+      "name": "Mud Snare",
+      "element_a": "hydro",
+      "element_b": "terra",
+      "bonus_damage_percent": 10,
+      "applied_effects": ["root", "slow"],
+      "color": "#8B4513",
+      "description": "Water saturates earth, trapping enemies in thick mud"
+    },
+    {
+      "id": "dust_cyclone",
+      "name": "Dust Cyclone",
+      "element_a": "aero",
+      "element_b": "terra",
+      "bonus_damage_percent": 10,
+      "applied_effects": ["blind", "knockback"],
+      "color": "#C2B280",
+      "description": "Wind whips earth into a blinding storm of debris"
+    },
+    {
+      "id": "black_steam",
+      "name": "Black Steam",
+      "element_a": "corruptus",
+      "element_b": "hydro",
+      "bonus_damage_percent": 11,
+      "applied_effects": ["dot", "slow"],
+      "color": "#4A0080",
+      "description": "Dark energy corrupts water into scalding toxic vapor"
+    },
+    {
+      "id": "gravebind",
+      "name": "Gravebind",
+      "element_a": "corruptus",
+      "element_b": "terra",
+      "bonus_damage_percent": 12,
+      "applied_effects": ["root", "vulnerability"],
+      "color": "#2F1B14",
+      "description": "Dark power infuses the earth, binding enemies to their grave"
+    },
+    {
+      "id": "hellstorm",
+      "name": "Hellstorm",
+      "element_a": "aero",
+      "element_b": "corruptus",
+      "bonus_damage_percent": 14,
+      "applied_effects": ["burn", "stun"],
+      "color": "#FF4500",
+      "description": "Wind fans dark flames into an infernal tempest"
+    }
+  ]
+}

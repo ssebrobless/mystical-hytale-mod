@@ -1,0 +1,65 @@
+{
+  "id": "terra",
+  "name": "Terra",
+  "display_name": "Terra - The Earthen Guardian",
+  "theme": "Earth",
+  "element": "Stone, nature, defense",
+  "description": "Masters of the earth, Terra warriors draw power from stone and soil. They excel at absorbing damage, controlling terrain, and outlasting their foes through sheer resilience. Terra fighters are the unmovable object in any battle.",
+  "lore": "Born from the first mountains that rose from the primordial sea, the Terra bloodline carries the weight of the world in their bones. They are the guardians of ancient forests and forgotten caverns, protectors of all that grows and endures.",
+  "color_primary": "#8B4513",
+  "color_secondary": "#228B22",
+  "color_accent": "#CD853F",
+  "icon": "assets/textures/ui/terra_icon.png",
+  "starting_stats": {
+    "health": 120,
+    "mana": 80,
+    "stamina": 100,
+    "armor": 15,
+    "magic_resist": 10,
+    "attack_damage": 12,
+    "ability_power": 8,
+    "movement_speed": 0.95,
+    "health_regen": 2.5,
+    "mana_regen": 1.0
+  },
+  "stat_growth_per_level": {
+    "health": 8,
+    "mana": 3,
+    "stamina": 4,
+    "armor": 1.2,
+    "magic_resist": 0.8,
+    "attack_damage": 0.8,
+    "ability_power": 0.5,
+    "health_regen": 0.15,
+    "mana_regen": 0.05
+  },
+  "passive_ability": {
+    "id": "terra_passive_earthen_resilience",
+    "name": "Earthen Resilience",
+    "description": "Standing still for 2 seconds grants a shield equal to 5% of max health. Regenerate 1% max health per second while below 30% health.",
+    "effects": [
+      {
+        "type": "conditional_shield",
+        "condition": "stationary_duration >= 2",
+        "value": 0.05,
+        "value_type": "percent_max_health"
+      },
+      {
+        "type": "conditional_regen",
+        "condition": "current_health_percent < 0.30",
+        "value": 0.01,
+        "value_type": "percent_max_health_per_second"
+      }
+    ]
+  },
+  "innate_resistances": {
+    "physical": 0.05,
+    "earth": 0.15,
+    "nature": 0.10,
+    "fire": -0.05
+  },
+  "playstyle_tags": ["tank", "defense", "sustain", "control"],
+  "recommended_for": "Players who enjoy being the front line, soaking damage, and protecting allies.",
+  "difficulty": "beginner",
+  "synergy_elements": ["earth", "nature", "stone", "defense", "fortification"]
+}

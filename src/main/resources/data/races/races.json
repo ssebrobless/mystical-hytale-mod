@@ -1,0 +1,124 @@
+{
+  "races": [
+    {
+      "id": "human",
+      "name": "Human",
+      "description": "Versatile and adaptable",
+      "hp_bonus": 5,
+      "ability_bonuses": {"STR": 1, "DEX": 1, "CON": 1, "INT": 1, "WIS": 1, "CHA": 1},
+      "bonuses": {"all_stats": 5},
+      "passive": "Adaptable: +5% to all damage dealt and healing received",
+      "special": "extra_ability_charge"
+    },
+    {
+      "id": "elf",
+      "name": "Elf",
+      "description": "Graceful and quick",
+      "hp_bonus": -5,
+      "ability_bonuses": {"DEX": 2, "INT": 1},
+      "bonuses": {"evasion": 15, "speed": true},
+      "passive": "Elven Grace: +15% evasion, always act first",
+      "special": "keen_senses"
+    },
+    {
+      "id": "dwarf",
+      "name": "Dwarf",
+      "description": "Sturdy and resilient",
+      "hp_bonus": 20,
+      "ability_bonuses": {"CON": 2, "WIS": 1},
+      "bonuses": {"damage_reduction": 10, "poison_immune": true},
+      "passive": "Dwarven Fortitude: +20 HP, +10% damage reduction, poison immune",
+      "special": "stone_skin"
+    },
+    {
+      "id": "halfling",
+      "name": "Halfling",
+      "description": "Lucky and nimble",
+      "hp_bonus": -10,
+      "ability_bonuses": {"DEX": 2, "CHA": 1},
+      "bonuses": {"luck": true, "evasion": 10},
+      "passive": "Lucky: Reroll one missed attack per battle, +10% evasion",
+      "special": "lucky_reroll"
+    },
+    {
+      "id": "gnome",
+      "name": "Gnome",
+      "description": "Clever and magical",
+      "hp_bonus": -5,
+      "ability_bonuses": {"INT": 2, "DEX": 1},
+      "bonuses": {"cooldown_reduction": 1, "magic_resist": 15},
+      "passive": "Arcane Cunning: -1 to all cooldowns, +15% magic resistance",
+      "special": "quick_mind"
+    },
+    {
+      "id": "half_orc",
+      "name": "Half-Orc",
+      "description": "Savage and powerful",
+      "hp_bonus": 15,
+      "ability_bonuses": {"STR": 2, "CON": 1},
+      "bonuses": {"damage": 15, "crit_chance": 10},
+      "passive": "Savage Attacks: +15% damage, 10% crit chance (1.5x damage)",
+      "special": "relentless"
+    },
+    {
+      "id": "half_elf",
+      "name": "Half-Elf",
+      "description": "Charismatic and versatile",
+      "hp_bonus": 5,
+      "ability_bonuses": {"CHA": 2, "DEX": 1, "WIS": 1},
+      "bonuses": {"evasion": 8, "healing": 10},
+      "passive": "Dual Heritage: +8% evasion, +10% healing received",
+      "special": "diplomat"
+    },
+    {
+      "id": "tiefling",
+      "name": "Tiefling",
+      "description": "Infernal heritage",
+      "hp_bonus": 0,
+      "ability_bonuses": {"CHA": 2, "INT": 1},
+      "bonuses": {"fire_damage": 20, "fire_resist": 30},
+      "passive": "Infernal Legacy: +20% fire damage, +30% fire resistance",
+      "special": "hellish_rebuke"
+    },
+    {
+      "id": "dragonborn",
+      "name": "Dragonborn",
+      "description": "Draconic power",
+      "hp_bonus": 10,
+      "ability_bonuses": {"STR": 2, "CHA": 1},
+      "bonuses": {"breath_weapon": true, "elemental_resist": 15},
+      "passive": "Dragon Ancestry: Breath weapon ability, +15% elemental resistance",
+      "special": "breath_weapon"
+    },
+    {
+      "id": "orc",
+      "name": "Orc",
+      "description": "Raw strength and fury",
+      "hp_bonus": 25,
+      "ability_bonuses": {"STR": 2, "CON": 1},
+      "bonuses": {"damage": 20, "healing_reduction": 20},
+      "passive": "Orcish Fury: +25 HP, +20% damage, but -20% healing received",
+      "special": "blood_rage"
+    },
+    {
+      "id": "dark_elf",
+      "name": "Dark Elf",
+      "description": "Shadow-touched and cunning",
+      "hp_bonus": -5,
+      "ability_bonuses": {"DEX": 2, "CHA": 1},
+      "bonuses": {"stealth_damage": 25, "evasion": 10},
+      "passive": "Shadowborn: +25% damage from stealth/surprise, +10% evasion",
+      "special": "faerie_fire"
+    },
+    {
+      "id": "goliath",
+      "name": "Goliath",
+      "description": "Mountain-born giant",
+      "hp_bonus": 30,
+      "ability_bonuses": {"STR": 2, "CON": 1},
+      "bonuses": {"knockback_resist": 50, "damage_reduction": 5},
+      "passive": "Stone's Endurance: +30 HP, 50% knockback resist, +5% DR",
+      "special": "powerful_build"
+    }
+  ]
+}

@@ -1,0 +1,400 @@
+{
+  "styles": [
+    {
+      "id": "icicle",
+      "name": "Icicle",
+      "class_id": "hydro",
+      "theme": "Rapid attacks, stacking slow",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "frozen_needles",
+          "name": "Frozen Needles",
+          "description": "Rapid ice shards, stacking slow",
+          "damage_percent": 12,
+          "cooldown_seconds": 2,
+          "effect": "slow_stack",
+          "categories": ["damage", "debuff"],
+          "resource_cost": 2
+        },
+        {
+          "id": "stalactite_crash",
+          "name": "Stalactite Crash",
+          "description": "Heavy ice impact with explosion",
+          "damage_percent": 20,
+          "cooldown_seconds": 5,
+          "effect": "slow",
+          "categories": ["damage", "debuff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "skate",
+          "name": "Skate",
+          "description": "Gain 50% evasion for 2 turns",
+          "damage_percent": 0,
+          "cooldown_seconds": 4,
+          "effect": "evasion_buff",
+          "categories": ["evasion"],
+          "resource_cost": 2
+        }
+      ]
+    },
+    {
+      "id": "snow",
+      "name": "Snow",
+      "class_id": "hydro",
+      "theme": "Minions, AoE slow",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "snow_imp",
+          "name": "Snow Imp",
+          "description": "Summon minion that attacks each turn",
+          "damage_percent": 5,
+          "cooldown_seconds": 5,
+          "effect": "summon",
+          "categories": ["summon", "damage"],
+          "resource_cost": 3
+        },
+        {
+          "id": "snowstorm",
+          "name": "Snowstorm",
+          "description": "Slow enemy attack speed for 3 turns",
+          "damage_percent": 3,
+          "cooldown_seconds": 5,
+          "effect": "attack_slow",
+          "categories": ["damage", "debuff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "frosty",
+          "name": "Frosty",
+          "description": "Summon golem that taunts and absorbs damage",
+          "damage_percent": 0,
+          "cooldown_seconds": 8,
+          "effect": "summon_tank",
+          "categories": ["summon"],
+          "resource_cost": 4
+        }
+      ]
+    },
+    {
+      "id": "surf",
+      "name": "Surf",
+      "class_id": "hydro",
+      "theme": "Waves, knockback, mobility",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "high_tide",
+          "name": "High Tide",
+          "description": "Push enemy back, gain speed",
+          "damage_percent": 8,
+          "cooldown_seconds": 3,
+          "effect": "knockback",
+          "categories": ["damage", "crowd_control"],
+          "resource_cost": 2
+        },
+        {
+          "id": "waverider",
+          "name": "Waverider",
+          "description": "Gain shield and speed for 2 turns",
+          "damage_percent": 0,
+          "cooldown_seconds": 4,
+          "effect": "shield+speed",
+          "categories": ["shielding", "buff"],
+          "shield_percent": 20,
+          "resource_cost": 3
+        },
+        {
+          "id": "riptide",
+          "name": "Riptide",
+          "description": "Pull enemy in, increase damage taken",
+          "damage_percent": 5,
+          "cooldown_seconds": 5,
+          "effect": "vulnerability",
+          "categories": ["damage", "debuff"],
+          "resource_cost": 3
+        }
+      ]
+    },
+    {
+      "id": "rain",
+      "name": "Rain",
+      "class_id": "hydro",
+      "theme": "Sustain, auto-healing, splash damage",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "piercing_rain",
+          "name": "Piercing Rain",
+          "description": "Acidic rain that damages over time and speeds attacks",
+          "damage_percent": 8,
+          "cooldown_seconds": 6,
+          "effect": "dot+attack_buff",
+          "categories": ["dot", "buff", "aoe"],
+          "resource_cost": 3
+        },
+        {
+          "id": "rainbow",
+          "name": "Rainbow",
+          "description": "Summon a healing rainbow that restores HP",
+          "damage_percent": 0,
+          "cooldown_seconds": 8,
+          "effect": "heal",
+          "categories": ["healing"],
+          "heal_percent": 10,
+          "resource_cost": 2
+        },
+        {
+          "id": "splash",
+          "name": "Splash",
+          "description": "Splash water that damages and creates a shield",
+          "damage_percent": 5,
+          "cooldown_seconds": 5,
+          "effect": "shield",
+          "categories": ["damage", "shielding"],
+          "shield_percent": 20,
+          "resource_cost": 3
+        }
+      ]
+    },
+    {
+      "id": "boiling",
+      "name": "Boiling",
+      "class_id": "hydro",
+      "theme": "Steam, burns, explosive damage",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "scald",
+          "name": "Scald",
+          "description": "Scorch with boiling water, burning and knocking back",
+          "damage_percent": 10,
+          "cooldown_seconds": 3,
+          "effect": "burn+knockback",
+          "categories": ["dot", "crowd_control"],
+          "resource_cost": 2
+        },
+        {
+          "id": "geyser",
+          "name": "Geyser",
+          "description": "Erupt a geyser of scalding water",
+          "damage_percent": 15,
+          "cooldown_seconds": 5,
+          "effect": "burn",
+          "categories": ["dot"],
+          "resource_cost": 3
+        },
+        {
+          "id": "overheat",
+          "name": "Overheat",
+          "description": "Supercharge attacks but burn yourself",
+          "damage_percent": 0,
+          "cooldown_seconds": 7,
+          "effect": "attack_buff+self_burn",
+          "categories": ["buff", "self_damage"],
+          "resource_cost": 3
+        }
+      ]
+    },
+    {
+      "id": "vapor",
+      "name": "Vapor",
+      "class_id": "hydro",
+      "theme": "Evasion, mist, intangibility",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "vapor_vanish",
+          "name": "Vapor Vanish",
+          "description": "Dissolve into mist for 50% evasion",
+          "damage_percent": 0,
+          "cooldown_seconds": 5,
+          "effect": "evasion",
+          "categories": ["evasion"],
+          "resource_cost": 2
+        },
+        {
+          "id": "dispersion",
+          "name": "Dispersion",
+          "description": "Reform from vapor in a quick strike",
+          "damage_percent": 10,
+          "cooldown_seconds": 3,
+          "effect": "",
+          "categories": ["damage"],
+          "charges": 3,
+          "resource_cost": 2
+        },
+        {
+          "id": "hidrosis",
+          "name": "Hidrosis",
+          "description": "Coat yourself in moisture for enhanced dodging",
+          "damage_percent": 0,
+          "cooldown_seconds": 6,
+          "effect": "evasion",
+          "categories": ["evasion"],
+          "resource_cost": 3
+        }
+      ]
+    },
+    {
+      "id": "iceberg",
+      "name": "Iceberg",
+      "class_id": "hydro",
+      "theme": "Heavy ice, freezing, defense",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "ice_cap",
+          "name": "Ice Cap",
+          "description": "Encase in ice for a shield and freeze attacker",
+          "damage_percent": 0,
+          "cooldown_seconds": 6,
+          "effect": "shield+stun",
+          "categories": ["shielding", "crowd_control"],
+          "shield_percent": 25,
+          "resource_cost": 3
+        },
+        {
+          "id": "glacier",
+          "name": "Glacier",
+          "description": "Conjure glacial armor for damage reduction",
+          "damage_percent": 0,
+          "cooldown_seconds": 7,
+          "effect": "defense_buff",
+          "categories": ["buff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "ice_shelf",
+          "name": "Ice Shelf",
+          "description": "Crush enemy with a massive ice shelf",
+          "damage_percent": 20,
+          "cooldown_seconds": 8,
+          "effect": "stun+slow",
+          "categories": ["damage", "crowd_control", "debuff"],
+          "resource_cost": 4
+        }
+      ]
+    },
+    {
+      "id": "saltwater",
+      "name": "Saltwater",
+      "class_id": "hydro",
+      "theme": "Ocean, tides, debuffs",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "tide_pool",
+          "name": "Tide Pool",
+          "description": "Create a tide pool that speeds you and slows enemy",
+          "damage_percent": 0,
+          "cooldown_seconds": 6,
+          "effect": "slow+attack_buff",
+          "categories": ["buff", "debuff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "abyssal_assist",
+          "name": "Abyssal Assist",
+          "description": "Call upon deep-sea pressure to stun and weaken",
+          "damage_percent": 12,
+          "cooldown_seconds": 5,
+          "effect": "stun+vulnerability",
+          "categories": ["damage", "crowd_control", "debuff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "rip_current",
+          "name": "Rip Current",
+          "description": "Drag the enemy with a powerful current",
+          "damage_percent": 8,
+          "cooldown_seconds": 4,
+          "effect": "slow",
+          "categories": ["damage", "debuff"],
+          "resource_cost": 4
+        }
+      ]
+    },
+    {
+      "id": "freshwater",
+      "name": "Freshwater",
+      "class_id": "hydro",
+      "theme": "Rivers, mobility, summons",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "leap_frog",
+          "name": "Leap Frog",
+          "description": "Leap and strike, leaving the enemy vulnerable",
+          "damage_percent": 10,
+          "cooldown_seconds": 4,
+          "effect": "vulnerability",
+          "categories": ["damage", "debuff", "dash"],
+          "charges": 2,
+          "resource_cost": 2
+        },
+        {
+          "id": "river_rapids",
+          "name": "River Rapids",
+          "description": "Ride the rapids to gain speed and momentum",
+          "damage_percent": 0,
+          "cooldown_seconds": 6,
+          "effect": "attack_buff",
+          "categories": ["buff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "swamp_monster",
+          "name": "Swamp Monster",
+          "description": "Summon a creature from the swamp to fight",
+          "damage_percent": 0,
+          "cooldown_seconds": 8,
+          "effect": "summon",
+          "categories": ["summon"],
+          "resource_cost": 4
+        }
+      ]
+    },
+    {
+      "id": "bilgewater",
+      "name": "Bilgewater",
+      "class_id": "hydro",
+      "theme": "Filth, corrosion, naval warfare",
+      "resource_type": "water",
+      "abilities": [
+        {
+          "id": "bilge_dump",
+          "name": "Bilge Dump",
+          "description": "Dump foul bilge water that poisons and slows",
+          "damage_percent": 5,
+          "cooldown_seconds": 5,
+          "effect": "dot+slow",
+          "categories": ["dot", "debuff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "anchor_haul",
+          "name": "Anchor Haul",
+          "description": "Haul an anchor across the enemy for heavy damage",
+          "damage_percent": 15,
+          "cooldown_seconds": 6,
+          "effect": "knockback",
+          "categories": ["damage", "crowd_control"],
+          "resource_cost": 3
+        },
+        {
+          "id": "oil_spill",
+          "name": "Oil Spill",
+          "description": "Coat yourself in protective oil for defense",
+          "damage_percent": 0,
+          "cooldown_seconds": 7,
+          "effect": "defense_buff+attack_buff",
+          "categories": ["buff"],
+          "resource_cost": 4
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "leveling_system": {
+    "max_level": 200,
+    "base_xp": 100,
+    "scaling_factor": 1.5,
+    "formula": "XP_required(level) = base_xp * (level ^ scaling_factor)",
+    "formula_description": "Experience required increases polynomially with level"
+  },
+  "xp_milestones": {
+    "level_2": 100,
+    "level_10": 3162,
+    "level_11": 3648,
+    "level_20": 8944,
+    "level_25": 12500,
+    "level_50": 35355,
+    "level_51": 36428,
+    "level_75": 64952,
+    "level_100": 100000,
+    "level_101": 101489,
+    "level_125": 139754,
+    "level_150": 183712,
+    "level_175": 231536,
+    "level_199": 280496,
+    "level_200": 282843
+  },
+  "cumulative_xp_to_level": {
+    "level_10": 17783,
+    "level_25": 64575,
+    "level_50": 286580,
+    "level_100": 1323340,
+    "level_150": 3622785,
+    "level_200": 7330830
+  },
+  "perk_milestones": {
+    "description": "Players gain perk selection points at every 10 levels",
+    "levels": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200],
+    "perks_per_milestone": 3,
+    "total_perk_selections": 20,
+    "total_perks_at_max_level": 60
+  },
+  "xp_modifiers": {
+    "party_bonus": {
+      "description": "XP bonus when in a party",
+      "2_players": 0.10,
+      "3_players": 0.15,
+      "4_players": 0.20,
+      "5_plus_players": 0.25
+    },
+    "rested_bonus": {
+      "description": "XP bonus from resting in safe areas",
+      "max_bonus": 0.50,
+      "accumulation_rate": 0.05,
+      "accumulation_unit": "per_hour_offline"
+    },
+    "first_kill_bonus": {
+      "description": "Bonus XP for first kill of each mob type per day",
+      "bonus": 0.25
+    }
+  },
+  "level_up_rewards": {
+    "stat_points": {
+      "description": "Stat points gained per level",
+      "base_per_level": 1,
+      "bonus_at_milestone": 2,
+      "milestone_levels": [25, 50, 75, 100, 125, 150, 175, 200]
+    },
+    "effects": {
+      "full_health_restore": true,
+      "full_mana_restore": true,
+      "visual_effect": "level_up_burst",
+      "sound_effect": "level_up_fanfare"
+    }
+  }
+}

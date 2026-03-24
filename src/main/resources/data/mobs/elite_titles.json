@@ -1,0 +1,81 @@
+{
+  "biome_elite_titles": {
+    "Zone 1": {
+      "Quake": "Grove Shaker",
+      "Metal": "Ancient Treant",
+      "Magma": "Forest Conflagration",
+      "Icicle": "Frost Ent",
+      "Snow": "Winter Warden",
+      "Surf": "River Sentinel",
+      "Scream": "Howling Harpy",
+      "Jet": "Wind Walker",
+      "Thunder": "Storm Caller",
+      "Flame": "Wildfire Spirit",
+      "Necro": "Blighted Ent",
+      "Shadow": "Twilight Stalker"
+    },
+    "Zone 2": {
+      "Quake": "Thorn Bash",
+      "Metal": "Bramble Ironclad",
+      "Magma": "Blazing Briar",
+      "Icicle": "Frost Thorn",
+      "Snow": "Night Frost",
+      "Surf": "Murk Tide",
+      "Scream": "Wailing Wraith",
+      "Jet": "Shadow Gust",
+      "Thunder": "Storm of Dread",
+      "Flame": "Cursed Flame",
+      "Necro": "Rotbring",
+      "Shadow": "Nightmare Shade"
+    },
+    "Zone 3": {
+      "Quake": "Peak Quake",
+      "Metal": "Iron Colossus",
+      "Magma": "Volcanic Titan",
+      "Icicle": "Glacier Golem",
+      "Snow": "Avalanche Warden",
+      "Surf": "Glacial Surge",
+      "Scream": "Mountain Scream",
+      "Jet": "Ridge Runner",
+      "Thunder": "Storm Peak",
+      "Flame": "Forge Fire",
+      "Necro": "Stone Dead",
+      "Shadow": "Cliff Shade"
+    },
+    "Zone 4": {
+      "Quake": "Bog Quake",
+      "Metal": "Corroded Armor",
+      "Magma": "Putrid Blast",
+      "Icicle": "Mire Freeze",
+      "Snow": "Swamp Chill",
+      "Surf": "Murky Depths",
+      "Scream": "Marsh Scream",
+      "Jet": "Fog Runner",
+      "Thunder": "Storm Bog",
+      "Flame": "Swamp Fire",
+      "Necro": "Plague Bringer",
+      "Shadow": "Murk Stalker"
+    },
+    "Zone 5": {
+      "Quake": "Void Tremor",
+      "Metal": "Ancient Construct",
+      "Magma": "Hellfire Void",
+      "Icicle": "Frozen Ghost",
+      "Snow": "Dark Frost",
+      "Surf": "Chasm Tide",
+      "Scream": "Ethereal Scream",
+      "Jet": "Phantom Vortex",
+      "Thunder": "Void Lightning",
+      "Flame": "Cinder Spirit",
+      "Necro": "Soul Devourer",
+      "Shadow": "Void Phantom"
+    }
+  },
+  "elite_config": {
+    "spawn_chance": 0.05,
+    "hp_multiplier": 2.0,
+    "damage_multiplier": 1.5,
+    "xp_multiplier": 3.0,
+    "drop_bonus_multiplier": 2.0
+  }
+}

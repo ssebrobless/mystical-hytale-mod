@@ -1,0 +1,79 @@
+{
+  "resource_config": {
+    "hydro": {
+      "type": "water",
+      "max_base": 10,
+      "containers": [
+        {"name": "Waterskin", "capacity": 10, "tier": 1},
+        {"name": "Canteen", "capacity": 20, "tier": 2},
+        {"name": "Water Flask", "capacity": 35, "tier": 3},
+        {"name": "Reservoir Pouch", "capacity": 50, "tier": 4},
+        {"name": "Elemental Ewer", "capacity": 75, "tier": 5}
+      ]
+    },
+    "aero": {
+      "type": "tp",
+      "max": 100,
+      "regen_per_second": 1
+    },
+    "corruptus": {
+      "type": "souls",
+      "max": 50,
+      "per_kill": 3
+    },
+    "terra": {
+      "type": "materials",
+      "material_types": ["rocks", "iron_ore", "wood", "seeds", "dirt", "sand", "emerald"]
+    }
+  },
+  "style_resource_map": {
+    "Terra": {
+      "Quake": "rocks",
+      "Metal": "iron_ore",
+      "Magma": "rocks",
+      "Stone": "rocks",
+      "Arbor": "wood",
+      "Bloom": "seeds",
+      "Self Petrification": "rocks",
+      "Soil": "dirt",
+      "Sand": "sand",
+      "Gem": "emerald"
+    },
+    "Hydro": {
+      "Icicle": "water",
+      "Snow": "water",
+      "Surf": "water",
+      "Rain": "water",
+      "Boiling": "water",
+      "Vapor": "water",
+      "Iceberg": "water",
+      "Saltwater": "water",
+      "Freshwater": "water",
+      "Bilgewater": "water"
+    },
+    "Aero": {
+      "Scream": "tp",
+      "Jet": "tp",
+      "Thunder": "tp",
+      "Tornado": "tp",
+      "Jump": "tp",
+      "Wind Blade": "tp",
+      "Smoke": "tp",
+      "Gale Wizard": "tp",
+      "Pressure": "tp",
+      "Pollution": "tp"
+    },
+    "Corruptus": {
+      "Flame": "souls",
+      "Necro": "souls",
+      "Shadow": "souls",
+      "Hell Flame": "souls",
+      "Mentokinesis": "souls",
+      "Imbuement": "souls",
+      "Attonement": "souls",
+      "Void": "souls",
+      "Scarak": "souls",
+      "Primordial": "souls"
+    }
+  }
+}

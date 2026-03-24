@@ -1,0 +1,401 @@
+{
+  "styles": [
+    {
+      "id": "scream",
+      "name": "Scream",
+      "class_id": "aero",
+      "theme": "Sonic attacks, stuns, team buffs",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "shriek",
+          "name": "Shriek",
+          "description": "Deafen enemy, reduce their accuracy",
+          "damage_percent": 0,
+          "cooldown_seconds": 3,
+          "effect": "deafen",
+          "categories": ["debuff"],
+          "resource_cost": 2
+        },
+        {
+          "id": "sonic_boom",
+          "name": "Sonic Boom",
+          "description": "Shockwave that stuns",
+          "damage_percent": 12,
+          "cooldown_seconds": 4,
+          "effect": "stun",
+          "categories": ["damage", "crowd_control"],
+          "resource_cost": 3
+        },
+        {
+          "id": "battle_cry",
+          "name": "Battle Cry",
+          "description": "Boost your attack and speed for 3 turns",
+          "damage_percent": 0,
+          "cooldown_seconds": 5,
+          "effect": "attack_buff+speed",
+          "categories": ["buff"],
+          "resource_cost": 3
+        }
+      ]
+    },
+    {
+      "id": "jet",
+      "name": "Jet",
+      "class_id": "aero",
+      "theme": "Fast dashes, momentum",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "jet_burst",
+          "name": "Jet Burst",
+          "description": "Dash attack, launch enemy",
+          "damage_percent": 10,
+          "cooldown_seconds": 2,
+          "effect": "knockback",
+          "categories": ["damage", "crowd_control", "dash"],
+          "charges": 3,
+          "resource_cost": 1
+        },
+        {
+          "id": "afterburner",
+          "name": "Afterburner",
+          "description": "Enhanced dash that leaves damage trail",
+          "damage_percent": 15,
+          "cooldown_seconds": 4,
+          "effect": "burn",
+          "categories": ["dot", "dash"],
+          "resource_cost": 2
+        },
+        {
+          "id": "mach_punch",
+          "name": "Mach Punch",
+          "description": "Powerful strike after dash",
+          "damage_percent": 20,
+          "cooldown_seconds": 3,
+          "effect": "stun_if_wall",
+          "categories": ["damage", "crowd_control", "dash"],
+          "resource_cost": 1
+        }
+      ]
+    },
+    {
+      "id": "thunder",
+      "name": "Thunder",
+      "class_id": "aero",
+      "theme": "Stuns, lightning damage",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "thunderclap",
+          "name": "Thunderclap",
+          "description": "Stun all and apply shocked",
+          "damage_percent": 0,
+          "cooldown_seconds": 4,
+          "effect": "stun+shocked",
+          "categories": ["crowd_control", "debuff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "smite",
+          "name": "Smite",
+          "description": "Lightning bolt, bonus vs shocked",
+          "damage_percent": 20,
+          "cooldown_seconds": 3,
+          "effect": "lightning",
+          "categories": ["damage"],
+          "charges": 2,
+          "resource_cost": 2
+        },
+        {
+          "id": "chain_lightning",
+          "name": "Chain Lightning",
+          "description": "Continuous lightning damage",
+          "damage_percent": 10,
+          "cooldown_seconds": 5,
+          "effect": "dot",
+          "categories": ["dot", "aoe"],
+          "resource_cost": 3
+        }
+      ]
+    },
+    {
+      "id": "tornado",
+      "name": "Tornado",
+      "class_id": "aero",
+      "theme": "Whirlwinds, knockback, sustain",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "twister",
+          "name": "Twister",
+          "description": "Spin up a twister that knocks enemies back",
+          "damage_percent": 10,
+          "cooldown_seconds": 3,
+          "effect": "knockback",
+          "categories": ["damage", "crowd_control"],
+          "resource_cost": 3
+        },
+        {
+          "id": "funnel_cloud",
+          "name": "Funnel Cloud",
+          "description": "Create a funnel cloud that damages over time",
+          "damage_percent": 8,
+          "cooldown_seconds": 5,
+          "effect": "dot",
+          "categories": ["dot", "aoe"],
+          "resource_cost": 3
+        },
+        {
+          "id": "eye_of_the_storm",
+          "name": "Eye of the Storm",
+          "description": "Find calm in the storm, healing and shielding",
+          "damage_percent": 0,
+          "cooldown_seconds": 7,
+          "effect": "heal+shield",
+          "categories": ["healing", "shielding"],
+          "heal_percent": 10,
+          "shield_percent": 15,
+          "resource_cost": 2
+        }
+      ]
+    },
+    {
+      "id": "jump",
+      "name": "Jump",
+      "class_id": "aero",
+      "theme": "Aerial mobility, diving strikes",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "leap",
+          "name": "Leap",
+          "description": "Launch into the air and crash down on the enemy",
+          "damage_percent": 8,
+          "cooldown_seconds": 4,
+          "effect": "knockback+vulnerability",
+          "categories": ["damage", "crowd_control", "debuff", "dash"],
+          "charges": 2,
+          "resource_cost": 2
+        },
+        {
+          "id": "divebomb",
+          "name": "Divebomb",
+          "description": "Dive from great height for devastating damage",
+          "damage_percent": 20,
+          "cooldown_seconds": 6,
+          "effect": "slow",
+          "categories": ["damage", "debuff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "hang_time",
+          "name": "Hang Time",
+          "description": "Stay airborne to dodge incoming attacks",
+          "damage_percent": 0,
+          "cooldown_seconds": 5,
+          "effect": "evasion",
+          "categories": ["evasion"],
+          "charges": 2,
+          "resource_cost": 2
+        }
+      ]
+    },
+    {
+      "id": "wind_blade",
+      "name": "Wind Blade",
+      "class_id": "aero",
+      "theme": "Cutting wind, rapid strikes",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "air_slash",
+          "name": "Air Slash",
+          "description": "Slice the air to send a cutting gust",
+          "damage_percent": 8,
+          "cooldown_seconds": 2,
+          "effect": "",
+          "categories": ["damage"],
+          "resource_cost": 2
+        },
+        {
+          "id": "gale_cutter",
+          "name": "Gale Cutter",
+          "description": "A powerful wind blade that knocks back",
+          "damage_percent": 12,
+          "cooldown_seconds": 5,
+          "effect": "knockback",
+          "categories": ["damage", "crowd_control"],
+          "resource_cost": 3
+        },
+        {
+          "id": "razor_wind",
+          "name": "Razor Wind",
+          "description": "Sharpen the wind around you for stronger attacks",
+          "damage_percent": 0,
+          "cooldown_seconds": 6,
+          "effect": "attack_buff",
+          "categories": ["buff"],
+          "resource_cost": 2
+        }
+      ]
+    },
+    {
+      "id": "smoke",
+      "name": "Smoke",
+      "class_id": "aero",
+      "theme": "Stealth, debuffs, evasion",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "smoke_bomb",
+          "name": "Smoke Bomb",
+          "description": "Deploy smoke to slow enemies and speed yourself",
+          "damage_percent": 0,
+          "cooldown_seconds": 5,
+          "effect": "slow+attack_buff",
+          "categories": ["debuff", "buff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "vanish",
+          "name": "Vanish",
+          "description": "Disappear in smoke, boosting next attack by 30%",
+          "damage_percent": 0,
+          "cooldown_seconds": 6,
+          "effect": "stealth",
+          "categories": ["stealth"],
+          "resource_cost": 2
+        },
+        {
+          "id": "smoke_form",
+          "name": "Smoke Form",
+          "description": "Become smoke for 40% evasion over 2 turns",
+          "damage_percent": 0,
+          "cooldown_seconds": 7,
+          "effect": "evasion",
+          "categories": ["evasion"],
+          "resource_cost": 3
+        }
+      ]
+    },
+    {
+      "id": "gale_wizard",
+      "name": "Gale Wizard",
+      "class_id": "aero",
+      "theme": "Wind magic, control, reflection",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "gust",
+          "name": "Gust",
+          "description": "Blast the enemy with a powerful gust of wind",
+          "damage_percent": 12,
+          "cooldown_seconds": 4,
+          "effect": "knockback",
+          "categories": ["damage", "crowd_control"],
+          "resource_cost": 2
+        },
+        {
+          "id": "cyclone_shield",
+          "name": "Cyclone Shield",
+          "description": "Surround yourself with a defensive cyclone",
+          "damage_percent": 0,
+          "cooldown_seconds": 6,
+          "effect": "defense_buff+shield",
+          "categories": ["buff", "shielding"],
+          "shield_percent": 15,
+          "resource_cost": 3
+        },
+        {
+          "id": "tempest",
+          "name": "Tempest",
+          "description": "Unleash a devastating tempest that stuns",
+          "damage_percent": 15,
+          "cooldown_seconds": 8,
+          "effect": "stun",
+          "categories": ["damage", "crowd_control"],
+          "resource_cost": 4
+        }
+      ]
+    },
+    {
+      "id": "pressure",
+      "name": "Pressure",
+      "class_id": "aero",
+      "theme": "Air pressure, charged attacks",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "air_shot",
+          "name": "Air Shot",
+          "description": "Compressed air projectile that hits hard",
+          "damage_percent": 15,
+          "cooldown_seconds": 3,
+          "effect": "",
+          "categories": ["damage"],
+          "resource_cost": 2
+        },
+        {
+          "id": "bullet_storm",
+          "name": "Bullet Storm",
+          "description": "Rapid air bullets that slow the target",
+          "damage_percent": 12,
+          "cooldown_seconds": 5,
+          "effect": "slow",
+          "categories": ["damage", "debuff"],
+          "resource_cost": 3
+        },
+        {
+          "id": "pressure_burst",
+          "name": "Pressure Burst",
+          "description": "Release built-up pressure in an explosive burst",
+          "damage_percent": 20,
+          "cooldown_seconds": 7,
+          "effect": "knockback",
+          "categories": ["damage", "crowd_control"],
+          "resource_cost": 4
+        }
+      ]
+    },
+    {
+      "id": "pollution",
+      "name": "Pollution",
+      "class_id": "aero",
+      "theme": "Toxic air, corrosion, debuffs",
+      "resource_type": "tp",
+      "abilities": [
+        {
+          "id": "smog",
+          "name": "Smog",
+          "description": "Engulf the enemy in toxic smog",
+          "damage_percent": 5,
+          "cooldown_seconds": 5,
+          "effect": "dot+slow",
+          "categories": ["dot", "debuff", "aoe"],
+          "resource_cost": 3
+        },
+        {
+          "id": "toxic_breath",
+          "name": "Toxic Breath",
+          "description": "Exhale poisonous fumes that weaken defenses",
+          "damage_percent": 8,
+          "cooldown_seconds": 6,
+          "effect": "dot+vulnerability",
+          "categories": ["dot", "debuff"],
+          "resource_cost": 2
+        },
+        {
+          "id": "acid_rain",
+          "name": "Acid Rain",
+          "description": "Call down acidic rain that corrodes armor",
+          "damage_percent": 10,
+          "cooldown_seconds": 8,
+          "effect": "dot+vulnerability",
+          "categories": ["dot", "debuff", "aoe"],
+          "resource_cost": 4
+        }
+      ]
+    }
+  ]
+}

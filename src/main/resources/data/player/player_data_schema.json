@@ -1,0 +1,283 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Player Data Schema",
+  "description": "Schema for storing player progression data in the Hytale Elemental Classes mod",
+  "type": "object",
+  "required": ["player_id", "class", "level", "current_xp", "selected_perks", "first_join"],
+  "properties": {
+    "player_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the player"
+    },
+    "player_name": {
+      "type": "string",
+      "description": "Display name of the player"
+    },
+    "class": {
+      "type": "string",
+      "enum": ["terra", "hydro", "aero", "corruptus", null],
+      "description": "Selected elemental class (null if not yet chosen)"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 200,
+      "default": 1,
+      "description": "Current player level"
+    },
+    "current_xp": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Experience points towards next level"
+    },
+    "total_xp_earned": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Total XP earned across all time"
+    },
+    "selected_perks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Array of perk IDs the player has selected",
+      "maxItems": 60
+    },
+    "perk_selection_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tier": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "perks_chosen": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "History of perk selections at each milestone"
+    },
+    "perk_selection_points": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Unused perk selection opportunities (3 perks per point)"
+    },
+    "pending_perk_tier": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 20,
+      "description": "The tier from which player must select perks (null if no selection pending)"
+    },
+    "first_join": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the player needs to complete first-time setup"
+    },
+    "stats": {
+      "type": "object",
+      "description": "Current calculated stats (derived from class + level + perks)",
+      "properties": {
+        "health": { "type": "number" },
+        "max_health": { "type": "number" },
+        "mana": { "type": "number" },
+        "max_mana": { "type": "number" },
+        "stamina": { "type": "number" },
+        "max_stamina": { "type": "number" },
+        "armor": { "type": "number" },
+        "magic_resist": { "type": "number" },
+        "attack_damage": { "type": "number" },
+        "ability_power": { "type": "number" },
+        "movement_speed": { "type": "number" },
+        "health_regen": { "type": "number" },
+        "mana_regen": { "type": "number" },
+        "critical_chance": { "type": "number" },
+        "critical_damage": { "type": "number" }
+      }
+    },
+    "active_synergy_bonuses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_perk": { "type": "string" },
+          "bonus_type": { "type": "string" },
+          "bonus_value": { "type": "number" },
+          "triggered_by_tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "description": "List of active synergy bonuses from perk combinations"
+    },
+    "statistics": {
+      "type": "object",
+      "description": "Gameplay statistics tracking",
+      "properties": {
+        "mobs_killed": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "bosses_defeated": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "total_damage_dealt": { "type": "number" },
+        "total_damage_taken": { "type": "number" },
+        "total_healing_done": { "type": "number" },
+        "deaths": { "type": "integer" },
+        "playtime_seconds": { "type": "integer" },
+        "highest_combo": { "type": "integer" }
+      }
+    },
+    "achievements": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of unlocked achievement IDs"
+    },
+    "settings": {
+      "type": "object",
+      "description": "Player-specific mod settings",
+      "properties": {
+        "show_damage_numbers": { "type": "boolean", "default": true },
+        "show_mob_levels": { "type": "boolean", "default": true },
+        "show_xp_notifications": { "type": "boolean", "default": true },
+        "auto_select_perks": { "type": "boolean", "default": false }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_played": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "mod_version": {
+          "type": "string"
+        },
+        "schema_version": {
+          "type": "integer",
+          "default": 1
+        }
+      }
+    }
+  },
+  "example": {
+    "player_id": "550e8400-e29b-41d4-a716-446655440000",
+    "player_name": "ExamplePlayer",
+    "class": "terra",
+    "level": 45,
+    "current_xp": 12500,
+    "total_xp_earned": 425000,
+    "selected_perks": [
+      "terra_t01_stone_skin",
+      "terra_t01_earthen_grip",
+      "terra_t01_root_stance",
+      "terra_t02_earthen_fortitude",
+      "terra_t02_mountain_resilience",
+      "terra_t02_natures_embrace",
+      "terra_t03_boulder_fist",
+      "terra_t03_tectonic_shift",
+      "terra_t03_living_stone",
+      "terra_t04_earthquake_stomp",
+      "terra_t04_crystal_armor",
+      "terra_t04_deep_roots"
+    ],
+    "perk_selection_history": [
+      {
+        "tier": 1,
+        "perks_chosen": ["terra_t01_stone_skin", "terra_t01_earthen_grip", "terra_t01_root_stance"],
+        "timestamp": "2024-01-15T10:30:00Z"
+      },
+      {
+        "tier": 2,
+        "perks_chosen": ["terra_t02_earthen_fortitude", "terra_t02_mountain_resilience", "terra_t02_natures_embrace"],
+        "timestamp": "2024-01-16T14:45:00Z"
+      },
+      {
+        "tier": 3,
+        "perks_chosen": ["terra_t03_boulder_fist", "terra_t03_tectonic_shift", "terra_t03_living_stone"],
+        "timestamp": "2024-01-17T09:20:00Z"
+      },
+      {
+        "tier": 4,
+        "perks_chosen": ["terra_t04_earthquake_stomp", "terra_t04_crystal_armor", "terra_t04_deep_roots"],
+        "timestamp": "2024-01-18T16:10:00Z"
+      }
+    ],
+    "perk_selection_points": 0,
+    "pending_perk_tier": null,
+    "first_join": false,
+    "stats": {
+      "health": 480,
+      "max_health": 480,
+      "mana": 215,
+      "max_mana": 215,
+      "stamina": 280,
+      "max_stamina": 280,
+      "armor": 68,
+      "magic_resist": 46,
+      "attack_damage": 48,
+      "ability_power": 30,
+      "movement_speed": 0.95,
+      "health_regen": 9.25,
+      "mana_regen": 3.25,
+      "critical_chance": 0.05,
+      "critical_damage": 1.5
+    },
+    "active_synergy_bonuses": [
+      {
+        "source_perk": "terra_t02_earthen_fortitude",
+        "bonus_type": "damage_reduction",
+        "bonus_value": 0.03,
+        "triggered_by_tags": ["defense", "defense"]
+      }
+    ],
+    "statistics": {
+      "mobs_killed": {
+        "zombie": 245,
+        "skeleton": 189,
+        "goblin": 312
+      },
+      "bosses_defeated": ["cave_troll", "forest_guardian"],
+      "total_damage_dealt": 1250000,
+      "total_damage_taken": 85000,
+      "total_healing_done": 45000,
+      "deaths": 12,
+      "playtime_seconds": 172800,
+      "highest_combo": 15
+    },
+    "achievements": ["first_blood", "reach_level_10", "defeat_first_boss"],
+    "settings": {
+      "show_damage_numbers": true,
+      "show_mob_levels": true,
+      "show_xp_notifications": true,
+      "auto_select_perks": false
+    },
+    "metadata": {
+      "created_at": "2024-01-15T08:00:00Z",
+      "last_played": "2024-01-20T22:30:00Z",
+      "mod_version": "1.0.0",
+      "schema_version": 1
+    }
+  }
+}

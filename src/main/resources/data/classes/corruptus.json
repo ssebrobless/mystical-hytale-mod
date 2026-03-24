@@ -1,0 +1,73 @@
+{
+  "id": "corruptus",
+  "name": "Corruptus",
+  "display_name": "Corruptus - The Void Flame",
+  "theme": "Dark Magic + Fire",
+  "element": "Corruption, flames, damage",
+  "description": "Wielders of forbidden power, Corruptus masters blend hellfire with void corruption to devastate their enemies. They sacrifice their own essence for overwhelming destruction, trading safety for raw power.",
+  "lore": "When the first flame met the endless void, the Corruptus were born. They are the children of chaos, marked by the burning darkness that flows through their veins. Feared and reviled, they walk the line between annihilation and apotheosis.",
+  "color_primary": "#8B0000",
+  "color_secondary": "#4B0082",
+  "color_accent": "#FF4500",
+  "icon": "assets/textures/ui/corruptus_icon.png",
+  "starting_stats": {
+    "health": 90,
+    "mana": 110,
+    "stamina": 85,
+    "armor": 5,
+    "magic_resist": 5,
+    "attack_damage": 10,
+    "ability_power": 16,
+    "movement_speed": 1.0,
+    "health_regen": 1.0,
+    "mana_regen": 2.0
+  },
+  "stat_growth_per_level": {
+    "health": 4,
+    "mana": 6,
+    "stamina": 3,
+    "armor": 0.3,
+    "magic_resist": 0.4,
+    "attack_damage": 0.7,
+    "ability_power": 1.5,
+    "health_regen": 0.06,
+    "mana_regen": 0.15
+  },
+  "passive_ability": {
+    "id": "corruptus_passive_burning_soul",
+    "name": "Burning Soul",
+    "description": "Dealing damage marks enemies with Corruption for 4 seconds. Corrupted enemies take 2% increased damage per stack (max 5 stacks). Killing a corrupted enemy restores 5% max health and mana.",
+    "effects": [
+      {
+        "type": "on_damage_debuff",
+        "debuff": "corruption_mark",
+        "duration": 4.0,
+        "max_stacks": 5
+      },
+      {
+        "type": "debuff_damage_amplification",
+        "debuff": "corruption_mark",
+        "value": 0.02,
+        "value_type": "percent_per_stack"
+      },
+      {
+        "type": "on_kill_restore",
+        "condition": "target_has_corruption_mark",
+        "restore_health": 0.05,
+        "restore_mana": 0.05,
+        "value_type": "percent_max"
+      }
+    ]
+  },
+  "innate_resistances": {
+    "fire": 0.15,
+    "dark": 0.20,
+    "corruption": 0.25,
+    "holy": -0.15,
+    "water": -0.10
+  },
+  "playstyle_tags": ["damage", "burst", "dot", "glass_cannon", "high_risk"],
+  "recommended_for": "Players who enjoy overwhelming offense, managing risk vs reward, and watching enemies melt.",
+  "difficulty": "expert",
+  "synergy_elements": ["fire", "dark", "corruption", "chaos", "destruction"]
+}

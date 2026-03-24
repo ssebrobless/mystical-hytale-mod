@@ -1,0 +1,118 @@
+{
+  "scaling_system": {
+    "type": "global",
+    "description": "All hostile mobs scale with player level globally",
+    "affects": ["hostile", "elite", "mini_boss"],
+    "excludes": ["passive", "neutral", "boss", "world_boss"]
+  },
+  "difficulty_formula": {
+    "formula": "difficulty_multiplier = 1.0 + (floor(player_level / 10) * 0.2)",
+    "description": "Every 10 player levels, hostile mobs gain +20% difficulty",
+    "examples": {
+      "level_1_to_9": { "multiplier": 1.0, "description": "Base difficulty" },
+      "level_10_to_19": { "multiplier": 1.2, "description": "+20% difficulty" },
+      "level_20_to_29": { "multiplier": 1.4, "description": "+40% difficulty" },
+      "level_30_to_39": { "multiplier": 1.6, "description": "+60% difficulty" },
+      "level_40_to_49": { "multiplier": 1.8, "description": "+80% difficulty" },
+      "level_50_to_59": { "multiplier": 2.0, "description": "+100% difficulty" },
+      "level_60_to_69": { "multiplier": 2.2, "description": "+120% difficulty" },
+      "level_70_to_79": { "multiplier": 2.4, "description": "+140% difficulty" },
+      "level_80_to_89": { "multiplier": 2.6, "description": "+160% difficulty" },
+      "level_90_to_99": { "multiplier": 2.8, "description": "+180% difficulty" },
+      "level_100_to_109": { "multiplier": 3.0, "description": "+200% difficulty" },
+      "level_110_to_119": { "multiplier": 3.2, "description": "+220% difficulty" },
+      "level_120_to_129": { "multiplier": 3.4, "description": "+240% difficulty" },
+      "level_130_to_139": { "multiplier": 3.6, "description": "+260% difficulty" },
+      "level_140_to_149": { "multiplier": 3.8, "description": "+280% difficulty" },
+      "level_150_to_159": { "multiplier": 4.0, "description": "+300% difficulty" },
+      "level_160_to_169": { "multiplier": 4.2, "description": "+320% difficulty" },
+      "level_170_to_179": { "multiplier": 4.4, "description": "+340% difficulty" },
+      "level_180_to_189": { "multiplier": 4.6, "description": "+360% difficulty" },
+      "level_190_to_200": { "multiplier": 4.8, "description": "+380% difficulty" }
+    }
+  },
+  "stat_scaling": {
+    "health": {
+      "formula": "scaled_hp = base_hp * difficulty_multiplier",
+      "description": "Linear scaling with difficulty multiplier",
+      "example": "Base 100 HP at 2.0x = 200 HP"
+    },
+    "damage": {
+      "formula": "scaled_dmg = base_dmg * difficulty_multiplier",
+      "description": "Linear scaling with difficulty multiplier",
+      "example": "Base 20 damage at 2.0x = 40 damage"
+    },
+    "speed": {
+      "formula": "scaled_speed = base_speed * (1 + (difficulty_multiplier - 1) * 0.25)",
+      "description": "Reduced speed scaling (25% of difficulty increase)",
+      "example": "Base 1.0 speed at 2.0x = 1.25 speed",
+      "rationale": "Speed scales slower to prevent unfair gameplay at high levels"
+    },
+    "xp_reward": {
+      "formula": "scaled_xp = base_xp * difficulty_multiplier",
+      "description": "XP reward scales linearly with difficulty",
+      "example": "Base 50 XP at 2.0x = 100 XP"
+    },
+    "armor": {
+      "formula": "scaled_armor = base_armor * (1 + (difficulty_multiplier - 1) * 0.5)",
+      "description": "Reduced armor scaling (50% of difficulty increase)",
+      "example": "Base 10 armor at 2.0x = 15 armor"
+    },
+    "magic_resist": {
+      "formula": "scaled_mr = base_mr * (1 + (difficulty_multiplier - 1) * 0.5)",
+      "description": "Reduced magic resist scaling (50% of difficulty increase)",
+      "example": "Base 10 MR at 2.0x = 15 MR"
+    }
+  },
+  "mob_level_assignment": {
+    "description": "How mob levels are assigned in the global scaling system",
+    "formula": "mob_level = floor(player_level * 0.9) + random(-2, +2)",
+    "minimum_level": 1,
+    "maximum_level": 200,
+    "variation": {
+      "description": "Mobs have slight level variation for diversity",
+      "range": [-2, 2]
+    }
+  },
+  "party_scaling": {
+    "description": "Additional scaling when player is in a party",
+    "enabled": true,
+    "formula": "party_multiplier = 1.0 + (party_size - 1) * 0.15",
+    "examples": {
+      "solo": 1.0,
+      "2_players": 1.15,
+      "3_players": 1.30,
+      "4_players": 1.45,
+      "5_players": 1.60
+    },
+    "applies_to": ["health", "xp_reward"],
+    "does_not_apply_to": ["damage", "speed"]
+  },
+  "special_modifiers": {
+    "night_bonus": {
+      "description": "Mobs are stronger at night",
+      "multiplier": 1.2,
+      "affects": ["damage", "health"],
+      "time_range": { "start": "18:00", "end": "06:00" }
+    },
+    "blood_moon": {
+      "description": "Special event with massively empowered mobs",
+      "multiplier": 2.0,
+      "affects": ["all"],
+      "spawn_rate_increase": 3.0,
+      "elite_chance_increase": 0.25
+    },
+    "dungeon_bonus": {
+      "description": "Dungeon mobs are inherently stronger",
+      "multiplier": 1.5,
+      "affects": ["health", "damage", "xp_reward"]
+    }
+  },
+  "caps_and_limits": {
+    "max_difficulty_multiplier": 5.0,
+    "max_health_multiplier": 10.0,
+    "max_damage_multiplier": 5.0,
+    "max_speed_multiplier": 2.0,
+    "min_xp_after_penalties": 1
+  }
+}
