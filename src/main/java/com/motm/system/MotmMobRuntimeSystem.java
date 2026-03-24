@@ -1,5 +1,6 @@
 package com.motm.system;
 
+import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.TickingSystem;
@@ -55,7 +56,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
         Set<UUID> activePlayerIds = new HashSet<>();
         World world = store.getExternalData().getWorld();
 
-        store.forEachChunk((chunk, ignoredCommandBuffer) -> {
+        store.forEachChunk((chunk, commandBuffer) -> {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
 
@@ -82,7 +83,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
                 TrackedMob trackedMob = trackedMobs.get(entityId);
                 if (trackedMob == null) {
                     ModelComponent modelComponent = chunk.getComponent(entityIndex, ModelComponent.getComponentType());
-                    trackedMob = maybeTrackNewMob(entityId, ref, npc, modelComponent, store, world);
+                    trackedMob = maybeTrackNewMob(entityId, ref, npc, modelComponent, store, commandBuffer, world);
                 }
 
                 DeathComponent death = chunk.getComponent(entityIndex, DeathComponent.getComponentType());
@@ -121,6 +122,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
 
     private TrackedMob maybeTrackNewMob(UUID entityId, Ref<EntityStore> ref, NPCEntity npc,
                                         ModelComponent modelComponent, Store<EntityStore> store,
+                                        CommandBuffer<EntityStore> commandBuffer,
                                         World world) {
         String mobType = resolveMobType(npc, modelComponent);
         if (mobType == null) {
@@ -138,7 +140,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
             return null;
         }
 
-        applyScaledResult(ref, store, result);
+        applyScaledResult(ref, store, commandBuffer, result);
 
         String category = mod.getDataLoader().getMobCategory(mobType);
         boolean isRare = result.stats().isElite()
@@ -154,6 +156,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
     }
 
     private void applyScaledResult(Ref<EntityStore> ref, Store<EntityStore> store,
+                                   CommandBuffer<EntityStore> commandBuffer,
                                    MenteesMod.ScaledMobResult result) {
         EntityStatMap entityStatMap = store.getComponent(ref, EntityStatMap.getComponentType());
         if (entityStatMap != null) {
@@ -165,7 +168,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
             displayName = displayName.color(result.levelColor());
         }
 
-        store.putComponent(ref, DisplayNameComponent.getComponentType(),
+        commandBuffer.putComponent(ref, DisplayNameComponent.getComponentType(),
                 new DisplayNameComponent(displayName));
     }
 
