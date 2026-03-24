@@ -1,31 +1,21 @@
 package com.motm.command;
 
 import com.motm.MenteesMod;
-import com.motm.manager.*;
-import com.motm.model.*;
+import com.motm.manager.LevelingManager;
+import com.motm.manager.PerkManager;
+import com.motm.manager.StyleManager;
+import com.motm.manager.SynergyEngine;
+import com.motm.model.AbilityData;
+import com.motm.model.ClassData;
+import com.motm.model.Perk;
+import com.motm.model.PlayerData;
+import com.motm.model.RaceData;
+import com.motm.model.StyleData;
 
 import java.util.List;
 
-// TODO: These imports will need to match Hytale's actual API packages.
-// Based on the CurseForge docs, commands extend CommandBase.
-// import com.hypixel.hytale.server.command.CommandBase;
-// import com.hypixel.hytale.server.command.CommandContext;
-// import com.hypixel.hytale.server.text.Message;
-
 /**
  * Main command handler for /motm commands.
- *
- * Subcommands:
- *   /motm class [classId]    - View classes or select one
- *   /motm perks              - Open perk selection UI / view current perks
- *   /motm select <id1> <id2> <id3> - Select 3 perks
- *   /motm stats              - View your stats and progress
- *   /motm level              - View XP progress
- *   /motm info               - View mod info
- *
- * NOTE: This is structured as a standalone class that can be adapted
- * to extend Hytale's CommandBase once the API is confirmed.
- * For now, it contains the logic that CommandBase.executeSync() would call.
  */
 public class MotmCommand {
 
@@ -36,10 +26,7 @@ public class MotmCommand {
     }
 
     /**
-     * Entry point — called from Hytale's command system.
-     * @param playerId The UUID of the command sender
-     * @param args     The command arguments (everything after "/motm")
-     * @return Response message to send back to the player
+     * Entry point called from Hytale's command bridge.
      */
     public String execute(String playerId, String[] args) {
         PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(playerId);
@@ -72,8 +59,12 @@ public class MotmCommand {
     private String handleClass(PlayerData player, String[] args) {
         if (player.getPlayerClass() != null) {
             ClassData classData = mod.getDataLoader().getClassData(player.getPlayerClass());
+            String styleSummary = player.getSelectedStyles().isEmpty()
+                    ? "None selected yet. Use /motm style <styleId>."
+                    : formatSelectedStyleSummary(player);
             return "[MOTM] You are a " + classData.getDisplayName() + "\n"
                     + "Theme: " + classData.getTheme() + " | Element: " + classData.getElement() + "\n"
+                    + "Style: " + styleSummary + "\n"
                     + "Passive: " + classData.getPassiveAbility().getName() + " - "
                     + classData.getPassiveAbility().getDescription();
         }
@@ -91,14 +82,15 @@ public class MotmCommand {
 
         String classId = args[1].toLowerCase();
         boolean success = mod.getPlayerDataManager().selectClass(player, classId);
-        if (success) {
-            ClassData classData = mod.getDataLoader().getClassData(classId);
-            rebuildPlayerRuntime(player);
-            return "[MOTM] You have chosen " + classData.getDisplayName() + "!\n"
-                    + "Your journey begins. Reach level 10 to unlock your first perks.";
-        } else {
+        if (!success) {
             return "[MOTM] Invalid class or you already have a class. Valid: terra, hydro, aero, corruptus";
         }
+
+        ClassData classData = mod.getDataLoader().getClassData(classId);
+        rebuildPlayerRuntime(player);
+        return "[MOTM] You have chosen " + classData.getDisplayName() + "!\n"
+                + "Next: choose your combat style with /motm style <styleId>\n"
+                + "Perks unlock starting at level 10.";
     }
 
     // --- /motm perks ---
@@ -108,42 +100,51 @@ public class MotmCommand {
             return "[MOTM] Select a class first with /motm class <classId>";
         }
 
+        if (player.getSelectedStyles().isEmpty()) {
+            return "[MOTM] Choose your style first with /motm style <styleId>\n"
+                    + "Flow: class -> style -> abilities -> perks";
+        }
+
         PerkManager pm = mod.getPerkManager();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM] === Your Perks ===\n");
-        sb.append("Class: ").append(player.getPlayerClass()).append(" | Level: ")
-                .append(player.getLevel()).append("\n");
-        sb.append("Perks: ").append(player.getSelectedPerks().size()).append("/")
-                .append(pm.getCurrentTier(player.getLevel()) * PerkManager.PERKS_TO_SELECT)
-                .append(" (").append(pm.getRemainingPerkSlots(player)).append(" slots remaining)\n\n");
+        sb.append("[MOTM] === Perks ===\n");
+        sb.append("Class: ").append(player.getPlayerClass())
+                .append(" | Style: ").append(getSelectedStyleName(player))
+                .append(" | Level: ").append(player.getLevel()).append("\n");
+        sb.append("Perks are separate from styles.\n");
 
         if (pm.hasPendingPerkSelection(player)) {
             int pendingTier = pm.getPendingSelectionTier(player);
-            sb.append(">>> PERK SELECTION AVAILABLE - Tier ").append(pendingTier).append(" <<<\n");
+            sb.append("Tier ").append(pendingTier).append(" choices: pick 3 of 10\n\n");
             List<Perk> available = pm.getAvailablePerks(player);
             for (int i = 0; i < available.size(); i++) {
-                Perk p = available.get(i);
-                sb.append("  [").append(i + 1).append("] ").append(p.getName())
-                        .append(" - ").append(p.getDescription()).append("\n")
-                        .append("      ID: ").append(p.getId()).append("\n")
-                        .append("      Tags: ").append(String.join(", ", p.getSynergyTags())).append("\n");
+                Perk perk = available.get(i);
+                sb.append("[").append(i + 1).append("] ").append(perk.getName()).append("\n");
+                sb.append("  ").append(compactText(perk.getDescription(), 60)).append("\n");
+                sb.append("  ID: ").append(perk.getId()).append("\n");
             }
             sb.append("\nUse: /motm select <id1> <id2> <id3>");
         } else {
-            // Show current perks by tier
+            sb.append("Selected: ").append(player.getSelectedPerks().size()).append(" perks\n");
+            int nextMilestone = ((player.getLevel() / 10) + 1) * 10;
+            if (nextMilestone <= LevelingManager.MAX_LEVEL) {
+                sb.append("Next perk tier unlocks at Lv. ").append(nextMilestone).append("\n\n");
+            } else {
+                sb.append("All perk tiers unlocked.\n\n");
+            }
+
             for (int tier = 1; tier <= pm.getCurrentTier(player.getLevel()); tier++) {
                 List<Perk> tierPerks = pm.getPlayerPerksForTier(player, tier);
                 if (!tierPerks.isEmpty()) {
                     sb.append("Tier ").append(tier).append(":\n");
-                    for (Perk p : tierPerks) {
-                        sb.append("  - ").append(p.getName()).append("\n");
+                    for (Perk perk : tierPerks) {
+                        sb.append("  ").append(perk.getName()).append("\n");
                     }
                 }
             }
         }
 
-        // Show active synergies
         if (!player.getActiveSynergyBonuses().isEmpty()) {
             sb.append("\n=== Active Synergies ===\n");
             for (var syn : player.getActiveSynergyBonuses()) {
@@ -162,6 +163,10 @@ public class MotmCommand {
             return "[MOTM] Select a class first with /motm class <classId>";
         }
 
+        if (player.getSelectedStyles().isEmpty()) {
+            return "[MOTM] Choose your style first with /motm style <styleId>";
+        }
+
         PerkManager pm = mod.getPerkManager();
         if (!pm.hasPendingPerkSelection(player)) {
             return "[MOTM] No perk selection available right now.";
@@ -173,34 +178,32 @@ public class MotmCommand {
 
         List<String> selectedIds = List.of(args[1], args[2], args[3]);
 
-        // Validate
         PerkManager.ValidationResult validation = pm.validatePerkSelection(player, selectedIds);
         if (!validation.isValid()) {
             return "[MOTM] Selection failed:\n" + String.join("\n", validation.getErrors());
         }
 
-        // Show synergy preview
         SynergyEngine.SynergyPreview preview = mod.getSynergyEngine()
                 .previewSynergyChanges(player, selectedIds);
 
-        // Apply
         boolean success = pm.applyPerkSelection(player, selectedIds, mod.getSynergyEngine());
-        if (success) {
-            StringBuilder sb = new StringBuilder("[MOTM] Perks selected!\n");
-            for (String id : selectedIds) {
-                Perk perk = mod.getDataLoader().getPerkById(id, player.getPlayerClass());
-                if (perk != null) {
-                    sb.append("  + ").append(perk.getName()).append("\n");
-                }
-            }
-            if (!preview.newSynergies.isEmpty()) {
-                sb.append("\nNew synergies activated: ").append(preview.newSynergies.size());
-            }
-            mod.getPlayerDataManager().savePlayerData(player);
-            mod.getPlayerDataManager().checkAchievements(player, "perks_selected", null);
-            return sb.toString();
+        if (!success) {
+            return "[MOTM] Perk selection failed.";
         }
-        return "[MOTM] Perk selection failed.";
+
+        StringBuilder sb = new StringBuilder("[MOTM] Perks selected!\n");
+        for (String id : selectedIds) {
+            Perk perk = mod.getDataLoader().getPerkById(id, player.getPlayerClass());
+            if (perk != null) {
+                sb.append("  + ").append(perk.getName()).append("\n");
+            }
+        }
+        if (!preview.newSynergies.isEmpty()) {
+            sb.append("\nNew synergies activated: ").append(preview.newSynergies.size());
+        }
+        mod.getPlayerDataManager().savePlayerData(player);
+        mod.getPlayerDataManager().checkAchievements(player, "perks_selected", null);
+        return sb.toString();
     }
 
     // --- /motm stats ---
@@ -209,6 +212,7 @@ public class MotmCommand {
         StringBuilder sb = new StringBuilder("[MOTM] === Player Summary ===\n");
         sb.append("Name: ").append(player.getPlayerName()).append("\n");
         sb.append("Class: ").append(player.getPlayerClass() != null ? player.getPlayerClass() : "None").append("\n");
+        sb.append("Style: ").append(formatSelectedStyleSummary(player)).append("\n");
         sb.append("Level: ").append(player.getLevel()).append("\n");
         sb.append("Perks: ").append(player.getSelectedPerks().size()).append("/60\n");
         sb.append("Synergies: ").append(player.getActiveSynergyBonuses().size()).append(" active\n");
@@ -262,63 +266,64 @@ public class MotmCommand {
         return sb.toString();
     }
 
-    // --- /motm style [styleId1] [styleId2] ---
+    // --- /motm style [styleId] ---
 
     private String handleStyle(PlayerData player, String[] args) {
         if (player.getPlayerClass() == null) {
             return "[MOTM] Select a class first with /motm class <classId>";
         }
 
-        var sm = mod.getStyleManager();
+        List<StyleData> allStyles = mod.getDataLoader().getStylesForClass(player.getPlayerClass());
 
-        // No args — show available styles for the player's class
         if (args.length < 2) {
-            List<StyleData> allStyles = mod.getDataLoader().getStylesForClass(player.getPlayerClass());
             StringBuilder sb = new StringBuilder("[MOTM] === " + player.getPlayerClass().toUpperCase() + " Styles ===\n");
-            sb.append("Choose 2 styles (6 abilities total)\n\n");
+            sb.append("Choose 1 style. Your style determines your abilities.\n\n");
 
             List<String> selected = player.getSelectedStyles();
             for (StyleData style : allStyles) {
                 boolean isSelected = selected.contains(style.getId());
                 sb.append(isSelected ? ">> " : "   ");
-                sb.append(sm.getStyleSummary(style)).append("\n");
+                sb.append(style.getId()).append(" - ").append(style.getName()).append("\n");
+                sb.append("   ").append(compactText(style.getTheme(), 54)).append("\n");
+                sb.append("   Abilities: ").append(formatAbilityNames(style)).append("\n");
             }
 
             if (selected.isEmpty()) {
-                sb.append("Use: /motm style <styleId1> <styleId2>");
+                sb.append("\nUse: /motm style <styleId>");
             } else {
-                sb.append("Current styles: ").append(String.join(", ", selected));
-                sb.append("\nTo change: /motm style <styleId1> <styleId2>");
+                sb.append("\nCurrent style: ").append(formatSelectedStyleSummary(player));
+                sb.append("\nTo change: /motm style <styleId>");
             }
             return sb.toString();
         }
 
-        // Select styles
-        if (args.length < 3) {
-            return "[MOTM] Select exactly 2 styles: /motm style <styleId1> <styleId2>";
+        String styleId = args[1].toLowerCase();
+        StyleData selectedStyle = allStyles.stream()
+                .filter(style -> style.getId().equals(styleId))
+                .findFirst()
+                .orElse(null);
+        if (selectedStyle == null) {
+            return "[MOTM] Invalid style. Use /motm style to see available options.";
         }
 
-        List<String> styleIds = List.of(args[1].toLowerCase(), args[2].toLowerCase());
-        if (styleIds.get(0).equals(styleIds.get(1))) {
-            return "[MOTM] You must select two different styles.";
+        boolean success = mod.getStyleManager().selectStyles(player, List.of(styleId));
+        if (!success) {
+            return "[MOTM] Invalid style selection. Use /motm style to see available styles.";
         }
 
-        boolean success = sm.selectStyles(player, styleIds);
-        if (success) {
-            StringBuilder sb = new StringBuilder("[MOTM] Styles selected!\n");
-            for (StyleData style : sm.getSelectedStyles(player)) {
-                sb.append("  ").append(style.getName()).append(" - ").append(style.getTheme()).append("\n");
-                for (AbilityData ability : style.getAbilities()) {
-                    sb.append("    - ").append(ability.getName()).append(": ")
-                            .append(ability.getDescription()).append("\n");
-                }
-            }
-            mod.getResourceManager().synchronizePersistentState(player);
-            mod.getResourceManager().initializeForPlayer(player.getPlayerId(), player.getPlayerClass());
-            mod.getPlayerDataManager().savePlayerData(player);
-            return sb.toString();
+        StringBuilder sb = new StringBuilder("[MOTM] Style selected!\n");
+        sb.append("Style: ").append(selectedStyle.getName()).append("\n");
+        sb.append("Theme: ").append(selectedStyle.getTheme()).append("\n");
+        sb.append("Abilities:\n");
+        for (AbilityData ability : selectedStyle.getAbilities()) {
+            sb.append("  ").append(ability.getName())
+                    .append(" (").append(ability.getCooldownSeconds()).append("s)")
+                    .append(" - ").append(compactText(ability.getDescription(), 46)).append("\n");
         }
-        return "[MOTM] Invalid style selection. Use /motm style to see available styles.";
+        mod.getResourceManager().synchronizePersistentState(player);
+        mod.getResourceManager().initializeForPlayer(player.getPlayerId(), player.getPlayerClass());
+        mod.getPlayerDataManager().savePlayerData(player);
+        return sb.toString();
     }
 
     // --- /motm race [raceId] ---
@@ -346,7 +351,6 @@ public class MotmCommand {
             return sb.toString();
         }
 
-        // Race is permanent — can only set once
         if (player.getRace() != null) {
             return "[MOTM] You are already a " + player.getRace() + ". Race cannot be changed.";
         }
@@ -574,11 +578,16 @@ public class MotmCommand {
                 + "Version: 1.0.0\n"
                 + "4 Classes | 40 Styles | 12 Races | 800 Perks | Level 1-200\n"
                 + "Elemental Reactions | Dynamic Mob Scaling | Synergy System\n\n"
+                + "Flow:\n"
+                + "  1. /motm class <id>\n"
+                + "  2. /motm style <id>\n"
+                + "  3. Use style abilities and level up\n"
+                + "  4. /motm perks at Lv. 10+\n\n"
                 + "Commands:\n"
                 + "  /motm class [id]        - View/select class\n"
                 + "  /motm race [id]         - View/select race\n"
-                + "  /motm style [id1] [id2] - View/select combat styles\n"
-                + "  /motm perks             - View perks & available selections\n"
+                + "  /motm style [id]        - View/select your combat style\n"
+                + "  /motm perks             - View perk choices (not styles)\n"
                 + "  /motm select ...        - Select 3 perks\n"
                 + "  /motm resources         - View class resources\n"
                 + "  /motm stats             - View your statistics\n"
@@ -628,6 +637,44 @@ public class MotmCommand {
         if (player.getRace() != null) {
             mod.getRaceManager().applyRaceBonuses(player, mod.getStatusEffectManager());
         }
+    }
+
+    private String formatSelectedStyleSummary(PlayerData player) {
+        StyleData style = getSelectedStyle(player);
+        if (style == null) {
+            return "None";
+        }
+        return style.getName() + " (" + style.getId() + ")";
+    }
+
+    private String getSelectedStyleName(PlayerData player) {
+        StyleData style = getSelectedStyle(player);
+        return style != null ? style.getName() : "None";
+    }
+
+    private StyleData getSelectedStyle(PlayerData player) {
+        if (player.getPlayerClass() == null || player.getSelectedStyles().isEmpty()) {
+            return null;
+        }
+
+        return mod.getDataLoader().getStyleById(player.getSelectedStyles().get(0), player.getPlayerClass());
+    }
+
+    private String formatAbilityNames(StyleData style) {
+        return style.getAbilities().stream()
+                .map(AbilityData::getName)
+                .reduce((left, right) -> left + ", " + right)
+                .orElse("None");
+    }
+
+    private String compactText(String text, int maxLength) {
+        if (text == null) {
+            return "";
+        }
+        if (text.length() <= maxLength) {
+            return text;
+        }
+        return text.substring(0, Math.max(0, maxLength - 3)).trim() + "...";
     }
 
     private void clearClassProgression(PlayerData player) {

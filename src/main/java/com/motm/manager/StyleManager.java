@@ -10,13 +10,13 @@ import java.util.logging.Logger;
 
 /**
  * Manages style selection and ability usage for players.
- * Each player selects 2 styles from their class's 10, gaining 6 abilities total.
+ * Each player selects 1 style from their class's 10, gaining that style's abilities.
  * Tracks cooldowns and resolves ability activation.
  */
 public class StyleManager {
 
     private static final Logger LOG = Logger.getLogger("MOTM");
-    public static final int MAX_SELECTED_STYLES = 2;
+    public static final int MAX_SELECTED_STYLES = 1;
     public static final int ABILITIES_PER_STYLE = 3;
     public static final int TICKS_PER_SECOND = 20; // Hytale server tick rate
 
@@ -59,7 +59,7 @@ public class StyleManager {
     }
 
     /**
-     * Get the StyleData objects for a player's selected styles.
+     * Get the StyleData object for a player's selected style.
      */
     public List<StyleData> getSelectedStyles(PlayerData player) {
         List<String> selected = player.getSelectedStyles();
