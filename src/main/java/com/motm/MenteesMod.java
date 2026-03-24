@@ -45,6 +45,7 @@ public class MenteesMod extends JavaPlugin {
     private StyleManager styleManager;
     private ElementalReactionManager elementalReactionManager;
     private RaceManager raceManager;
+    private SpellbookManager spellbookManager;
 
     // Plugin data directory
     private Path pluginDirectory;
@@ -98,6 +99,13 @@ public class MenteesMod extends JavaPlugin {
         styleManager = new StyleManager(dataLoader, resourceManager);
         elementalReactionManager = new ElementalReactionManager(dataLoader, statusEffectManager);
         raceManager = new RaceManager(dataLoader);
+        spellbookManager = new SpellbookManager(
+                dataLoader,
+                levelingManager,
+                styleManager,
+                perkManager,
+                resourceManager
+        );
 
         // Initialize command handler
         motmCommand = new MotmCommand(this);
@@ -289,6 +297,7 @@ public class MenteesMod extends JavaPlugin {
     public StyleManager getStyleManager() { return styleManager; }
     public ElementalReactionManager getElementalReactionManager() { return elementalReactionManager; }
     public RaceManager getRaceManager() { return raceManager; }
+    public SpellbookManager getSpellbookManager() { return spellbookManager; }
 
     // --- Result wrapper for mob spawn scaling ---
 

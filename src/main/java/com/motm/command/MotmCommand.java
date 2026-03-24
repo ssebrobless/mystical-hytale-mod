@@ -3,6 +3,7 @@ package com.motm.command;
 import com.motm.MenteesMod;
 import com.motm.manager.LevelingManager;
 import com.motm.manager.PerkManager;
+import com.motm.manager.SpellbookManager;
 import com.motm.manager.StyleManager;
 import com.motm.manager.SynergyEngine;
 import com.motm.model.AbilityData;
@@ -45,6 +46,7 @@ public class MotmCommand {
             case "style" -> handleStyle(player, args);
             case "abilities" -> handleAbilities(player);
             case "cast" -> handleCast(player, args);
+            case "spellbook", "book" -> handleSpellbook(player, args);
             case "race" -> handleRace(player, args);
             case "resources" -> handleResources(player);
             case "stats" -> handleStats(player);
@@ -380,6 +382,20 @@ public class MotmCommand {
                 + "  Special: " + race.getSpecial();
     }
 
+    // --- /motm spellbook [section] ---
+
+    private String handleSpellbook(PlayerData player, String[] args) {
+        SpellbookManager spellbookManager = mod.getSpellbookManager();
+        SpellbookManager.Section section = args.length >= 2
+                ? spellbookManager.parseSection(args[1])
+                : SpellbookManager.Section.OVERVIEW;
+        if (section == null) {
+            return "[MOTM] Unknown spellbook section.\n"
+                    + "Sections: " + spellbookManager.getSectionList();
+        }
+        return spellbookManager.render(player, section);
+    }
+
     // --- /motm abilities ---
 
     private String handleAbilities(PlayerData player) {
@@ -688,12 +704,14 @@ public class MotmCommand {
                 + "Flow:\n"
                 + "  1. /motm class <id>\n"
                 + "  2. /motm style <id>\n"
-                + "  3. /motm abilities and /motm cast <abilityId>\n"
-                + "  4. /motm perks at Lv. 10+\n\n"
+                + "  3. /motm spellbook overview\n"
+                + "  4. /motm abilities and /motm cast <abilityId>\n"
+                + "  5. /motm perks at Lv. 10+\n\n"
                 + "Commands:\n"
                 + "  /motm class [id]        - View/select class\n"
                 + "  /motm race [id]         - View/select race\n"
                 + "  /motm style [id]        - View/select your combat style\n"
+                + "  /motm spellbook [page]  - Open the spellbook sections\n"
                 + "  /motm abilities         - View ability IDs and cooldowns\n"
                 + "  /motm cast <abilityId>  - Test-cast a style ability\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
