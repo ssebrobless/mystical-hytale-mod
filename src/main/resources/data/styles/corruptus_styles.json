@@ -16,7 +16,13 @@
           "effect": "burn",
           "categories": ["dot"],
           "charges": 3,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "projectile",
+          "target_type": "enemy",
+          "range": 18,
+          "radius": 3,
+          "projectile_speed": 24,
+          "travel_type": "explosive_fireball"
         },
         {
           "id": "ignite",
@@ -26,7 +32,12 @@
           "cooldown_seconds": 4,
           "effect": "self_burn+aoe",
           "categories": ["damage", "self_damage", "aoe"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_burst",
+          "target_type": "self_centered",
+          "radius": 4,
+          "duration_seconds": 4,
+          "terrain_effect": "living_flame"
         },
         {
           "id": "combust",
@@ -36,7 +47,10 @@
           "cooldown_seconds": 5,
           "effect": "consume_burn",
           "categories": ["damage"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "execute",
+          "target_type": "enemy",
+          "range": 14
         }
       ]
     },
@@ -55,7 +69,13 @@
           "cooldown_seconds": 3,
           "effect": "summon",
           "categories": ["summon", "damage"],
-          "resource_cost": 9
+          "resource_cost": 9,
+          "cast_type": "summon",
+          "target_type": "ground_target",
+          "range": 10,
+          "duration_seconds": 20,
+          "summon_name": "skeleton_minion",
+          "terrain_effect": "grave_rise"
         },
         {
           "id": "life_drain",
@@ -65,7 +85,11 @@
           "cooldown_seconds": 4,
           "effect": "lifesteal",
           "categories": ["damage", "lifesteal"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "channel",
+          "target_type": "enemy",
+          "range": 14,
+          "duration_seconds": 3
         },
         {
           "id": "death_mark",
@@ -75,7 +99,11 @@
           "cooldown_seconds": 5,
           "effect": "vulnerability",
           "categories": ["debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "curse",
+          "target_type": "enemy",
+          "range": 16,
+          "duration_seconds": 6
         }
       ]
     },
@@ -95,7 +123,14 @@
           "effect": "clone",
           "categories": ["damage", "dash", "stealth"],
           "charges": 2,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "teleport",
+          "target_type": "enemy",
+          "range": 12,
+          "dash_distance": 12,
+          "duration_seconds": 4,
+          "summon_name": "shadow_clone",
+          "travel_type": "shadow_step"
         },
         {
           "id": "umbral_veil",
@@ -105,7 +140,11 @@
           "cooldown_seconds": 5,
           "effect": "stealth",
           "categories": ["stealth"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 5,
+          "terrain_effect": "umbral_shroud"
         },
         {
           "id": "dark_embrace",
@@ -115,7 +154,13 @@
           "cooldown_seconds": 6,
           "effect": "evasion_zone",
           "categories": ["damage", "evasion", "aoe"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 10,
+          "radius": 5,
+          "duration_seconds": 6,
+          "terrain_effect": "shadow_zone"
         }
       ]
     },
@@ -134,7 +179,13 @@
           "cooldown_seconds": 4,
           "effect": "burn+slow",
           "categories": ["dot", "debuff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "projectile_burst",
+          "target_type": "enemy",
+          "range": 16,
+          "radius": 3,
+          "projectile_speed": 22,
+          "travel_type": "hellfire_burst"
         },
         {
           "id": "infernal_ground",
@@ -144,7 +195,13 @@
           "cooldown_seconds": 7,
           "effect": "burn+attack_buff",
           "categories": ["dot", "buff", "aoe"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 5,
+          "duration_seconds": 7,
+          "terrain_effect": "infernal_ground"
         },
         {
           "id": "soul_scorch",
@@ -154,7 +211,11 @@
           "cooldown_seconds": 8,
           "effect": "vulnerability+slow",
           "categories": ["debuff"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "curse",
+          "target_type": "enemy",
+          "range": 16,
+          "duration_seconds": 6
         }
       ]
     },
@@ -173,7 +234,11 @@
           "cooldown_seconds": 7,
           "effect": "stun+vulnerability",
           "categories": ["crowd_control", "debuff"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "gaze",
+          "target_type": "enemy",
+          "range": 15,
+          "duration_seconds": 3
         },
         {
           "id": "mind_shatter",
@@ -183,7 +248,12 @@
           "cooldown_seconds": 6,
           "effect": "stun",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "projectile",
+          "target_type": "enemy",
+          "range": 16,
+          "projectile_speed": 26,
+          "travel_type": "psychic_bolt"
         },
         {
           "id": "hivemind",
@@ -193,7 +263,11 @@
           "cooldown_seconds": 8,
           "effect": "attack_buff",
           "categories": ["buff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 8,
+          "terrain_effect": "psychic_link"
         }
       ]
     },
@@ -212,7 +286,10 @@
           "cooldown_seconds": 6,
           "effect": "attack_buff",
           "categories": ["buff"],
-          "resource_cost": 1
+          "resource_cost": 1,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 8
         },
         {
           "id": "imbue_fortitude",
@@ -223,7 +300,11 @@
           "effect": "defense_buff+heal",
           "categories": ["buff", "healing"],
           "heal_percent": 10,
-          "resource_cost": 1
+          "resource_cost": 1,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 8,
+          "terrain_effect": "abyssal_armor"
         },
         {
           "id": "imbue_swiftness",
@@ -233,7 +314,12 @@
           "cooldown_seconds": 5,
           "effect": "evasion+attack_buff",
           "categories": ["buff", "evasion"],
-          "resource_cost": 1
+          "resource_cost": 1,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 7,
+          "dash_distance": 9,
+          "travel_type": "shadow_haste"
         }
       ]
     },
@@ -253,7 +339,13 @@
           "effect": "heal",
           "categories": ["healing"],
           "heal_percent": 15,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "support_zone",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 5,
+          "duration_seconds": 6,
+          "terrain_effect": "sanctuary"
         },
         {
           "id": "absorb",
@@ -264,7 +356,10 @@
           "effect": "defense_buff+heal",
           "categories": ["buff", "healing"],
           "heal_percent": 10,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "self_buff",
+          "target_type": "self",
+          "duration_seconds": 5
         },
         {
           "id": "purify",
@@ -274,7 +369,11 @@
           "cooldown_seconds": 8,
           "effect": "defense_buff",
           "categories": ["buff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "cleanse",
+          "target_type": "self",
+          "duration_seconds": 6,
+          "terrain_effect": "purifying_aura"
         }
       ]
     },
@@ -293,7 +392,14 @@
           "cooldown_seconds": 6,
           "effect": "dot",
           "categories": ["dot", "aoe"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "ground_zone",
+          "target_type": "ground_target",
+          "range": 14,
+          "radius": 5,
+          "duration_seconds": 6,
+          "pull_force": 4,
+          "terrain_effect": "void_rift"
         },
         {
           "id": "void_spawn",
@@ -304,7 +410,13 @@
           "effect": "summon",
           "categories": ["summon"],
           "charges": 2,
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "summon",
+          "target_type": "ground_target",
+          "range": 10,
+          "duration_seconds": 18,
+          "summon_name": "void_spawn",
+          "terrain_effect": "void_gate"
         },
         {
           "id": "consume",
@@ -314,7 +426,11 @@
           "cooldown_seconds": 9,
           "effect": "stun",
           "categories": ["damage", "crowd_control"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "execute",
+          "target_type": "enemy",
+          "range": 12,
+          "duration_seconds": 2.5
         }
       ]
     },
@@ -334,7 +450,13 @@
           "effect": "summon",
           "categories": ["summon"],
           "charges": 3,
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "summon",
+          "target_type": "ground_target",
+          "range": 8,
+          "duration_seconds": 16,
+          "summon_name": "scarak_egg",
+          "terrain_effect": "brood_nest"
         },
         {
           "id": "brood_surge",
@@ -344,7 +466,11 @@
           "cooldown_seconds": 7,
           "effect": "attack_buff",
           "categories": ["buff"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "summon_buff",
+          "target_type": "allied_summons",
+          "radius": 12,
+          "duration_seconds": 8
         },
         {
           "id": "locust_queen",
@@ -354,7 +480,13 @@
           "cooldown_seconds": 10,
           "effect": "summon",
           "categories": ["summon"],
-          "resource_cost": 4
+          "resource_cost": 4,
+          "cast_type": "summon",
+          "target_type": "ground_target",
+          "range": 10,
+          "duration_seconds": 22,
+          "summon_name": "locust_queen",
+          "terrain_effect": "swarm_gate"
         }
       ]
     },
@@ -373,7 +505,12 @@
           "cooldown_seconds": 8,
           "effect": "evasion+attack_buff",
           "categories": ["damage", "evasion", "buff"],
-          "resource_cost": 1
+          "resource_cost": 1,
+          "cast_type": "transformation",
+          "target_type": "self",
+          "duration_seconds": 10,
+          "launch_height": 6,
+          "travel_type": "flight_form"
         },
         {
           "id": "triceratops_form",
@@ -383,7 +520,13 @@
           "cooldown_seconds": 8,
           "effect": "defense_buff",
           "categories": ["damage", "buff"],
-          "resource_cost": 2
+          "resource_cost": 2,
+          "cast_type": "transformation",
+          "target_type": "self",
+          "duration_seconds": 10,
+          "dash_distance": 10,
+          "knockback_force": 5,
+          "travel_type": "stampede_charge"
         },
         {
           "id": "t_rex_form",
@@ -393,7 +536,12 @@
           "cooldown_seconds": 10,
           "effect": "attack_buff+stun",
           "categories": ["damage", "buff", "crowd_control"],
-          "resource_cost": 3
+          "resource_cost": 3,
+          "cast_type": "transformation",
+          "target_type": "self",
+          "duration_seconds": 12,
+          "radius": 4,
+          "terrain_effect": "primal_roar"
         }
       ]
     }
