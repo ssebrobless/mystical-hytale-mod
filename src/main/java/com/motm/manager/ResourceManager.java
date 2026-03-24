@@ -1,5 +1,7 @@
 package com.motm.manager;
 
+import com.motm.model.PlayerData;
+
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -63,6 +65,26 @@ public class ResourceManager {
         }
 
         playerResources.put(playerId, resources);
+    }
+
+    /**
+     * Rehydrate persistent resource-related state onto the runtime caches.
+     */
+    public void synchronizePersistentState(PlayerData player) {
+        if (player == null || player.getPlayerId() == null) {
+            return;
+        }
+
+        int tier = Math.max(0, Math.min(player.getWaterContainerTier(), WATER_CONTAINER_CAPACITY.length - 1));
+        waterContainerTier.put(player.getPlayerId(), tier);
+    }
+
+    /**
+     * Clear runtime-only resource state for a player.
+     */
+    public void clearPlayerState(String playerId) {
+        playerResources.remove(playerId);
+        waterContainerTier.remove(playerId);
     }
 
     /**
@@ -189,7 +211,7 @@ public class ResourceManager {
      */
     public void onPlayerDisconnect(String playerId) {
         playerResources.remove(playerId);
-        // Note: waterContainerTier persists (saved with player data)
+        // Note: waterContainerTier persists in PlayerData and is restored on login.
     }
 
     /**

@@ -145,6 +145,7 @@ public class MenteesMod extends JavaPlugin {
         if (player.getPlayerClass() != null) {
             perkManager.reapplyAllPerks(player, synergyEngine);
             // Initialize class resources
+            resourceManager.synchronizePersistentState(player);
             resourceManager.initializeForPlayer(playerId, player.getPlayerClass());
             if (player.getRace() != null) {
                 raceManager.applyRaceBonuses(player, statusEffectManager);

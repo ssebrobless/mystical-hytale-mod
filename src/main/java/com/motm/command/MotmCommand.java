@@ -60,6 +60,7 @@ public class MotmCommand {
             case "resources" -> handleResources(player);
             case "stats" -> handleStats(player);
             case "level" -> handleLevel(player);
+            case "dev" -> handleDev(player, args);
             case "info" -> handleInfo();
             case "help" -> getHelpMessage();
             default -> "[MOTM] Unknown subcommand. Use /motm help";
@@ -92,11 +93,7 @@ public class MotmCommand {
         boolean success = mod.getPlayerDataManager().selectClass(player, classId);
         if (success) {
             ClassData classData = mod.getDataLoader().getClassData(classId);
-            mod.getResourceManager().initializeForPlayer(player.getPlayerId(), classId);
-            mod.getPerkManager().reapplyAllPerks(player, mod.getSynergyEngine());
-            if (player.getRace() != null) {
-                mod.getRaceManager().applyRaceBonuses(player, mod.getStatusEffectManager());
-            }
+            rebuildPlayerRuntime(player);
             return "[MOTM] You have chosen " + classData.getDisplayName() + "!\n"
                     + "Your journey begins. Reach level 10 to unlock your first perks.";
         } else {
@@ -316,7 +313,7 @@ public class MotmCommand {
                             .append(ability.getDescription()).append("\n");
                 }
             }
-            // Initialize resources for the player's class
+            mod.getResourceManager().synchronizePersistentState(player);
             mod.getResourceManager().initializeForPlayer(player.getPlayerId(), player.getPlayerClass());
             mod.getPlayerDataManager().savePlayerData(player);
             return sb.toString();
@@ -362,12 +359,202 @@ public class MotmCommand {
         player.setRace(raceId);
         RaceData race = mod.getDataLoader().getRaceById(raceId);
         if (player.getPlayerClass() != null) {
-            mod.getRaceManager().applyRaceBonuses(player, mod.getStatusEffectManager());
+            rebuildPlayerRuntime(player);
         }
         mod.getPlayerDataManager().savePlayerData(player);
         return "[MOTM] You are now a " + race.getName() + "!\n"
                 + "  " + race.getPassive() + "\n"
                 + "  Special: " + race.getSpecial();
+    }
+
+    // --- /motm dev ... ---
+
+    private String handleDev(PlayerData player, String[] args) {
+        if (args.length < 2) {
+            return getDevHelpMessage();
+        }
+
+        return switch (args[1].toLowerCase()) {
+            case "help" -> getDevHelpMessage();
+            case "level" -> handleDevLevel(player, args);
+            case "xp" -> handleDevXp(player, args);
+            case "class" -> handleDevClass(player, args);
+            case "race" -> handleDevRace(player, args);
+            case "perks" -> handleDevPerks(player, args);
+            case "styles" -> handleDevStyles(player, args);
+            case "reset" -> handleDevReset(player, args);
+            default -> "[MOTM] Unknown dev subcommand.\n" + getDevHelpMessage();
+        };
+    }
+
+    private String handleDevLevel(PlayerData player, String[] args) {
+        if (args.length < 4) {
+            return "[MOTM] Usage: /motm dev level <set|add> <value>";
+        }
+
+        Integer value = parseInteger(args[3]);
+        if (value == null) {
+            return "[MOTM] Level value must be a whole number.";
+        }
+
+        int oldLevel = player.getLevel();
+        int newLevel = switch (args[2].toLowerCase()) {
+            case "set" -> clampLevel(value);
+            case "add" -> clampLevel(player.getLevel() + value);
+            default -> -1;
+        };
+
+        if (newLevel < 1) {
+            return "[MOTM] Usage: /motm dev level <set|add> <value>";
+        }
+
+        player.setLevel(newLevel);
+        player.setCurrentXp(0);
+        player.setTotalXpEarned(mod.getLevelingManager().calculateTotalXpToLevel(newLevel));
+        updateDebugProgressionState(player);
+        mod.getPlayerDataManager().savePlayerData(player);
+
+        return "[MOTM] Dev: level changed " + oldLevel + " -> " + newLevel + ".";
+    }
+
+    private String handleDevXp(PlayerData player, String[] args) {
+        if (args.length < 4) {
+            return "[MOTM] Usage: /motm dev xp <set|add> <value>";
+        }
+
+        Integer value = parseInteger(args[3]);
+        if (value == null) {
+            return "[MOTM] XP value must be a whole number.";
+        }
+
+        int oldXp = player.getCurrentXp();
+        int newXp = switch (args[2].toLowerCase()) {
+            case "set" -> Math.max(0, value);
+            case "add" -> Math.max(0, player.getCurrentXp() + value);
+            default -> -1;
+        };
+
+        if (newXp < 0) {
+            return "[MOTM] Usage: /motm dev xp <set|add> <value>";
+        }
+
+        int xpRequired = mod.getLevelingManager().calculateXpRequired(player.getLevel());
+        if (xpRequired > 0) {
+            newXp = Math.min(newXp, Math.max(0, xpRequired - 1));
+        } else {
+            newXp = 0;
+        }
+
+        player.setCurrentXp(newXp);
+        int floorTotalXp = mod.getLevelingManager().calculateTotalXpToLevel(player.getLevel());
+        player.setTotalXpEarned(Math.max(player.getTotalXpEarned(), floorTotalXp + newXp));
+        mod.getPlayerDataManager().savePlayerData(player);
+
+        return "[MOTM] Dev: XP changed " + oldXp + " -> " + newXp + ".";
+    }
+
+    private String handleDevClass(PlayerData player, String[] args) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev class <set|clear> [classId]";
+        }
+
+        return switch (args[2].toLowerCase()) {
+            case "set" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev class set <terra|hydro|aero|corruptus>";
+                }
+
+                String classId = args[3].toLowerCase();
+                if (!mod.getDataLoader().isValidClass(classId)) {
+                    yield "[MOTM] Invalid class. Valid: terra, hydro, aero, corruptus.";
+                }
+
+                clearClassProgression(player);
+                player.setPlayerClass(classId);
+                player.setFirstJoin(false);
+                updateDebugProgressionState(player);
+                rebuildPlayerRuntime(player);
+                mod.getPlayerDataManager().savePlayerData(player);
+
+                ClassData classData = mod.getDataLoader().getClassData(classId);
+                yield "[MOTM] Dev: class set to " + classData.getDisplayName() + ".";
+            }
+            case "clear" -> {
+                clearClassProgression(player);
+                player.setPlayerClass(null);
+                rebuildPlayerRuntime(player);
+                mod.getPlayerDataManager().savePlayerData(player);
+                yield "[MOTM] Dev: class cleared.";
+            }
+            default -> "[MOTM] Usage: /motm dev class <set|clear> [classId]";
+        };
+    }
+
+    private String handleDevRace(PlayerData player, String[] args) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev race <set|clear> [raceId]";
+        }
+
+        return switch (args[2].toLowerCase()) {
+            case "set" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev race set <raceId>";
+                }
+
+                String raceId = args[3].toLowerCase();
+                if (!mod.getDataLoader().isValidRace(raceId)) {
+                    yield "[MOTM] Invalid race. Use /motm race to see valid options.";
+                }
+
+                player.setRace(raceId);
+                rebuildPlayerRuntime(player);
+                mod.getPlayerDataManager().savePlayerData(player);
+
+                RaceData race = mod.getDataLoader().getRaceById(raceId);
+                yield "[MOTM] Dev: race set to " + race.getName() + ".";
+            }
+            case "clear" -> {
+                player.setRace(null);
+                rebuildPlayerRuntime(player);
+                mod.getPlayerDataManager().savePlayerData(player);
+                yield "[MOTM] Dev: race cleared.";
+            }
+            default -> "[MOTM] Usage: /motm dev race <set|clear> [raceId]";
+        };
+    }
+
+    private String handleDevPerks(PlayerData player, String[] args) {
+        if (args.length < 3 || !"clear".equalsIgnoreCase(args[2])) {
+            return "[MOTM] Usage: /motm dev perks clear";
+        }
+
+        clearPerkProgression(player);
+        updateDebugProgressionState(player);
+        rebuildPlayerRuntime(player);
+        mod.getPlayerDataManager().savePlayerData(player);
+        return "[MOTM] Dev: perks and perk history cleared.";
+    }
+
+    private String handleDevStyles(PlayerData player, String[] args) {
+        if (args.length < 3 || !"clear".equalsIgnoreCase(args[2])) {
+            return "[MOTM] Usage: /motm dev styles clear";
+        }
+
+        player.getSelectedStyles().clear();
+        mod.getStyleManager().resetCooldowns(player.getPlayerId());
+        mod.getPlayerDataManager().savePlayerData(player);
+        return "[MOTM] Dev: styles cleared.";
+    }
+
+    private String handleDevReset(PlayerData player, String[] args) {
+        if (args.length < 3 || !"player".equalsIgnoreCase(args[2])) {
+            return "[MOTM] Usage: /motm dev reset player";
+        }
+
+        resetPlayerForDev(player);
+        rebuildPlayerRuntime(player);
+        mod.getPlayerDataManager().savePlayerData(player);
+        return "[MOTM] Dev: player progression reset to a fresh state.";
     }
 
     // --- /motm resources ---
@@ -396,10 +583,122 @@ public class MotmCommand {
                 + "  /motm resources         - View class resources\n"
                 + "  /motm stats             - View your statistics\n"
                 + "  /motm level             - View XP progress\n"
+                + "  /motm dev ...           - Testing/admin tools\n"
                 + "  /motm help              - Show this help";
     }
 
     private String getHelpMessage() {
         return handleInfo();
+    }
+
+    private String getDevHelpMessage() {
+        return "[MOTM] === Dev Commands ===\n"
+                + "  /motm dev level set <n>\n"
+                + "  /motm dev level add <n>\n"
+                + "  /motm dev xp set <n>\n"
+                + "  /motm dev xp add <n>\n"
+                + "  /motm dev class set <id>\n"
+                + "  /motm dev class clear\n"
+                + "  /motm dev race set <id>\n"
+                + "  /motm dev race clear\n"
+                + "  /motm dev perks clear\n"
+                + "  /motm dev styles clear\n"
+                + "  /motm dev reset player";
+    }
+
+    private void rebuildPlayerRuntime(PlayerData player) {
+        String playerId = player.getPlayerId();
+
+        mod.getStyleManager().resetCooldowns(playerId);
+        mod.getStatusEffectManager().clearEffects(playerId);
+        mod.getElementalReactionManager().clearMarks(playerId);
+        mod.getResourceManager().clearPlayerState(playerId);
+        mod.getResourceManager().synchronizePersistentState(player);
+
+        player.clearSynergyBonuses();
+        player.clearRaceBonuses();
+
+        if (player.getPlayerClass() == null) {
+            return;
+        }
+
+        mod.getResourceManager().initializeForPlayer(playerId, player.getPlayerClass());
+        mod.getPerkManager().reapplyAllPerks(player, mod.getSynergyEngine());
+
+        if (player.getRace() != null) {
+            mod.getRaceManager().applyRaceBonuses(player, mod.getStatusEffectManager());
+        }
+    }
+
+    private void clearClassProgression(PlayerData player) {
+        clearPerkProgression(player);
+        player.getSelectedStyles().clear();
+        player.getClassResources().clear();
+        mod.getStyleManager().resetCooldowns(player.getPlayerId());
+    }
+
+    private void clearPerkProgression(PlayerData player) {
+        player.getSelectedPerks().clear();
+        player.getPerkSelectionHistory().clear();
+        player.setPerkSelectionPoints(0);
+        player.setPendingPerkTier(null);
+        player.clearSynergyBonuses();
+    }
+
+    private void updateDebugProgressionState(PlayerData player) {
+        int availableSelections = Math.max(0,
+                mod.getPerkManager().getCurrentTier(player.getLevel()) - player.getPerkSelectionHistory().size());
+        player.setPerkSelectionPoints(availableSelections);
+        player.setPendingPerkTier(availableSelections > 0
+                ? player.getPerkSelectionHistory().size() + 1
+                : null);
+    }
+
+    private void resetPlayerForDev(PlayerData player) {
+        player.setPlayerClass(null);
+        player.setRace(null);
+        player.setLevel(1);
+        player.setCurrentXp(0);
+        player.setTotalXpEarned(0);
+        player.setFirstJoin(true);
+        player.getSelectedPerks().clear();
+        player.getPerkSelectionHistory().clear();
+        player.setPerkSelectionPoints(0);
+        player.setPendingPerkTier(null);
+        player.getSelectedStyles().clear();
+        player.getClassResources().clear();
+        player.setWaterContainerTier(0);
+        player.getAchievements().clear();
+
+        player.getStatistics().getMobsKilled().clear();
+        player.getStatistics().getBossesDefeated().clear();
+        player.getStatistics().setTotalDamageDealt(0);
+        player.getStatistics().setTotalDamageTaken(0);
+        player.getStatistics().setTotalHealingDone(0);
+        player.getStatistics().setDeaths(0);
+        player.getStatistics().setPlaytimeSeconds(0);
+        player.getStatistics().setHighestCombo(0);
+
+        player.initRuntimeFields();
+        player.getRecentKills().clear();
+        player.setComboCount(0);
+        player.setLastKillTime(null);
+        player.setPartySize(1);
+        player.setRestedBonus(0);
+        player.setLastLogoutTimestamp(null);
+        player.clearSynergyBonuses();
+        player.clearRaceBonuses();
+    }
+
+    private Integer parseInteger(String rawValue) {
+        try {
+            return Integer.parseInt(rawValue);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private int clampLevel(int level) {
+        return Math.max(1, Math.min(LevelingManager.MAX_LEVEL, level));
     }
 }
