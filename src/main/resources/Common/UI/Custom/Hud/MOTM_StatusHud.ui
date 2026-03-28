@@ -1,0 +1,1466 @@
+Group #Root {
+  Anchor: (
+    Bottom: 32,
+    Width: 420,
+    Height: 248
+  );
+
+  Group #StatusRoot {
+    Anchor: (
+      Bottom: 154,
+      Width: 420,
+      Height: 34
+    );
+
+    Label #StatusLine1 {
+      Anchor: (
+        Left: 0,
+        Top: 0,
+        Width: 420,
+        Height: 14
+      );
+      Visible: false;
+      Style: (
+        Alignment: Center,
+        FontSize: 11,
+        RenderBold: true,
+        TextColor: #f2f3f8
+      );
+    }
+
+    Label #StatusLine2 {
+      Anchor: (
+        Left: 0,
+        Top: 16,
+        Width: 420,
+        Height: 14
+      );
+      Visible: false;
+      Style: (
+        Alignment: Center,
+        FontSize: 10,
+        TextColor: #d6d9e5
+      );
+    }
+
+    Group #BuffStatus1Root {
+      Anchor: (
+        Left: 40,
+        Width: 48,
+        Height: 60
+      );
+      Visible: false;
+
+      Group #BuffStatus1BuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1DebuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DebuffBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1DisabledBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1ArrowBuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuff.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1ArrowBuffDisabled {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuffDisabled.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1ArrowDebuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: 46);
+        Background: "Assets/StatusEffects/ArrowDebuff.png";
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus1CooldownBuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGreen@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus1CooldownDebuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillRed@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus1CooldownPassive {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGrey@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      Group #BuffStatus1IconAttack {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1IconDefense {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1IconHealth {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1IconSpeed {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1IconStamina {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1IconShield {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1IconMagic {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus1IconSword {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #BuffStatus1Counter {
+        Anchor: (Left: 28, Top: 3, Width: 16, Height: 12);
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 9,
+          RenderBold: true,
+          TextColor: #ffffe6
+        );
+      }
+
+      Label #BuffStatus1Tag {
+        Anchor: (Left: 2, Top: 8, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          TextColor: #f4f4f6
+        );
+      }
+
+      Label #BuffStatus1Detail {
+        Anchor: (Left: 2, Top: 24, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          TextColor: #d6d9e5
+        );
+      }
+    }
+
+    Group #BuffStatus2Root {
+      Anchor: (
+        Left: 92,
+        Width: 48,
+        Height: 60
+      );
+      Visible: false;
+
+      Group #BuffStatus2BuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2DebuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DebuffBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2DisabledBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2ArrowBuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuff.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2ArrowBuffDisabled {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuffDisabled.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2ArrowDebuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: 46);
+        Background: "Assets/StatusEffects/ArrowDebuff.png";
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus2CooldownBuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGreen@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus2CooldownDebuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillRed@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus2CooldownPassive {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGrey@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      Group #BuffStatus2IconAttack {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2IconDefense {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2IconHealth {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2IconSpeed {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2IconStamina {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2IconShield {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2IconMagic {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus2IconSword {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #BuffStatus2Counter {
+        Anchor: (Left: 28, Top: 3, Width: 16, Height: 12);
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 9,
+          RenderBold: true,
+          TextColor: #ffffe6
+        );
+      }
+
+      Label #BuffStatus2Tag {
+        Anchor: (Left: 2, Top: 8, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          TextColor: #f4f4f6
+        );
+      }
+
+      Label #BuffStatus2Detail {
+        Anchor: (Left: 2, Top: 24, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          TextColor: #d6d9e5
+        );
+      }
+    }
+
+    Group #BuffStatus3Root {
+      Anchor: (
+        Left: 144,
+        Width: 48,
+        Height: 60
+      );
+      Visible: false;
+
+      Group #BuffStatus3BuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3DebuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DebuffBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3DisabledBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3ArrowBuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuff.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3ArrowBuffDisabled {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuffDisabled.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3ArrowDebuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: 46);
+        Background: "Assets/StatusEffects/ArrowDebuff.png";
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus3CooldownBuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGreen@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus3CooldownDebuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillRed@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #BuffStatus3CooldownPassive {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGrey@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      Group #BuffStatus3IconAttack {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3IconDefense {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3IconHealth {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3IconSpeed {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3IconStamina {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3IconShield {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3IconMagic {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #BuffStatus3IconSword {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #BuffStatus3Counter {
+        Anchor: (Left: 28, Top: 3, Width: 16, Height: 12);
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 9,
+          RenderBold: true,
+          TextColor: #ffffe6
+        );
+      }
+
+      Label #BuffStatus3Tag {
+        Anchor: (Left: 2, Top: 8, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          TextColor: #f4f4f6
+        );
+      }
+
+      Label #BuffStatus3Detail {
+        Anchor: (Left: 2, Top: 24, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          TextColor: #d6d9e5
+        );
+      }
+    }
+
+    Group #DebuffStatus1Root {
+      Anchor: (
+        Left: 236,
+        Width: 48,
+        Height: 60
+      );
+      Visible: false;
+
+      Group #DebuffStatus1BuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1DebuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DebuffBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1DisabledBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1ArrowBuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuff.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1ArrowBuffDisabled {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuffDisabled.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1ArrowDebuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: 46);
+        Background: "Assets/StatusEffects/ArrowDebuff.png";
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus1CooldownBuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGreen@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus1CooldownDebuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillRed@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus1CooldownPassive {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGrey@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      Group #DebuffStatus1IconAttack {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1IconDefense {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1IconHealth {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1IconSpeed {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1IconStamina {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1IconShield {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1IconMagic {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus1IconSword {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #DebuffStatus1Counter {
+        Anchor: (Left: 28, Top: 3, Width: 16, Height: 12);
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 9,
+          RenderBold: true,
+          TextColor: #ffffe6
+        );
+      }
+
+      Label #DebuffStatus1Tag {
+        Anchor: (Left: 2, Top: 8, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          TextColor: #f4f4f6
+        );
+      }
+
+      Label #DebuffStatus1Detail {
+        Anchor: (Left: 2, Top: 24, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          TextColor: #d6d9e5
+        );
+      }
+    }
+
+    Group #DebuffStatus2Root {
+      Anchor: (
+        Left: 288,
+        Width: 48,
+        Height: 60
+      );
+      Visible: false;
+
+      Group #DebuffStatus2BuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2DebuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DebuffBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2DisabledBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2ArrowBuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuff.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2ArrowBuffDisabled {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuffDisabled.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2ArrowDebuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: 46);
+        Background: "Assets/StatusEffects/ArrowDebuff.png";
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus2CooldownBuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGreen@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus2CooldownDebuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillRed@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus2CooldownPassive {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGrey@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      Group #DebuffStatus2IconAttack {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2IconDefense {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2IconHealth {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2IconSpeed {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2IconStamina {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2IconShield {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2IconMagic {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus2IconSword {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #DebuffStatus2Counter {
+        Anchor: (Left: 28, Top: 3, Width: 16, Height: 12);
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 9,
+          RenderBold: true,
+          TextColor: #ffffe6
+        );
+      }
+
+      Label #DebuffStatus2Tag {
+        Anchor: (Left: 2, Top: 8, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          TextColor: #f4f4f6
+        );
+      }
+
+      Label #DebuffStatus2Detail {
+        Anchor: (Left: 2, Top: 24, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          TextColor: #d6d9e5
+        );
+      }
+    }
+
+    Group #DebuffStatus3Root {
+      Anchor: (
+        Left: 340,
+        Width: 48,
+        Height: 60
+      );
+      Visible: false;
+
+      Group #DebuffStatus3BuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3DebuffBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DebuffBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3DisabledBg {
+        Anchor: (Width: 48, Height: 48);
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3ArrowBuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuff.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3ArrowBuffDisabled {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: -7);
+        Background: "Assets/StatusEffects/ArrowBuffDisabled.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3ArrowDebuff {
+        Anchor: (Width: 14, Height: 9, Left: 3, Top: 46);
+        Background: "Assets/StatusEffects/ArrowDebuff.png";
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus3CooldownBuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGreen@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus3CooldownDebuff {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillRed@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      ProgressBar #DebuffStatus3CooldownPassive {
+        Anchor: (Width: 34, Height: 34, Left: 7, Top: 7);
+        BarTexturePath: "Assets/StatusEffects/StatusEffectBarFillGrey@2x.png";
+        EffectTexturePath: "Assets/StatusEffects/LineCooldownDisabled.png";
+        EffectWidth: 34;
+        EffectHeight: 2;
+        Value: 0;
+        Direction: Start;
+        Alignment: Vertical;
+        Visible: false;
+      }
+
+      Group #DebuffStatus3IconAttack {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3IconDefense {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3IconHealth {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3IconSpeed {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3IconStamina {
+        Anchor: (Width: 28, Height: 28, Left: 10, Top: 10);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3IconShield {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3IconMagic {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #DebuffStatus3IconSword {
+        Anchor: (Width: 24, Height: 24, Left: 12, Top: 10);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #DebuffStatus3Counter {
+        Anchor: (Left: 28, Top: 3, Width: 16, Height: 12);
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 9,
+          RenderBold: true,
+          TextColor: #ffffe6
+        );
+      }
+
+      Label #DebuffStatus3Tag {
+        Anchor: (Left: 2, Top: 8, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          TextColor: #f4f4f6
+        );
+      }
+
+      Label #DebuffStatus3Detail {
+        Anchor: (Left: 2, Top: 24, Width: 44, Height: 12);
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          TextColor: #d6d9e5
+        );
+      }
+    }
+  }
+
+  Group #XpRoot {
+    Anchor: (
+      Bottom: 126,
+      Width: 420,
+      Height: 24
+    );
+
+    ProgressBar #XpBar {
+      Anchor: (
+        Left: 0,
+        Top: 0,
+        Width: 420,
+        Height: 8
+      );
+      BarTexturePath: "Assets/BarFill_Xp.png";
+    }
+
+    Label #XpLabel {
+      Anchor: (
+        Left: 0,
+        Top: 10,
+        Width: 420,
+        Height: 12
+      );
+      Style: (
+        FontSize: 12,
+        RenderBold: true,
+        TextColor: #f4eed2
+      );
+    }
+
+    Label #XpMilestone {
+      Anchor: (
+        Left: 0,
+        Top: 22,
+        Width: 420,
+        Height: 12
+      );
+      Visible: false;
+      Style: (
+        FontSize: 11,
+        TextColor: #c7c8d2
+      );
+    }
+  }
+
+  Group #ResourceRoot {
+    Anchor: (
+      Bottom: 88,
+      Width: 420,
+      Height: 30
+    );
+    Visible: false;
+
+    Label #ResourceTitle {
+      Anchor: (
+        Left: 0,
+        Top: 0,
+        Width: 420,
+        Height: 12
+      );
+      Style: (
+        FontSize: 12,
+        RenderBold: true,
+        TextColor: #f4f4f6
+      );
+    }
+
+    ProgressBar #ResourceTerraBar {
+      Anchor: (
+        Left: 0,
+        Top: 14,
+        Width: 420,
+        Height: 8
+      );
+      BarTexturePath: "Assets/BarFill_Terra.png";
+      Visible: false;
+    }
+
+    ProgressBar #ResourceHydroBar {
+      Anchor: (
+        Left: 0,
+        Top: 14,
+        Width: 420,
+        Height: 8
+      );
+      BarTexturePath: "Assets/BarFill_Hydro.png";
+      Visible: false;
+    }
+
+    ProgressBar #ResourceAeroBar {
+      Anchor: (
+        Left: 0,
+        Top: 14,
+        Width: 420,
+        Height: 8
+      );
+      BarTexturePath: "Assets/BarFill_Aero.png";
+      Visible: false;
+    }
+
+    ProgressBar #ResourceCorruptusBar {
+      Anchor: (
+        Left: 0,
+        Top: 14,
+        Width: 420,
+        Height: 8
+      );
+      BarTexturePath: "Assets/BarFill_Corruptus.png";
+      Visible: false;
+    }
+
+    Label #ResourceLabel {
+      Anchor: (
+        Left: 0,
+        Top: 18,
+        Width: 420,
+        Height: 12
+      );
+      Style: (
+        FontSize: 11,
+        TextColor: #dadbe4
+      );
+    }
+  }
+
+  Group #AbilitySlotsRoot {
+    Anchor: (
+      Right: -660,
+      Bottom: 32,
+      Width: 246,
+      Height: 64
+    );
+    Visible: false;
+
+    Group #Ability1Root {
+      Anchor: (
+        Left: 0,
+        Width: 74,
+        Height: 64
+      );
+      Visible: false;
+
+      Group #Ability1ReadyBg {
+        Anchor: (
+          Left: 14,
+          Top: 0,
+          Width: 48,
+          Height: 48
+        );
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #Ability1CooldownBg {
+        Anchor: (
+          Left: 14,
+          Top: 0,
+          Width: 48,
+          Height: 48
+        );
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #Ability1IconAttack {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #Ability1IconDefense {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #Ability1IconHealth {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #Ability1IconSpeed {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #Ability1IconStamina {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #Ability1IconShield {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #Ability1IconMagic {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #Ability1IconSword {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #Ability1Timer {
+        Anchor: (
+          Left: 14,
+          Top: 15,
+          Width: 48,
+          Height: 16
+        );
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 13,
+          RenderBold: true,
+          TextColor: #fff7d6
+        );
+      }
+
+      Label #Ability1Name {
+        Anchor: (
+          Left: 0,
+          Top: 46,
+          Width: 74,
+          Height: 16
+        );
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          RenderBold: true,
+          TextColor: #f2f3f8
+        );
+      }
+    }
+
+    Group #Ability2Root {
+      Anchor: (
+        Left: 86,
+        Width: 74,
+        Height: 64
+      );
+      Visible: false;
+
+      Group #Ability2ReadyBg {
+        Anchor: (
+          Left: 14,
+          Top: 0,
+          Width: 48,
+          Height: 48
+        );
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #Ability2CooldownBg {
+        Anchor: (
+          Left: 14,
+          Top: 0,
+          Width: 48,
+          Height: 48
+        );
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #Ability2IconAttack {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #Ability2IconDefense {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #Ability2IconHealth {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #Ability2IconSpeed {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #Ability2IconStamina {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #Ability2IconShield {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #Ability2IconMagic {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #Ability2IconSword {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #Ability2Timer {
+        Anchor: (
+          Left: 14,
+          Top: 15,
+          Width: 48,
+          Height: 16
+        );
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 13,
+          RenderBold: true,
+          TextColor: #fff7d6
+        );
+      }
+
+      Label #Ability2Name {
+        Anchor: (
+          Left: 0,
+          Top: 46,
+          Width: 74,
+          Height: 16
+        );
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          RenderBold: true,
+          TextColor: #f2f3f8
+        );
+      }
+    }
+
+    Group #Ability3Root {
+      Anchor: (
+        Left: 172,
+        Width: 74,
+        Height: 64
+      );
+      Visible: false;
+
+      Group #Ability3ReadyBg {
+        Anchor: (
+          Left: 14,
+          Top: 0,
+          Width: 48,
+          Height: 48
+        );
+        Background: "Assets/StatusEffects/BuffBackground.png";
+        Visible: false;
+      }
+
+      Group #Ability3CooldownBg {
+        Anchor: (
+          Left: 14,
+          Top: 0,
+          Width: 48,
+          Height: 48
+        );
+        Background: "Assets/StatusEffects/DisabledBackground.png";
+        Visible: false;
+      }
+
+      Group #Ability3IconAttack {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatAttack.png";
+        Visible: false;
+      }
+
+      Group #Ability3IconDefense {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatDefense.png";
+        Visible: false;
+      }
+
+      Group #Ability3IconHealth {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatHealth.png";
+        Visible: false;
+      }
+
+      Group #Ability3IconSpeed {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatSpeed.png";
+        Visible: false;
+      }
+
+      Group #Ability3IconStamina {
+        Anchor: (Left: 24, Top: 10, Width: 28, Height: 28);
+        Background: "Assets/StatusEffects/Icons/IconStatStamina.png";
+        Visible: false;
+      }
+
+      Group #Ability3IconShield {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #Ability3IconMagic {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/SignatureAbility@2x.png";
+        Visible: false;
+      }
+
+      Group #Ability3IconSword {
+        Anchor: (Left: 26, Top: 12, Width: 24, Height: 24);
+        Background: "Assets/StatusEffects/Icons/SwordChargeUpAttack@2x.png";
+        Visible: false;
+      }
+
+      Label #Ability3Timer {
+        Anchor: (
+          Left: 14,
+          Top: 15,
+          Width: 48,
+          Height: 16
+        );
+        Visible: false;
+        Style: (
+          Alignment: Center,
+          FontSize: 13,
+          RenderBold: true,
+          TextColor: #fff7d6
+        );
+      }
+
+      Label #Ability3Name {
+        Anchor: (
+          Left: 0,
+          Top: 46,
+          Width: 74,
+          Height: 16
+        );
+        Style: (
+          Alignment: Center,
+          FontSize: 8,
+          RenderBold: true,
+          TextColor: #f2f3f8
+        );
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 param(
-    [switch]$BuildOnly
+    [switch]$BuildOnly,
+    [switch]$PublicRelease
 )
 
 $ErrorActionPreference = "Stop"
@@ -114,6 +115,7 @@ if (-not (Test-Path $jdkJavaExe) -or -not (Test-Path $jdkJavacExe)) {
 $env:JAVA_HOME = $jdkRoot
 $env:PATH = "$jdkRoot\\bin;$env:PATH"
 $serverVersion = Get-HytaleServerVersion -ServerJarPath $hytaleServerJar
+$buildChannel = if ($PublicRelease) { "public" } else { "internal" }
 
 $tasks = @("build")
 if (-not $BuildOnly) {
@@ -122,7 +124,26 @@ if (-not $BuildOnly) {
 
 Push-Location $repoRoot
 try {
-    & $gradleExe "-Dorg.gradle.java.installations.paths=$jdkRoot" "-Pserver_version=$serverVersion" @tasks
+    & $gradleExe "-Dorg.gradle.java.installations.paths=$jdkRoot" "-Pserver_version=$serverVersion" "-Pmotm_build_channel=$buildChannel" @tasks
+
+    if (-not $BuildOnly) {
+        $modsDir = Join-Path $env:APPDATA "Hytale\\UserData\\Mods"
+        $modVersion = ((Get-Content (Join-Path $repoRoot 'gradle.properties') | Where-Object { $_ -like 'mod_version=*' }).Split('=')[1])
+        $jarName = if ($buildChannel -eq "internal") {
+            "mentees_of_the_mystical-$modVersion-internal.jar"
+        } else {
+            "mentees_of_the_mystical-$modVersion.jar"
+        }
+        $builtJar = Join-Path $repoRoot "build\\libs\\$jarName"
+
+        Get-ChildItem -Path $modsDir -Filter "mentees_of_the_mystical-*.jar" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -ne $builtJar } |
+            Remove-Item -Force -ErrorAction SilentlyContinue
+
+        if (Test-Path $builtJar) {
+            Copy-Item -Path $builtJar -Destination $modsDir -Force
+        }
+    }
 } finally {
     Pop-Location
 }

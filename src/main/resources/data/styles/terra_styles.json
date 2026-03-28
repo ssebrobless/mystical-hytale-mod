@@ -5,7 +5,7 @@
       "name": "Quake",
       "class_id": "terra",
       "theme": "Knockback, AoE, ground control",
-      "resource_type": "rocks",
+      "resource_type": "stone_blocks",
       "abilities": [
         {
           "id": "stomp",
@@ -13,9 +13,15 @@
           "description": "Shockwave that damages and knocks back",
           "damage_percent": 5,
           "cooldown_seconds": 2,
+          "cast_time_seconds": 0.25,
+          "recovery_seconds": 0.18,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "charges": 4,
+          "charge_recharge_seconds": 2.0,
           "resource_cost": 2,
           "cast_type": "ground_burst",
           "target_type": "self_centered",
@@ -29,8 +35,12 @@
           "description": "Slow and disorient enemies",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "slow+disoriented",
-          "categories": ["debuff"],
+          "categories": [
+            "debuff"
+          ],
           "resource_cost": 2,
           "cast_type": "ground_zone",
           "target_type": "self_centered",
@@ -44,8 +54,13 @@
           "description": "Bury enemy, dealing suffocation damage",
           "damage_percent": 15,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.6,
+          "recovery_seconds": 0.28,
           "effect": "stun",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_target",
           "target_type": "enemy",
@@ -62,7 +77,7 @@
       "name": "Metal",
       "class_id": "terra",
       "theme": "Defense, walls, self-healing",
-      "resource_type": "iron_ore",
+      "resource_type": "metal",
       "abilities": [
         {
           "id": "iron_wall",
@@ -70,8 +85,12 @@
           "description": "Create barrier, heal 10% HP",
           "damage_percent": 0,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "heal",
-          "categories": ["healing"],
+          "categories": [
+            "healing"
+          ],
           "heal_percent": 10,
           "resource_cost": 4,
           "cast_type": "barrier",
@@ -88,8 +107,12 @@
           "description": "Gain 20% damage reduction for 3 turns",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "defense_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 3,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -102,8 +125,12 @@
           "description": "Boost next attack by 35%",
           "damage_percent": 0,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "damage_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 2,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -116,7 +143,7 @@
       "name": "Magma",
       "class_id": "terra",
       "theme": "Lava, area denial, burn damage",
-      "resource_type": "rocks",
+      "resource_type": "stone_blocks",
       "abilities": [
         {
           "id": "lava_pool",
@@ -124,8 +151,13 @@
           "description": "Create lava that burns over time",
           "damage_percent": 8,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "burn",
-          "categories": ["dot", "aoe"],
+          "categories": [
+            "dot",
+            "aoe"
+          ],
           "resource_cost": 2,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -140,8 +172,12 @@
           "description": "Shield equal to 30% HP, reduce damage taken",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "shield",
-          "categories": ["shielding"],
+          "categories": [
+            "shielding"
+          ],
           "shield_percent": 30,
           "resource_cost": 3,
           "cast_type": "self_buff",
@@ -155,8 +191,13 @@
           "description": "Ranged attack with slow and burn",
           "damage_percent": 10,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "burn+slow",
-          "categories": ["dot", "debuff"],
+          "categories": [
+            "dot",
+            "debuff"
+          ],
           "resource_cost": 2,
           "cast_type": "projectile",
           "target_type": "enemy",
@@ -172,7 +213,7 @@
       "name": "Stone",
       "class_id": "terra",
       "theme": "Heavy strikes, knockback, crowd control",
-      "resource_type": "rocks",
+      "resource_type": "stone_blocks",
       "abilities": [
         {
           "id": "rubble_rouser",
@@ -180,8 +221,13 @@
           "description": "Hurl rubble that knocks back the enemy",
           "damage_percent": 8,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 2,
           "cast_type": "projectile",
           "target_type": "enemy",
@@ -197,8 +243,13 @@
           "description": "Slam a stone pillar down, stunning the target",
           "damage_percent": 15,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.7,
+          "recovery_seconds": 0.28,
           "effect": "stun",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_strike",
           "target_type": "ground_target",
@@ -216,8 +267,13 @@
           "description": "Trigger a rockslide dealing heavy damage and slowing",
           "damage_percent": 20,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.32,
           "effect": "slow",
-          "categories": ["damage", "debuff"],
+          "categories": [
+            "damage",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -234,7 +290,7 @@
       "name": "Arbor",
       "class_id": "terra",
       "theme": "Nature, healing, minions",
-      "resource_type": "wood",
+      "resource_type": "seeds",
       "abilities": [
         {
           "id": "rooted",
@@ -242,8 +298,12 @@
           "description": "Root yourself to heal 20% HP and regenerate",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "heal",
-          "categories": ["healing"],
+          "categories": [
+            "healing"
+          ],
           "heal_percent": 20,
           "resource_cost": 3,
           "cast_type": "self_buff",
@@ -257,8 +317,13 @@
           "description": "Entangle the enemy with thorny vines",
           "damage_percent": 5,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.4,
+          "recovery_seconds": 0.24,
           "effect": "stun",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 2,
           "cast_type": "line_control",
           "target_type": "enemy",
@@ -274,8 +339,12 @@
           "description": "Summon a treant sapling to fight alongside you",
           "damage_percent": 0,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.4,
           "effect": "summon",
-          "categories": ["summon"],
+          "categories": [
+            "summon"
+          ],
           "resource_cost": 3,
           "cast_type": "summon",
           "target_type": "ground_target",
@@ -299,8 +368,12 @@
           "description": "Release toxic spores that poison the enemy",
           "damage_percent": 8,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.25,
+          "recovery_seconds": 0.18,
           "effect": "dot",
-          "categories": ["dot"],
+          "categories": [
+            "dot"
+          ],
           "resource_cost": 2,
           "cast_type": "cone",
           "target_type": "cone",
@@ -315,8 +388,13 @@
           "description": "Dance among flowers, healing and gaining speed",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "heal+attack_buff",
-          "categories": ["healing", "buff"],
+          "categories": [
+            "healing",
+            "buff"
+          ],
           "heal_percent": 15,
           "resource_cost": 3,
           "cast_type": "self_buff",
@@ -329,8 +407,13 @@
           "description": "Launch cactus needles that slow and poison",
           "damage_percent": 10,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.32,
+          "recovery_seconds": 0.22,
           "effect": "dot+slow",
-          "categories": ["dot", "debuff"],
+          "categories": [
+            "dot",
+            "debuff"
+          ],
           "resource_cost": 2,
           "cast_type": "projectile_volley",
           "target_type": "enemy",
@@ -346,7 +429,7 @@
       "name": "Self Petrification",
       "class_id": "terra",
       "theme": "Stone form, stuns, invulnerability",
-      "resource_type": "rocks",
+      "resource_type": "stone_blocks",
       "abilities": [
         {
           "id": "gargoyle",
@@ -354,8 +437,13 @@
           "description": "Turn to stone, healing and gaining a shield",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "heal+shield",
-          "categories": ["healing", "shielding"],
+          "categories": [
+            "healing",
+            "shielding"
+          ],
           "heal_percent": 15,
           "shield_percent": 20,
           "resource_cost": 3,
@@ -370,8 +458,12 @@
           "description": "Petrifying gaze that stuns for 2 turns",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.38,
+          "recovery_seconds": 0.22,
           "effect": "stun",
-          "categories": ["crowd_control"],
+          "categories": [
+            "crowd_control"
+          ],
           "resource_cost": 3,
           "cast_type": "gaze",
           "target_type": "enemy",
@@ -384,8 +476,14 @@
           "description": "Burrow underground and strike from below",
           "damage_percent": 12,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.4,
+          "recovery_seconds": 0.16,
           "effect": "evasion",
-          "categories": ["damage", "evasion", "dash"],
+          "categories": [
+            "damage",
+            "evasion",
+            "dash"
+          ],
           "resource_cost": 2,
           "cast_type": "dash",
           "target_type": "enemy",
@@ -404,7 +502,7 @@
       "name": "Soil",
       "class_id": "terra",
       "theme": "Burrowing, debuffs, area control",
-      "resource_type": "dirt",
+      "resource_type": "dirt_blocks",
       "abilities": [
         {
           "id": "burrow",
@@ -412,9 +510,16 @@
           "description": "Emerge from the ground in a devastating strike",
           "damage_percent": 20,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control", "dash"],
+          "categories": [
+            "damage",
+            "crowd_control",
+            "dash"
+          ],
           "charges": 2,
+          "charge_recharge_seconds": 5.0,
           "resource_cost": 2,
           "cast_type": "dash",
           "target_type": "enemy",
@@ -433,8 +538,13 @@
           "description": "Trap the enemy in sticky mud",
           "damage_percent": 10,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "slow+vulnerability",
-          "categories": ["damage", "debuff"],
+          "categories": [
+            "damage",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -449,8 +559,13 @@
           "description": "Fling debris that blinds and weakens",
           "damage_percent": 10,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.32,
+          "recovery_seconds": 0.22,
           "effect": "vulnerability",
-          "categories": ["damage", "debuff"],
+          "categories": [
+            "damage",
+            "debuff"
+          ],
           "resource_cost": 2,
           "cast_type": "projectile_volley",
           "target_type": "enemy",
@@ -466,7 +581,7 @@
       "name": "Sand",
       "class_id": "terra",
       "theme": "Desert storms, erosion, glass",
-      "resource_type": "sand",
+      "resource_type": "sand_blocks",
       "abilities": [
         {
           "id": "sandstorm",
@@ -474,8 +589,14 @@
           "description": "Conjure a blinding sandstorm that damages over time",
           "damage_percent": 5,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "dot+slow",
-          "categories": ["dot", "debuff", "aoe"],
+          "categories": [
+            "dot",
+            "debuff",
+            "aoe"
+          ],
           "resource_cost": 2,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -490,8 +611,13 @@
           "description": "Spin up a dust devil that knocks back",
           "damage_percent": 12,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 2,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -508,9 +634,14 @@
           "description": "Superheated sand burns the enemy",
           "damage_percent": 8,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "burn",
-          "categories": ["dot"],
+          "categories": [
+            "dot"
+          ],
           "charges": 3,
+          "charge_recharge_seconds": 4.0,
           "resource_cost": 2,
           "cast_type": "projectile",
           "target_type": "enemy",
@@ -526,7 +657,7 @@
       "name": "Gem",
       "class_id": "terra",
       "theme": "Crystals, shields, refraction",
-      "resource_type": "emerald",
+      "resource_type": "gems",
       "abilities": [
         {
           "id": "lapidary",
@@ -534,8 +665,12 @@
           "description": "Encase yourself in crystal for a powerful shield",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "shield",
-          "categories": ["shielding"],
+          "categories": [
+            "shielding"
+          ],
           "shield_percent": 30,
           "resource_cost": 4,
           "cast_type": "self_buff",
@@ -549,8 +684,12 @@
           "description": "Shatter crystals into the enemy for heavy damage",
           "damage_percent": 25,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "",
-          "categories": ["damage"],
+          "categories": [
+            "damage"
+          ],
           "resource_cost": 3,
           "cast_type": "projectile_line",
           "target_type": "enemy",
@@ -565,8 +704,12 @@
           "description": "Bend light through gems to boost attack and speed",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "attack_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 2,
           "cast_type": "self_buff",
           "target_type": "self",

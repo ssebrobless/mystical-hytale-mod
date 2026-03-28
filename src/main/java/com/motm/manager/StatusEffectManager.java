@@ -59,6 +59,27 @@ public class StatusEffectManager {
     }
 
     /**
+     * Remove all effects coming from a specific source ability or perk.
+     */
+    public int clearEffectsFromSource(String entityId, String sourcePerkOrAbility) {
+        if (entityId == null || sourcePerkOrAbility == null || sourcePerkOrAbility.isBlank()) {
+            return 0;
+        }
+
+        List<StatusEffect> effects = activeEffects.get(entityId);
+        if (effects == null || effects.isEmpty()) {
+            return 0;
+        }
+
+        int before = effects.size();
+        effects.removeIf(effect -> sourcePerkOrAbility.equalsIgnoreCase(effect.getSourcePerkOrAbility()));
+        if (effects.isEmpty()) {
+            activeEffects.remove(entityId);
+        }
+        return Math.max(0, before - effects.size());
+    }
+
+    /**
      * Tick all effects for a given entity. Returns damage-over-time total as % of max HP.
      */
     public double tickEffects(String entityId) {
@@ -148,6 +169,16 @@ public class StatusEffectManager {
     public double getDamageIncrease(String entityId) {
         return getEffects(entityId).stream()
                 .filter(e -> e.getType() == StatusEffect.Type.ATTACK_BUFF)
+                .mapToDouble(StatusEffect::getValue)
+                .sum();
+    }
+
+    /**
+     * Get movement / haste bonus from speed effects.
+     */
+    public double getSpeedBonus(String entityId) {
+        return getEffects(entityId).stream()
+                .filter(e -> e.getType() == StatusEffect.Type.SPEED_BUFF)
                 .mapToDouble(StatusEffect::getValue)
                 .sum();
     }

@@ -1,0 +1,14 @@
+{
+  "Duration": 0.35,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#c7bbff",
+    "EntityBottomTint": "#1f0f33",
+    "Particles": [
+      {
+        "SystemId": "Eye_Void_Smoke_Teal"
+      }
+    ],
+    "ModelVFXId": "Dagger_Dash"
+  }
+}

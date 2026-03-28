@@ -1,0 +1,17 @@
+{
+  "Duration": 0.35,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#a8a2ff",
+    "EntityBottomTint": "#27133d",
+    "Particles": [
+      {
+        "SystemId": "Eye_Void_Smoke_Teal"
+      },
+      {
+        "SystemId": "VoidImpact"
+      }
+    ],
+    "ModelVFXId": "Portal_Teleport"
+  }
+}

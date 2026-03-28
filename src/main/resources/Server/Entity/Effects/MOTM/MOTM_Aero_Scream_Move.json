@@ -1,0 +1,17 @@
+{
+  "Duration": 0.3,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#ebffff",
+    "EntityBottomTint": "#3da8de",
+    "Particles": [
+      {
+        "SystemId": "Wind"
+      },
+      {
+        "SystemId": "Daggers_Dash_Straight"
+      }
+    ],
+    "ModelVFXId": "Dagger_Dash"
+  }
+}

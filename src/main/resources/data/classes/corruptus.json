@@ -34,28 +34,22 @@
     "mana_regen": 0.15
   },
   "passive_ability": {
-    "id": "corruptus_passive_burning_soul",
-    "name": "Burning Soul",
-    "description": "Dealing damage marks enemies with Corruption for 4 seconds. Corrupted enemies take 2% increased damage per stack (max 5 stacks). Killing a corrupted enemy restores 5% max health and mana.",
+    "id": "corruptus_passive_soul_harvest",
+    "name": "Soul Harvest",
+    "description": "Hostile mobs slain by Corruptus grant Souls. Souls are spent like mana to fuel Corruptus abilities, so every kill feeds your next cast.",
     "effects": [
       {
-        "type": "on_damage_debuff",
-        "debuff": "corruption_mark",
-        "duration": 4.0,
-        "max_stacks": 5
+        "type": "resource_generation",
+        "resource": "souls",
+        "trigger": "mob_kill",
+        "value": 3,
+        "value_type": "per_kill",
+        "max": 50
       },
       {
-        "type": "debuff_damage_amplification",
-        "debuff": "corruption_mark",
-        "value": 0.02,
-        "value_type": "percent_per_stack"
-      },
-      {
-        "type": "on_kill_restore",
-        "condition": "target_has_corruption_mark",
-        "restore_health": 0.05,
-        "restore_mana": 0.05,
-        "value_type": "percent_max"
+        "type": "resource_cast_pool",
+        "resource": "souls",
+        "trigger": "ability_cast"
       }
     ]
   },

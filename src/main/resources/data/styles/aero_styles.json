@@ -5,7 +5,7 @@
       "name": "Scream",
       "class_id": "aero",
       "theme": "Sonic attacks, stuns, team buffs",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "shriek",
@@ -13,9 +13,13 @@
           "description": "Deafen enemy, reduce their accuracy",
           "damage_percent": 0,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.25,
+          "recovery_seconds": 0.18,
           "effect": "deafen",
-          "categories": ["debuff"],
-          "resource_cost": 2,
+          "categories": [
+            "debuff"
+          ],
+          "resource_cost": 0,
           "cast_type": "cone",
           "target_type": "cone",
           "range": 10,
@@ -28,9 +32,14 @@
           "description": "Shockwave that stuns",
           "damage_percent": 12,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "stun",
-          "categories": ["damage", "crowd_control"],
-          "resource_cost": 3,
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
+          "resource_cost": 0,
           "cast_type": "wave_line",
           "target_type": "line",
           "range": 14,
@@ -44,9 +53,13 @@
           "description": "Boost your attack and speed for 3 turns",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "attack_buff+speed",
-          "categories": ["buff"],
-          "resource_cost": 3,
+          "categories": [
+            "buff"
+          ],
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 6,
@@ -59,7 +72,7 @@
       "name": "Jet",
       "class_id": "aero",
       "theme": "Fast dashes, momentum",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "jet_burst",
@@ -67,10 +80,17 @@
           "description": "Dash attack, launch enemy",
           "damage_percent": 10,
           "cooldown_seconds": 2,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control", "dash"],
+          "categories": [
+            "damage",
+            "crowd_control",
+            "dash"
+          ],
           "charges": 3,
-          "resource_cost": 1,
+          "charge_recharge_seconds": 2.0,
+          "resource_cost": 0,
           "cast_type": "dash",
           "target_type": "enemy",
           "range": 10,
@@ -85,9 +105,14 @@
           "description": "Enhanced dash that leaves damage trail",
           "damage_percent": 15,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "burn",
-          "categories": ["dot", "dash"],
-          "resource_cost": 2,
+          "categories": [
+            "dot",
+            "dash"
+          ],
+          "resource_cost": 0,
           "cast_type": "dash",
           "target_type": "line",
           "range": 14,
@@ -102,9 +127,15 @@
           "description": "Powerful strike after dash",
           "damage_percent": 20,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "stun_if_wall",
-          "categories": ["damage", "crowd_control", "dash"],
-          "resource_cost": 1,
+          "categories": [
+            "damage",
+            "crowd_control",
+            "dash"
+          ],
+          "resource_cost": 0,
           "cast_type": "dash_strike",
           "target_type": "enemy",
           "range": 8,
@@ -119,7 +150,7 @@
       "name": "Thunder",
       "class_id": "aero",
       "theme": "Stuns, lightning damage",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "thunderclap",
@@ -127,9 +158,14 @@
           "description": "Stun all and apply shocked",
           "damage_percent": 0,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "stun+shocked",
-          "categories": ["crowd_control", "debuff"],
-          "resource_cost": 3,
+          "categories": [
+            "crowd_control",
+            "debuff"
+          ],
+          "resource_cost": 0,
           "cast_type": "self_burst",
           "target_type": "self_centered",
           "radius": 5,
@@ -142,10 +178,15 @@
           "description": "Lightning bolt, bonus vs shocked",
           "damage_percent": 20,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "lightning",
-          "categories": ["damage"],
+          "categories": [
+            "damage"
+          ],
           "charges": 2,
-          "resource_cost": 2,
+          "charge_recharge_seconds": 3.0,
+          "resource_cost": 0,
           "cast_type": "projectile",
           "target_type": "enemy",
           "range": 18,
@@ -158,9 +199,14 @@
           "description": "Continuous lightning damage",
           "damage_percent": 10,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.4,
+          "recovery_seconds": 0.24,
           "effect": "dot",
-          "categories": ["dot", "aoe"],
-          "resource_cost": 3,
+          "categories": [
+            "dot",
+            "aoe"
+          ],
+          "resource_cost": 0,
           "cast_type": "chain",
           "target_type": "enemy_cluster",
           "range": 16,
@@ -175,7 +221,7 @@
       "name": "Tornado",
       "class_id": "aero",
       "theme": "Whirlwinds, knockback, sustain",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "twister",
@@ -183,9 +229,14 @@
           "description": "Spin up a twister that knocks enemies back",
           "damage_percent": 10,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
-          "resource_cost": 3,
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 12,
@@ -200,9 +251,14 @@
           "description": "Create a funnel cloud that damages over time",
           "damage_percent": 8,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "dot",
-          "categories": ["dot", "aoe"],
-          "resource_cost": 3,
+          "categories": [
+            "dot",
+            "aoe"
+          ],
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 14,
@@ -217,11 +273,16 @@
           "description": "Find calm in the storm, healing and shielding",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "heal+shield",
-          "categories": ["healing", "shielding"],
+          "categories": [
+            "healing",
+            "shielding"
+          ],
           "heal_percent": 10,
           "shield_percent": 15,
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 6,
@@ -234,7 +295,7 @@
       "name": "Jump",
       "class_id": "aero",
       "theme": "Aerial mobility, diving strikes",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "leap",
@@ -242,10 +303,18 @@
           "description": "Launch into the air and crash down on the enemy",
           "damage_percent": 8,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "knockback+vulnerability",
-          "categories": ["damage", "crowd_control", "debuff", "dash"],
+          "categories": [
+            "damage",
+            "crowd_control",
+            "debuff",
+            "dash"
+          ],
           "charges": 2,
-          "resource_cost": 2,
+          "charge_recharge_seconds": 4.0,
+          "resource_cost": 0,
           "cast_type": "leap",
           "target_type": "enemy",
           "range": 10,
@@ -260,9 +329,14 @@
           "description": "Dive from great height for devastating damage",
           "damage_percent": 20,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.5,
+          "recovery_seconds": 0.2,
           "effect": "slow",
-          "categories": ["damage", "debuff"],
-          "resource_cost": 3,
+          "categories": [
+            "damage",
+            "debuff"
+          ],
+          "resource_cost": 0,
           "cast_type": "dive_strike",
           "target_type": "ground_target",
           "range": 12,
@@ -278,10 +352,15 @@
           "description": "Stay airborne to dodge incoming attacks",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "evasion",
-          "categories": ["evasion"],
+          "categories": [
+            "evasion"
+          ],
           "charges": 2,
-          "resource_cost": 2,
+          "charge_recharge_seconds": 5.0,
+          "resource_cost": 0,
           "cast_type": "air_stall",
           "target_type": "self",
           "duration_seconds": 3,
@@ -295,7 +374,7 @@
       "name": "Wind Blade",
       "class_id": "aero",
       "theme": "Cutting wind, rapid strikes",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "air_slash",
@@ -303,9 +382,13 @@
           "description": "Slice the air to send a cutting gust",
           "damage_percent": 8,
           "cooldown_seconds": 2,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "",
-          "categories": ["damage"],
-          "resource_cost": 2,
+          "categories": [
+            "damage"
+          ],
+          "resource_cost": 0,
           "cast_type": "projectile_line",
           "target_type": "enemy",
           "range": 16,
@@ -319,9 +402,14 @@
           "description": "A powerful wind blade that knocks back",
           "damage_percent": 12,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
-          "resource_cost": 3,
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
+          "resource_cost": 0,
           "cast_type": "projectile_line",
           "target_type": "enemy",
           "range": 18,
@@ -336,9 +424,13 @@
           "description": "Sharpen the wind around you for stronger attacks",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "attack_buff",
-          "categories": ["buff"],
-          "resource_cost": 2,
+          "categories": [
+            "buff"
+          ],
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 8
@@ -350,7 +442,7 @@
       "name": "Smoke",
       "class_id": "aero",
       "theme": "Stealth, debuffs, evasion",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "smoke_bomb",
@@ -358,9 +450,14 @@
           "description": "Deploy smoke to slow enemies and speed yourself",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "slow+attack_buff",
-          "categories": ["debuff", "buff"],
-          "resource_cost": 3,
+          "categories": [
+            "debuff",
+            "buff"
+          ],
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 10,
@@ -374,9 +471,13 @@
           "description": "Disappear in smoke, boosting next attack by 30%",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "stealth",
-          "categories": ["stealth"],
-          "resource_cost": 2,
+          "categories": [
+            "stealth"
+          ],
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 5,
@@ -388,12 +489,18 @@
           "description": "Become smoke for 40% evasion over 2 turns",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.85,
+          "recovery_seconds": 0.45,
           "effect": "evasion",
-          "categories": ["evasion"],
-          "resource_cost": 3,
+          "categories": [
+            "evasion"
+          ],
+          "resource_cost": 0,
           "cast_type": "transformation",
           "target_type": "self",
           "duration_seconds": 5,
+          "toggleable": true,
+          "toggle_cooldown_seconds": 7.0,
           "travel_type": "smoke_form"
         }
       ]
@@ -403,7 +510,7 @@
       "name": "Gale Wizard",
       "class_id": "aero",
       "theme": "Wind magic, control, reflection",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "gust",
@@ -411,9 +518,14 @@
           "description": "Blast the enemy with a powerful gust of wind",
           "damage_percent": 12,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
-          "resource_cost": 2,
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
+          "resource_cost": 0,
           "cast_type": "projectile",
           "target_type": "enemy",
           "range": 16,
@@ -427,10 +539,15 @@
           "description": "Surround yourself with a defensive cyclone",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "defense_buff+shield",
-          "categories": ["buff", "shielding"],
+          "categories": [
+            "buff",
+            "shielding"
+          ],
           "shield_percent": 15,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 6,
@@ -442,9 +559,14 @@
           "description": "Unleash a devastating tempest that stuns",
           "damage_percent": 15,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "stun",
-          "categories": ["damage", "crowd_control"],
-          "resource_cost": 4,
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 14,
@@ -460,7 +582,7 @@
       "name": "Pressure",
       "class_id": "aero",
       "theme": "Air pressure, charged attacks",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "air_shot",
@@ -468,9 +590,13 @@
           "description": "Compressed air projectile that hits hard",
           "damage_percent": 15,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "",
-          "categories": ["damage"],
-          "resource_cost": 2,
+          "categories": [
+            "damage"
+          ],
+          "resource_cost": 0,
           "cast_type": "projectile",
           "target_type": "enemy",
           "range": 18,
@@ -483,9 +609,14 @@
           "description": "Rapid air bullets that slow the target",
           "damage_percent": 12,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.32,
+          "recovery_seconds": 0.22,
           "effect": "slow",
-          "categories": ["damage", "debuff"],
-          "resource_cost": 3,
+          "categories": [
+            "damage",
+            "debuff"
+          ],
+          "resource_cost": 0,
           "cast_type": "projectile_volley",
           "target_type": "enemy",
           "range": 18,
@@ -499,9 +630,14 @@
           "description": "Release built-up pressure in an explosive burst",
           "damage_percent": 20,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
-          "resource_cost": 4,
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
+          "resource_cost": 0,
           "cast_type": "self_burst",
           "target_type": "self_centered",
           "radius": 5,
@@ -515,7 +651,7 @@
       "name": "Pollution",
       "class_id": "aero",
       "theme": "Toxic air, corrosion, debuffs",
-      "resource_type": "tp",
+      "resource_type": "",
       "abilities": [
         {
           "id": "smog",
@@ -523,9 +659,15 @@
           "description": "Engulf the enemy in toxic smog",
           "damage_percent": 5,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "dot+slow",
-          "categories": ["dot", "debuff", "aoe"],
-          "resource_cost": 3,
+          "categories": [
+            "dot",
+            "debuff",
+            "aoe"
+          ],
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 12,
@@ -539,9 +681,14 @@
           "description": "Exhale poisonous fumes that weaken defenses",
           "damage_percent": 8,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.25,
+          "recovery_seconds": 0.18,
           "effect": "dot+vulnerability",
-          "categories": ["dot", "debuff"],
-          "resource_cost": 2,
+          "categories": [
+            "dot",
+            "debuff"
+          ],
+          "resource_cost": 0,
           "cast_type": "cone",
           "target_type": "cone",
           "range": 10,
@@ -555,9 +702,15 @@
           "description": "Call down acidic rain that corrodes armor",
           "damage_percent": 10,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "dot+vulnerability",
-          "categories": ["dot", "debuff", "aoe"],
-          "resource_cost": 4,
+          "categories": [
+            "dot",
+            "debuff",
+            "aoe"
+          ],
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 14,

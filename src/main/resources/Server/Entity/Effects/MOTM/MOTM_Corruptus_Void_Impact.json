@@ -1,0 +1,14 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#e2c5ff",
+    "EntityBottomTint": "#32134b",
+    "Particles": [
+      {
+        "SystemId": "VoidImpact"
+      }
+    ],
+    "ModelVFXId": "Intangible_Dark"
+  }
+}

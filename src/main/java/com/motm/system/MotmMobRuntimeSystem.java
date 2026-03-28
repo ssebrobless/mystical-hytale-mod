@@ -72,6 +72,9 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
                 if (npc == null) {
                     continue;
                 }
+                if ("motm_summon".equalsIgnoreCase(npc.getRoleName())) {
+                    continue;
+                }
 
                 UUID entityId = getEntityId(chunk.getComponent(entityIndex, UUIDComponent.getComponentType()));
                 if (entityId == null) {
@@ -93,7 +96,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
                 }
 
                 if (trackedMob != null && processedMobDeaths.add(entityId)) {
-                    handleMobDeath(store, death, trackedMob);
+                    handleMobDeath(entityId, store, death, trackedMob);
                 }
             }
         });
@@ -199,13 +202,19 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
         entityStatMap.maximizeStatValue(DefaultEntityStatTypes.getHealth());
     }
 
-    private void handleMobDeath(Store<EntityStore> store, DeathComponent death, TrackedMob trackedMob) {
+    private void handleMobDeath(UUID mobEntityId, Store<EntityStore> store, DeathComponent death, TrackedMob trackedMob) {
         String killerPlayerId = resolvePlayerId(store, death.getDeathInfo());
         if (killerPlayerId == null) {
             return;
         }
 
-        mod.onMobKilled(killerPlayerId, trackedMob.mobType(), trackedMob.level(), trackedMob.rare());
+        mod.onMobKilled(
+                killerPlayerId,
+                mobEntityId != null ? mobEntityId.toString() : null,
+                trackedMob.mobType(),
+                trackedMob.level(),
+                trackedMob.rare()
+        );
     }
 
     private String resolvePlayerId(Store<EntityStore> store, Damage damage) {

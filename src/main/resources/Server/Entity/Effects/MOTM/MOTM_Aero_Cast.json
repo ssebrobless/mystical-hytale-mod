@@ -1,0 +1,16 @@
+{
+  "Duration": 0.5,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#d7f6ff",
+    "EntityBottomTint": "#4b90c9",
+    "Particles": [
+      {
+        "SystemId": "Battleaxe_Signature_Whirlwind"
+      },
+      {
+        "SystemId": "Wind"
+      }
+    ]
+  }
+}

@@ -28,6 +28,6 @@ public class MotmServerTickSystem extends TickingSystem<EntityStore> {
             lastProcessedTick = worldTick;
         }
 
-        mod.onServerTick();
+        mod.onServerTick(store);
     }
 }

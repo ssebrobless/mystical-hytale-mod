@@ -13,9 +13,14 @@
           "description": "Explosive fire, applies burn",
           "damage_percent": 8,
           "cooldown_seconds": 2,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "burn",
-          "categories": ["dot"],
+          "categories": [
+            "dot"
+          ],
           "charges": 3,
+          "charge_recharge_seconds": 2.0,
           "resource_cost": 3,
           "cast_type": "projectile",
           "target_type": "enemy",
@@ -30,8 +35,14 @@
           "description": "Set self on fire, damage nearby enemies",
           "damage_percent": 12,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "self_burn+aoe",
-          "categories": ["damage", "self_damage", "aoe"],
+          "categories": [
+            "damage",
+            "self_damage",
+            "aoe"
+          ],
           "resource_cost": 3,
           "cast_type": "self_burst",
           "target_type": "self_centered",
@@ -45,8 +56,12 @@
           "description": "Consume burns for massive damage",
           "damage_percent": 25,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.3,
+          "recovery_seconds": 0.22,
           "effect": "consume_burn",
-          "categories": ["damage"],
+          "categories": [
+            "damage"
+          ],
           "resource_cost": 4,
           "cast_type": "execute",
           "target_type": "enemy",
@@ -67,8 +82,13 @@
           "description": "Summon skeleton minion",
           "damage_percent": 5,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.4,
           "effect": "summon",
-          "categories": ["summon", "damage"],
+          "categories": [
+            "summon",
+            "damage"
+          ],
           "resource_cost": 9,
           "cast_type": "summon",
           "target_type": "ground_target",
@@ -83,8 +103,13 @@
           "description": "Damage enemy, heal yourself",
           "damage_percent": 10,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.45,
+          "recovery_seconds": 0.24,
           "effect": "lifesteal",
-          "categories": ["damage", "lifesteal"],
+          "categories": [
+            "damage",
+            "lifesteal"
+          ],
           "resource_cost": 3,
           "cast_type": "channel",
           "target_type": "enemy",
@@ -97,8 +122,12 @@
           "description": "Mark enemy to take 25% more damage",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.38,
+          "recovery_seconds": 0.22,
           "effect": "vulnerability",
-          "categories": ["debuff"],
+          "categories": [
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "curse",
           "target_type": "enemy",
@@ -120,9 +149,16 @@
           "description": "Teleport and leave damaging clone",
           "damage_percent": 10,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "clone",
-          "categories": ["damage", "dash", "stealth"],
+          "categories": [
+            "damage",
+            "dash",
+            "stealth"
+          ],
           "charges": 2,
+          "charge_recharge_seconds": 3.0,
           "resource_cost": 3,
           "cast_type": "teleport",
           "target_type": "enemy",
@@ -138,8 +174,12 @@
           "description": "Go invisible, next attack +40% damage",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "stealth",
-          "categories": ["stealth"],
+          "categories": [
+            "stealth"
+          ],
           "resource_cost": 2,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -152,8 +192,14 @@
           "description": "Create shadow zone, 25% dodge chance",
           "damage_percent": 5,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "evasion_zone",
-          "categories": ["damage", "evasion", "aoe"],
+          "categories": [
+            "damage",
+            "evasion",
+            "aoe"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -177,8 +223,13 @@
           "description": "Unleash hellfire that burns and slows, scorching yourself",
           "damage_percent": 8,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.32,
+          "recovery_seconds": 0.22,
           "effect": "burn+slow",
-          "categories": ["dot", "debuff"],
+          "categories": [
+            "dot",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "projectile_burst",
           "target_type": "enemy",
@@ -193,8 +244,14 @@
           "description": "Set the ground ablaze, burning enemies and boosting attacks",
           "damage_percent": 5,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "burn+attack_buff",
-          "categories": ["dot", "buff", "aoe"],
+          "categories": [
+            "dot",
+            "buff",
+            "aoe"
+          ],
           "resource_cost": 4,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -209,8 +266,12 @@
           "description": "Scorch the enemy's soul, weakening and slowing them",
           "damage_percent": 0,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.38,
+          "recovery_seconds": 0.22,
           "effect": "vulnerability+slow",
-          "categories": ["debuff"],
+          "categories": [
+            "debuff"
+          ],
           "resource_cost": 2,
           "cast_type": "curse",
           "target_type": "enemy",
@@ -232,8 +293,13 @@
           "description": "Dominate the enemy's mind, stunning them",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.38,
+          "recovery_seconds": 0.22,
           "effect": "stun+vulnerability",
-          "categories": ["crowd_control", "debuff"],
+          "categories": [
+            "crowd_control",
+            "debuff"
+          ],
           "resource_cost": 4,
           "cast_type": "gaze",
           "target_type": "enemy",
@@ -246,8 +312,13 @@
           "description": "Shatter the enemy's psyche with raw power",
           "damage_percent": 25,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "stun",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 3,
           "cast_type": "projectile",
           "target_type": "enemy",
@@ -261,8 +332,12 @@
           "description": "Tap into collective dark intelligence for power",
           "damage_percent": 0,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "attack_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 3,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -284,8 +359,12 @@
           "description": "Channel dark energy to massively boost attack",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "attack_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 1,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -297,8 +376,13 @@
           "description": "Reinforce your body with dark magic",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "defense_buff+heal",
-          "categories": ["buff", "healing"],
+          "categories": [
+            "buff",
+            "healing"
+          ],
           "heal_percent": 10,
           "resource_cost": 1,
           "cast_type": "self_buff",
@@ -312,8 +396,13 @@
           "description": "Enhance your reflexes with shadow magic",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "evasion+attack_buff",
-          "categories": ["buff", "evasion"],
+          "categories": [
+            "buff",
+            "evasion"
+          ],
           "resource_cost": 1,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -336,8 +425,12 @@
           "description": "Create a holy space that heals and cleanses",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "heal",
-          "categories": ["healing"],
+          "categories": [
+            "healing"
+          ],
           "heal_percent": 15,
           "resource_cost": 3,
           "cast_type": "support_zone",
@@ -353,8 +446,13 @@
           "description": "Absorb incoming damage and convert to healing",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "defense_buff+heal",
-          "categories": ["buff", "healing"],
+          "categories": [
+            "buff",
+            "healing"
+          ],
           "heal_percent": 10,
           "resource_cost": 3,
           "cast_type": "self_buff",
@@ -367,8 +465,12 @@
           "description": "Purge all negative effects and bolster defenses",
           "damage_percent": 0,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.38,
+          "recovery_seconds": 0.22,
           "effect": "defense_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 3,
           "cast_type": "cleanse",
           "target_type": "self",
@@ -390,8 +492,13 @@
           "description": "Open a void rift that damages over time",
           "damage_percent": 8,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "dot",
-          "categories": ["dot", "aoe"],
+          "categories": [
+            "dot",
+            "aoe"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -407,9 +514,14 @@
           "description": "Summon a creature from the void",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.4,
           "effect": "summon",
-          "categories": ["summon"],
+          "categories": [
+            "summon"
+          ],
           "charges": 2,
+          "charge_recharge_seconds": 7.0,
           "resource_cost": 3,
           "cast_type": "summon",
           "target_type": "ground_target",
@@ -424,8 +536,13 @@
           "description": "The void consumes the enemy for massive damage",
           "damage_percent": 30,
           "cooldown_seconds": 9,
+          "cast_time_seconds": 0.3,
+          "recovery_seconds": 0.22,
           "effect": "stun",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 4,
           "cast_type": "execute",
           "target_type": "enemy",
@@ -447,9 +564,14 @@
           "description": "Lay a scarak egg that hatches into a minion",
           "damage_percent": 0,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.4,
           "effect": "summon",
-          "categories": ["summon"],
+          "categories": [
+            "summon"
+          ],
           "charges": 3,
+          "charge_recharge_seconds": 3.0,
           "resource_cost": 2,
           "cast_type": "summon",
           "target_type": "ground_target",
@@ -464,8 +586,12 @@
           "description": "Empower your minions with dark energy",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "attack_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 3,
           "cast_type": "summon_buff",
           "target_type": "allied_summons",
@@ -478,8 +604,12 @@
           "description": "Summon a massive locust queen to devastate",
           "damage_percent": 0,
           "cooldown_seconds": 10,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.4,
           "effect": "summon",
-          "categories": ["summon"],
+          "categories": [
+            "summon"
+          ],
           "resource_cost": 4,
           "cast_type": "summon",
           "target_type": "ground_target",
@@ -503,12 +633,20 @@
           "description": "Take flight in pterodactyl form, gaining evasion",
           "damage_percent": 10,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.85,
+          "recovery_seconds": 0.45,
           "effect": "evasion+attack_buff",
-          "categories": ["damage", "evasion", "buff"],
+          "categories": [
+            "damage",
+            "evasion",
+            "buff"
+          ],
           "resource_cost": 1,
           "cast_type": "transformation",
           "target_type": "self",
           "duration_seconds": 10,
+          "toggleable": true,
+          "toggle_cooldown_seconds": 8.0,
           "launch_height": 6,
           "travel_type": "flight_form"
         },
@@ -518,12 +656,19 @@
           "description": "Charge in armored triceratops form",
           "damage_percent": 12,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.85,
+          "recovery_seconds": 0.45,
           "effect": "defense_buff",
-          "categories": ["damage", "buff"],
+          "categories": [
+            "damage",
+            "buff"
+          ],
           "resource_cost": 2,
           "cast_type": "transformation",
           "target_type": "self",
           "duration_seconds": 10,
+          "toggleable": true,
+          "toggle_cooldown_seconds": 8.0,
           "dash_distance": 10,
           "knockback_force": 5,
           "travel_type": "stampede_charge"
@@ -534,12 +679,20 @@
           "description": "Transform into a terrifying T-Rex for devastating damage",
           "damage_percent": 20,
           "cooldown_seconds": 10,
+          "cast_time_seconds": 0.85,
+          "recovery_seconds": 0.45,
           "effect": "attack_buff+stun",
-          "categories": ["damage", "buff", "crowd_control"],
+          "categories": [
+            "damage",
+            "buff",
+            "crowd_control"
+          ],
           "resource_cost": 3,
           "cast_type": "transformation",
           "target_type": "self",
           "duration_seconds": 12,
+          "toggleable": true,
+          "toggle_cooldown_seconds": 10.0,
           "radius": 4,
           "terrain_effect": "primal_roar"
         }

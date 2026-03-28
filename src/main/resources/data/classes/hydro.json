@@ -36,7 +36,7 @@
   "passive_ability": {
     "id": "hydro_passive_tidal_flow",
     "name": "Tidal Flow",
-    "description": "Abilities heal you for 3% of damage dealt. When below 50% mana, abilities cost 15% less but deal 10% reduced damage.",
+    "description": "Abilities heal you for 3% of damage dealt. Hydro swims 40% faster and can breathe underwater 50% longer. When below 50% water, abilities cost 15% less but deal 10% reduced damage.",
     "effects": [
       {
         "type": "spell_vamp",
@@ -44,14 +44,24 @@
         "value_type": "percent_damage_dealt"
       },
       {
+        "type": "swim_speed_bonus",
+        "value": 0.40,
+        "value_type": "percent_modifier"
+      },
+      {
+        "type": "oxygen_capacity_bonus",
+        "value": 0.50,
+        "value_type": "percent_modifier"
+      },
+      {
         "type": "conditional_cost_reduction",
-        "condition": "current_mana_percent < 0.50",
+        "condition": "current_water_percent < 0.50",
         "value": 0.15,
         "value_type": "percent_reduction"
       },
       {
         "type": "conditional_damage_modifier",
-        "condition": "current_mana_percent < 0.50",
+        "condition": "current_water_percent < 0.50",
         "value": -0.10,
         "value_type": "percent_modifier"
       }

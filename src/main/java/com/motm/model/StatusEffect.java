@@ -28,12 +28,14 @@ public class StatusEffect {
         DAMAGE_BUFF,    // +35% next attack only, until consumed
         STEALTH,        // Invisible, +40% damage next hit, until consumed
         HEAL_OVER_TIME, // Regen % HP per tick
-        LIFESTEAL       // Heal for % of damage dealt
+        LIFESTEAL,      // Heal for % of damage dealt
+        SPEED_BUFF      // Faster movement / follow-up momentum
     }
 
     private final Type type;
     private final String sourcePlayerId;
     private final String sourcePerkOrAbility;
+    private final int initialDurationTicks;
     private int remainingTicks;
     private double value;        // damage %, reduction %, shield HP, etc.
     private boolean consumed;    // for one-shot effects like DAMAGE_BUFF, STEALTH
@@ -41,6 +43,7 @@ public class StatusEffect {
     public StatusEffect(Type type, int durationTicks, double value,
                         String sourcePlayerId, String sourcePerkOrAbility) {
         this.type = type;
+        this.initialDurationTicks = Math.max(0, durationTicks);
         this.remainingTicks = durationTicks;
         this.value = value;
         this.sourcePlayerId = sourcePlayerId;
@@ -51,6 +54,7 @@ public class StatusEffect {
     public Type getType() { return type; }
     public String getSourcePlayerId() { return sourcePlayerId; }
     public String getSourcePerkOrAbility() { return sourcePerkOrAbility; }
+    public int getInitialDurationTicks() { return initialDurationTicks; }
     public int getRemainingTicks() { return remainingTicks; }
     public double getValue() { return value; }
     public boolean isConsumed() { return consumed; }

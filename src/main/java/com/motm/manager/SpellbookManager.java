@@ -7,10 +7,9 @@ import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
-import com.motm.util.PassivePresentation;
 import com.motm.util.DataLoader;
+import com.motm.util.PassivePresentation;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -35,17 +34,20 @@ public class SpellbookManager {
     private final StyleManager styleManager;
     private final PerkManager perkManager;
     private final ResourceManager resourceManager;
+    private final ClassPassiveManager classPassiveManager;
 
     public SpellbookManager(DataLoader dataLoader,
                             LevelingManager levelingManager,
                             StyleManager styleManager,
                             PerkManager perkManager,
-                            ResourceManager resourceManager) {
+                            ResourceManager resourceManager,
+                            ClassPassiveManager classPassiveManager) {
         this.dataLoader = dataLoader;
         this.levelingManager = levelingManager;
         this.styleManager = styleManager;
         this.perkManager = perkManager;
         this.resourceManager = resourceManager;
+        this.classPassiveManager = classPassiveManager;
     }
 
     public String render(PlayerData player, Section section) {
@@ -85,22 +87,26 @@ public class SpellbookManager {
     private String renderOverview(PlayerData player) {
         StringBuilder sb = new StringBuilder();
         sb.append("[MOTM Spellbook] === Overview ===\n");
-        sb.append("┌ Identity ─────────────────────────────┐\n");
+        sb.append("+--------------------------------------+\n");
+        sb.append("| Identity                             |\n");
+        sb.append("+--------------------------------------+\n");
         sb.append("Class: ").append(displayClass(player)).append("\n");
         sb.append("Race: ").append(displayRace(player)).append("\n");
         sb.append("Style: ").append(displayStyle(player)).append("\n");
         sb.append("Level: ").append(player.getLevel()).append(" | XP: ")
                 .append(player.getCurrentXp()).append("/")
                 .append(levelingManager.calculateXpRequired(player.getLevel())).append("\n");
-        sb.append("└───────────────────────────────────────┘\n");
-        sb.append("┌ Current Path ─────────────────────────┐\n");
+        sb.append("Growth: ").append(levelingManager.describePlayerStatGrowth(player.getLevel())).append("\n");
+        sb.append("+--------------------------------------+\n");
+        sb.append("| Current Path                         |\n");
+        sb.append("+--------------------------------------+\n");
         sb.append("Next Step: ").append(getNextStep(player)).append("\n");
         sb.append("Pending Perks: ").append(perkManager.hasPendingPerkSelection(player) ? "Yes" : "No").append("\n");
         sb.append("Active Synergies: ").append(player.getActiveSynergyBonuses().size()).append("\n");
         sb.append("Resources: ").append(player.getPlayerClass() != null
                 ? resourceManager.getResourceDisplay(player.getPlayerId(), player.getPlayerClass())
                 : "No class selected").append("\n");
-        sb.append("└───────────────────────────────────────┘\n");
+        sb.append("+--------------------------------------+\n");
         sb.append("Sections: ").append(getSectionList()).append("\n");
         sb.append("Use: /motm spellbook <section>");
         return sb.toString();
@@ -121,6 +127,10 @@ public class SpellbookManager {
                 if (!passiveSummary.isBlank()) {
                     sb.append("  ").append(passiveSummary).append("\n");
                 }
+                String passiveState = classPassiveManager.buildPassiveStateSummary(player);
+                if (!passiveState.isBlank()) {
+                    sb.append("  State: ").append(passiveState).append("\n");
+                }
             }
         }
         sb.append("Race: ").append(displayRace(player)).append("\n");
@@ -132,6 +142,7 @@ public class SpellbookManager {
         }
         sb.append("Style: ").append(displayStyle(player)).append("\n");
         sb.append("Level: ").append(player.getLevel()).append(" / ").append(LevelingManager.MAX_LEVEL).append("\n");
+        sb.append("Growth: ").append(levelingManager.describePlayerStatGrowth(player.getLevel())).append("\n");
         sb.append("Total XP Earned: ").append(player.getTotalXpEarned()).append("\n");
         sb.append("Perks Chosen: ").append(player.getSelectedPerks().size()).append(" / 60\n");
         sb.append("Achievements: ").append(player.getAchievements().size()).append("\n");
@@ -158,7 +169,7 @@ public class SpellbookManager {
 
         sb.append("Style: ").append(style.getName()).append("\n");
         sb.append("Theme: ").append(style.getTheme()).append("\n");
-        sb.append("Resource: ").append(style.getResourceType()).append("\n");
+        sb.append("Resource: ").append(displayStyleResource(style)).append("\n");
         sb.append("Abilities:\n");
         for (AbilityData ability : style.getAbilities()) {
             double cooldown = styleManager.getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
@@ -196,7 +207,8 @@ public class SpellbookManager {
 
         int currentTier = perkManager.getCurrentTier(player.getLevel());
         sb.append("Unlocked Tiers: ").append(currentTier).append(" / ").append(PerkManager.TOTAL_TIERS).append("\n");
-        sb.append("Owned Perks: ").append(player.getSelectedPerks().size()).append(" / ").append(PerkManager.MAX_TOTAL_PERKS).append("\n");
+        sb.append("Owned Perks: ").append(player.getSelectedPerks().size()).append(" / ")
+                .append(PerkManager.MAX_TOTAL_PERKS).append("\n");
 
         if (perkManager.hasPendingPerkSelection(player)) {
             int pendingTier = perkManager.getPendingSelectionTier(player);
@@ -328,9 +340,9 @@ public class SpellbookManager {
 
     private String resourceNotes(String playerClass) {
         return switch (playerClass.toLowerCase(Locale.ROOT)) {
-            case "terra" -> "Terra uses gathered materials and practical terrain tools.";
-            case "hydro" -> "Hydro spends water and refills from containers and sources.";
-            case "aero" -> "Aero regenerates TP over time.";
+            case "terra" -> "Terra spends style-specific materials: stone blocks, seeds, dirt blocks, sand blocks, metal, and gems.";
+            case "hydro" -> "Hydro spends water from a crafted waterskin kept in your inventory like ammo while casting with the spellbook, and refills it by right-clicking a water source.";
+            case "aero" -> "Aero does not use a class resource and instead relies on cooldowns, movement, and momentum.";
             case "corruptus" -> "Corruptus earns souls from kills and cashes them into power.";
             default -> "Unknown class resource.";
         };
@@ -338,6 +350,13 @@ public class SpellbookManager {
 
     private String abilitySummary(AbilityData ability) {
         return AbilityPresentation.buildEffectSummary(ability);
+    }
+
+    private String displayStyleResource(StyleData style) {
+        if (style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
+            return "None";
+        }
+        return resourceManager.getDisplayName(style.getResourceType());
     }
 
     private String formatDecimal(double value) {

@@ -1,0 +1,9 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#f6ecff",
+    "EntityBottomTint": "#6b5ec9",
+    "ModelVFXId": "PrototypeBlockPlaceSuccess"
+  }
+}

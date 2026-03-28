@@ -1,0 +1,9 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityBottomTint": "#3e81b8",
+    "EntityTopTint": "#c6f0ff",
+    "ModelVFXId": "Portal_Teleport"
+  }
+}

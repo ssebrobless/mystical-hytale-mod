@@ -1,0 +1,10 @@
+{
+  "Duration": 10.0,
+  "OverlapBehavior": "Overwrite",
+  "ModelChange": "Pterodactyl",
+  "ApplicationEffects": {
+    "EntityBottomTint": "#2f1638",
+    "EntityTopTint": "#c8a2ff",
+    "ModelVFXId": "Intangible_Dark"
+  }
+}

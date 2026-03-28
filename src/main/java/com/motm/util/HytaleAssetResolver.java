@@ -70,7 +70,10 @@ public final class HytaleAssetResolver {
     private static final String MODEL_SCARAK_BROODMOTHER = "Common/NPC/Beast/Scarak_Broodmother/Models/Model.blockymodel";
     private static final String MODEL_SPARK_LIVING = "Common/NPC/Beast/Spark_Living/Models/Model.blockymodel";
     private static final String MODEL_PTERODACTYL = "Common/NPC/Flying_Beast/Pterodactyl/Models/Model.blockymodel";
+    private static final String MODEL_BAT = "Common/NPC/Flying_Critter/Bat/Models/Model.blockymodel";
     private static final String MODEL_SHADOW_KNIGHT = "Common/NPC/Undead/Shadow_Knight/Models/Model.blockymodel";
+    private static final String MODEL_TOAD_RHINO = "Common/NPC/Beast/Toad_Rhino/Models/Model.blockymodel";
+    private static final String MODEL_REX_CAVE = "Common/NPC/Beast/Rex_Cave/Models/Model.blockymodel";
     private static final String MODEL_VOID_SPAWN = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
     private static final String MODEL_VOID_EYE = "Common/NPC/Void/Eye_Void/Models/Model.blockymodel";
     private static final String MODEL_FROG = "Common/NPC/Critter/Frog/Models/Model.blockymodel";
@@ -117,6 +120,11 @@ public final class HytaleAssetResolver {
         append(parts, "Loop FX ", assets.getLoopEffectAsset());
         append(parts, "Model ", assets.getModelAsset());
         return String.join(" | ", parts);
+    }
+
+    public static String resolveModelId(String classId, String styleId, AbilityData ability) {
+        AbilityActionAssets assets = resolve(classId, styleId, ability);
+        return extractModelId(assets.getModelAsset());
     }
 
     private static String resolveAnimation(String classId, String styleId, AbilityData ability) {
@@ -242,6 +250,9 @@ public final class HytaleAssetResolver {
         if (travelType.contains("shadow") || travelType.contains("void")) {
             return FX_VOID_SMOKE;
         }
+        if (travelType.contains("anchor")) {
+            return FX_METAL_SPARKS;
+        }
         if (travelType.contains("lightning") || abilityId.contains("smite") || abilityId.contains("lightning")) {
             return FX_LIGHTNING;
         }
@@ -297,6 +308,9 @@ public final class HytaleAssetResolver {
                 yield FX_EARTH_IMPACT;
             }
             case "hydro" -> {
+                if (abilityId.contains("anchor")) {
+                    yield FX_METAL_SPARKS;
+                }
                 if (abilityId.contains("ice") || abilityId.contains("frost") || abilityId.contains("snow")) {
                     yield FX_ICE_IMPACT;
                 }
@@ -336,11 +350,17 @@ public final class HytaleAssetResolver {
             return switch (lower(classId)) {
                 case "terra" -> abilityId.contains("sand") ? FX_SAND_DUST : FX_STONE_DUST;
                 case "hydro" -> abilityId.contains("rainbow") || abilityId.contains("heal") ? FX_HEAL_LOOP : FX_WATER_TRAVEL;
-                case "aero" -> abilityId.contains("smoke") ? FX_SMOKE_END : FX_WIND_LOOP;
+                case "aero" -> abilityId.contains("smoke") || terrainEffect.contains("smog")
+                        ? FX_SMOKE_END
+                        : abilityId.contains("acid") || abilityId.contains("toxic")
+                        ? FX_SLOW_LOOP
+                        : FX_WIND_LOOP;
                 case "corruptus" -> terrainEffect.contains("infernal") || abilityId.contains("fire")
                         ? FX_FIRE_AOE
                         : abilityId.contains("sanctuary")
                         ? FX_HEAL_LOOP
+                        : terrainEffect.contains("shadow")
+                        ? FX_VOID_SMOKE
                         : abilityId.contains("acid") || abilityId.contains("toxic")
                         ? FX_SLOW_LOOP
                         : FX_VOID_SPLASH;
@@ -382,6 +402,15 @@ public final class HytaleAssetResolver {
         if (abilityId.contains("pterodactyl")) {
             return MODEL_PTERODACTYL;
         }
+        if (abilityId.contains("smoke_form")) {
+            return MODEL_BAT;
+        }
+        if (abilityId.contains("triceratops")) {
+            return MODEL_TOAD_RHINO;
+        }
+        if (abilityId.contains("t_rex") || abilityId.contains("trex")) {
+            return MODEL_REX_CAVE;
+        }
         if (abilityId.contains("primordial")) {
             return MODEL_VOID_SPAWN;
         }
@@ -407,6 +436,21 @@ public final class HytaleAssetResolver {
             return MODEL_SPARK_LIVING;
         }
         return null;
+    }
+
+    private static String extractModelId(String assetPath) {
+        if (assetPath == null || assetPath.isBlank()) {
+            return null;
+        }
+
+        String normalized = assetPath.replace('\\', '/');
+        String[] segments = normalized.split("/");
+        if (segments.length >= 3 && "Models".equalsIgnoreCase(segments[segments.length - 2])) {
+            return segments[segments.length - 3];
+        }
+
+        String fileName = segments[segments.length - 1];
+        return fileName.replaceFirst("\\.[^.]+$", "");
     }
 
     private static void append(List<String> parts, String label, String assetPath) {

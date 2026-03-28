@@ -16,6 +16,15 @@ public class AbilityData {
     private double damagePercent;
     @SerializedName("cooldown_seconds")
     private double cooldownSeconds;
+    @SerializedName("cast_time_seconds")
+    private double castTimeSeconds;
+    @SerializedName("recovery_seconds")
+    private double recoverySeconds;
+    @SerializedName("charge_recharge_seconds")
+    private double chargeRechargeSeconds;
+    private boolean toggleable;
+    @SerializedName("toggle_cooldown_seconds")
+    private double toggleCooldownSeconds;
     private String effect;
     private List<String> categories;
     private int charges; // 0 = unlimited (cooldown-based), >0 = charge-based
@@ -65,6 +74,11 @@ public class AbilityData {
     public String getName() { return name; }
     public double getDamagePercent() { return damagePercent; }
     public double getCooldownSeconds() { return cooldownSeconds; }
+    public double getCastTimeSeconds() { return castTimeSeconds; }
+    public double getRecoverySeconds() { return recoverySeconds; }
+    public double getChargeRechargeSeconds() { return chargeRechargeSeconds; }
+    public boolean isToggleable() { return toggleable; }
+    public double getToggleCooldownSeconds() { return toggleCooldownSeconds; }
     public String getEffect() { return effect; }
     public List<String> getCategories() { return categories; }
     public int getCharges() { return charges; }

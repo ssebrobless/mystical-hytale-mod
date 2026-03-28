@@ -36,7 +36,7 @@
   "passive_ability": {
     "id": "terra_passive_earthen_resilience",
     "name": "Earthen Resilience",
-    "description": "Standing still for 2 seconds grants a shield equal to 5% of max health. Regenerate 1% max health per second while below 30% health.",
+    "description": "Standing still for 2 seconds grants a shield equal to 5% of max health. Regenerate 1% max health per second while below 30% health. Terra also mines 50% faster with pickaxes and gains cave vision underground.",
     "effects": [
       {
         "type": "conditional_shield",
@@ -49,6 +49,17 @@
         "condition": "current_health_percent < 0.30",
         "value": 0.01,
         "value_type": "percent_max_health_per_second"
+      },
+      {
+        "type": "mining_speed_bonus",
+        "value": 0.50,
+        "value_type": "percent_modifier"
+      },
+      {
+        "type": "conditional_night_vision",
+        "condition": "underground_cave",
+        "value": 1.0,
+        "value_type": "toggle"
       }
     ]
   },

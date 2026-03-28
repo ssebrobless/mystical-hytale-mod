@@ -3,6 +3,7 @@ package com.motm.manager;
 import com.motm.model.PlayerData;
 import com.motm.util.DataLoader;
 
+import java.util.Collection;
 import java.util.logging.Logger;
 
 /**
@@ -17,6 +18,9 @@ public class LevelingManager {
     public static final int BASE_XP = 100;
     public static final double SCALING_FACTOR = 1.5;
     public static final int MILESTONE_INTERVAL = 10;
+    private static final double PLAYER_HEALTH_BONUS_PER_LEVEL = 0.0025;
+    private static final double PLAYER_ABILITY_POWER_BONUS_PER_LEVEL = 0.0015;
+    private static final double PLAYER_SUSTAIN_BONUS_PER_LEVEL = 0.0015;
 
     // XP Modifier Constants
     private static final double PARTY_BONUS_2P = 0.10;
@@ -82,6 +86,46 @@ public class LevelingManager {
         int tier = playerLevel / 10;
         double multiplier = 1.0 + (tier * 0.20);
         return Math.min(multiplier, 5.0);
+    }
+
+    public double getPlayerMaxHealthMultiplier(int level) {
+        return 1.0 + (Math.max(0, level - 1) * PLAYER_HEALTH_BONUS_PER_LEVEL);
+    }
+
+    public double getPlayerAbilityPowerMultiplier(int level) {
+        return 1.0 + (Math.max(0, level - 1) * PLAYER_ABILITY_POWER_BONUS_PER_LEVEL);
+    }
+
+    public double getPlayerSustainMultiplier(int level) {
+        return 1.0 + (Math.max(0, level - 1) * PLAYER_SUSTAIN_BONUS_PER_LEVEL);
+    }
+
+    public int calculateAverageOnlineLevel(Collection<PlayerData> players) {
+        if (players == null || players.isEmpty()) {
+            return 1;
+        }
+
+        int totalLevels = 0;
+        int count = 0;
+        for (PlayerData player : players) {
+            if (player == null) {
+                continue;
+            }
+            totalLevels += Math.max(1, player.getLevel());
+            count++;
+        }
+
+        if (count == 0) {
+            return 1;
+        }
+
+        return Math.max(1, (int) Math.round(totalLevels / (double) count));
+    }
+
+    public String describePlayerStatGrowth(int level) {
+        return "HP +" + formatPercent(getPlayerMaxHealthMultiplier(level) - 1.0)
+                + " | Ability +" + formatPercent(getPlayerAbilityPowerMultiplier(level) - 1.0)
+                + " | Sustain +" + formatPercent(getPlayerSustainMultiplier(level) - 1.0);
     }
 
     // --- XP Modifiers ---
@@ -238,6 +282,10 @@ public class LevelingManager {
     private void consumeRestedBonus(PlayerData player, double xpEarned) {
         double consumption = (xpEarned / 100.0) * 0.01;
         player.setRestedBonus(Math.max(0, player.getRestedBonus() - consumption));
+    }
+
+    private String formatPercent(double value) {
+        return String.format("%.1f%%", Math.max(0.0, value) * 100.0);
     }
 
     // --- Combo System ---

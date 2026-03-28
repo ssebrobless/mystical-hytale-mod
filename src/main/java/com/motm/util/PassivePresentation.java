@@ -37,6 +37,10 @@ public final class PassivePresentation {
         return switch (effect.getType()) {
             case "spell_vamp" -> "Ability damage heals " + percent(effect.getValue())
                     + " of damage dealt";
+            case "swim_speed_bonus" -> "Swim " + signedPercent(effect.getValue()) + " faster";
+            case "oxygen_capacity_bonus" -> "Breathe underwater " + percent(effect.getValue()) + " longer";
+            case "movement_speed_bonus" -> "Movement speed " + signedPercent(effect.getValue());
+            case "signature_energy_bonus" -> "Native Hytale energy +" + percent(effect.getValue());
             case "conditional_cost_reduction" -> humanizeCondition(effect.getCondition())
                     + ": ability costs " + signedPercent(-effect.getValue());
             case "conditional_damage_modifier" -> humanizeCondition(effect.getCondition())
@@ -45,10 +49,10 @@ public final class PassivePresentation {
                     + ": gain shield for " + percent(effect.getValue()) + " max HP";
             case "conditional_regen" -> humanizeCondition(effect.getCondition())
                     + ": regen " + percent(effect.getValue()) + " max HP/s";
-            case "resource_generation" -> "While " + humanizeTrigger(effect.getTrigger())
-                    + ": gain " + AbilityPresentation.formatDecimal(effect.getValue()) + " "
-                    + humanize(effect.getResource()) + "/s"
-                    + (effect.getMax() > 0 ? " (max " + AbilityPresentation.formatDecimal(effect.getMax()) + ")" : "");
+            case "mining_speed_bonus" -> "Pickaxe mining speed " + signedPercent(effect.getValue());
+            case "conditional_night_vision" -> humanizeCondition(effect.getCondition()) + ": gain night vision";
+            case "resource_generation" -> summarizeResourceGeneration(effect);
+            case "resource_cast_pool" -> humanize(effect.getResource()) + " fuel Corruptus abilities";
             case "conditional_bonus_damage" -> humanizeCondition(effect.getCondition())
                     + ": next attack deals +" + percent(effect.getValue()) + " attack damage as "
                     + humanize(effect.getDamageType())
@@ -65,6 +69,20 @@ public final class PassivePresentation {
                     + percent(effect.getRestoreHealth()) + " HP and "
                     + percent(effect.getRestoreMana()) + " mana on kill";
             default -> fallbackSummary(effect);
+        };
+    }
+
+    private static String summarizeResourceGeneration(ClassData.PassiveEffect effect) {
+        String resourceName = humanize(effect.getResource());
+        String amount = AbilityPresentation.formatDecimal(effect.getValue());
+        String maxSuffix = effect.getMax() > 0
+                ? " (max " + AbilityPresentation.formatDecimal(effect.getMax()) + ")"
+                : "";
+
+        return switch (normalize(effect.getTrigger())) {
+            case "movement" -> "While moving: gain " + amount + " " + resourceName + "/s" + maxSuffix;
+            case "mob_kill", "kill", "enemy_kill" -> "On hostile kill: gain " + amount + " " + resourceName + maxSuffix;
+            default -> "On " + humanizeTrigger(effect.getTrigger()) + ": gain " + amount + " " + resourceName + maxSuffix;
         };
     }
 
@@ -89,8 +107,10 @@ public final class PassivePresentation {
 
         return switch (condition.trim()) {
             case "current_mana_percent < 0.50" -> "Below 50% mana";
+            case "current_water_percent < 0.50" -> "Below 50% water";
             case "current_health_percent < 0.30" -> "Below 30% HP";
             case "stationary_duration >= 2" -> "After standing still 2s";
+            case "underground_cave" -> "Underground in caves";
             case "storm_charge >= 100" -> "At 100 Storm Charge";
             case "storm_charge_consumed" -> "When Storm Charge is consumed";
             case "target_has_corruption_mark" -> "If the target has Corruption";
@@ -104,6 +124,7 @@ public final class PassivePresentation {
         }
         return switch (trigger.trim()) {
             case "movement" -> "moving";
+            case "mob_kill", "kill", "enemy_kill" -> "hostile kill";
             default -> humanize(trigger);
         };
     }
@@ -157,5 +178,9 @@ public final class PassivePresentation {
             }
         }
         return builder.toString();
+    }
+
+    private static String normalize(String rawValue) {
+        return rawValue == null ? "" : rawValue.trim().toLowerCase(Locale.ROOT);
     }
 }

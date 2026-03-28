@@ -1,0 +1,14 @@
+{
+  "Duration": 0.35,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#dfffff",
+    "EntityBottomTint": "#3f96c2",
+    "Particles": [
+      {
+        "SystemId": "Water_Can_Splash"
+      }
+    ],
+    "ModelVFXId": "Portal_Teleport"
+  }
+}

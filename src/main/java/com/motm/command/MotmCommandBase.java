@@ -6,13 +6,15 @@ import com.hypixel.hytale.server.core.command.system.basecommands.CommandBase;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.motm.MenteesMod;
 import com.motm.manager.SpellbookManager;
-import com.motm.ui.SpellbookPage;
+
+import java.util.logging.Logger;
 
 /**
  * Thin Hytale command bridge that forwards to the plain Java command logic.
  */
 public class MotmCommandBase extends CommandBase {
 
+    private static final Logger LOG = Logger.getLogger("MOTM");
     private final MenteesMod mod;
 
     public MotmCommandBase(MenteesMod mod) {
@@ -28,21 +30,28 @@ public class MotmCommandBase extends CommandBase {
 
     @Override
     public void executeSync(CommandContext context) {
-        if (!context.isPlayer()) {
-            context.sendMessage(Message.raw("[MOTM] This command can only be used by an in-game player."));
-            return;
+        try {
+            if (!context.isPlayer()) {
+                context.sendMessage(Message.raw("[MOTM] This command can only be used by an in-game player."));
+                return;
+            }
+
+            Player sender = context.senderAs(Player.class);
+            String input = context.getInputString();
+            String[] args = parseArgs(input);
+
+            if (tryOpenSpellbook(context, sender, args)) {
+                return;
+            }
+
+            String response = mod.getMotmCommand().execute(sender, args);
+            context.sendMessage(Message.raw(response));
+        } catch (Exception e) {
+            LOG.severe("[MOTM] Command bridge failed: " + e.getMessage());
+            context.sendMessage(Message.raw(
+                    "[MOTM] Command failed safely. The error was logged instead of crashing the mod."
+            ));
         }
-
-        Player sender = context.senderAs(Player.class);
-        String input = context.getInputString();
-        String[] args = parseArgs(input);
-
-        if (tryOpenSpellbook(context, sender, args)) {
-            return;
-        }
-
-        String response = mod.getMotmCommand().execute(sender.getPlayerRef().getUuid().toString(), args);
-        context.sendMessage(Message.raw(response));
     }
 
     private boolean tryOpenSpellbook(CommandContext context, Player sender, String[] args) {
@@ -50,8 +59,14 @@ public class MotmCommandBase extends CommandBase {
             return false;
         }
 
+        String playerId = mod.findOnlinePlayerId(sender);
+
         String subcommand = args[0].toLowerCase();
         if (!subcommand.equals("spellbook") && !subcommand.equals("book")) {
+            return false;
+        }
+
+        if (args.length >= 2 && "give".equalsIgnoreCase(args[1])) {
             return false;
         }
 
@@ -66,16 +81,23 @@ public class MotmCommandBase extends CommandBase {
 
         var entityRef = sender.getReference();
         if (entityRef == null || !entityRef.isValid()) {
-            String fallback = mod.getMotmCommand().execute(sender.getPlayerRef().getUuid().toString(), args);
+            if (playerId == null) {
+                context.sendMessage(Message.raw("[MOTM] Runtime player context is unavailable."));
+                return true;
+            }
+            String fallback = mod.getMotmCommand().execute(playerId, args);
             context.sendMessage(Message.raw(fallback));
             return true;
         }
 
-        sender.getPageManager().openCustomPage(
-                entityRef,
-                entityRef.getStore(),
-                new SpellbookPage(sender.getPlayerRef(), mod, section)
-        );
+        if (!mod.openSpellbook(sender, section)) {
+            if (playerId == null) {
+                context.sendMessage(Message.raw("[MOTM] Runtime player context is unavailable."));
+                return true;
+            }
+            String fallback = mod.getMotmCommand().execute(playerId, args);
+            context.sendMessage(Message.raw(fallback));
+        }
         return true;
     }
 

@@ -34,32 +34,17 @@
     "mana_regen": 0.12
   },
   "passive_ability": {
-    "id": "aero_passive_storm_surge",
-    "name": "Storm Surge",
-    "description": "Moving builds Storm Charge (max 100). At full charge, next attack deals bonus lightning damage equal to 20% of attack damage and grants 30% movement speed for 2 seconds.",
+    "id": "aero_passive_tempo_surge",
+    "name": "Tempo Surge",
+    "description": "You move 25% faster at all times and your native Hytale energy bar is increased by 80%.",
     "effects": [
       {
-        "type": "resource_generation",
-        "resource": "storm_charge",
-        "trigger": "movement",
-        "value": 5,
-        "value_type": "per_second_moving",
-        "max": 100
+        "type": "movement_speed_bonus",
+        "value": 0.25
       },
       {
-        "type": "conditional_bonus_damage",
-        "condition": "storm_charge >= 100",
-        "damage_type": "lightning",
-        "value": 0.20,
-        "value_type": "percent_attack_damage",
-        "consumes_resource": true
-      },
-      {
-        "type": "conditional_buff",
-        "condition": "storm_charge_consumed",
-        "buff": "movement_speed",
-        "value": 0.30,
-        "duration": 2.0
+        "type": "signature_energy_bonus",
+        "value": 0.80
       }
     ]
   },

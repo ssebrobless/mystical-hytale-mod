@@ -1,5 +1,9 @@
 package com.motm.command;
 
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.MenteesMod;
 import com.motm.manager.LevelingManager;
 import com.motm.manager.PerkManager;
@@ -16,12 +20,16 @@ import com.motm.util.AbilityPresentation;
 import com.motm.util.PassivePresentation;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Main command handler for /motm commands.
  */
 public class MotmCommand {
 
+    private static final Logger LOG = Logger.getLogger("MOTM");
+    private static final List<String> CLASS_ID_ORDER = List.of("terra", "hydro", "aero", "corruptus");
     private final MenteesMod mod;
 
     public MotmCommand(MenteesMod mod) {
@@ -37,6 +45,31 @@ public class MotmCommand {
             return "[MOTM] Error: Player data not found.";
         }
 
+        return execute(player, args, null);
+    }
+
+    public String execute(Player runtimePlayer, String[] args) {
+        if (runtimePlayer == null) {
+            return "[MOTM] Error: Player runtime not found.";
+        }
+
+        String playerId = mod.findOnlinePlayerId(runtimePlayer);
+        if (playerId == null) {
+            playerId = mod.getRuntimePlayerId(runtimePlayer);
+        }
+        if (playerId == null) {
+            return "[MOTM] Error: Player runtime not found.";
+        }
+
+        PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(playerId);
+        if (player == null) {
+            return "[MOTM] Error: Player data not found.";
+        }
+
+        return execute(player, args, runtimePlayer);
+    }
+
+    private String execute(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length == 0) {
             return getHelpMessage();
         }
@@ -47,13 +80,15 @@ public class MotmCommand {
             case "select" -> handleSelect(player, args);
             case "style" -> handleStyle(player, args);
             case "abilities" -> handleAbilities(player);
-            case "cast" -> handleCast(player, args);
-            case "spellbook", "book" -> handleSpellbook(player, args);
+            case "cast" -> handleCast(player, args, runtimePlayer);
+            case "spellbook", "book" -> handleSpellbook(player, args, runtimePlayer);
+            case "controls" -> handleControls(player, args, runtimePlayer);
             case "race" -> handleRace(player, args);
             case "resources" -> handleResources(player);
             case "stats" -> handleStats(player);
-            case "level" -> handleLevel(player);
-            case "dev" -> handleDev(player, args);
+            case "level" -> handleLevel(player, runtimePlayer);
+            case "audit" -> handleAudit();
+            case "dev" -> handleDev(player, args, runtimePlayer);
             case "info" -> handleInfo();
             case "help" -> getHelpMessage();
             default -> "[MOTM] Unknown subcommand. Use /motm help";
@@ -73,7 +108,8 @@ public class MotmCommand {
                     + "Style: " + styleSummary + "\n"
                     + "Passive: " + classData.getPassiveAbility().getName() + " - "
                     + classData.getPassiveAbility().getDescription()
-                    + "\nPassive Flow: " + PassivePresentation.buildPassiveSummary(classData.getPassiveAbility());
+                    + "\nPassive Flow: " + PassivePresentation.buildPassiveSummary(classData.getPassiveAbility())
+                    + "\nPassive State: " + mod.getClassPassiveManager().buildPassiveStateSummary(player);
         }
 
         if (args.length < 2) {
@@ -253,18 +289,33 @@ public class MotmCommand {
 
     // --- /motm level ---
 
-    private String handleLevel(PlayerData player) {
+    private String handleLevel(PlayerData player, Player runtimePlayer) {
         LevelingManager lm = mod.getLevelingManager();
         int required = lm.calculateXpRequired(player.getLevel());
         double percent = lm.getXpProgressPercent(player);
-        String difficulty = mod.getMobScalingManager().getDifficultyDescription(player.getLevel());
+        String playerId = runtimePlayer != null
+                ? mod.findOnlinePlayerId(runtimePlayer)
+                : player.getPlayerId();
+        if (playerId == null && runtimePlayer != null) {
+            playerId = mod.getRuntimePlayerId(runtimePlayer);
+        }
+        if (playerId == null) {
+            playerId = player.getPlayerId();
+        }
+        int hostileAnchorLevel = mod.getAverageOnlinePlayerLevelForPlayer(playerId);
+        String difficulty = mod.getMobScalingManager().getDifficultyDescription(hostileAnchorLevel);
+        String bossDifficulty = mod.getMobScalingManager().getBossDifficultyDescription(hostileAnchorLevel, "boss");
 
         StringBuilder sb = new StringBuilder("[MOTM] === Level Progress ===\n");
         sb.append("Level: ").append(player.getLevel()).append(" / ").append(LevelingManager.MAX_LEVEL).append("\n");
         sb.append("XP: ").append(player.getCurrentXp()).append(" / ").append(required)
                 .append(" (").append(String.format("%.1f", percent)).append("%)\n");
         sb.append("Total XP Earned: ").append(player.getTotalXpEarned()).append("\n");
-        sb.append("World Difficulty: ").append(difficulty).append("\n");
+        sb.append("Level Growth: ").append(lm.describePlayerStatGrowth(player.getLevel())).append("\n");
+        sb.append("Hostile Mob Anchor: Lv ").append(hostileAnchorLevel)
+                .append(" average level in this world").append("\n");
+        sb.append("Hostile Scaling: ").append(difficulty).append("\n");
+        sb.append("Boss Scaling: ").append(bossDifficulty).append("\n");
 
         if (player.getRestedBonus() > 0) {
             sb.append("Rested Bonus: +").append((int) (player.getRestedBonus() * 100)).append("%\n");
@@ -283,41 +334,35 @@ public class MotmCommand {
     // --- /motm style [styleId] ---
 
     private String handleStyle(PlayerData player, String[] args) {
-        if (player.getPlayerClass() == null) {
-            return "[MOTM] Select a class first with /motm class <classId>";
-        }
-
-        List<StyleData> allStyles = mod.getDataLoader().getStylesForClass(player.getPlayerClass());
-
         if (args.length < 2) {
-            StringBuilder sb = new StringBuilder("[MOTM] === " + player.getPlayerClass().toUpperCase() + " Styles ===\n");
-            sb.append("Choose 1 style. Your style determines your abilities.\n\n");
-
-            List<String> selected = player.getSelectedStyles();
-            for (StyleData style : allStyles) {
-                boolean isSelected = selected.contains(style.getId());
-                sb.append(isSelected ? ">> " : "   ");
-                sb.append(style.getId()).append(" - ").append(style.getName()).append("\n");
-                sb.append("   ").append(compactText(style.getTheme(), 54)).append("\n");
-                sb.append("   Abilities: ").append(formatAbilityNames(style)).append("\n");
-            }
-
-            if (selected.isEmpty()) {
-                sb.append("\nUse: /motm style <styleId>");
-            } else {
-                sb.append("\nCurrent style: ").append(formatSelectedStyleSummary(player));
-                sb.append("\nTo change: /motm style <styleId>");
-            }
-            return sb.toString();
+            return buildStyleOverview(player);
         }
 
         String styleId = args[1].toLowerCase();
-        StyleData selectedStyle = allStyles.stream()
-                .filter(style -> style.getId().equals(styleId))
-                .findFirst()
-                .orElse(null);
-        if (selectedStyle == null) {
+        ResolvedStyleSelection resolvedStyle = resolveStyleSelection(styleId);
+        if (resolvedStyle == null) {
             return "[MOTM] Invalid style. Use /motm style to see available options.";
+        }
+
+        boolean internalTestFlow = mod.isDevToolsEnabled();
+        boolean autoClassSwap = internalTestFlow
+                && (player.getPlayerClass() == null || !player.getPlayerClass().equals(resolvedStyle.classId()));
+
+        if (!internalTestFlow) {
+            if (player.getPlayerClass() == null) {
+                return "[MOTM] Select a class first with /motm class <classId>.\n"
+                        + "Then use /motm style <styleId> for that class.";
+            }
+            if (!player.getPlayerClass().equals(resolvedStyle.classId())) {
+                return "[MOTM] " + resolvedStyle.style().getName()
+                        + " belongs to " + resolvedStyle.classData().getDisplayName()
+                        + ". Select that class first with /motm class " + resolvedStyle.classId() + ".";
+            }
+        } else {
+            clearClassProgression(player);
+            player.setPlayerClass(resolvedStyle.classId());
+            player.setFirstJoin(false);
+            updateDebugProgressionState(player);
         }
 
         boolean success = mod.getStyleManager().selectStyles(player, List.of(styleId));
@@ -325,13 +370,22 @@ public class MotmCommand {
             return "[MOTM] Invalid style selection. Use /motm style to see available styles.";
         }
 
-        StringBuilder sb = new StringBuilder("[MOTM] Style selected!\n");
-        sb.append("Style: ").append(selectedStyle.getName()).append("\n");
-        sb.append("Theme: ").append(selectedStyle.getTheme()).append("\n");
+        StringBuilder sb = new StringBuilder(internalTestFlow
+                ? "[MOTM] Testing loadout ready!\n"
+                : "[MOTM] Style selected!\n");
+        if (internalTestFlow) {
+            sb.append("Class: ").append(resolvedStyle.classData().getDisplayName()).append("\n");
+            if (autoClassSwap) {
+                sb.append("Flow: class auto-set from style id.\n");
+            }
+            sb.append("Reset: class perks, style, resources, and cooldowns cleared for a clean test swap.\n");
+        }
+        sb.append("Style: ").append(resolvedStyle.style().getName()).append("\n");
+        sb.append("Theme: ").append(resolvedStyle.style().getTheme()).append("\n");
         sb.append("Abilities:\n");
-        for (AbilityData ability : selectedStyle.getAbilities()) {
+        for (AbilityData ability : resolvedStyle.style().getAbilities()) {
             String profile = buildAbilityProfileSummary(ability);
-            String visuals = buildAbilityVisualSummary(player.getPlayerClass(), selectedStyle.getId(), ability);
+            String visuals = buildAbilityVisualSummary(player.getPlayerClass(), resolvedStyle.style().getId(), ability);
             sb.append("  ").append(ability.getName())
                     .append(" (").append(ability.getCooldownSeconds()).append("s)")
                     .append(" - ").append(compactText(
@@ -342,9 +396,8 @@ public class MotmCommand {
                 sb.append("    Visuals: ").append(compactText(visuals, 64)).append("\n");
             }
         }
-        mod.getResourceManager().synchronizePersistentState(player);
-        mod.getResourceManager().initializeForPlayer(player.getPlayerId(), player.getPlayerClass());
         mod.getPlayerDataManager().savePlayerData(player);
+        rebuildPlayerRuntime(player);
         return sb.toString();
     }
 
@@ -395,7 +448,14 @@ public class MotmCommand {
 
     // --- /motm spellbook [section] ---
 
-    private String handleSpellbook(PlayerData player, String[] args) {
+    private String handleSpellbook(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length >= 2 && "give".equalsIgnoreCase(args[1])) {
+            if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
+                return "[MOTM] Join a world and run this in-game to receive the spellbook item.";
+            }
+            return mod.queueSpellbookGrant(player.getPlayerId());
+        }
+
         SpellbookManager spellbookManager = mod.getSpellbookManager();
         SpellbookManager.Section section = args.length >= 2
                 ? spellbookManager.parseSection(args[1])
@@ -405,6 +465,37 @@ public class MotmCommand {
                     + "Sections: " + spellbookManager.getSectionList();
         }
         return spellbookManager.render(player, section);
+    }
+
+    private String handleControls(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length >= 2 && "givebook".equalsIgnoreCase(args[1])) {
+            if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
+                return "[MOTM] Join a world and run this in-game to receive the spellbook item.";
+            }
+            return mod.queueSpellbookGrant(player.getPlayerId());
+        }
+
+        StyleData style = getSelectedStyle(player);
+        String slot1 = describeAbilitySlot(style, 0);
+        String slot2 = describeAbilitySlot(style, 1);
+        String slot3 = describeAbilitySlot(style, 2);
+        String bookStatus = runtimePlayer != null && mod.playerHasSpellbook(runtimePlayer)
+                ? "Present"
+                : "Optional";
+
+        return "[MOTM] === Ability Controls ===\n"
+                + "Default spellbook controls while equipped:\n"
+                + "Left Click -> Slot 1: " + slot1 + "\n"
+                + "Right Click -> Slot 2: " + slot2 + "\n"
+                + "Use -> Slot 3: " + slot3 + "\n"
+                + "Alternate bindings: Ability 1 / 2 / 3 also cast the same three slots.\n"
+                + "Spellbook management/readout: /motm spellbook overview\n"
+                + "Book overview gesture: Crouch + Use\n"
+                + "Spellbook Status: " + bookStatus + "\n"
+                + "Weapon swaps are encouraged for follow-up attacks after casting.\n"
+                + "Fallback: /motm cast <abilityId>\n"
+                + "Optional: /motm spellbook give"
+                + (mod.isDevToolsEnabled() ? " | /motm dev book" : "");
     }
 
     // --- /motm abilities ---
@@ -426,7 +517,7 @@ public class MotmCommand {
 
         StringBuilder sb = new StringBuilder("[MOTM] === Abilities ===\n");
         sb.append("Style: ").append(style.getName())
-                .append(" | Resource: ").append(style.getResourceType()).append("\n\n");
+                .append(" | Resource: ").append(displayStyleResource(style)).append("\n\n");
 
         for (AbilityData ability : abilities) {
             double remainingCooldown = mod.getStyleManager()
@@ -452,13 +543,14 @@ public class MotmCommand {
             sb.append("  ").append(compactText(ability.getDescription(), 58)).append("\n\n");
         }
 
-        sb.append("Use: /motm cast <abilityId>");
+        sb.append("Use: /motm cast <abilityId>\n");
+        sb.append("Equip the spellbook, then use Hytale Ability 1 / 2 / 3 for live in-world casts.");
         return sb.toString();
     }
 
     // --- /motm cast <abilityId> ---
 
-    private String handleCast(PlayerData player, String[] args) {
+    private String handleCast(PlayerData player, String[] args, Player runtimePlayer) {
         if (player.getPlayerClass() == null) {
             return "[MOTM] Select a class first with /motm class <classId>";
         }
@@ -473,65 +565,184 @@ public class MotmCommand {
         }
 
         String abilityId = args[1].toLowerCase();
-        StyleManager styleManager = mod.getStyleManager();
-        AbilityData ability = styleManager.findAbility(player, abilityId);
+        AbilityData ability = mod.getStyleManager().findAbility(player, abilityId);
         if (ability == null) {
             return "[MOTM] Unknown ability. Use /motm abilities to see valid IDs.";
         }
 
-        double remainingCooldown = styleManager.getRemainingCooldownSeconds(player.getPlayerId(), abilityId);
-        if (remainingCooldown > 0) {
-            return "[MOTM] " + ability.getName() + " is on cooldown for "
-                    + formatDecimal(remainingCooldown) + "s.";
+        return castResolvedAbility(player, style, ability, runtimePlayer, null, null, false);
+    }
+
+    public String castAbilityBySlot(Player runtimePlayer,
+                                    int slot,
+                                    Ref<EntityStore> targetRef,
+                                    Vector3i targetBlock) {
+        if (runtimePlayer == null) {
+            return "[MOTM] Runtime player context is unavailable.";
         }
 
-        if (ability.getResourceCost() > 0) {
-            int currentResource = mod.getResourceManager().getAmount(player.getPlayerId(), style.getResourceType());
-            if (currentResource < ability.getResourceCost()) {
-                return "[MOTM] Not enough " + style.getResourceType() + ". Need "
-                        + ability.getResourceCost() + ", have " + currentResource + ".";
+        String playerId = mod.findOnlinePlayerId(runtimePlayer);
+        if (playerId == null) {
+            playerId = mod.getRuntimePlayerId(runtimePlayer);
+        }
+        if (playerId == null) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+
+        PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(playerId);
+        if (player == null) {
+            return "[MOTM] Error: Player data not found.";
+        }
+
+        if (player.getPlayerClass() == null) {
+            return "[MOTM] Select a class first with /motm class <classId>";
+        }
+
+        StyleData style = getSelectedStyle(player);
+        if (style == null) {
+            return "[MOTM] Choose your style first with /motm style <styleId>";
+        }
+
+        if (slot < 1 || slot > style.getAbilities().size()) {
+            return "[MOTM] Slot " + slot + " is not bound for your current style.";
+        }
+
+        AbilityData ability = style.getAbilities().get(slot - 1);
+        LOG.info("[MOTM] Slot cast resolved: player="
+                + player.getPlayerName()
+                + " style=" + style.getId()
+                + " slot=" + slot
+                + " ability=" + ability.getId());
+        return castResolvedAbility(player, style, ability, runtimePlayer, targetRef, targetBlock, true);
+    }
+
+    private String castResolvedAbility(PlayerData player,
+                                       StyleData style,
+                                       AbilityData ability,
+                                       Player runtimePlayer,
+                                       Ref<EntityStore> targetRef,
+                                       Vector3i targetBlock,
+                                       boolean quietSuccess) {
+        if (runtimePlayer == null) {
+            return "[MOTM] Join a world and run this in-game to trigger live ability playback.";
+        }
+
+        mod.queueAbilityCast(player.getPlayerId(), ability.getId(), targetRef, targetBlock, !quietSuccess);
+        return quietSuccess ? "" : "[MOTM] Cast queued: " + ability.getName() + ".";
+    }
+
+    public String executeQueuedAbilityCast(String playerId,
+                                           String abilityId,
+                                           Player runtimePlayer,
+                                           Ref<EntityStore> targetRef,
+                                           Vector3i targetBlock) {
+        PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(playerId);
+        if (player == null) {
+            return "[MOTM] Error: Player data not found.";
+        }
+
+        StyleData style = getSelectedStyle(player);
+        if (style == null) {
+            return "[MOTM] That ability is unavailable for your current style.";
+        }
+
+        AbilityData ability = mod.getStyleManager().findAbility(player, abilityId);
+        if (ability == null) {
+            return "[MOTM] That ability is unavailable.";
+        }
+
+        try {
+            StyleManager styleManager = mod.getStyleManager();
+            StyleManager.ActionState actionState = styleManager.getActionState(player.getPlayerId());
+            if (actionState != null) {
+                String phase = actionState.phase() == StyleManager.AbilityPhase.CASTING ? "casting" : "recovering";
+                return "[MOTM] " + actionState.abilityName() + " is still " + phase + " for "
+                        + formatDecimal(actionState.remainingSeconds()) + "s.";
             }
-        }
 
-        AbilityData activated = styleManager.useAbility(player, abilityId);
-        if (activated == null) {
-            return "[MOTM] Could not use that ability right now.";
-        }
+            String useFailureReason = styleManager.getUseFailureReason(player, ability);
+            if (!useFailureReason.isBlank()) {
+                return "[MOTM] " + useFailureReason;
+            }
 
-        StringBuilder sb = new StringBuilder("[MOTM] Cast ").append(activated.getName()).append("!\n");
-        sb.append("Effect: ").append(buildAbilityEffectSummary(activated)).append("\n");
-        String profile = buildAbilityProfileSummary(activated);
-        if (!profile.isBlank()) {
-            sb.append("Profile: ").append(profile).append("\n");
-        }
-        String visuals = buildAbilityVisualDetail(player.getPlayerClass(), style.getId(), activated);
-        if (!visuals.isBlank()) {
-            sb.append("Assets: ").append(visuals).append("\n");
-        }
-        sb.append("Cooldown: ").append(formatDecimal(activated.getCooldownSeconds())).append("s");
+            boolean deactivatingToggle = styleManager.isToggleActive(player.getPlayerId(), abilityId);
+            String castRestriction = deactivatingToggle ? "" : mod.getGameplayPlaybackManager().getCastRestriction(player, ability);
+            if (!castRestriction.isBlank()) {
+                return "[MOTM] " + castRestriction;
+            }
 
-        if (activated.getResourceCost() > 0) {
-            int remainingResource = mod.getResourceManager().getAmount(player.getPlayerId(), style.getResourceType());
-            sb.append(" | ").append(style.getResourceType()).append(": ")
-                    .append(remainingResource).append(" remaining");
-        }
+            StyleManager.AbilityUseResult useResult = styleManager.useAbility(player, abilityId);
+            if (!useResult.success()) {
+                return "[MOTM] " + useResult.failureReason();
+            }
 
-        sb.append("\nRuntime note: cooldowns and resource spending are live, but the")
-                .append(" physical Hytale combat effect for this ability is not wired yet.\n")
-                .append("Presentation note: this ability now resolves to built-in Hytale")
-                .append(" animations, particles, and optional summon/form models.");
-        return sb.toString();
+            if (useResult.toggledOff()) {
+                mod.refreshStatusHud(player.getPlayerId());
+                String runtimeSummary = mod.getGameplayPlaybackManager().deactivateAbilityRuntime(player, abilityId);
+                StringBuilder toggledOff = new StringBuilder("[MOTM] Toggled off ")
+                        .append(ability.getName())
+                        .append(".");
+                if (useResult.cooldownSeconds() > 0) {
+                    toggledOff.append(" Cooldown: ")
+                            .append(formatDecimal(useResult.cooldownSeconds()))
+                            .append("s.");
+                }
+                if (!runtimeSummary.isBlank()) {
+                    toggledOff.append(" Runtime: ").append(runtimeSummary).append(".");
+                }
+                return toggledOff.toString();
+            }
+
+            AbilityData activated = useResult.ability();
+            mod.refreshStatusHud(player.getPlayerId());
+
+            StringBuilder sb = new StringBuilder("[MOTM] Cast ").append(activated.getName()).append("!");
+            if (useResult.maxCharges() > 0) {
+                sb.append(" Charges ")
+                        .append(useResult.currentCharges()).append("/").append(useResult.maxCharges()).append(".");
+            }
+            if (useResult.toggleActive()) {
+                sb.append(" Toggle ON.");
+            }
+
+            if (runtimePlayer != null) {
+                var execution = mod.getGameplayPlaybackManager().executeAbility(
+                        runtimePlayer,
+                        player,
+                        style,
+                        activated,
+                        new com.motm.manager.GameplayPlaybackManager.CastContext(targetRef, targetBlock)
+                );
+                if (!execution.summary().isBlank()) {
+                    sb.append(" Runtime: ").append(execution.summary()).append(".");
+                }
+            }
+
+            return sb.toString();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE,
+                    "[MOTM] Cast failed safely for " + player.getPlayerName() + " ability=" + abilityId,
+                    e);
+            return "[MOTM] Cast failed safely. The error was logged instead of silently breaking the mod.";
+        }
     }
 
     // --- /motm dev ... ---
 
-    private String handleDev(PlayerData player, String[] args) {
+    private String handleDev(PlayerData player, String[] args, Player runtimePlayer) {
+        if (!mod.isDevToolsEnabled()) {
+            return mod.devToolsDisabledMessage();
+        }
         if (args.length < 2) {
             return getDevHelpMessage();
         }
 
         return switch (args[1].toLowerCase()) {
             case "help" -> getDevHelpMessage();
+            case "book" -> handleDevBook(player, runtimePlayer);
+            case "test" -> handleDevTest(player, args, runtimePlayer);
+            case "freecast" -> handleDevFreeCast(player, args);
+            case "clear" -> handleDevClear(player, args);
             case "level" -> handleDevLevel(player, args);
             case "xp" -> handleDevXp(player, args);
             case "class" -> handleDevClass(player, args);
@@ -540,6 +751,55 @@ public class MotmCommand {
             case "styles" -> handleDevStyles(player, args);
             case "reset" -> handleDevReset(player, args);
             default -> "[MOTM] Unknown dev subcommand.\n" + getDevHelpMessage();
+        };
+    }
+
+    private String handleDevBook(PlayerData player, Player runtimePlayer) {
+        if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
+            return "[MOTM] Join a world and run this in-game to receive the Dev Grimoire.";
+        }
+        return mod.queueDevBookGrant(player.getPlayerId());
+    }
+
+    private String handleDevTest(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev test <style <styleId>|status|stop>";
+        }
+        if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
+            return "[MOTM] Join a world and run this in-game to start a live style test.";
+        }
+
+        return switch (args[2].toLowerCase()) {
+            case "style" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev test style <styleId>";
+                }
+                yield mod.startStyleTest(player.getPlayerId(), args[3]);
+            }
+            case "status" -> mod.getStyleTestStatus(player.getPlayerId());
+            case "stop" -> mod.stopStyleTest(player.getPlayerId());
+            default -> "[MOTM] Usage: /motm dev test <style <styleId>|status|stop>";
+        };
+    }
+
+    private String handleDevFreeCast(PlayerData player, String[] args) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev freecast <on|off>\n"
+                    + "Current: " + (mod.isFreeCastEnabled(player.getPlayerId()) ? "ON" : "OFF");
+        }
+
+        return switch (args[2].toLowerCase()) {
+            case "on", "enable", "enabled", "true" -> {
+                mod.setFreeCastEnabled(player.getPlayerId(), true);
+                mod.refreshStatusHud(player.getPlayerId());
+                yield "[MOTM] Dev: free-cast enabled. Ability costs are ignored for testing.";
+            }
+            case "off", "disable", "disabled", "false" -> {
+                mod.setFreeCastEnabled(player.getPlayerId(), false);
+                mod.refreshStatusHud(player.getPlayerId());
+                yield "[MOTM] Dev: free-cast disabled. Normal resource costs restored.";
+            }
+            default -> "[MOTM] Usage: /motm dev freecast <on|off>";
         };
     }
 
@@ -569,6 +829,8 @@ public class MotmCommand {
         player.setTotalXpEarned(mod.getLevelingManager().calculateTotalXpToLevel(newLevel));
         updateDebugProgressionState(player);
         mod.getPlayerDataManager().savePlayerData(player);
+        mod.refreshPlayerProgressionBonuses(player.getPlayerId());
+        mod.refreshStatusHud(player.getPlayerId());
 
         return "[MOTM] Dev: level changed " + oldLevel + " -> " + newLevel + ".";
     }
@@ -605,6 +867,7 @@ public class MotmCommand {
         int floorTotalXp = mod.getLevelingManager().calculateTotalXpToLevel(player.getLevel());
         player.setTotalXpEarned(Math.max(player.getTotalXpEarned(), floorTotalXp + newXp));
         mod.getPlayerDataManager().savePlayerData(player);
+        mod.refreshStatusHud(player.getPlayerId());
 
         return "[MOTM] Dev: XP changed " + oldXp + " -> " + newXp + ".";
     }
@@ -697,20 +960,27 @@ public class MotmCommand {
         }
 
         player.getSelectedStyles().clear();
-        mod.getStyleManager().resetCooldowns(player.getPlayerId());
         mod.getPlayerDataManager().savePlayerData(player);
+        rebuildPlayerRuntime(player);
         return "[MOTM] Dev: styles cleared.";
     }
 
-    private String handleDevReset(PlayerData player, String[] args) {
-        if (args.length < 3 || !"player".equalsIgnoreCase(args[2])) {
-            return "[MOTM] Usage: /motm dev reset player";
+    private String handleDevClear(PlayerData player, String[] args) {
+        if (args.length >= 3 && !"player".equalsIgnoreCase(args[2]) && !"all".equalsIgnoreCase(args[2])) {
+            return "[MOTM] Usage: /motm dev clear\n"
+                    + "Optional: /motm dev clear player";
         }
 
-        resetPlayerForDev(player);
-        rebuildPlayerRuntime(player);
-        mod.getPlayerDataManager().savePlayerData(player);
-        return "[MOTM] Dev: player progression reset to a fresh state.";
+        return performFullDevPlayerClear(player);
+    }
+
+    private String handleDevReset(PlayerData player, String[] args) {
+        if (args.length >= 3 && !"player".equalsIgnoreCase(args[2]) && !"all".equalsIgnoreCase(args[2])) {
+            return "[MOTM] Usage: /motm dev reset\n"
+                    + "Optional: /motm dev reset player";
+        }
+
+        return performFullDevPlayerClear(player);
     }
 
     // --- /motm resources ---
@@ -719,36 +989,45 @@ public class MotmCommand {
         if (player.getPlayerClass() == null) {
             return "[MOTM] Select a class first with /motm class <classId>";
         }
-        return "[MOTM] " + mod.getResourceManager()
-                .getResourceDisplay(player.getPlayerId(), player.getPlayerClass());
+        StringBuilder sb = new StringBuilder("[MOTM] ")
+                .append(mod.getResourceManager().getResourceDisplay(player.getPlayerId(), player.getPlayerClass()));
+        if (mod.isFreeCastEnabled(player.getPlayerId())) {
+            sb.append("\nDev Free-Cast: ON");
+        }
+        return sb.toString();
     }
 
     // --- /motm info ---
 
     private String handleInfo() {
         return "[MOTM] === Mentees of the Mystical ===\n"
-                + "Version: 1.0.0\n"
+                + "Version: 1.0.1\n"
                 + "4 Classes | 40 Styles | 12 Races | 800 Perks | Level 1-200\n"
                 + "Elemental Reactions | Dynamic Mob Scaling | Synergy System\n\n"
                 + "Flow:\n"
                 + "  1. /motm class <id>\n"
                 + "  2. /motm style <id>\n"
                 + "  3. /motm spellbook overview\n"
-                + "  4. /motm abilities and /motm cast <abilityId>\n"
-                + "  5. /motm perks at Lv. 10+\n\n"
+                + "  4. Equip the spellbook and use Hytale Ability 1 / 2 / 3\n"
+                + "  5. /motm abilities and /motm cast <abilityId>\n"
+                + "  6. /motm perks at Lv. 10+\n\n"
                 + "Commands:\n"
                 + "  /motm class [id]        - View/select class\n"
                 + "  /motm race [id]         - View/select race\n"
-                + "  /motm style [id]        - View/select your combat style\n"
-                + "  /motm spellbook [page]  - Open the visual spellbook\n"
+                + "  /motm style [id]        - View/select combat style"
+                + (mod.isDevToolsEnabled() ? " (auto-loads matching class in test builds)\n" : "\n")
+                + "  /motm spellbook [page]  - Open the spellbook page in chat\n"
+                + "  /motm spellbook give    - Spawn the normal spellbook\n"
+                + "  /motm controls          - View ability input bindings\n"
                 + "  /motm abilities         - View ability IDs and cooldowns\n"
                 + "  /motm cast <abilityId>  - Test-cast a style ability\n"
+                + "  /motm audit             - Run the preflight data/runtime audit\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
                 + "  /motm select ...        - Select 3 perks by number\n"
                 + "  /motm resources         - View class resources\n"
                 + "  /motm stats             - View your statistics\n"
                 + "  /motm level             - View XP progress\n"
-                + "  /motm dev ...           - Testing/admin tools\n"
+                + buildDevHelpSummary()
                 + "  /motm help              - Show this help";
     }
 
@@ -756,8 +1035,21 @@ public class MotmCommand {
         return handleInfo();
     }
 
+    private String handleAudit() {
+        return mod.runPreflightAudit().toChatSummary();
+    }
+
     private String getDevHelpMessage() {
+        if (!mod.isDevToolsEnabled()) {
+            return mod.devToolsDisabledMessage();
+        }
         return "[MOTM] === Dev Commands ===\n"
+                + "  /motm dev book\n"
+                + "  /motm dev test style <styleId>\n"
+                + "  /motm dev test status\n"
+                + "  /motm dev test stop\n"
+                + "  /motm dev freecast <on|off>\n"
+                + "  /motm dev clear\n"
                 + "  /motm dev level set <n>\n"
                 + "  /motm dev level add <n>\n"
                 + "  /motm dev xp set <n>\n"
@@ -768,31 +1060,20 @@ public class MotmCommand {
                 + "  /motm dev race clear\n"
                 + "  /motm dev perks clear\n"
                 + "  /motm dev styles clear\n"
-                + "  /motm dev reset player";
+                + "  /motm dev reset";
+    }
+
+    private String buildDevHelpSummary() {
+        if (!mod.isDevToolsEnabled()) {
+            return "  Dev tools              - Disabled in this build/server\n";
+        }
+        return "  /motm dev ...           - Testing/admin tools\n"
+                + "  /motm dev book          - Spawn the Dev Grimoire\n"
+                + "  /motm dev test ...      - Run a live style test sequence\n";
     }
 
     private void rebuildPlayerRuntime(PlayerData player) {
-        String playerId = player.getPlayerId();
-
-        mod.getStyleManager().resetCooldowns(playerId);
-        mod.getStatusEffectManager().clearEffects(playerId);
-        mod.getElementalReactionManager().clearMarks(playerId);
-        mod.getResourceManager().clearPlayerState(playerId);
-        mod.getResourceManager().synchronizePersistentState(player);
-
-        player.clearSynergyBonuses();
-        player.clearRaceBonuses();
-
-        if (player.getPlayerClass() == null) {
-            return;
-        }
-
-        mod.getResourceManager().initializeForPlayer(playerId, player.getPlayerClass());
-        mod.getPerkManager().reapplyAllPerks(player, mod.getSynergyEngine());
-
-        if (player.getRace() != null) {
-            mod.getRaceManager().applyRaceBonuses(player, mod.getStatusEffectManager());
-        }
+        mod.rebuildPlayerRuntime(player);
     }
 
     private String formatSelectedStyleSummary(PlayerData player) {
@@ -801,6 +1082,57 @@ public class MotmCommand {
             return "None";
         }
         return style.getName() + " (" + style.getId() + ")";
+    }
+
+    private String buildStyleOverview(PlayerData player) {
+        if (player.getPlayerClass() == null) {
+            StringBuilder sb = new StringBuilder("[MOTM] === Styles ===\n");
+            sb.append("Pick any style id with /motm style <styleId>\n\n");
+            for (String classId : CLASS_ID_ORDER) {
+                ClassData classData = mod.getDataLoader().getClassData(classId);
+                List<StyleData> styles = mod.getDataLoader().getStylesForClass(classId);
+                if (classData == null || styles.isEmpty()) {
+                    continue;
+                }
+                sb.append(classData.getDisplayName()).append(": ");
+                sb.append(styles.stream()
+                        .map(StyleData::getId)
+                        .reduce((left, right) -> left + ", " + right)
+                        .orElse("none"));
+                sb.append("\n");
+            }
+            if (mod.isDevToolsEnabled()) {
+                sb.append("\nInternal test flow: /motm style <styleId> auto-loads the matching class")
+                        .append(" and clears prior class/style state.");
+            } else {
+                sb.append("\nPublic flow: choose your class first with /motm class <classId>.");
+            }
+            return sb.toString();
+        }
+
+        List<StyleData> allStyles = mod.getDataLoader().getStylesForClass(player.getPlayerClass());
+        StringBuilder sb = new StringBuilder("[MOTM] === " + player.getPlayerClass().toUpperCase() + " Styles ===\n");
+        sb.append("Choose 1 style. Your style determines your abilities.\n\n");
+
+        List<String> selected = player.getSelectedStyles();
+        for (StyleData style : allStyles) {
+            boolean isSelected = selected.contains(style.getId());
+            sb.append(isSelected ? ">> " : "   ");
+            sb.append(style.getId()).append(" - ").append(style.getName()).append("\n");
+            sb.append("   ").append(compactText(style.getTheme(), 54)).append("\n");
+            sb.append("   Abilities: ").append(formatAbilityNames(style)).append("\n");
+        }
+
+        if (selected.isEmpty()) {
+            sb.append("\nUse: /motm style <styleId>");
+        } else {
+            sb.append("\nCurrent style: ").append(formatSelectedStyleSummary(player));
+            sb.append("\nTo change: /motm style <styleId>");
+        }
+        if (mod.isDevToolsEnabled()) {
+            sb.append("\nDev shortcut: /motm style <styleId> can auto-swap into any class for testing.");
+        }
+        return sb.toString();
     }
 
     private String getSelectedStyleName(PlayerData player) {
@@ -816,11 +1148,33 @@ public class MotmCommand {
         return mod.getDataLoader().getStyleById(player.getSelectedStyles().get(0), player.getPlayerClass());
     }
 
+    private ResolvedStyleSelection resolveStyleSelection(String styleId) {
+        for (String classId : CLASS_ID_ORDER) {
+            StyleData style = mod.getDataLoader().getStyleById(styleId, classId);
+            if (style != null) {
+                ClassData classData = mod.getDataLoader().getClassData(classId);
+                if (classData != null) {
+                    return new ResolvedStyleSelection(classId, classData, style);
+                }
+            }
+        }
+        return null;
+    }
+
     private String formatAbilityNames(StyleData style) {
         return style.getAbilities().stream()
                 .map(AbilityData::getName)
                 .reduce((left, right) -> left + ", " + right)
                 .orElse("None");
+    }
+
+    private String describeAbilitySlot(StyleData style, int index) {
+        if (style == null || index < 0 || index >= style.getAbilities().size()) {
+            return "Empty";
+        }
+
+        AbilityData ability = style.getAbilities().get(index);
+        return ability.getName() + " [" + ability.getId() + "]";
     }
 
     private SelectionResolution resolvePerkSelections(List<Perk> available, List<String> selections) {
@@ -870,10 +1224,17 @@ public class MotmCommand {
     }
 
     private String formatResourceCost(StyleData style, AbilityData ability) {
-        if (ability.getResourceCost() <= 0 || style == null || style.getResourceType() == null) {
+        if (ability.getResourceCost() <= 0 || style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
             return "none";
         }
-        return ability.getResourceCost() + " " + style.getResourceType();
+        return ability.getResourceCost() + " " + mod.getResourceManager().getDisplayName(style.getResourceType());
+    }
+
+    private String displayStyleResource(StyleData style) {
+        if (style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
+            return "None";
+        }
+        return mod.getResourceManager().getDisplayName(style.getResourceType());
     }
 
     private String compactText(String text, int maxLength) {
@@ -891,6 +1252,8 @@ public class MotmCommand {
         player.getSelectedStyles().clear();
         player.getClassResources().clear();
         mod.getStyleManager().resetCooldowns(player.getPlayerId());
+        mod.getStatusEffectManager().clearEffects(player.getPlayerId());
+        mod.getElementalReactionManager().clearMarks(player.getPlayerId());
     }
 
     private void clearPerkProgression(PlayerData player) {
@@ -944,6 +1307,18 @@ public class MotmCommand {
         player.setLastLogoutTimestamp(null);
         player.clearSynergyBonuses();
         player.clearRaceBonuses();
+        mod.getStyleManager().resetCooldowns(player.getPlayerId());
+        mod.getStatusEffectManager().clearEffects(player.getPlayerId());
+        mod.getElementalReactionManager().clearMarks(player.getPlayerId());
+    }
+
+    private String performFullDevPlayerClear(PlayerData player) {
+        resetPlayerForDev(player);
+        rebuildPlayerRuntime(player);
+        mod.getPlayerDataManager().savePlayerData(player);
+        mod.refreshStatusHud(player.getPlayerId());
+        return "[MOTM] Dev: player cleared to a fresh state.\n"
+                + "Reset: class, race, style, perks, level, XP, resources, cooldowns, statuses, and marks.";
     }
 
     private Integer parseInteger(String rawValue) {
@@ -966,4 +1341,6 @@ public class MotmCommand {
     }
 
     private record SelectionResolution(List<String> resolvedIds, List<String> invalidSelections) {}
+
+    private record ResolvedStyleSelection(String classId, ClassData classData, StyleData style) {}
 }

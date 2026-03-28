@@ -13,8 +13,13 @@
           "description": "Rapid ice shards, stacking slow",
           "damage_percent": 12,
           "cooldown_seconds": 2,
+          "cast_time_seconds": 0.32,
+          "recovery_seconds": 0.22,
           "effect": "slow_stack",
-          "categories": ["damage", "debuff"],
+          "categories": [
+            "damage",
+            "debuff"
+          ],
           "resource_cost": 2,
           "cast_type": "projectile_volley",
           "target_type": "enemy",
@@ -29,8 +34,13 @@
           "description": "Heavy ice impact with explosion",
           "damage_percent": 20,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.28,
           "effect": "slow",
-          "categories": ["damage", "debuff"],
+          "categories": [
+            "damage",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_strike",
           "target_type": "ground_target",
@@ -46,8 +56,12 @@
           "description": "Gain 50% evasion for 2 turns",
           "damage_percent": 0,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "evasion_buff",
-          "categories": ["evasion"],
+          "categories": [
+            "evasion"
+          ],
           "resource_cost": 2,
           "cast_type": "dash_buff",
           "target_type": "self",
@@ -71,8 +85,13 @@
           "description": "Summon minion that attacks each turn",
           "damage_percent": 5,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.4,
           "effect": "summon",
-          "categories": ["summon", "damage"],
+          "categories": [
+            "summon",
+            "damage"
+          ],
           "resource_cost": 3,
           "cast_type": "summon",
           "target_type": "ground_target",
@@ -87,8 +106,13 @@
           "description": "Slow enemy attack speed for 3 turns",
           "damage_percent": 3,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "attack_slow",
-          "categories": ["damage", "debuff"],
+          "categories": [
+            "damage",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -103,8 +127,12 @@
           "description": "Summon golem that taunts and absorbs damage",
           "damage_percent": 0,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.4,
           "effect": "summon_tank",
-          "categories": ["summon"],
+          "categories": [
+            "summon"
+          ],
           "resource_cost": 4,
           "cast_type": "summon",
           "target_type": "ground_target",
@@ -128,8 +156,13 @@
           "description": "Push enemy back, gain speed",
           "damage_percent": 8,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 2,
           "cast_type": "wave_line",
           "target_type": "line",
@@ -144,8 +177,13 @@
           "description": "Gain shield and speed for 2 turns",
           "damage_percent": 0,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "shield+speed",
-          "categories": ["shielding", "buff"],
+          "categories": [
+            "shielding",
+            "buff"
+          ],
           "shield_percent": 20,
           "resource_cost": 3,
           "cast_type": "self_buff",
@@ -160,8 +198,13 @@
           "description": "Pull enemy in, increase damage taken",
           "damage_percent": 5,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.4,
+          "recovery_seconds": 0.24,
           "effect": "vulnerability",
-          "categories": ["damage", "debuff"],
+          "categories": [
+            "damage",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "line_control",
           "target_type": "enemy",
@@ -184,8 +227,14 @@
           "description": "Acidic rain that damages over time and speeds attacks",
           "damage_percent": 8,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "dot+attack_buff",
-          "categories": ["dot", "buff", "aoe"],
+          "categories": [
+            "dot",
+            "buff",
+            "aoe"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -200,8 +249,12 @@
           "description": "Summon a healing rainbow that restores HP",
           "damage_percent": 0,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "heal",
-          "categories": ["healing"],
+          "categories": [
+            "healing"
+          ],
           "heal_percent": 10,
           "resource_cost": 2,
           "cast_type": "support_zone",
@@ -217,8 +270,13 @@
           "description": "Splash water that damages and creates a shield",
           "damage_percent": 5,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.32,
+          "recovery_seconds": 0.22,
           "effect": "shield",
-          "categories": ["damage", "shielding"],
+          "categories": [
+            "damage",
+            "shielding"
+          ],
           "shield_percent": 20,
           "resource_cost": 3,
           "cast_type": "projectile_burst",
@@ -243,8 +301,13 @@
           "description": "Scorch with boiling water, burning and knocking back",
           "damage_percent": 10,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "burn+knockback",
-          "categories": ["dot", "crowd_control"],
+          "categories": [
+            "dot",
+            "crowd_control"
+          ],
           "resource_cost": 2,
           "cast_type": "projectile",
           "target_type": "enemy",
@@ -259,8 +322,12 @@
           "description": "Erupt a geyser of scalding water",
           "damage_percent": 15,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.7,
+          "recovery_seconds": 0.28,
           "effect": "burn",
-          "categories": ["dot"],
+          "categories": [
+            "dot"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_strike",
           "target_type": "ground_target",
@@ -278,8 +345,13 @@
           "description": "Supercharge attacks but burn yourself",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "attack_buff+self_burn",
-          "categories": ["buff", "self_damage"],
+          "categories": [
+            "buff",
+            "self_damage"
+          ],
           "resource_cost": 3,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -301,8 +373,12 @@
           "description": "Dissolve into mist for 50% evasion",
           "damage_percent": 0,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "evasion",
-          "categories": ["evasion"],
+          "categories": [
+            "evasion"
+          ],
           "resource_cost": 2,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -315,9 +391,14 @@
           "description": "Reform from vapor in a quick strike",
           "damage_percent": 10,
           "cooldown_seconds": 3,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "",
-          "categories": ["damage"],
+          "categories": [
+            "damage"
+          ],
           "charges": 3,
+          "charge_recharge_seconds": 3.0,
           "resource_cost": 2,
           "cast_type": "dash",
           "target_type": "enemy",
@@ -331,8 +412,12 @@
           "description": "Coat yourself in moisture for enhanced dodging",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "evasion",
-          "categories": ["evasion"],
+          "categories": [
+            "evasion"
+          ],
           "resource_cost": 3,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -354,8 +439,13 @@
           "description": "Encase in ice for a shield and freeze attacker",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "shield+stun",
-          "categories": ["shielding", "crowd_control"],
+          "categories": [
+            "shielding",
+            "crowd_control"
+          ],
           "shield_percent": 25,
           "resource_cost": 3,
           "cast_type": "self_buff",
@@ -369,8 +459,12 @@
           "description": "Conjure glacial armor for damage reduction",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "defense_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 3,
           "cast_type": "barrier",
           "target_type": "line",
@@ -386,8 +480,14 @@
           "description": "Crush enemy with a massive ice shelf",
           "damage_percent": 20,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.28,
           "effect": "stun+slow",
-          "categories": ["damage", "crowd_control", "debuff"],
+          "categories": [
+            "damage",
+            "crowd_control",
+            "debuff"
+          ],
           "resource_cost": 4,
           "cast_type": "ground_strike",
           "target_type": "ground_target",
@@ -412,8 +512,13 @@
           "description": "Create a tide pool that speeds you and slows enemy",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.55,
+          "recovery_seconds": 0.32,
           "effect": "slow+attack_buff",
-          "categories": ["buff", "debuff"],
+          "categories": [
+            "buff",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
@@ -428,8 +533,14 @@
           "description": "Call upon deep-sea pressure to stun and weaken",
           "damage_percent": 12,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.25,
+          "recovery_seconds": 0.18,
           "effect": "stun+vulnerability",
-          "categories": ["damage", "crowd_control", "debuff"],
+          "categories": [
+            "damage",
+            "crowd_control",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "ground_burst",
           "target_type": "enemy",
@@ -444,8 +555,13 @@
           "description": "Drag the enemy with a powerful current",
           "damage_percent": 8,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.4,
+          "recovery_seconds": 0.24,
           "effect": "slow",
-          "categories": ["damage", "debuff"],
+          "categories": [
+            "damage",
+            "debuff"
+          ],
           "resource_cost": 4,
           "cast_type": "line_control",
           "target_type": "enemy",
@@ -469,9 +585,16 @@
           "description": "Leap and strike, leaving the enemy vulnerable",
           "damage_percent": 10,
           "cooldown_seconds": 4,
+          "cast_time_seconds": 0.2,
+          "recovery_seconds": 0.16,
           "effect": "vulnerability",
-          "categories": ["damage", "debuff", "dash"],
+          "categories": [
+            "damage",
+            "debuff",
+            "dash"
+          ],
           "charges": 2,
+          "charge_recharge_seconds": 4.0,
           "resource_cost": 2,
           "cast_type": "dash",
           "target_type": "enemy",
@@ -486,8 +609,12 @@
           "description": "Ride the rapids to gain speed and momentum",
           "damage_percent": 0,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "attack_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 3,
           "cast_type": "self_buff",
           "target_type": "self",
@@ -501,8 +628,12 @@
           "description": "Summon a creature from the swamp to fight",
           "damage_percent": 0,
           "cooldown_seconds": 8,
+          "cast_time_seconds": 0.8,
+          "recovery_seconds": 0.4,
           "effect": "summon",
-          "categories": ["summon"],
+          "categories": [
+            "summon"
+          ],
           "resource_cost": 4,
           "cast_type": "summon",
           "target_type": "ground_target",
@@ -526,8 +657,13 @@
           "description": "Dump foul bilge water that poisons and slows",
           "damage_percent": 5,
           "cooldown_seconds": 5,
+          "cast_time_seconds": 0.25,
+          "recovery_seconds": 0.18,
           "effect": "dot+slow",
-          "categories": ["dot", "debuff"],
+          "categories": [
+            "dot",
+            "debuff"
+          ],
           "resource_cost": 3,
           "cast_type": "cone",
           "target_type": "cone",
@@ -542,8 +678,13 @@
           "description": "Haul an anchor across the enemy for heavy damage",
           "damage_percent": 15,
           "cooldown_seconds": 6,
+          "cast_time_seconds": 0.35,
+          "recovery_seconds": 0.24,
           "effect": "knockback",
-          "categories": ["damage", "crowd_control"],
+          "categories": [
+            "damage",
+            "crowd_control"
+          ],
           "resource_cost": 3,
           "cast_type": "projectile_line",
           "target_type": "enemy",
@@ -559,8 +700,12 @@
           "description": "Coat yourself in protective oil for defense",
           "damage_percent": 0,
           "cooldown_seconds": 7,
+          "cast_time_seconds": 0.28,
+          "recovery_seconds": 0.2,
           "effect": "defense_buff+attack_buff",
-          "categories": ["buff"],
+          "categories": [
+            "buff"
+          ],
           "resource_cost": 4,
           "cast_type": "self_buff",
           "target_type": "self",

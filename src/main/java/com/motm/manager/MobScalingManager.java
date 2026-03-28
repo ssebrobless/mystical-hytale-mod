@@ -23,8 +23,13 @@ public class MobScalingManager {
     private static final double MAX_DAMAGE_MULTIPLIER = 5.0;
     private static final double MAX_SPEED_MULTIPLIER = 2.0;
     private static final double SPEED_SCALING_FACTOR = 0.25;
+    private static final double BOSS_DIFFICULTY_INCREASE_PER_10_LEVELS = 0.12;
+    private static final double WORLD_BOSS_DIFFICULTY_INCREASE_PER_10_LEVELS = 0.10;
+    private static final double MAX_BOSS_DIFFICULTY_MULTIPLIER = 3.5;
+    private static final double MAX_WORLD_BOSS_DIFFICULTY_MULTIPLIER = 3.0;
 
     private static final Set<String> SCALING_CATEGORIES = Set.of("hostile", "elite", "mini_boss");
+    private static final Set<String> BOSS_SCALING_CATEGORIES = Set.of("boss", "world_boss");
     private static final Set<String> NON_SCALING_CATEGORIES = Set.of("passive", "neutral", "boss", "world_boss");
 
     // Night/event constants
@@ -46,10 +51,37 @@ public class MobScalingManager {
         return Math.min(multiplier, MAX_DIFFICULTY_MULTIPLIER);
     }
 
+    public boolean isScalingCategory(String mobCategory) {
+        return SCALING_CATEGORIES.contains(mobCategory);
+    }
+
+    public boolean isBossCategory(String mobCategory) {
+        return BOSS_SCALING_CATEGORIES.contains(mobCategory);
+    }
+
     public String getDifficultyDescription(int playerLevel) {
         double multiplier = getDifficultyMultiplier(playerLevel);
         int percentIncrease = (int) ((multiplier - 1.0) * 100);
         return percentIncrease == 0 ? "Base Difficulty" : "+" + percentIncrease + "% Difficulty";
+    }
+
+    public double getBossDifficultyMultiplier(int playerLevel, String mobCategory) {
+        double increasePerTier = "world_boss".equals(mobCategory)
+                ? WORLD_BOSS_DIFFICULTY_INCREASE_PER_10_LEVELS
+                : BOSS_DIFFICULTY_INCREASE_PER_10_LEVELS;
+        double maxMultiplier = "world_boss".equals(mobCategory)
+                ? MAX_WORLD_BOSS_DIFFICULTY_MULTIPLIER
+                : MAX_BOSS_DIFFICULTY_MULTIPLIER;
+
+        int tier = playerLevel / 10;
+        double multiplier = 1.0 + (tier * increasePerTier);
+        return Math.min(multiplier, maxMultiplier);
+    }
+
+    public String getBossDifficultyDescription(int playerLevel, String mobCategory) {
+        double multiplier = getBossDifficultyMultiplier(playerLevel, mobCategory);
+        int percentIncrease = (int) ((multiplier - 1.0) * 100);
+        return percentIncrease == 0 ? "Base Boss Difficulty" : "+" + percentIncrease + "% Boss Difficulty";
     }
 
     // --- Mob Stat Scaling ---
@@ -88,6 +120,35 @@ public class MobScalingManager {
         scaled.setAttackSpeed(baseStats.getAttackSpeed() * (1 + asIncrease));
 
         // XP Reward: Linear scaling
+        scaled.setXpReward(baseStats.getXpReward() * difficulty);
+
+        return scaled;
+    }
+
+    public MobStats scaleBossStats(MobStats baseStats, int playerLevel, String mobCategory) {
+        if (!BOSS_SCALING_CATEGORIES.contains(mobCategory)) {
+            return baseStats;
+        }
+
+        double difficulty = getBossDifficultyMultiplier(playerLevel, mobCategory);
+        double difficultyDelta = difficulty - 1.0;
+        MobStats scaled = new MobStats(baseStats);
+
+        double healthMultiplier = 1.0 + (difficultyDelta * 1.35);
+        double damageMultiplier = 1.0 + (difficultyDelta * 0.85);
+        double armorMultiplier = 1.0 + (difficultyDelta * 0.65);
+        double speedMultiplier = 1.0 + (difficultyDelta * 0.10);
+        double attackSpeedMultiplier = 1.0 + (difficultyDelta * 0.12);
+
+        scaled.setHealth(Math.min(baseStats.getHealth() * healthMultiplier,
+                baseStats.getHealth() * (MAX_HEALTH_MULTIPLIER * 1.25)));
+        scaled.setDamage(Math.min(baseStats.getDamage() * damageMultiplier,
+                baseStats.getDamage() * (MAX_DAMAGE_MULTIPLIER * 1.15)));
+        scaled.setArmor(baseStats.getArmor() * armorMultiplier);
+        scaled.setMagicResist(baseStats.getMagicResist() * armorMultiplier);
+        scaled.setSpeed(Math.min(baseStats.getSpeed() * speedMultiplier,
+                baseStats.getSpeed() * MAX_SPEED_MULTIPLIER));
+        scaled.setAttackSpeed(baseStats.getAttackSpeed() * attackSpeedMultiplier);
         scaled.setXpReward(baseStats.getXpReward() * difficulty);
 
         return scaled;

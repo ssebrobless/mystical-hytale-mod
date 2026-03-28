@@ -1,0 +1,15 @@
+{
+  "Duration": 0.35,
+  "OverlapBehavior": "Extend",
+  "WorldSoundEventId": "SFX_Wolf_Alerted",
+  "ApplicationEffects": {
+    "EntityTopTint": "#f8ffff",
+    "EntityBottomTint": "#76d8f5",
+    "Particles": [
+      {
+        "SystemId": "Wind"
+      }
+    ],
+    "ModelVFXId": "Portal_Teleport"
+  }
+}

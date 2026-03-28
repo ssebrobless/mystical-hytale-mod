@@ -5,9 +5,21 @@ plugins {
 group = project.mod_group
 version = project.mod_version
 
+def motmBuildChannel = (project.findProperty('motm_build_channel') ?: 'public').toString().toLowerCase()
+def motmInternalTestBuild = motmBuildChannel == 'internal'
+def generatedBuildInfoDir = layout.buildDirectory.dir('generated/sources/motmBuildInfo/main/java')
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir generatedBuildInfoDir
+        }
     }
 }
 
@@ -30,6 +42,28 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.11.0'
 }
 
+tasks.register('generateMotmBuildInfo') {
+    outputs.dir(generatedBuildInfoDir)
+    doLast {
+        def outputDir = generatedBuildInfoDir.get().file('com/motm/MotmBuildInfo.java').asFile
+        outputDir.parentFile.mkdirs()
+        outputDir.text = """package com.motm;
+
+public final class MotmBuildInfo {
+    public static final String BUILD_CHANNEL = "${motmBuildChannel}";
+    public static final boolean INTERNAL_TEST_BUILD = ${motmInternalTestBuild};
+
+    private MotmBuildInfo() {
+    }
+}
+"""
+    }
+}
+
+compileJava {
+    dependsOn tasks.named('generateMotmBuildInfo')
+}
+
 processResources {
     filesMatching('manifest.json') {
         expand(
@@ -45,6 +79,9 @@ processResources {
 
 jar {
     archiveBaseName = project.mod_id
+    if (motmInternalTestBuild) {
+        archiveClassifier = 'internal'
+    }
 }
 
 tasks.register('installMod', Copy) {

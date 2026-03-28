@@ -463,7 +463,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
         setText(commands, "#GrimoireStyleValue.Text", hasStyle ? safe(style.getName()) : "Unchosen");
         setText(commands, "#GrimoireThemeValue.Text", hasStyle ? safe(style.getTheme()) : "No theme yet");
-        setText(commands, "#GrimoireResourceValue.Text", hasStyle ? safe(style.getResourceType()) : "No class resource");
+        setText(commands, "#GrimoireResourceValue.Text", hasStyle ? displayStyleResource(style) : "No class resource");
         setText(commands, "#GrimoireAbilityRule.Text", "Styles grant all 3 active abilities immediately. Perks stay passive and modify those abilities later.");
 
         List<AbilityData> abilities = hasStyle && style.getAbilities() != null ? style.getAbilities() : Collections.emptyList();
@@ -742,9 +742,9 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             return "Choose a class to unlock a resource rule.";
         }
         return switch (playerClass.toLowerCase(Locale.ROOT)) {
-            case "terra" -> "Terra uses gathered materials and practical terrain tools.";
-            case "hydro" -> "Hydro spends water and refills from containers and natural sources.";
-            case "aero" -> "Aero regenerates TP over time for fast, mobile casting.";
+            case "terra" -> "Terra spends style-specific materials: stone blocks, seeds, dirt blocks, sand blocks, metal, and gems.";
+            case "hydro" -> "Hydro spends water from a crafted waterskin in inventory like ammo and refills it by right-clicking natural water sources.";
+            case "aero" -> "Aero has no class resource and fights through cooldowns, movement, and momentum.";
             case "corruptus" -> "Corruptus earns souls from kills and burns them for power.";
             default -> "Unknown class resource.";
         };
@@ -764,6 +764,13 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             return classData.getPassiveAbility().getDescription();
         }
         return classData.getPassiveAbility().getDescription() + " | " + summary;
+    }
+
+    private String displayStyleResource(StyleData style) {
+        if (style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
+            return "None";
+        }
+        return mod.getResourceManager().getDisplayName(style.getResourceType());
     }
 
     private String buildAbilityMeta(PlayerData player, StyleData style, AbilityData ability) {

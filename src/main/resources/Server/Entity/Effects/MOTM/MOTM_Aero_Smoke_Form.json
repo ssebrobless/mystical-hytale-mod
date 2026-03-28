@@ -1,0 +1,10 @@
+{
+  "Duration": 5.0,
+  "OverlapBehavior": "Overwrite",
+  "ModelChange": "Bat",
+  "ApplicationEffects": {
+    "EntityBottomTint": "#4e5666",
+    "EntityTopTint": "#d9ecf2",
+    "ModelVFXId": "Intangible_Dark"
+  }
+}

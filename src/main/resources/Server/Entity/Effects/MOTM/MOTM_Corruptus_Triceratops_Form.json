@@ -1,0 +1,10 @@
+{
+  "Duration": 10.0,
+  "OverlapBehavior": "Overwrite",
+  "ModelChange": "Toad_Rhino",
+  "ApplicationEffects": {
+    "EntityBottomTint": "#5f442f",
+    "EntityTopTint": "#d6baa0",
+    "ModelVFXId": "PrototypeBlockPlaceSuccess"
+  }
+}
