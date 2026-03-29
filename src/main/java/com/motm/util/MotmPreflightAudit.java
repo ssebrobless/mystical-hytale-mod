@@ -4,6 +4,7 @@ import com.motm.MenteesMod;
 import com.motm.model.AbilityActionAssets;
 import com.motm.model.AbilityData;
 import com.motm.model.ClassData;
+import com.motm.model.Perk;
 import com.motm.model.StyleData;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ public final class MotmPreflightAudit {
     private static final int EXPECTED_ABILITIES_PER_STYLE = 3;
     private static final int EXPECTED_TOTAL_STYLES = 40;
     private static final int EXPECTED_TOTAL_ABILITIES = 120;
-    private static final String HUD_DOC_RESOURCE = "Common/UI/Custom/Hud/MOTM_StatusHud.ui";
+    private static final String HUD_DOC_RESOURCE = "Common/UI/Custom/HUD/MOTM_StatusHud.ui";
     private static final String REPORT_FILE_NAME = "motm-preflight-report.txt";
 
     private static final Set<String> SUPPORTED_CAST_TYPES = Set.of(
@@ -65,6 +66,20 @@ public final class MotmPreflightAudit {
     );
     private static final Set<String> SUMMON_CAST_TYPES = Set.of("summon", "summon_buff");
     private static final Set<String> TOGGLE_FAMILY_CAST_TYPES = Set.of("transformation", "channel", "self_buff");
+    private static final Set<String> SELF_TARGETING_CAST_TYPES = Set.of(
+            "self_buff", "self_burst", "transformation", "cleanse"
+    );
+    private static final Set<String> IMPLEMENTED_PERK_EFFECT_TYPES = Set.of(
+            "damage_bonus", "damage_increase", "damage_reduction",
+            "health_bonus", "speed_bonus", "resource_regen",
+            "critical_chance", "crit_chance", "critical_damage", "crit_damage",
+            "element_resistance", "cooldown_reduction", "cost_reduction",
+            "heal_increase", "lifesteal", "regen",
+            "stat_increase", "stat_multiplier",
+            "ability", "summon", "passive", "on_hit", "on_kill", "aura", "transformation",
+            "conditional_buff", "immunity",
+            "duration_increase", "chain_increase", "radius_increase"
+    );
 
     private static final Map<String, Set<String>> ALLOWED_RESOURCE_TYPES = Map.of(
             "terra", Set.of("stone_blocks", "dirt_blocks", "sand_blocks", "seeds", "metal", "gems"),
@@ -174,6 +189,15 @@ public final class MotmPreflightAudit {
             if (styles.size() != EXPECTED_STYLES_PER_CLASS) {
                 audit.error("class:" + classId,
                         "Expected " + EXPECTED_STYLES_PER_CLASS + " styles, found " + styles.size() + ".");
+            }
+
+            List<Perk> perks = mod.getDataLoader().getPerksForClass(classId);
+            if (perks == null || perks.isEmpty()) {
+                audit.warning("class:" + classId, "No perks were loaded for this class.");
+            } else {
+                for (Perk perk : perks) {
+                    auditPerkData(classId, perk, audit);
+                }
             }
 
             for (StyleData style : styles) {
@@ -324,6 +348,16 @@ public final class MotmPreflightAudit {
             audit.warning(scope, "Target type is blank.");
         }
 
+        boolean hasSpatialShape = ability.getRange() > 0
+                || ability.getMaxRange() > 0
+                || ability.getRadius() > 0
+                || ability.getWidth() > 0
+                || ability.getLength() > 0
+                || ability.getConeAngle() > 0;
+        if (!SELF_TARGETING_CAST_TYPES.contains(castType) && !hasSpatialShape) {
+            audit.warning(scope, "Ability has no spatial data (range/radius/width/length/cone_angle) and is not a self-targeting cast type.");
+        }
+
         if (ability.getCooldownSeconds() < 0) {
             audit.error(scope, "Cooldown cannot be negative.");
         }
@@ -403,6 +437,61 @@ public final class MotmPreflightAudit {
         }
 
         auditConceptFit(style, ability, castType, targetType, summonName, audit);
+    }
+
+    private static void auditPerkData(String classId, Perk perk, AuditBuilder audit) {
+        String perkId = safeLower(perk != null ? perk.getId() : null);
+        String scope = "perk:" + safeLabel(perkId);
+
+        if (perk == null) {
+            audit.error(scope, "Perk entry is null.");
+            return;
+        }
+        if (perkId.isBlank()) {
+            audit.error(scope, "Perk id is blank.");
+        }
+        if (isBlank(perk.getName())) {
+            audit.error(scope, "Perk name is blank.");
+        }
+        if (perk.getTier() <= 0) {
+            audit.warning(scope, "Perk tier is not positive.");
+        }
+        if (perk.getTier() > 14) {
+            audit.warning(scope, "Perk tier exceeds the implemented cap (14) and should have been filtered.");
+        }
+        if (perk.getEffects() == null || perk.getEffects().isEmpty()) {
+            audit.warning(scope, "Perk has no direct effects.");
+        } else {
+            for (Perk.Effect effect : perk.getEffects()) {
+                auditPerkEffectData(scope, effect, audit);
+            }
+        }
+        if (perk.getSynergyBonuses() != null) {
+            for (Perk.SynergyBonus bonus : perk.getSynergyBonuses()) {
+                if (bonus == null || bonus.getBonus() == null) {
+                    audit.warning(scope, "Perk has a synergy bonus entry with no bonus payload.");
+                    continue;
+                }
+                auditPerkEffectData(scope + ":synergy", bonus.getBonus(), audit);
+            }
+        }
+    }
+
+    private static void auditPerkEffectData(String scope, Perk.Effect effect, AuditBuilder audit) {
+        if (effect == null) {
+            audit.warning(scope, "Perk effect entry is null.");
+            return;
+        }
+
+        String type = safeLower(effect.getType());
+        if (type.isBlank()) {
+            audit.warning(scope, "Perk effect type is blank.");
+            return;
+        }
+
+        if (!IMPLEMENTED_PERK_EFFECT_TYPES.contains(type)) {
+            audit.warning(scope, "Perk effect type '" + effect.getType() + "' is not recognized as implemented.");
+        }
     }
 
     private static void auditConceptFit(StyleData style,

@@ -21,7 +21,11 @@ import java.util.logging.Logger;
  */
 public class DataLoader {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
+            .registerTypeAdapter(double.class, new LenientDoubleAdapter())
+            .registerTypeAdapter(Double.class, new LenientDoubleAdapter())
+            .create();
     private static final Logger LOG = Logger.getLogger("MOTM");
 
     private final Path dataDirectory;
@@ -43,15 +47,15 @@ public class DataLoader {
     }
 
     public void loadAll() {
-        loadClasses();
-        loadPerks();
-        loadStyles();
-        loadReactions();
-        loadRaces();
-        loadLevelingData();
-        loadMobData();
-        loadEliteTitles();
-        LOG.info("[MOTM] All data files loaded successfully.");
+        safeLoad("classes", this::loadClasses);
+        safeLoad("perks", this::loadPerks);
+        safeLoad("styles", this::loadStyles);
+        safeLoad("reactions", this::loadReactions);
+        safeLoad("races", this::loadRaces);
+        safeLoad("leveling", this::loadLevelingData);
+        safeLoad("mobs", this::loadMobData);
+        safeLoad("elite titles", this::loadEliteTitles);
+        LOG.info("[MOTM] Data loading complete.");
     }
 
     // --- Class Data ---
@@ -92,6 +96,7 @@ public class DataLoader {
                 LOG.info("[MOTM] Loaded " + perks.size() + " perks for class: " + classId);
             }
         }
+        filterUnimplementedPerks();
     }
 
     public List<Perk> getPerksForClass(String classId) {
@@ -110,6 +115,18 @@ public class DataLoader {
 
     public boolean perkExists(String perkId, String classId) {
         return getPerkById(perkId, classId) != null;
+    }
+
+    private void filterUnimplementedPerks() {
+        int removed = 0;
+        for (Map.Entry<String, List<Perk>> entry : perkCache.entrySet()) {
+            int before = entry.getValue().size();
+            entry.getValue().removeIf(perk -> perk != null && perk.getTier() > 14);
+            removed += before - entry.getValue().size();
+        }
+        if (removed > 0) {
+            LOG.info("[MOTM] Filtered " + removed + " unimplemented high-tier perks (tier > 14)");
+        }
     }
 
     // --- Style Data ---
@@ -216,6 +233,42 @@ public class DataLoader {
 
     public double getEliteDamageMultiplier() {
         return getEliteConfigValue("damage_multiplier", 1.5);
+    }
+
+    private void safeLoad(String category, Runnable loader) {
+        try {
+            loader.run();
+        } catch (Exception e) {
+            LOG.severe("[MOTM] Failed to load " + category + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static final class LenientDoubleAdapter extends com.google.gson.TypeAdapter<Double> {
+        @Override
+        public void write(com.google.gson.stream.JsonWriter out, Double value) throws IOException {
+            out.value(value);
+        }
+
+        @Override
+        public Double read(com.google.gson.stream.JsonReader in) throws IOException {
+            if (in.peek() == com.google.gson.stream.JsonToken.STRING) {
+                String s = in.nextString().trim().toLowerCase(Locale.ROOT);
+                return switch (s) {
+                    case "infinite", "infinity" -> Double.POSITIVE_INFINITY;
+                    case "-infinite", "-infinity" -> Double.NEGATIVE_INFINITY;
+                    case "universal" -> 999999.0;
+                    default -> {
+                        try {
+                            yield Double.parseDouble(s);
+                        } catch (NumberFormatException e) {
+                            yield 0.0;
+                        }
+                    }
+                };
+            }
+            return in.nextDouble();
+        }
     }
 
     public double getEliteXpMultiplier() {

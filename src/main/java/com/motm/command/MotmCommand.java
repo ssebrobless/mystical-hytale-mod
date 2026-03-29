@@ -78,7 +78,7 @@ public class MotmCommand {
             case "class" -> handleClass(player, args);
             case "perks" -> handlePerks(player);
             case "select" -> handleSelect(player, args);
-            case "style" -> handleStyle(player, args);
+            case "style" -> handleStyle(player, args, runtimePlayer);
             case "abilities" -> handleAbilities(player);
             case "cast" -> handleCast(player, args, runtimePlayer);
             case "spellbook", "book" -> handleSpellbook(player, args, runtimePlayer);
@@ -333,7 +333,7 @@ public class MotmCommand {
 
     // --- /motm style [styleId] ---
 
-    private String handleStyle(PlayerData player, String[] args) {
+    private String handleStyle(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 2) {
             return buildStyleOverview(player);
         }
@@ -370,6 +370,14 @@ public class MotmCommand {
             return "[MOTM] Invalid style selection. Use /motm style to see available styles.";
         }
 
+        if (internalTestFlow) {
+            mod.setFreeCastEnabled(player.getPlayerId(), true);
+            boolean grantedImmediately = runtimePlayer != null && mod.ensureSpellbookItem(runtimePlayer);
+            if (!grantedImmediately) {
+                mod.queueSpellbookGrant(player.getPlayerId());
+            }
+        }
+
         StringBuilder sb = new StringBuilder(internalTestFlow
                 ? "[MOTM] Testing loadout ready!\n"
                 : "[MOTM] Style selected!\n");
@@ -379,6 +387,7 @@ public class MotmCommand {
                 sb.append("Flow: class auto-set from style id.\n");
             }
             sb.append("Reset: class perks, style, resources, and cooldowns cleared for a clean test swap.\n");
+            sb.append("Test Protection: free-cast enabled and spellbook delivery queued automatically.\n");
         }
         sb.append("Style: ").append(resolvedStyle.style().getName()).append("\n");
         sb.append("Theme: ").append(resolvedStyle.style().getTheme()).append("\n");
@@ -452,6 +461,9 @@ public class MotmCommand {
         if (args.length >= 2 && "give".equalsIgnoreCase(args[1])) {
             if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
                 return "[MOTM] Join a world and run this in-game to receive the spellbook item.";
+            }
+            if (runtimePlayer != null && mod.ensureSpellbookItem(runtimePlayer)) {
+                return "[MOTM] Spellbook delivered.";
             }
             return mod.queueSpellbookGrant(player.getPlayerId());
         }
@@ -613,7 +625,14 @@ public class MotmCommand {
                 + " style=" + style.getId()
                 + " slot=" + slot
                 + " ability=" + ability.getId());
-        return castResolvedAbility(player, style, ability, runtimePlayer, targetRef, targetBlock, true);
+        String response = castResolvedAbility(player, style, ability, runtimePlayer, targetRef, targetBlock, true);
+        if (!response.isBlank()) {
+            return response;
+        }
+        if (mod.isDevToolsEnabled()) {
+            return "[MOTM] Spellbook slot " + slot + " queued: " + ability.getName() + ".";
+        }
+        return "";
     }
 
     private String castResolvedAbility(PlayerData player,

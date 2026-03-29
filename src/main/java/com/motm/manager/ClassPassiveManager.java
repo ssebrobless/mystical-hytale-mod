@@ -131,7 +131,7 @@ public class ClassPassiveManager {
                 continue;
             }
             Ref<EntityStore> playerRef = runtimePlayer.getReference();
-            if (playerRef == null || !playerRef.isValid() || playerRef.getStore() != currentStore) {
+            if (playerRef == null || !playerRef.isValid() || !isPlayerInCurrentWorldStore(runtimePlayer, playerRef, currentStore)) {
                 continue;
             }
 
@@ -550,6 +550,29 @@ public class ClassPassiveManager {
         }
 
         return blockType.getMaterial();
+    }
+
+    private boolean isPlayerInCurrentWorldStore(Player runtimePlayer,
+                                                Ref<EntityStore> playerRef,
+                                                Store<EntityStore> currentStore) {
+        if (runtimePlayer == null || playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return false;
+        }
+        if (currentStore == null) {
+            return true;
+        }
+
+        Store<EntityStore> playerStore = playerRef.getStore();
+        if (playerStore == currentStore || playerStore.equals(currentStore)) {
+            return true;
+        }
+
+        World playerWorld = runtimePlayer.getWorld();
+        World currentWorld = currentStore.getExternalData() != null
+                ? currentStore.getExternalData().getWorld()
+                : null;
+        return playerWorld != null && currentWorld != null
+                && (playerWorld == currentWorld || playerWorld.equals(currentWorld));
     }
 
     private String resolvePrimaryResourceType(String classId) {

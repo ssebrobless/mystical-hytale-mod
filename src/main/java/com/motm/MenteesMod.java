@@ -28,9 +28,11 @@ import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
+import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.Modifier;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.StaticModifier;
@@ -83,7 +85,7 @@ import java.util.logging.Logger;
 public class MenteesMod extends JavaPlugin {
 
     private static final Logger LOG = Logger.getLogger("MOTM");
-    private static final String DEFAULT_SPELLBOOK_ITEM_ID = "Recipe_Book_Magic_Air";
+    private static final String DEFAULT_SPELLBOOK_ITEM_ID = "MOTM_Spellbook_Focus";
     private static final String DEFAULT_DEV_GRIMOIRE_ITEM_ID = "Recipe_Book_Magic_Void";
     private static final String HYDRO_CONTAINER_METADATA_KEY = "motm_hydro_container";
     private static final String HYDRO_CONTAINER_TIER_METADATA_KEY = "motm_hydro_container_tier";
@@ -140,8 +142,10 @@ public class MenteesMod extends JavaPlugin {
     private static final boolean CUSTOM_HUD_ENABLED = true;
     private static final String SERVER_CONFIG_FILE_NAME = "motm-server.properties";
     private static final int HUD_REFRESH_INTERVAL_TICKS = 4;
+    private static final int HUD_INSTALL_DELAY_TICKS = 4;
     private static final long SPELLBOOK_INPUT_DEBOUNCE_MS = 150L;
     private static final Set<String> LEGACY_NONWEAPON_SPELLBOOK_ITEM_IDS = Set.of(
+            "Recipe_Book_Magic_Air",
             "Weapon_Spellbook_Grimoire_Brown",
             "Weapon_Spellbook_Grimoire_Purple",
             "Weapon_Spellbook_Frost",
@@ -150,11 +154,11 @@ public class MenteesMod extends JavaPlugin {
     );
     private static final Set<String> SPELLBOOK_ITEM_IDS = Set.of(
             DEFAULT_SPELLBOOK_ITEM_ID,
-            "Weapon_Spellbook_Grimoire_Brown",
             "Weapon_Spellbook_Grimoire_Purple",
             "Weapon_Spellbook_Frost",
             "Weapon_Spellbook_Fire",
-            "Weapon_Spellbook_Rekindle_Embers"
+            "Weapon_Spellbook_Rekindle_Embers",
+            "Weapon_Spellbook_Grimoire_Brown"
     );
     private static final Set<String> DEV_GRIMOIRE_ITEM_IDS = Set.of(
             DEFAULT_DEV_GRIMOIRE_ITEM_ID
@@ -188,11 +192,15 @@ public class MenteesMod extends JavaPlugin {
     private final Set<String> pendingHydroContainerSyncs = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingRuntimeRebuilds = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingStatusHudRefreshs = ConcurrentHashMap.newKeySet();
+    private final Map<String, Integer> pendingStatusHudInstalls = new ConcurrentHashMap<>();
     private final Set<String> pendingProgressionBonusRefreshs = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingFreeCastInvulnerabilityClears = ConcurrentHashMap.newKeySet();
     private final Queue<PendingAbilityCast> pendingAbilityCasts = new ConcurrentLinkedQueue<>();
     private final Map<String, ActiveStyleTest> activeStyleTests = new ConcurrentHashMap<>();
     private final Set<String> freeCastPlayers = ConcurrentHashMap.newKeySet();
     private final Map<String, Long> recentSpellbookSlotInputs = new ConcurrentHashMap<>();
+    private final Map<String, Double> lastAppliedTargetHealthByPlayer = new ConcurrentHashMap<>();
+    private final Map<String, Float> lastObservedFreeCastHealthByPlayer = new ConcurrentHashMap<>();
     private int hudRefreshTickCounter = 0;
     private volatile MotmPreflightAudit.AuditReport lastPreflightAudit;
 
@@ -394,10 +402,33 @@ public class MenteesMod extends JavaPlugin {
         if (playerRef == null || playerRef.getUuid() == null) {
             return;
         }
-        onlineRuntimePlayers.put(playerRef.getUuid().toString(), runtimePlayer);
-        onPlayerJoin(playerRef.getUuid().toString(), playerRef.getUsername());
-        refreshPlayerProgressionBonuses(playerRef.getUuid().toString());
-        installStatusHud(runtimePlayer);
+        String playerId = playerRef.getUuid().toString();
+        onlineRuntimePlayers.put(playerId, runtimePlayer);
+        onPlayerJoin(playerId, playerRef.getUsername());
+
+        var playerData = playerDataManager.getOnlinePlayer(playerId);
+        boolean hasSavedLoadout = playerData != null
+                && playerData.getPlayerClass() != null
+                && playerData.getSelectedStyles() != null
+                && !playerData.getSelectedStyles().isEmpty();
+        if (hasSavedLoadout) {
+            rebuildPlayerRuntimeNow(playerData);
+            ensureSpellbookItem(runtimePlayer);
+        }
+
+        if (isDevToolsEnabled()) {
+            statusEffectManager.clearEffects(playerId);
+            elementalReactionManager.clearMarks(playerId);
+            setFreeCastEnabled(playerId, true);
+            if (!ensureSpellbookItem(runtimePlayer)) {
+                queueSpellbookGrant(playerId);
+            }
+        } else if (hasSavedLoadout && !playerHasSpellbook(runtimePlayer)) {
+            queueSpellbookGrant(playerId);
+        }
+
+        refreshPlayerProgressionBonuses(playerId);
+        queueStatusHudInstall(playerId);
     }
 
     /**
@@ -421,10 +452,14 @@ public class MenteesMod extends JavaPlugin {
         pendingHydroContainerSyncs.remove(playerId);
         pendingRuntimeRebuilds.remove(playerId);
         pendingStatusHudRefreshs.remove(playerId);
+        pendingStatusHudInstalls.remove(playerId);
         pendingProgressionBonusRefreshs.remove(playerId);
+        pendingFreeCastInvulnerabilityClears.remove(playerId);
         pendingAbilityCasts.removeIf(request -> playerId.equals(request.playerId()));
         activeStyleTests.remove(playerId);
-        freeCastPlayers.remove(playerId);
+        lastAppliedTargetHealthByPlayer.remove(playerId);
+        lastObservedFreeCastHealthByPlayer.remove(playerId);
+        setFreeCastEnabled(playerId, false);
         recentSpellbookSlotInputs.keySet().removeIf(key -> key.startsWith(playerId + ":"));
     }
 
@@ -531,18 +566,20 @@ public class MenteesMod extends JavaPlugin {
         elementalReactionManager.tickAll();
         styleManager.tickCooldowns();
         resourceManager.tick();
+        processPendingFreeCastInvulnerabilityClears(currentStore);
         processPendingRuntimeRebuilds(currentStore);
+        processFreeCastTestSafety(currentStore);
         classPassiveManager.tick(onlineRuntimePlayers, currentStore);
         processActiveStyleTests(currentStore);
         processPendingAbilityCasts(currentStore);
         gameplayPlaybackManager.tick();
         processPendingInventoryGrants(currentStore);
         processPendingProgressionBonusRefreshs(currentStore);
+        processPendingStatusHudInstalls(currentStore);
         processPendingStatusHudRefreshs(currentStore);
         hudRefreshTickCounter++;
         if (hudRefreshTickCounter >= HUD_REFRESH_INTERVAL_TICKS) {
             hudRefreshTickCounter = 0;
-            refreshAllPlayerProgressionBonuses(currentStore);
             refreshAllStatusHuds(currentStore);
         }
 
@@ -940,12 +977,17 @@ public class MenteesMod extends JavaPlugin {
         }
 
         var playerRef = getUniversePlayerRef(player);
-        if (playerRef == null) {
+        if (playerRef == null || playerRef.getUuid() == null) {
+            return;
+        }
+
+        String playerId = playerRef.getUuid().toString();
+        if (statusHuds.containsKey(playerId)) {
             return;
         }
 
         MotmStatusHud hud = new MotmStatusHud(playerRef, this);
-        statusHuds.put(playerRef.getUuid().toString(), hud);
+        statusHuds.put(playerId, hud);
         player.getHudManager().setCustomHud(playerRef, hud);
         try {
             // Keep the native hotbar, but let the MOTM HUD own the right-side spell lane.
@@ -960,10 +1002,166 @@ public class MenteesMod extends JavaPlugin {
         }
     }
 
+    private void queueStatusHudInstall(String playerId) {
+        if (!CUSTOM_HUD_ENABLED || playerId == null || playerId.isBlank()) {
+            return;
+        }
+        pendingStatusHudInstalls.put(playerId, HUD_INSTALL_DELAY_TICKS);
+    }
+
     private void processPendingInventoryGrants(Store<EntityStore> currentStore) {
         processPendingSpellbookGrants(currentStore);
         processPendingDevBookGrants(currentStore);
         processPendingHydroContainerSyncs(currentStore);
+    }
+
+    private void processPendingStatusHudInstalls(Store<EntityStore> currentStore) {
+        for (Map.Entry<String, Integer> entry : Map.copyOf(pendingStatusHudInstalls).entrySet()) {
+            String playerId = entry.getKey();
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingStatusHudInstalls.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            int ticksRemaining = entry.getValue() - 1;
+            if (ticksRemaining > 0) {
+                pendingStatusHudInstalls.put(playerId, ticksRemaining);
+                continue;
+            }
+
+            installStatusHud(player);
+            pendingStatusHudInstalls.remove(playerId);
+            refreshStatusHud(playerId);
+        }
+    }
+
+    private void processFreeCastTestSafety(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(freeCastPlayers)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            try {
+                var playerRef = player.getReference();
+                if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+                    continue;
+                }
+
+                EntityStatMap entityStatMap = playerRef.getStore().getComponent(playerRef, EntityStatMap.getComponentType());
+                if (entityStatMap == null) {
+                    continue;
+                }
+
+                EntityStatValue healthBeforeSafety = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+                if (healthBeforeSafety != null) {
+                    float currentHealth = healthBeforeSafety.get();
+                    Float previousHealth = lastObservedFreeCastHealthByPlayer.put(playerId, currentHealth);
+                    if (previousHealth != null && currentHealth < previousHealth - 0.5f) {
+                        var playerData = playerDataManager.getOnlinePlayer(playerId);
+                        LOG.info("[MOTM] Free-cast health drop detected: player="
+                                + (playerData != null ? playerData.getPlayerName() : playerId)
+                                + " class=" + (playerData != null ? playerData.getPlayerClass() : "unknown")
+                                + " styles=" + (playerData != null ? playerData.getSelectedStyles() : List.of())
+                                + " from=" + previousHealth
+                                + " to=" + currentHealth
+                                + " burn=" + statusEffectManager.hasEffect(playerId, com.motm.model.StatusEffect.Type.BURN)
+                                + " dot=" + statusEffectManager.hasEffect(playerId, com.motm.model.StatusEffect.Type.DOT));
+                    }
+                }
+
+                entityStatMap.maximizeStatValue(DefaultEntityStatTypes.getHealth());
+                statusEffectManager.removeEffect(playerId, com.motm.model.StatusEffect.Type.BURN);
+                statusEffectManager.removeEffect(playerId, com.motm.model.StatusEffect.Type.DOT);
+                ensureFreeCastInvulnerability(player);
+            } catch (IllegalStateException e) {
+                LOG.fine("[MOTM] Skipped free-cast safety tick on the wrong store for " + playerId + ": " + e.getMessage());
+            }
+        }
+    }
+
+    private void processPendingFreeCastInvulnerabilityClears(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingFreeCastInvulnerabilityClears)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingFreeCastInvulnerabilityClears.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            clearFreeCastInvulnerability(playerId);
+            pendingFreeCastInvulnerabilityClears.remove(playerId);
+        }
+    }
+
+    private void ensureFreeCastInvulnerability(Player player) {
+        if (!setRuntimeInvulnerability(player, true) && player != null) {
+            player.sendMessage(Message.raw("[MOTM] Test Protection warning: native invulnerability did not attach. "
+                    + "Free-cast is still on, but arena mobs may still hit you."));
+        }
+    }
+
+    private void clearFreeCastInvulnerability(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return;
+        }
+        Player player = onlineRuntimePlayers.get(playerId);
+        if (player != null) {
+            setRuntimeInvulnerability(player, false);
+        }
+    }
+
+    private boolean setRuntimeInvulnerability(Player player, boolean enabled) {
+        if (player == null) {
+            return false;
+        }
+
+        try {
+            var playerRef = player.getReference();
+            if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+                return false;
+            }
+
+            Store<EntityStore> store = playerRef.getStore();
+            var componentType = Invulnerable.getComponentType();
+            var existing = store.getComponent(playerRef, componentType);
+
+            if (enabled) {
+                if (existing != null) {
+                    return true;
+                }
+                store.addComponent(playerRef, componentType);
+                return true;
+            }
+
+            if (existing == null) {
+                return true;
+            }
+            store.removeComponent(playerRef, componentType);
+            return true;
+        } catch (Exception e) {
+            String playerLabel = "unknown";
+            try {
+                var playerRef = getUniversePlayerRef(player);
+                if (playerRef != null && playerRef.getUsername() != null && !playerRef.getUsername().isBlank()) {
+                    playerLabel = playerRef.getUsername();
+                }
+            } catch (Exception ignored) {
+                // Keep fallback label.
+            }
+            LOG.warning("[MOTM] Failed to toggle dev invulnerability for "
+                    + playerLabel + ": " + e.getMessage());
+            return false;
+        }
     }
 
     private void processPendingAbilityCasts(Store<EntityStore> currentStore) {
@@ -984,7 +1182,9 @@ public class MenteesMod extends JavaPlugin {
                     request.targetRef(),
                     request.targetBlock()
             );
-            if (request.notifyFailures() && failureMessage != null && !failureMessage.isBlank()) {
+            if ((request.notifyFailures() || isDevToolsEnabled())
+                    && failureMessage != null
+                    && !failureMessage.isBlank()) {
                 player.sendMessage(Message.raw(failureMessage));
             }
             pendingAbilityCasts.remove(request);
@@ -1488,12 +1688,34 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private boolean isPlayerInStore(Player player, Store<EntityStore> currentStore) {
-        if (player == null || currentStore == null) {
+        if (player == null) {
             return false;
         }
 
         var playerRef = player.getReference();
-        return playerRef != null && playerRef.isValid() && playerRef.getStore() == currentStore;
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return false;
+        }
+
+        if (currentStore == null) {
+            return true;
+        }
+
+        Store<EntityStore> playerStore = playerRef.getStore();
+        if (playerStore == currentStore || playerStore.equals(currentStore)) {
+            return true;
+        }
+
+        World playerWorld = player.getWorld();
+        World currentWorld = currentStore.getExternalData() != null
+                ? currentStore.getExternalData().getWorld()
+                : null;
+
+        if (playerWorld != null && currentWorld != null) {
+            return playerWorld == currentWorld || playerWorld.equals(currentWorld);
+        }
+
+        return false;
     }
 
     private CombinedItemContainer getCombinedPlayerInventory(Player player) {
@@ -1547,6 +1769,10 @@ public class MenteesMod extends JavaPlugin {
         player.clearRaceBonuses();
 
         if (player.getPlayerClass() == null) {
+            refreshPlayerProgressionBonusesNow(playerId);
+            if (!isFreeCastEnabled(playerId)) {
+                clearFreeCastInvulnerability(playerId);
+            }
             refreshStatusHudNow(playerId);
             return;
         }
@@ -1558,7 +1784,14 @@ public class MenteesMod extends JavaPlugin {
         if (player.getRace() != null) {
             raceManager.applyRaceBonuses(player, statusEffectManager);
         }
+        refreshPlayerProgressionBonusesNow(playerId);
         classPassiveManager.onPlayerJoin(player);
+        if (isFreeCastEnabled(playerId)) {
+            Player runtimePlayer = onlineRuntimePlayers.get(playerId);
+            if (runtimePlayer != null) {
+                ensureFreeCastInvulnerability(runtimePlayer);
+            }
+        }
         refreshStatusHudNow(playerId);
     }
 
@@ -1598,11 +1831,45 @@ public class MenteesMod extends JavaPlugin {
 
         Player runtimePlayer = onlineRuntimePlayers.get(playerId);
         var playerData = playerDataManager.getOnlinePlayer(playerId);
-        if (runtimePlayer == null || playerData == null) {
+        if (runtimePlayer == null) {
+            lastAppliedTargetHealthByPlayer.remove(playerId);
+            return;
+        }
+        if (playerData == null || playerData.getPlayerClass() == null) {
+            clearPlayerLevelHealthBonus(runtimePlayer, playerId);
             return;
         }
 
         applyPlayerLevelHealthBonus(runtimePlayer, playerData);
+    }
+
+    private void clearPlayerLevelHealthBonus(Player runtimePlayer, String playerId) {
+        if (runtimePlayer == null) {
+            if (playerId != null) {
+                lastAppliedTargetHealthByPlayer.remove(playerId);
+            }
+            return;
+        }
+
+        try {
+            var playerRef = runtimePlayer.getReference();
+            if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+                return;
+            }
+
+            EntityStatMap entityStatMap = playerRef.getStore().getComponent(playerRef, EntityStatMap.getComponentType());
+            if (entityStatMap == null) {
+                return;
+            }
+
+            entityStatMap.removeModifier(DefaultEntityStatTypes.getHealth(), PLAYER_LEVEL_HEALTH_MODIFIER_ID);
+            if (playerId != null) {
+                lastAppliedTargetHealthByPlayer.remove(playerId);
+            }
+        } catch (IllegalStateException e) {
+            LOG.warning("[MOTM] Skipped clearing progression health bonus on the wrong store for "
+                    + (playerId == null ? "unknown" : playerId) + ": " + e.getMessage());
+        }
     }
 
     private void applyPlayerLevelHealthBonus(Player runtimePlayer, com.motm.model.PlayerData playerData) {
@@ -1610,30 +1877,92 @@ public class MenteesMod extends JavaPlugin {
             return;
         }
 
-        var playerRef = runtimePlayer.getReference();
-        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
-            return;
-        }
+        try {
+            var playerRef = runtimePlayer.getReference();
+            if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+                return;
+            }
 
-        EntityStatMap entityStatMap = playerRef.getStore().getComponent(playerRef, EntityStatMap.getComponentType());
-        if (entityStatMap == null) {
-            return;
-        }
+            EntityStatMap entityStatMap = playerRef.getStore().getComponent(playerRef, EntityStatMap.getComponentType());
+            if (entityStatMap == null) {
+                return;
+            }
 
-        float healthMultiplier = (float) levelingManager.getPlayerMaxHealthMultiplier(playerData.getLevel());
-        if (!Float.isFinite(healthMultiplier) || healthMultiplier <= 0f) {
-            return;
-        }
+            String classId = playerData.getPlayerClass();
+            var classData = classId == null ? null : dataLoader.getClassData(classId);
+            if (classData == null || classData.getStartingStats() == null) {
+                return;
+            }
 
-        entityStatMap.putModifier(
-                DefaultEntityStatTypes.getHealth(),
-                PLAYER_LEVEL_HEALTH_MODIFIER_ID,
-                new StaticModifier(
-                        Modifier.ModifierTarget.MAX,
-                        StaticModifier.CalculationType.MULTIPLICATIVE,
-                        healthMultiplier
-                )
-        );
+            double baseHealth = classData.getStartingStats().getOrDefault("health", 100.0);
+            double healthGrowth = classData.getStatGrowthPerLevel() == null
+                    ? 0.0
+                    : classData.getStatGrowthPerLevel().getOrDefault("health", 0.0);
+            double targetHealth = baseHealth + (Math.max(1, playerData.getLevel()) - 1) * healthGrowth;
+            if (!Double.isFinite(targetHealth) || targetHealth <= 0.0) {
+                return;
+            }
+
+            String playerId = playerData.getPlayerId();
+            Double lastAppliedTargetHealth = playerId == null ? null : lastAppliedTargetHealthByPlayer.get(playerId);
+            if (lastAppliedTargetHealth != null && Math.abs(lastAppliedTargetHealth - targetHealth) < 0.01) {
+                return;
+            }
+
+            EntityStatValue healthBefore = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+            float currentHealthBefore = healthBefore != null ? healthBefore.get() : 0.0f;
+            float maxHealthBefore = healthBefore != null ? healthBefore.getMax() : 0.0f;
+            boolean shouldMaximizeAfterApply = playerId != null
+                    && isFreeCastEnabled(playerId)
+                    || (maxHealthBefore > 0.0f && currentHealthBefore >= maxHealthBefore - 0.5f);
+            float previousHealthRatio = maxHealthBefore > 0.0f
+                    ? Math.max(0.0f, Math.min(1.0f, currentHealthBefore / maxHealthBefore))
+                    : 1.0f;
+
+            entityStatMap.removeModifier(DefaultEntityStatTypes.getHealth(), PLAYER_LEVEL_HEALTH_MODIFIER_ID);
+
+            EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+            if (health == null || health.getMax() <= 0.0f) {
+                return;
+            }
+
+            float healthMultiplier = (float) (targetHealth / health.getMax());
+            if (!Float.isFinite(healthMultiplier) || healthMultiplier <= 0f) {
+                return;
+            }
+
+            if (Math.abs(healthMultiplier - 1.0f) > 0.0001f) {
+                entityStatMap.putModifier(
+                        DefaultEntityStatTypes.getHealth(),
+                        PLAYER_LEVEL_HEALTH_MODIFIER_ID,
+                        new StaticModifier(
+                                Modifier.ModifierTarget.MAX,
+                                StaticModifier.CalculationType.MULTIPLICATIVE,
+                                healthMultiplier
+                        )
+                );
+            }
+
+            EntityStatValue updatedHealth = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+            if (updatedHealth != null && updatedHealth.getMax() > 0.0f) {
+                if (shouldMaximizeAfterApply) {
+                    entityStatMap.maximizeStatValue(DefaultEntityStatTypes.getHealth());
+                } else {
+                    float desiredCurrentHealth = updatedHealth.getMax() * previousHealthRatio;
+                    float missingHealth = desiredCurrentHealth - updatedHealth.get();
+                    if (missingHealth > 0.05f) {
+                        entityStatMap.addStatValue(DefaultEntityStatTypes.getHealth(), missingHealth);
+                    }
+                }
+            }
+
+            if (playerId != null) {
+                lastAppliedTargetHealthByPlayer.put(playerId, targetHealth);
+            }
+        } catch (IllegalStateException e) {
+            LOG.warning("[MOTM] Skipped progression health bonus refresh on the wrong store for "
+                    + playerData.getPlayerName() + ": " + e.getMessage());
+        }
     }
 
     private int calculateAverageOnlinePlayerLevelForWorld(World world) {
@@ -1884,13 +2213,23 @@ public class MenteesMod extends JavaPlugin {
             boolean holdingDevBook = isDevBookItem(itemInHand);
             boolean crouching = isPlayerCrouching(player);
             InteractionType actionType = event.getActionType();
-            int bookSlot = switch (actionType) {
-                case Ability1 -> 1;
-                case Ability2 -> 2;
-                case Ability3 -> 3;
-                case Use -> 3;
-                default -> 0;
-            };
+            int bookSlot = resolveSpellbookInteractSlot(actionType);
+            String heldItemId = itemInHand != null ? itemInHand.getItemId() : null;
+            boolean hasSelectedStyle = playerData.getSelectedStyles() != null && !playerData.getSelectedStyles().isEmpty();
+            if (heldItemId != null && hasSelectedStyle) {
+                LOG.info("[MOTM] Input trace(interact): player="
+                        + playerData.getPlayerName()
+                        + " action=" + actionType
+                        + " item=" + heldItemId
+                        + " recognizedSpellbook=" + holdingSpellbook);
+            }
+            if (holdingSpellbook) {
+                LOG.info("[MOTM] Spellbook interact input: player="
+                        + playerData.getPlayerName()
+                        + " action=" + actionType
+                        + " slot=" + bookSlot
+                        + " item=" + heldItemId);
+            }
             boolean openSpellbookGesture = holdingSpellbook && crouching && actionType == InteractionType.Use;
             boolean navigateSpellbookGesture = holdingSpellbook && crouching && bookSlot > 0;
             boolean openDevBookGesture = holdingDevBook && actionType == InteractionType.Use;
@@ -2069,12 +2408,21 @@ public class MenteesMod extends JavaPlugin {
             if (itemId == null || itemId.isBlank()) {
                 return;
             }
+            boolean hasSelectedStyle = playerData.getSelectedStyles() != null && !playerData.getSelectedStyles().isEmpty();
+            if (hasSelectedStyle) {
+                LOG.info("[MOTM] Input trace(mouse): player="
+                        + playerData.getPlayerName()
+                        + " button=" + event.getMouseButton().mouseButtonType
+                        + " item=" + itemId
+                        + " recognizedSpellbook=" + isSpellbookItemId(itemId));
+            }
             if (isSpellbookItemId(itemId)) {
-                int slot = switch (event.getMouseButton().mouseButtonType) {
-                    case Left -> 1;
-                    case Right -> 2;
-                    default -> 0;
-                };
+                int slot = resolveSpellbookMouseSlot(event.getMouseButton().mouseButtonType);
+                LOG.info("[MOTM] Spellbook mouse input: player="
+                        + playerData.getPlayerName()
+                        + " button=" + event.getMouseButton().mouseButtonType
+                        + " slot=" + slot
+                        + " item=" + itemId);
                 if (slot > 0) {
                     event.setCancelled(true);
                     String response = tryCastSpellbookSlot(
@@ -2147,6 +2495,32 @@ public class MenteesMod extends JavaPlugin {
                 + " source=" + source);
 
         return motmCommand.castAbilityBySlot(player, slot, targetRef, targetBlock);
+    }
+
+    private int resolveSpellbookInteractSlot(InteractionType actionType) {
+        if (actionType == null) {
+            return 0;
+        }
+
+        String normalized = String.valueOf(actionType).toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "primary", "ability1" -> 1;
+            case "secondary", "ability2" -> 2;
+            case "use", "ability3" -> 3;
+            default -> 0;
+        };
+    }
+
+    private int resolveSpellbookMouseSlot(MouseButtonType mouseButtonType) {
+        if (mouseButtonType == null) {
+            return 0;
+        }
+
+        return switch (String.valueOf(mouseButtonType).toLowerCase(Locale.ROOT)) {
+            case "left" -> 1;
+            case "right" -> 2;
+            default -> 0;
+        };
     }
 
     private boolean isDuplicateSpellbookInput(String playerId, int slot) {
@@ -2301,8 +2675,11 @@ public class MenteesMod extends JavaPlugin {
         }
         if (enabled) {
             freeCastPlayers.add(playerId);
+            pendingFreeCastInvulnerabilityClears.remove(playerId);
         } else {
             freeCastPlayers.remove(playerId);
+            lastObservedFreeCastHealthByPlayer.remove(playerId);
+            pendingFreeCastInvulnerabilityClears.add(playerId);
         }
     }
     public String devToolsDisabledMessage() {

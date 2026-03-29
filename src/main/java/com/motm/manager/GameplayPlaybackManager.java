@@ -55,7 +55,7 @@ public class GameplayPlaybackManager {
     private static final Set<String> AREA_CAST_TYPES = Set.of(
             "ground_burst", "ground_zone", "ground_target", "ground_strike",
             "support_zone", "self_burst", "barrier", "execute");
-    private static final Set<String> CONE_CAST_TYPES = Set.of("cone");
+    private static final Set<String> CONE_CAST_TYPES = Set.of("cone", "gaze");
     private static final Set<String> MULTI_TARGET_CAST_TYPES = Set.of("projectile_volley", "chain");
     private static final Set<String> CASTER_EFFECT_TOKENS = Set.of(
             "attack_buff", "defense_buff", "evasion", "evasion_buff", "evasion_zone",
@@ -607,24 +607,7 @@ public class GameplayPlaybackManager {
 
     private AbilitySpecificRuntimeResult applySpecificCastRuntime(PlayerData player,
                                                                   AbilityData ability) {
-        if (player == null || ability == null || player.getPlayerId() == null) {
-            return AbilitySpecificRuntimeResult.none();
-        }
-
-        List<String> granted = new ArrayList<>();
-        String abilityId = lower(ability.getId());
-        if (Set.of("high_tide", "river_rapids", "frolick", "refraction").contains(abilityId)
-                && applyOwnerStatusToken("speed", player, ability)) {
-            granted.add("speed");
-        }
-
-        if (granted.isEmpty()) {
-            return AbilitySpecificRuntimeResult.none();
-        }
-
-        return new AbilitySpecificRuntimeResult(
-                String.join(" | ", granted.stream().map(this::humanize).toList())
-        );
+        return AbilitySpecificRuntimeResult.none();
     }
 
     private boolean applyOwnerStatusToken(String token,
@@ -2552,8 +2535,8 @@ public class GameplayPlaybackManager {
 
         Store<EntityStore> store = playerRef.getStore();
         String effectId = resolveTransformationEffectId(ability.getId());
-        if (effectId == null || !applyEffectById(playerRef, store, effectId)) {
-            return FormRuntimeResult.none();
+        if (effectId != null) {
+            applyEffectById(playerRef, store, effectId);
         }
 
         String modelId = HytaleAssetResolver.resolveModelId(player.getPlayerClass(), style.getId(), ability);
@@ -3901,7 +3884,8 @@ public class GameplayPlaybackManager {
     }
 
     private boolean shouldArmWeaponFollowUp(AbilityData ability) {
-        if (!"self_buff".equals(lower(ability.getCastType()))) {
+        String castType = lower(ability.getCastType());
+        if (!"self_buff".equals(castType) && !"dash_buff".equals(castType)) {
             return false;
         }
 
@@ -4299,6 +4283,14 @@ public class GameplayPlaybackManager {
             return List.copyOf(targets);
         }
 
+        if ("curse".equals(castType)) {
+            TargetCandidate nearestLooseFacing = frame.candidates().stream()
+                    .filter(candidate -> candidate.forwardDot() > -0.5 && candidate.distance() <= frame.range())
+                    .min((left, right) -> Double.compare(left.distance(), right.distance()))
+                    .orElse(null);
+            return nearestLooseFacing != null ? List.of(nearestLooseFacing.ref()) : List.of();
+        }
+
         if (frame.explicitTarget() != null) {
             return List.of(frame.explicitTarget());
         }
@@ -4323,8 +4315,11 @@ public class GameplayPlaybackManager {
         double range = resolveRange(ability);
         double radius = ability.getRadius() > 0 ? ability.getRadius() : DEFAULT_AREA_RADIUS;
         double halfWidth = ability.getWidth() > 0 ? ability.getWidth() / 2.0 : DEFAULT_LINE_HALF_WIDTH;
+        String castType = lower(ability.getCastType());
         double coneThreshold = ability.getConeAngle() > 0
                 ? Math.cos(Math.toRadians(ability.getConeAngle() / 2.0))
+                : "gaze".equals(castType)
+                ? Math.cos(Math.toRadians(12.0))
                 : Math.cos(Math.toRadians(35.0));
 
         Vector3d areaCenter = resolveAreaCenter(origin, forward, context, range);
