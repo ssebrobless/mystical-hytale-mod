@@ -31,6 +31,9 @@ public final class HytaleAssetResolver {
 
     private static final String FX_EARTH_CAST = "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner";
     private static final String FX_EARTH_IMPACT = "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner";
+    private static final String FX_TERRA_QUAKE_CAST = "MOTM_Terra_Quake_Cast";
+    private static final String FX_TERRA_QUAKE_IMPACT = "MOTM_Terra_Quake_Impact";
+    private static final String FX_TERRA_QUAKE_LOOP = "MOTM_Terra_Quake_Loop";
     private static final String FX_STONE_DUST = "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner";
     private static final String FX_METAL_SPARKS = "Server/Particles/Block/Metal/Spawners/Block_Break_Metal_Sparks.particlespawner";
     private static final String FX_CRYSTAL_SPARKS = "Server/Particles/Block/Crystal/Spawners/Block_Break_Crystal_Sparks.particlespawner";
@@ -200,6 +203,12 @@ public final class HytaleAssetResolver {
     private static String resolveCastEffect(String classId, String styleId, AbilityData ability) {
         String abilityId = lower(ability.getId());
         String castType = lower(ability.getCastType());
+        String style = lower(styleId);
+
+        if ("terra".equals(lower(classId)) && "quake".equals(style)
+                && ("stomp".equals(abilityId) || "aftershock".equals(abilityId) || "sinkhole".equals(abilityId))) {
+            return FX_TERRA_QUAKE_CAST;
+        }
 
         return switch (lower(classId)) {
             case "terra" -> {
@@ -293,6 +302,12 @@ public final class HytaleAssetResolver {
 
     private static String resolveImpactEffect(String classId, String styleId, AbilityData ability) {
         String abilityId = lower(ability.getId());
+        String style = lower(styleId);
+
+        if ("terra".equals(lower(classId)) && "quake".equals(style)
+                && ("stomp".equals(abilityId) || "aftershock".equals(abilityId) || "sinkhole".equals(abilityId))) {
+            return FX_TERRA_QUAKE_IMPACT;
+        }
 
         return switch (lower(classId)) {
             case "terra" -> {
@@ -345,10 +360,18 @@ public final class HytaleAssetResolver {
         String castType = lower(ability.getCastType());
         String abilityId = lower(ability.getId());
         String terrainEffect = lower(ability.getTerrainEffect());
+        String style = lower(styleId);
+
+        if ("terra".equals(lower(classId)) && "quake".equals(style)
+                && ("aftershock".equals(abilityId) || "sinkhole".equals(abilityId))) {
+            return FX_TERRA_QUAKE_LOOP;
+        }
 
         if ("ground_zone".equals(castType) || "support_zone".equals(castType) || "barrier".equals(castType)) {
             return switch (lower(classId)) {
-                case "terra" -> abilityId.contains("sand") ? FX_SAND_DUST : FX_STONE_DUST;
+                case "terra" -> {
+                    yield abilityId.contains("sand") ? FX_SAND_DUST : FX_STONE_DUST;
+                }
                 case "hydro" -> abilityId.contains("rainbow") || abilityId.contains("heal") ? FX_HEAL_LOOP : FX_WATER_TRAVEL;
                 case "aero" -> abilityId.contains("smoke") || terrainEffect.contains("smog")
                         ? FX_SMOKE_END

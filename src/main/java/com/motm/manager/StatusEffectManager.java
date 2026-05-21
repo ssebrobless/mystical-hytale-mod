@@ -21,7 +21,7 @@ public class StatusEffectManager {
      * Apply a status effect to an entity.
      * Some effects stack (SLOW_STACK), others refresh duration if already present.
      */
-    public void applyEffect(String entityId, StatusEffect effect) {
+    public synchronized void applyEffect(String entityId, StatusEffect effect) {
         List<StatusEffect> effects = activeEffects.computeIfAbsent(entityId, k -> new ArrayList<>());
 
         if (effect.getType() == StatusEffect.Type.SLOW_STACK) {
@@ -44,7 +44,7 @@ public class StatusEffectManager {
     /**
      * Remove all effects of a given type from an entity.
      */
-    public void removeEffect(String entityId, StatusEffect.Type type) {
+    public synchronized void removeEffect(String entityId, StatusEffect.Type type) {
         List<StatusEffect> effects = activeEffects.get(entityId);
         if (effects != null) {
             effects.removeIf(e -> e.getType() == type);
@@ -54,14 +54,14 @@ public class StatusEffectManager {
     /**
      * Remove all effects from an entity (on death, cleanse, etc.).
      */
-    public void clearEffects(String entityId) {
+    public synchronized void clearEffects(String entityId) {
         activeEffects.remove(entityId);
     }
 
     /**
      * Remove all effects coming from a specific source ability or perk.
      */
-    public int clearEffectsFromSource(String entityId, String sourcePerkOrAbility) {
+    public synchronized int clearEffectsFromSource(String entityId, String sourcePerkOrAbility) {
         if (entityId == null || sourcePerkOrAbility == null || sourcePerkOrAbility.isBlank()) {
             return 0;
         }
@@ -82,7 +82,7 @@ public class StatusEffectManager {
     /**
      * Tick all effects for a given entity. Returns damage-over-time total as % of max HP.
      */
-    public double tickEffects(String entityId) {
+    public synchronized double tickEffects(String entityId) {
         List<StatusEffect> effects = activeEffects.get(entityId);
         if (effects == null || effects.isEmpty()) return 0;
 
@@ -110,7 +110,7 @@ public class StatusEffectManager {
     /**
      * Tick all tracked entities. Returns a map of entityId -> DoT damage percent.
      */
-    public Map<String, Double> tickAll() {
+    public synchronized Map<String, Double> tickAll() {
         Map<String, Double> dotDamage = new HashMap<>();
         for (String entityId : new ArrayList<>(activeEffects.keySet())) {
             double dmg = tickEffects(entityId);
@@ -126,7 +126,7 @@ public class StatusEffectManager {
     /**
      * Check if an entity has a specific effect type active.
      */
-    public boolean hasEffect(String entityId, StatusEffect.Type type) {
+    public synchronized boolean hasEffect(String entityId, StatusEffect.Type type) {
         List<StatusEffect> effects = activeEffects.get(entityId);
         if (effects == null) return false;
         return effects.stream().anyMatch(e -> e.getType() == type && !e.isExpired());
@@ -135,28 +135,32 @@ public class StatusEffectManager {
     /**
      * Get all active effects for an entity.
      */
-    public List<StatusEffect> getEffects(String entityId) {
-        return activeEffects.getOrDefault(entityId, Collections.emptyList());
+    public synchronized List<StatusEffect> getEffects(String entityId) {
+        List<StatusEffect> effects = activeEffects.get(entityId);
+        if (effects == null || effects.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(effects);
     }
 
     /**
      * Whether the entity is prevented from acting (stunned/frozen).
      */
-    public boolean isIncapacitated(String entityId) {
+    public synchronized boolean isIncapacitated(String entityId) {
         return getEffects(entityId).stream().anyMatch(StatusEffect::preventsAction);
     }
 
     /**
      * Whether the entity is prevented from moving (stunned/frozen/rooted).
      */
-    public boolean isImmobilized(String entityId) {
+    public synchronized boolean isImmobilized(String entityId) {
         return getEffects(entityId).stream().anyMatch(StatusEffect::preventsMovement);
     }
 
     /**
      * Calculate total damage reduction from defense buffs.
      */
-    public double getDamageReduction(String entityId) {
+    public synchronized double getDamageReduction(String entityId) {
         return getEffects(entityId).stream()
                 .filter(e -> e.getType() == StatusEffect.Type.DEFENSE_BUFF)
                 .mapToDouble(StatusEffect::getValue)
@@ -166,7 +170,7 @@ public class StatusEffectManager {
     /**
      * Calculate total damage increase from attack buffs.
      */
-    public double getDamageIncrease(String entityId) {
+    public synchronized double getDamageIncrease(String entityId) {
         return getEffects(entityId).stream()
                 .filter(e -> e.getType() == StatusEffect.Type.ATTACK_BUFF)
                 .mapToDouble(StatusEffect::getValue)
@@ -176,7 +180,7 @@ public class StatusEffectManager {
     /**
      * Get movement / haste bonus from speed effects.
      */
-    public double getSpeedBonus(String entityId) {
+    public synchronized double getSpeedBonus(String entityId) {
         return getEffects(entityId).stream()
                 .filter(e -> e.getType() == StatusEffect.Type.SPEED_BUFF)
                 .mapToDouble(StatusEffect::getValue)
@@ -186,7 +190,7 @@ public class StatusEffectManager {
     /**
      * Get total shield HP remaining on an entity.
      */
-    public double getShieldHp(String entityId) {
+    public synchronized double getShieldHp(String entityId) {
         return getEffects(entityId).stream()
                 .filter(e -> e.getType() == StatusEffect.Type.SHIELD)
                 .mapToDouble(StatusEffect::getValue)
@@ -196,7 +200,7 @@ public class StatusEffectManager {
     /**
      * Absorb damage through shields. Returns remaining damage after shield absorption.
      */
-    public double absorbDamage(String entityId, double damage) {
+    public synchronized double absorbDamage(String entityId, double damage) {
         List<StatusEffect> effects = activeEffects.get(entityId);
         if (effects == null) return damage;
 
@@ -222,7 +226,7 @@ public class StatusEffectManager {
      * Consume a one-shot buff (DAMAGE_BUFF, STEALTH) and return its value.
      * Returns 0 if no such effect is active.
      */
-    public double consumeOneShot(String entityId, StatusEffect.Type type) {
+    public synchronized double consumeOneShot(String entityId, StatusEffect.Type type) {
         List<StatusEffect> effects = activeEffects.get(entityId);
         if (effects == null) return 0;
 
@@ -240,7 +244,7 @@ public class StatusEffectManager {
      * Get the cumulative slow multiplier (for SLOW_STACK effects).
      * Each stack multiplies, so 3 stacks of 20% slow = 0.8^3 = 0.512 speed multiplier.
      */
-    public double getSlowMultiplier(String entityId) {
+    public synchronized double getSlowMultiplier(String entityId) {
         List<StatusEffect> effects = activeEffects.get(entityId);
         if (effects == null) return 1.0;
 
@@ -257,7 +261,7 @@ public class StatusEffectManager {
     /**
      * Get evasion chance from evasion effects.
      */
-    public double getEvasionChance(String entityId) {
+    public synchronized double getEvasionChance(String entityId) {
         return getEffects(entityId).stream()
                 .filter(e -> e.getType() == StatusEffect.Type.EVASION)
                 .mapToDouble(StatusEffect::getValue)
@@ -267,7 +271,7 @@ public class StatusEffectManager {
     /**
      * Get vulnerability multiplier (extra damage taken).
      */
-    public double getVulnerabilityMultiplier(String entityId) {
+    public synchronized double getVulnerabilityMultiplier(String entityId) {
         double vuln = getEffects(entityId).stream()
                 .filter(e -> e.getType() == StatusEffect.Type.VULNERABILITY)
                 .mapToDouble(StatusEffect::getValue)

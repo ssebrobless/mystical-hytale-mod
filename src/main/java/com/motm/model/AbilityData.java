@@ -69,6 +69,15 @@ public class AbilityData {
     private String terrainEffect;
     @SerializedName("summon_name")
     private String summonName;
+    @SerializedName("ground_targets_only")
+    private boolean groundTargetsOnly;
+    @SerializedName("visual_overlay")
+    private String visualOverlay;
+    private String trigger;
+    @SerializedName("vertical_displace_blocks")
+    private double verticalDisplaceBlocks;
+    @SerializedName("dot_percent_per_second")
+    private double dotPercentPerSecond;
 
     public String getId() { return id; }
     public String getName() { return name; }
@@ -106,4 +115,9 @@ public class AbilityData {
     public String getTravelType() { return travelType; }
     public String getTerrainEffect() { return terrainEffect; }
     public String getSummonName() { return summonName; }
+    public boolean isGroundTargetsOnly() { return groundTargetsOnly; }
+    public String getVisualOverlay() { return visualOverlay; }
+    public String getTrigger() { return trigger; }
+    public double getVerticalDisplaceBlocks() { return verticalDisplaceBlocks; }
+    public double getDotPercentPerSecond() { return dotPercentPerSecond; }
 }

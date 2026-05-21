@@ -24,9 +24,11 @@ public class PerkManager {
     public static final int MAX_TOTAL_PERKS = 60;
 
     private final DataLoader dataLoader;
+    private final PlayerStatModifierManager statModifiers;
 
-    public PerkManager(DataLoader dataLoader) {
+    public PerkManager(DataLoader dataLoader, PlayerStatModifierManager statModifiers) {
         this.dataLoader = dataLoader;
+        this.statModifiers = statModifiers;
     }
 
     // --- Tier Calculation ---
@@ -140,7 +142,8 @@ public class PerkManager {
             }
         }
 
-        // Recalculate synergies
+        // Recalculate data-only synergies. Runtime stat modifiers are applied by
+        // the queued world-thread rebuild after command selection completes.
         synergyEngine.recalculateSynergies(player);
 
         LOG.info("[MOTM] " + player.getPlayerName() + " selected Tier " + pendingTier
@@ -165,6 +168,21 @@ public class PerkManager {
         }
     }
 
+    public void applyAllOwnedPerks(PlayerData player) {
+        if (player == null || statModifiers == null) {
+            return;
+        }
+
+        List<Perk> ownedPerks = new ArrayList<>();
+        for (String perkId : player.getSelectedPerks()) {
+            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            if (perk != null) {
+                ownedPerks.add(perk);
+            }
+        }
+        statModifiers.rebuildFromPerks(player, ownedPerks);
+    }
+
     // --- Reapply on Load ---
 
     public void reapplyAllPerks(PlayerData player, SynergyEngine synergyEngine) {
@@ -174,6 +192,7 @@ public class PerkManager {
                 applyPerkEffects(player, perk);
             }
         }
+        applyAllOwnedPerks(player);
         synergyEngine.recalculateSynergies(player);
     }
 

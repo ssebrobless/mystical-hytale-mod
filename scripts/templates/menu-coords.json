@@ -1,0 +1,12 @@
+{
+  "1280x720": {
+    "main_menu_worlds": {
+      "x_ratio": 0.083,
+      "y_ratio": 0.461
+    },
+    "worlds_first_card": {
+      "x_ratio": 0.151,
+      "y_ratio": 0.474
+    }
+  }
+}

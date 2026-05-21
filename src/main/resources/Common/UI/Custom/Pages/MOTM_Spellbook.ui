@@ -1,0 +1,204 @@
+@PanelBg = #111720(0.94);
+@PanelSoft = #1a2230(0.88);
+@PanelLine = #344052(0.70);
+@Text = #eef3f7;
+@Muted = #b3bfcb;
+@Accent = #d8aa53;
+@Good = #98d982;
+
+@SmallText = (FontSize: 13, TextColor: @Muted, Wrap: true);
+@BodyText = (FontSize: 15, TextColor: @Text, Wrap: true);
+@TitleText = (FontSize: 28, RenderBold: true, TextColor: @Text);
+@ValueText = (FontSize: 15, RenderBold: true, TextColor: @Good, Wrap: true);
+@NavText = (FontSize: 14, RenderBold: true, TextColor: @Text);
+@ButtonStyle = (
+  Default: (
+    Background: PatchStyle(Color: @PanelSoft),
+    LabelStyle: @NavText
+  ),
+  Hovered: (
+    Background: PatchStyle(Color: #263143(0.94)),
+    LabelStyle: (...@NavText, TextColor: @Accent)
+  ),
+  Pressed: (
+    Background: PatchStyle(Color: #3a2d1e(0.95)),
+    LabelStyle: (...@NavText, TextColor: #ffffff)
+  )
+);
+
+Group #Root {
+  Anchor: (Width: 1040, Height: 704);
+  Background: PatchStyle(Color: @PanelBg);
+
+  Group #NavRail {
+    Anchor: (Left: 24, Top: 24, Width: 176, Height: 656);
+    Background: PatchStyle(Color: #0b1018(0.96));
+
+    Label #SpellbookTitle {
+      Anchor: (Left: 14, Top: 12, Width: 148, Height: 32);
+      Text: "MOTM";
+      Style: (FontSize: 25, RenderBold: true, TextColor: @Accent);
+    }
+
+    Label #SpellbookSubtitle {
+      Anchor: (Left: 14, Top: 43, Width: 148, Height: 30);
+      Text: "Spellbook";
+      Style: @SmallText;
+    }
+
+    TextButton #NavOverviewButton { Anchor: (Left: 14, Top: 92, Width: 148, Height: 34); Text: "Overview"; Style: @ButtonStyle; }
+    Label #NavOverviewSelected { Anchor: (Left: 14, Top: 92, Width: 148, Height: 34); Text: "> Overview"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+
+    TextButton #NavJourneyButton { Anchor: (Left: 14, Top: 132, Width: 148, Height: 34); Text: "Journey"; Style: @ButtonStyle; }
+    Label #NavJourneySelected { Anchor: (Left: 14, Top: 132, Width: 148, Height: 34); Text: "> Journey"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+
+    TextButton #NavGrimoireButton { Anchor: (Left: 14, Top: 172, Width: 148, Height: 34); Text: "Grimoire"; Style: @ButtonStyle; }
+    Label #NavGrimoireSelected { Anchor: (Left: 14, Top: 172, Width: 148, Height: 34); Text: "> Grimoire"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+
+    TextButton #NavPerksButton { Anchor: (Left: 14, Top: 212, Width: 148, Height: 34); Text: "Perk Web"; Style: @ButtonStyle; }
+    Label #NavPerksSelected { Anchor: (Left: 14, Top: 212, Width: 148, Height: 34); Text: "> Perk Web"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+
+    TextButton #NavResourcesButton { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "Resources"; Style: @ButtonStyle; }
+    Label #NavResourcesSelected { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "> Resources"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+
+    TextButton #NavCodexButton { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: "Codex"; Style: @ButtonStyle; }
+    Label #NavCodexSelected { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: "> Codex"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+
+    TextButton #NavJournalButton { Anchor: (Left: 14, Top: 332, Width: 148, Height: 34); Text: "Journal"; Style: @ButtonStyle; }
+    Label #NavJournalSelected { Anchor: (Left: 14, Top: 332, Width: 148, Height: 34); Text: "> Journal"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+
+    Label #ActionStatus {
+      Anchor: (Left: 14, Top: 410, Width: 148, Height: 190);
+      Text: "";
+      Style: (...@SmallText, TextColor: #d9dde7);
+    }
+  }
+
+  Group #HeroPanel {
+    Anchor: (Left: 224, Top: 24, Width: 792, Height: 132);
+    Background: PatchStyle(Color: @PanelSoft);
+
+    Label #SectionTitle { Anchor: (Left: 22, Top: 14, Width: 450, Height: 36); Style: @TitleText; }
+    Label #SectionSubtitle { Anchor: (Left: 22, Top: 54, Width: 450, Height: 42); Style: @BodyText; }
+    Label #HeroNextStep { Anchor: (Left: 22, Top: 98, Width: 450, Height: 20); Style: (...@SmallText, TextColor: @Accent); }
+
+    Label #HeroClassValue { Anchor: (Left: 510, Top: 18, Width: 250, Height: 18); Style: @ValueText; }
+    Label #HeroRaceValue { Anchor: (Left: 510, Top: 42, Width: 250, Height: 18); Style: @ValueText; }
+    Label #HeroStyleValue { Anchor: (Left: 510, Top: 66, Width: 250, Height: 18); Style: @ValueText; }
+    Label #HeroLevelValue { Anchor: (Left: 510, Top: 90, Width: 250, Height: 18); Style: @ValueText; }
+    Label #HeroProgress { Anchor: (Left: 510, Top: 112, Width: 250, Height: 16); Style: @SmallText; }
+  }
+
+  Group #ContentRoot {
+    Anchor: (Left: 224, Top: 172, Width: 792, Height: 508);
+    Background: PatchStyle(Color: #0f141c(0.90));
+
+    Group #OverviewPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 472);
+      Label #OverviewIdentityClassValue { Anchor: (Left: 0, Top: 0, Width: 350, Height: 22); Style: @ValueText; }
+      Label #OverviewIdentityRaceValue { Anchor: (Left: 0, Top: 30, Width: 350, Height: 22); Style: @ValueText; }
+      Label #OverviewIdentityStyleValue { Anchor: (Left: 0, Top: 60, Width: 350, Height: 22); Style: @ValueText; }
+      Label #OverviewIdentityLevelValue { Anchor: (Left: 0, Top: 90, Width: 350, Height: 22); Style: @ValueText; }
+      Label #OverviewPathNextStepValue { Anchor: (Left: 392, Top: 0, Width: 350, Height: 44); Style: @BodyText; }
+      Label #OverviewPathPendingPerksValue { Anchor: (Left: 392, Top: 54, Width: 350, Height: 22); Style: @ValueText; }
+      Label #OverviewPathSynergyValue { Anchor: (Left: 392, Top: 84, Width: 350, Height: 22); Style: @ValueText; }
+      Label #OverviewPathResourceValue { Anchor: (Left: 0, Top: 142, Width: 742, Height: 44); Style: @BodyText; }
+      Label #OverviewPathTipValue { Anchor: (Left: 0, Top: 205, Width: 742, Height: 64); Style: @SmallText; }
+    }
+
+    Group #JourneyPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 472);
+      Visible: false;
+      Label #JourneyClassValue { Anchor: (Left: 0, Top: 0, Width: 300, Height: 22); Style: @ValueText; }
+      Label #JourneyThemeValue { Anchor: (Left: 0, Top: 28, Width: 360, Height: 34); Style: @BodyText; }
+      Label #JourneyElementValue { Anchor: (Left: 0, Top: 68, Width: 300, Height: 20); Style: @SmallText; }
+      Label #JourneyPassiveNameValue { Anchor: (Left: 0, Top: 96, Width: 360, Height: 22); Style: @ValueText; }
+      Label #JourneyPassiveDescValue { Anchor: (Left: 0, Top: 124, Width: 360, Height: 70); Style: @SmallText; }
+      Label #JourneyClassActionValue { Anchor: (Left: 0, Top: 202, Width: 360, Height: 44); Style: @SmallText; }
+      TextButton #ClassTerraButton { Anchor: (Left: 0, Top: 256, Width: 170, Height: 32); Text: "Terra"; Style: @ButtonStyle; }
+      TextButton #ClassHydroButton { Anchor: (Left: 190, Top: 256, Width: 170, Height: 32); Text: "Hydro"; Style: @ButtonStyle; }
+      TextButton #ClassAeroButton { Anchor: (Left: 0, Top: 296, Width: 170, Height: 32); Text: "Aero"; Style: @ButtonStyle; }
+      TextButton #ClassCorruptusButton { Anchor: (Left: 190, Top: 296, Width: 170, Height: 32); Text: "Corruptus"; Style: @ButtonStyle; }
+
+      Label #JourneyRaceValue { Anchor: (Left: 392, Top: 0, Width: 340, Height: 22); Style: @ValueText; }
+      Label #JourneyRacePassiveValue { Anchor: (Left: 392, Top: 28, Width: 340, Height: 45); Style: @SmallText; }
+      Label #JourneyRaceSpecialValue { Anchor: (Left: 392, Top: 78, Width: 340, Height: 45); Style: @SmallText; }
+      Label #JourneyRaceActionValue { Anchor: (Left: 392, Top: 130, Width: 340, Height: 42); Style: @SmallText; }
+      TextButton #RaceButton1 { Anchor: (Left: 392, Top: 184, Width: 108, Height: 28); Text: "Race 1"; Style: @ButtonStyle; }
+      TextButton #RaceButton2 { Anchor: (Left: 512, Top: 184, Width: 108, Height: 28); Text: "Race 2"; Style: @ButtonStyle; }
+      TextButton #RaceButton3 { Anchor: (Left: 632, Top: 184, Width: 108, Height: 28); Text: "Race 3"; Style: @ButtonStyle; }
+      TextButton #RaceButton4 { Anchor: (Left: 392, Top: 218, Width: 108, Height: 28); Text: "Race 4"; Style: @ButtonStyle; }
+      TextButton #RaceButton5 { Anchor: (Left: 512, Top: 218, Width: 108, Height: 28); Text: "Race 5"; Style: @ButtonStyle; }
+      TextButton #RaceButton6 { Anchor: (Left: 632, Top: 218, Width: 108, Height: 28); Text: "Race 6"; Style: @ButtonStyle; }
+      TextButton #RaceButton7 { Anchor: (Left: 392, Top: 252, Width: 108, Height: 28); Text: "Race 7"; Style: @ButtonStyle; }
+      TextButton #RaceButton8 { Anchor: (Left: 512, Top: 252, Width: 108, Height: 28); Text: "Race 8"; Style: @ButtonStyle; }
+      TextButton #RaceButton9 { Anchor: (Left: 632, Top: 252, Width: 108, Height: 28); Text: "Race 9"; Style: @ButtonStyle; }
+      TextButton #RaceButton10 { Anchor: (Left: 392, Top: 286, Width: 108, Height: 28); Text: "Race 10"; Style: @ButtonStyle; }
+      TextButton #RaceButton11 { Anchor: (Left: 512, Top: 286, Width: 108, Height: 28); Text: "Race 11"; Style: @ButtonStyle; }
+      TextButton #RaceButton12 { Anchor: (Left: 632, Top: 286, Width: 108, Height: 28); Text: "Race 12"; Style: @ButtonStyle; }
+      Label #JourneyStyleValue { Anchor: (Left: 392, Top: 338, Width: 340, Height: 20); Style: @ValueText; }
+      Label #JourneyProgressValue { Anchor: (Left: 392, Top: 364, Width: 340, Height: 20); Style: @SmallText; }
+      Label #JourneyMilestoneValue { Anchor: (Left: 392, Top: 390, Width: 340, Height: 20); Style: @SmallText; }
+      Label #JourneyPromptValue { Anchor: (Left: 392, Top: 416, Width: 340, Height: 38); Style: (...@BodyText, TextColor: @Accent); }
+    }
+
+    Group #GrimoirePanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 472);
+      Visible: false;
+      Label #GrimoireEmpty { Anchor: (Left: 0, Top: 0, Width: 742, Height: 32); Style: @BodyText; }
+      Group #GrimoireDetails {
+        Anchor: (Left: 0, Top: 0, Width: 742, Height: 472);
+        Label #GrimoireStyleValue { Anchor: (Left: 0, Top: 0, Width: 360, Height: 22); Style: @ValueText; }
+        Label #GrimoireThemeValue { Anchor: (Left: 0, Top: 28, Width: 360, Height: 42); Style: @BodyText; }
+        Label #GrimoireResourceValue { Anchor: (Left: 0, Top: 74, Width: 360, Height: 20); Style: @SmallText; }
+        Label #GrimoireAbilityRule { Anchor: (Left: 0, Top: 100, Width: 360, Height: 54); Style: @SmallText; }
+        Label #GrimoireStyleActionValue { Anchor: (Left: 392, Top: 0, Width: 340, Height: 46); Style: @SmallText; }
+      }
+      Group #StyleButtonsContainer {
+        Anchor: (Left: 392, Top: 56, Width: 340, Height: 132);
+        TextButton #StyleButton1 { Anchor: (Left: 0, Top: 0, Width: 160, Height: 28); Text: "Style 1"; Style: @ButtonStyle; }
+        TextButton #StyleButton2 { Anchor: (Left: 176, Top: 0, Width: 160, Height: 28); Text: "Style 2"; Style: @ButtonStyle; }
+        TextButton #StyleButton3 { Anchor: (Left: 0, Top: 34, Width: 160, Height: 28); Text: "Style 3"; Style: @ButtonStyle; }
+        TextButton #StyleButton4 { Anchor: (Left: 176, Top: 34, Width: 160, Height: 28); Text: "Style 4"; Style: @ButtonStyle; }
+        TextButton #StyleButton5 { Anchor: (Left: 0, Top: 68, Width: 160, Height: 28); Text: "Style 5"; Style: @ButtonStyle; }
+        TextButton #StyleButton6 { Anchor: (Left: 176, Top: 68, Width: 160, Height: 28); Text: "Style 6"; Style: @ButtonStyle; }
+        TextButton #StyleButton7 { Anchor: (Left: 0, Top: 102, Width: 160, Height: 28); Text: "Style 7"; Style: @ButtonStyle; }
+        TextButton #StyleButton8 { Anchor: (Left: 176, Top: 102, Width: 160, Height: 28); Text: "Style 8"; Style: @ButtonStyle; }
+        TextButton #StyleButton9 { Anchor: (Left: 0, Top: 136, Width: 160, Height: 28); Text: "Style 9"; Style: @ButtonStyle; }
+        TextButton #StyleButton10 { Anchor: (Left: 176, Top: 136, Width: 160, Height: 28); Text: "Style 10"; Style: @ButtonStyle; }
+      }
+      Group #AbilityCard1 { Anchor: (Left: 0, Top: 210, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability1Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability1Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability1Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability1Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
+      Group #AbilityCard2 { Anchor: (Left: 256, Top: 210, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability2Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability2Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability2Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability2Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
+      Group #AbilityCard3 { Anchor: (Left: 512, Top: 210, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability3Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability3Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability3Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability3Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
+    }
+
+    Group #PerksPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 472);
+      Visible: false;
+      Label #PerksDesignValue { Anchor: (Left: 0, Top: 0, Width: 742, Height: 38); Style: @BodyText; }
+      Label #PerksUnlockedValue { Anchor: (Left: 0, Top: 48, Width: 170, Height: 20); Style: @ValueText; }
+      Label #PerksOwnedValue { Anchor: (Left: 190, Top: 48, Width: 170, Height: 20); Style: @ValueText; }
+      Label #PerksSynergyValue { Anchor: (Left: 380, Top: 48, Width: 170, Height: 20); Style: @ValueText; }
+      Label #PerksStatusValue { Anchor: (Left: 0, Top: 76, Width: 742, Height: 38); Style: @SmallText; }
+      Group #PerksChoicesContainer { Anchor: (Left: 0, Top: 126, Width: 742, Height: 248);
+        Group #PerkRow1 { Anchor: (Left: 0, Top: 0, Width: 742, Height: 22); Label #Perk1Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk1Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk1Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton1 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow2 { Anchor: (Left: 0, Top: 24, Width: 742, Height: 22); Label #Perk2Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk2Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk2Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton2 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow3 { Anchor: (Left: 0, Top: 48, Width: 742, Height: 22); Label #Perk3Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk3Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk3Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton3 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow4 { Anchor: (Left: 0, Top: 72, Width: 742, Height: 22); Label #Perk4Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk4Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk4Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton4 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow5 { Anchor: (Left: 0, Top: 96, Width: 742, Height: 22); Label #Perk5Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk5Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk5Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton5 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow6 { Anchor: (Left: 0, Top: 120, Width: 742, Height: 22); Label #Perk6Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk6Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk6Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton6 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow7 { Anchor: (Left: 0, Top: 144, Width: 742, Height: 22); Label #Perk7Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk7Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk7Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton7 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow8 { Anchor: (Left: 0, Top: 168, Width: 742, Height: 22); Label #Perk8Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk8Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk8Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton8 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow9 { Anchor: (Left: 0, Top: 192, Width: 742, Height: 22); Label #Perk9Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk9Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk9Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton9 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+        Group #PerkRow10 { Anchor: (Left: 0, Top: 216, Width: 742, Height: 22); Label #Perk10Index { Anchor: (Left: 0, Top: 0, Width: 40, Height: 20); Style: @SmallText; } Label #Perk10Name { Anchor: (Left: 42, Top: 0, Width: 180, Height: 20); Style: @ValueText; } Label #Perk10Desc { Anchor: (Left: 230, Top: 0, Width: 392, Height: 20); Style: @SmallText; } TextButton #PerkButton10 { Anchor: (Left: 636, Top: 0, Width: 92, Height: 22); Text: "Queue"; Style: @ButtonStyle; } }
+      }
+      Label #PerksEmpty { Anchor: (Left: 0, Top: 126, Width: 742, Height: 42); Style: @BodyText; }
+      Label #PerksSelectionValue { Anchor: (Left: 0, Top: 392, Width: 390, Height: 24); Style: @ValueText; }
+      Group #PerksControls { Anchor: (Left: 440, Top: 386, Width: 300, Height: 34); TextButton #PerksConfirmButton { Anchor: (Left: 0, Top: 0, Width: 140, Height: 32); Text: "Confirm"; Style: @ButtonStyle; } TextButton #PerksClearButton { Anchor: (Left: 154, Top: 0, Width: 140, Height: 32); Text: "Clear"; Style: @ButtonStyle; } }
+    }
+
+    Group #ResourcesPanel { Anchor: (Left: 18, Top: 18, Width: 756, Height: 472); Visible: false; Label #ResourcesCurrentValue { Anchor: (Left: 0, Top: 0, Width: 742, Height: 40); Style: @ValueText; } Label #ResourcesRuleValue { Anchor: (Left: 0, Top: 54, Width: 742, Height: 68); Style: @BodyText; } Label #ResourcesPracticalValue { Anchor: (Left: 0, Top: 136, Width: 742, Height: 68); Style: @SmallText; } }
+    Group #CodexPanel { Anchor: (Left: 18, Top: 18, Width: 756, Height: 472); Visible: false; Label #CodexFlowValue { Anchor: (Left: 0, Top: 0, Width: 742, Height: 42); Style: @BodyText; } Label #CodexReactionsValue { Anchor: (Left: 0, Top: 58, Width: 742, Height: 52); Style: @SmallText; } Label #CodexScalingValue { Anchor: (Left: 0, Top: 126, Width: 742, Height: 52); Style: @SmallText; } Label #CodexFocusValue { Anchor: (Left: 0, Top: 194, Width: 742, Height: 72); Style: @SmallText; } }
+    Group #JournalPanel { Anchor: (Left: 18, Top: 18, Width: 756, Height: 472); Visible: false; Label #JournalStatusValue { Anchor: (Left: 0, Top: 0, Width: 742, Height: 52); Style: @BodyText; } Label #JournalPathValue { Anchor: (Left: 0, Top: 68, Width: 742, Height: 28); Style: @ValueText; } Label #JournalFutureValue { Anchor: (Left: 0, Top: 112, Width: 742, Height: 72); Style: @SmallText; } }
+  }
+}

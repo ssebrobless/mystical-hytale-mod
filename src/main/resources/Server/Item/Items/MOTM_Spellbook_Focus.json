@@ -9,9 +9,27 @@
   "Model": "Items/Weapons/Spellbook/Grimoire.blockymodel",
   "Texture": "Items/Weapons/Spellbook/Grimoire_Brown_Texture.png",
   "Interactions": {
-    "Primary": "Root_Unarmed_Attack_Swing_Left",
-    "Secondary": "Block_Secondary",
-    "Use": "Block_Secondary"
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "motm_spellbook_primary"
+        }
+      ]
+    },
+    "Secondary": {
+      "Interactions": [
+        {
+          "Type": "motm_spellbook_secondary"
+        }
+      ]
+    },
+    "Use": {
+      "Interactions": [
+        {
+          "Type": "motm_spellbook_use"
+        }
+      ]
+    }
   },
   "MaxStack": 1,
   "Tags": {

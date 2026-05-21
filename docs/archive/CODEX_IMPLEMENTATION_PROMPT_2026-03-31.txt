@@ -1,0 +1,30 @@
+Please read these files first, in order:
+
+1. C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\CLAUDE_HANDOFF_2026-03-30.md
+2. C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\CLAUDE_RECOVERED_PLAN_2026-03-31.md
+3. C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\CODEX_CORRECTIONS_PLAN.md
+
+Important:
+- Inspect the current live working tree, not just the last pushed commit.
+- There are local uncommitted changes that matter, especially in:
+  - C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\MenteesMod.java
+  - C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\Server\Item\Items\MOTM_Spellbook_Focus.json
+
+Continue from the recovered Claude plan, not from scratch.
+
+Execution priorities:
+1. Instrument the runtime so the actual failure point is proven in logs.
+2. Fix the spellbook interaction contract.
+3. Fix join restore timing/lifecycle.
+4. Lock one reliable Quake vertical slice before broadening further.
+
+Success slice:
+- join world
+- saved Quake loadout restores immediately
+- spellbook restores immediately
+- equip spellbook
+- Left Click / Right Click / Use reliably cast the three Quake abilities
+- no random damage or movement slowdown while testing
+
+Do not treat `/motm cast` as proof that spellbook gameplay is fixed.
+Do not revert to native recipe books or weapon-shell spellbooks.

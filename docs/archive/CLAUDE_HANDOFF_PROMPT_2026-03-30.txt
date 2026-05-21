@@ -1,0 +1,44 @@
+I need you to read this handoff document first and use it as the factual starting point for your planning:
+
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\CLAUDE_HANDOFF_2026-03-30.md
+
+Please do not jump straight into implementation. First, I want a concrete implementation plan that:
+
+1. Uses the handoff as the source of truth for:
+   - what issues we have been experiencing
+   - what fixes have already been tried
+   - what partially helped
+   - what still is not reliably working
+
+2. Explicitly avoids retrying dead ends that are already listed there, especially:
+   - using native recipe books as spellbooks
+   - using weapon-shell spellbooks as the final answer
+   - relying on PlayerReadyEvent alone for saved loadout restore
+   - treating `/motm cast` as proof that gameplay is fixed
+   - focusing on HUD cosmetics before runtime/input reliability
+
+3. Produces a staged implementation plan centered on one reliable vertical slice first:
+   - join the world
+   - saved class/style restore immediately
+   - spellbook restored immediately
+   - equip spellbook
+   - Left Click / Right Click / Use cast the 3 Quake abilities reliably
+   - no random damage while testing
+
+4. Clearly separates:
+   - confirmed facts
+   - strongest hypotheses
+   - risky assumptions
+
+5. Identifies the best next technical decisions for:
+   - which Hytale lifecycle event(s) should own join restoration
+   - how a custom spellbook item should be defined so it emits usable interaction events
+   - how to instrument the runtime so we can prove where the cast/input path fails instead of guessing
+
+6. Gives me an ordered implementation roadmap with priorities, where each step explains:
+   - why it comes before the next one
+   - what file(s) it touches
+   - what test proves it worked
+
+Please optimize the plan for getting the mod functionally reliable first, not for adding more features or polishing visuals yet.
+

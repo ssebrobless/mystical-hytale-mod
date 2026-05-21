@@ -11,6 +11,8 @@ import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.CollisionResultComponent;
+import com.hypixel.hytale.server.core.modules.collision.BlockCollisionData;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageSystems;
@@ -39,6 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class GameplayPlaybackManager {
@@ -102,16 +105,23 @@ public class GameplayPlaybackManager {
     private static final long LINE_CONTROL_PULSE_INTERVAL_MS = 350L;
     private static final double BLIND_DAMAGE_PENALTY = 0.22;
     private static final double DISORIENTED_DAMAGE_PENALTY = 0.12;
+    private static final long STOMP_ARM_TIMEOUT_MILLIS = 30_000L;
+    private static final double STOMP_JUMP_THRESHOLD_BLOCKS = 0.45;
+    private static final double STOMP_LAND_TOLERANCE_BLOCKS = 0.10;
 
     private final MenteesMod mod;
     private final Map<String, List<ActiveSummon>> activeSummonsByOwner = new HashMap<>();
     private final Map<String, ActiveTransformation> activeTransformationsByPlayer = new HashMap<>();
     private final Map<String, Long> nextTransformationPulseAtByPlayer = new HashMap<>();
     private final Map<String, ActiveWeaponFollowUp> activeWeaponFollowUpsByPlayer = new HashMap<>();
+    private final Map<String, ArmedStomp> armedStompByPlayer = new ConcurrentHashMap<>();
     private final List<ActiveProjectile> activeProjectiles = new ArrayList<>();
     private final List<ActiveField> activeFields = new ArrayList<>();
     private final List<ActiveChannel> activeChannels = new ArrayList<>();
     private final List<ActiveLineControl> activeLineControls = new ArrayList<>();
+    private final Map<String, List<BuriedVictim>> buriedVictimsByField = new HashMap<>();
+    private final Set<String> reportedAbilityKillEntityIds = ConcurrentHashMap.newKeySet();
+    private boolean warnedGroundedFallback;
 
     public GameplayPlaybackManager(MenteesMod mod) {
         this.mod = mod;
@@ -142,6 +152,10 @@ public class GameplayPlaybackManager {
                                                        CastContext context) {
         if (runtimePlayer == null || player == null || style == null || ability == null) {
             return ExecutionResult.none("Runtime player context is unavailable.");
+        }
+
+        if ("jump_land".equalsIgnoreCase(ability.getTrigger())) {
+            return armJumpLandAbility(runtimePlayer, player, style, ability);
         }
 
         PlaybackResult playback = playAbility(runtimePlayer, player, style, ability);
@@ -200,17 +214,202 @@ public class GameplayPlaybackManager {
                 summons.spawned(), summons.buffed(), form.applied(), summary);
     }
 
-    public synchronized void tick() {
+    private ExecutionResult armJumpLandAbility(Player runtimePlayer,
+                                               PlayerData player,
+                                               StyleData style,
+                                               AbilityData ability) {
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return ExecutionResult.none("Cannot arm: player reference invalid.");
+        }
+
+        Store<EntityStore> store = playerRef.getStore();
+        TransformComponent transform = store.getComponent(playerRef, TransformComponent.getComponentType());
+        if (transform == null || transform.getTransform() == null || transform.getTransform().getPosition() == null) {
+            return ExecutionResult.none("Cannot arm: player position unavailable.");
+        }
+
         long now = System.currentTimeMillis();
-        activeProjectiles.removeIf(projectile -> processProjectileTick(projectile, now));
-        activeFields.removeIf(field -> processFieldTick(field, now));
-        activeLineControls.removeIf(lineControl -> processLineControlTick(lineControl, now));
-        activeChannels.removeIf(channel -> processChannelTick(channel, now));
-        activeTransformationsByPlayer.entrySet().removeIf(entry -> processTransformationTick(entry.getValue(), now));
+        armedStompByPlayer.put(player.getPlayerId(), new ArmedStomp(
+                player.getPlayerId(),
+                player,
+                style,
+                ability,
+                now,
+                now + STOMP_ARM_TIMEOUT_MILLIS,
+                transform.getTransform().getPosition().y,
+                false
+        ));
+
+        LOG.info("[MOTM] Stomp armed: player=" + player.getPlayerName()
+                + " - next jump's landing will trigger the shockwave");
+        String effectId = resolveEffectId(player.getPlayerClass(), currentStyleId(player), ability);
+        applyEffectById(playerRef, store, effectId);
+
+        return new ExecutionResult(
+                PlaybackResult.none("Stomp armed - jump and land to release."),
+                0, 0.0, 0, 0, false,
+                "Stomp armed (jump -> land to release the shockwave)");
+    }
+
+    public synchronized void tick(Store<EntityStore> currentStore) {
+        if (currentStore == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        activeProjectiles.removeIf(projectile ->
+                belongsToCurrentStore(projectile.ownerRef(), currentStore) && processProjectileTick(projectile, now));
+        activeFields.removeIf(field ->
+                belongsToCurrentStore(field.ownerRef(), currentStore) && processFieldTick(field, now));
+        activeLineControls.removeIf(lineControl ->
+                belongsToCurrentStore(lineControl.ownerRef(), currentStore) && processLineControlTick(lineControl, now));
+        activeChannels.removeIf(channel ->
+                belongsToCurrentStore(channel.ownerRef(), currentStore) && processChannelTick(channel, now));
+        activeTransformationsByPlayer.entrySet().removeIf(entry ->
+                belongsToCurrentStore(entry.getValue().ownerRef(), currentStore)
+                        && processTransformationTick(entry.getValue(), now));
         activeWeaponFollowUpsByPlayer.entrySet().removeIf(entry -> now >= entry.getValue().expireAtMillis() || entry.getValue().remainingUses() <= 0);
         activeSummonsByOwner.values().removeIf(List::isEmpty);
         activeSummonsByOwner.values().forEach(summons ->
-                summons.removeIf(summon -> processSummonTick(summon, now)));
+                summons.removeIf(summon ->
+                        belongsToCurrentStore(summon.ref(), currentStore) && processSummonTick(summon, now)));
+    }
+
+    public synchronized void tickArmedStomps(Store<EntityStore> currentStore) {
+        if (currentStore == null || armedStompByPlayer.isEmpty()) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        for (Map.Entry<String, ArmedStomp> entry : new ArrayList<>(armedStompByPlayer.entrySet())) {
+            String playerId = entry.getKey();
+            ArmedStomp armed = entry.getValue();
+            if (now >= armed.expireAtMillis()) {
+                LOG.info("[MOTM] Stomp arm expired: player=" + armed.player().getPlayerName());
+                armedStompByPlayer.remove(playerId, armed);
+                continue;
+            }
+
+            Player runtimePlayer = mod.getRuntimePlayer(armed.playerId());
+            if (runtimePlayer == null) {
+                continue;
+            }
+
+            Ref<EntityStore> playerRef = runtimePlayer.getReference();
+            if (playerRef == null || !playerRef.isValid() || !belongsToCurrentStore(playerRef, currentStore)) {
+                continue;
+            }
+
+            TransformComponent transform = currentStore.getComponent(playerRef, TransformComponent.getComponentType());
+            if (transform == null || transform.getTransform() == null || transform.getTransform().getPosition() == null) {
+                continue;
+            }
+
+            double y = transform.getTransform().getPosition().y;
+            double dy = y - armed.previousY();
+            boolean nowAirborne = armed.wasAirborne()
+                    || dy > STOMP_JUMP_THRESHOLD_BLOCKS / StyleManager.TICKS_PER_SECOND;
+            double fractionalY = Math.abs(y - Math.floor(y));
+            boolean landed = armed.wasAirborne()
+                    && fractionalY < STOMP_LAND_TOLERANCE_BLOCKS
+                    && dy <= 0.0;
+            if (landed) {
+                fireArmedStomp(runtimePlayer, armed, transform.getTransform().getPosition().clone());
+                armedStompByPlayer.remove(playerId, armed);
+                continue;
+            }
+
+            armedStompByPlayer.replace(playerId, armed, new ArmedStomp(
+                    armed.playerId(),
+                    armed.player(),
+                    armed.style(),
+                    armed.ability(),
+                    armed.armedAtMillis(),
+                    armed.expireAtMillis(),
+                    y,
+                    nowAirborne
+            ));
+        }
+    }
+
+    private void fireArmedStomp(Player runtimePlayer, ArmedStomp armed, Vector3d landingPosition) {
+        LOG.info("[MOTM] Stomp fired at landing: player=" + armed.player().getPlayerName()
+                + " pos=" + landingPosition);
+        CastContext landingContext = CastContext.atPosition(landingPosition);
+        AbilityData ability = armed.ability();
+        PlaybackResult playback = playAbility(runtimePlayer, armed.player(), armed.style(), ability);
+        CombatResolution combat = applyCombat(runtimePlayer, armed.player(), ability, landingContext);
+        EffectResolution effects = applyTargetEffects(runtimePlayer, armed.player(), ability, landingContext);
+        spawnQuakeImpactRing(runtimePlayer, ability, landingPosition);
+        double lifestealHealing = applyLifesteal(runtimePlayer, armed.player(), combat.totalDamage());
+
+        if (combat.totalDamage() > 0.0) {
+            armed.player().getStatistics().setTotalDamageDealt(
+                    armed.player().getStatistics().getTotalDamageDealt() + combat.totalDamage());
+        }
+        if (lifestealHealing > 0.0) {
+            armed.player().getStatistics().setTotalHealingDone(
+                    armed.player().getStatistics().getTotalHealingDone() + lifestealHealing);
+        }
+
+        LOG.info("[MOTM] Stomp landing resolved: targets=" + combat.targetsHit()
+                + " damage=" + AbilityPresentation.formatDecimal(combat.totalDamage())
+                + " effects=" + effects.effectsApplied()
+                + (playback.effectApplied() ? " visual=applied" : " visual=missing"));
+    }
+
+    private void spawnQuakeImpactRing(Player runtimePlayer, AbilityData ability, Vector3d center) {
+        if (runtimePlayer == null || ability == null || center == null) {
+            return;
+        }
+
+        World world = runtimePlayer.getWorld();
+        if (world == null) {
+            return;
+        }
+
+        List<Vector3d> positions = buildAreaVisualPositions(center, ability);
+        if (positions.isEmpty()) {
+            positions = List.of(center.clone());
+        }
+
+        String effectId = "MOTM_Terra_Quake_Impact";
+        float despawnSeconds = 1.0f;
+        int spawned = 0;
+        for (Vector3d position : positions) {
+            NPCEntity proxy = new NPCEntity(world);
+            proxy.setRoleName(FIELD_VISUAL_ROLE_NAME);
+            proxy.setDespawnTime(despawnSeconds);
+            world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
+
+            Ref<EntityStore> proxyRef = proxy.getReference();
+            if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
+                applyEffectById(proxyRef, proxyRef.getStore(), effectId);
+                spawned++;
+            }
+        }
+
+        LOG.info("[MOTM] Quake impact ring spawned at " + center
+                + " positions=" + positions.size()
+                + " applied=" + spawned);
+    }
+
+    public synchronized void clearArmedStomp(String playerId) {
+        if (playerId != null) {
+            armedStompByPlayer.remove(playerId);
+        }
+    }
+
+    private boolean belongsToCurrentStore(Ref<EntityStore> ownerRef, Store<EntityStore> currentStore) {
+        if (ownerRef == null || !ownerRef.isValid()) {
+            return true;
+        }
+
+        try {
+            return ownerRef.getStore() == currentStore;
+        } catch (IllegalStateException ignored) {
+            return true;
+        }
     }
 
     public synchronized String deactivateAbilityRuntime(PlayerData player, String abilityId) {
@@ -228,6 +427,7 @@ public class GameplayPlaybackManager {
             if (!playerId.equals(field.ownerPlayerId()) || !normalizedAbilityId.equals(lower(field.ability().getId()))) {
                 continue;
             }
+            releaseSinkholeField(field, field.ownerRef() != null && field.ownerRef().isValid() ? field.ownerRef().getStore() : null);
             despawnFieldVisual(field);
             activeFields.remove(index);
             removedFields++;
@@ -847,12 +1047,14 @@ public class GameplayPlaybackManager {
 
     private boolean processFieldTick(ActiveField field, long now) {
         if (field.ownerRef() == null || !field.ownerRef().isValid()) {
+            releaseSinkholeField(field, null);
             despawnFieldVisual(field);
             return true;
         }
 
         Store<EntityStore> store = field.ownerRef().getStore();
         if (store == null) {
+            releaseSinkholeField(field, null);
             despawnFieldVisual(field);
             return true;
         }
@@ -860,6 +1062,7 @@ public class GameplayPlaybackManager {
         syncFollowOwnerFieldAnchor(field, store);
 
         if (now >= field.expireAtMillis()) {
+            releaseSinkholeField(field, store);
             despawnFieldVisual(field);
             return true;
         }
@@ -869,6 +1072,10 @@ public class GameplayPlaybackManager {
             return false;
         }
 
+        if (isSinkhole(field.ability())) {
+            engageSinkholeField(field, store);
+        }
+
         syncFieldVisual(field, now);
         if (now < field.nextPulseAtMillis()) {
             return false;
@@ -876,6 +1083,7 @@ public class GameplayPlaybackManager {
 
         PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(field.ownerPlayerId());
         if (player == null) {
+            releaseSinkholeField(field, store);
             despawnFieldVisual(field);
             return true;
         }
@@ -885,6 +1093,7 @@ public class GameplayPlaybackManager {
             applyFieldPulse(field, player, store, targets);
         }
         applyFieldSupportPulse(field, player);
+        applySinkholeSuffocationPulse(field, store);
         field.nextPulseAtMillis = now + FIELD_PULSE_INTERVAL_MS;
         return false;
     }
@@ -983,6 +1192,7 @@ public class GameplayPlaybackManager {
             if (resolvedDamage > 0.0) {
                 Damage damage = new Damage(new Damage.EntitySource(projectile.ownerRef()), cause, (float) resolvedDamage);
                 DamageSystems.executeDamage(targetRef, store, damage);
+                reportAbilityKillIfDead(projectile.ownerPlayerId(), player, targetRef, store, targetEntityId);
                 applyPostDamageClassPassives(player, projectile.ownerRef(), targetEntityId, resolvedDamage, true);
                 totalDamage += resolvedDamage;
             }
@@ -1392,6 +1602,10 @@ public class GameplayPlaybackManager {
                 }
 
                 Vector3d position = transform.getTransform().getPosition();
+                if (field.ability().isGroundTargetsOnly() && !isTargetGrounded(ref, store)) {
+                    continue;
+                }
+
                 if ("barrier".equals(castType)) {
                     if (isInsideBarrier(field, position)) {
                         targets.add(ref);
@@ -1454,6 +1668,131 @@ public class GameplayPlaybackManager {
                     player.getStatistics().getTotalDamageDealt() + totalDamage);
             applyLifesteal(field.ownerRef(), player.getPlayerId(), totalDamage);
         }
+    }
+
+    private void engageSinkholeField(ActiveField field, Store<EntityStore> store) {
+        if (!isSinkhole(field.ability())) {
+            return;
+        }
+
+        String key = buriedFieldKey(field);
+        if (buriedVictimsByField.containsKey(key)) {
+            return;
+        }
+
+        List<Ref<EntityStore>> caught = collectFieldTargets(field, store);
+        if (caught.isEmpty()) {
+            buriedVictimsByField.put(key, new ArrayList<>());
+            LOG.info("[MOTM] Sinkhole engaged: no targets in radius="
+                    + AbilityPresentation.formatDecimal(field.ability().getRadius() > 0 ? field.ability().getRadius() : DEFAULT_AREA_RADIUS)
+                    + " at center=" + field.center());
+            return;
+        }
+
+        List<BuriedVictim> victims = new ArrayList<>();
+        for (Ref<EntityStore> targetRef : caught) {
+            if (targetRef == null || !targetRef.isValid()) {
+                continue;
+            }
+
+            applyEffectById(targetRef, store, "MOTM_Terra_Sinkhole_Buried");
+            applyTargetToken("root", targetRef, store, field.ownerRef(), field.ownerPlayerId(), field.ability());
+            victims.add(new BuriedVictim(targetRef, null, field.expireAtMillis()));
+        }
+
+        buriedVictimsByField.put(key, victims);
+        LOG.info("[MOTM] Sinkhole engaged: buried " + victims.size()
+                + " target(s) at center=" + field.center());
+    }
+
+    private void applySinkholeSuffocationPulse(ActiveField field, Store<EntityStore> store) {
+        if (!isSinkhole(field.ability())) {
+            return;
+        }
+
+        double dotPercent = Math.max(0.0, field.ability().getDotPercentPerSecond());
+        if (dotPercent <= 0.0) {
+            return;
+        }
+
+        List<BuriedVictim> victims = buriedVictimsByField.get(buriedFieldKey(field));
+        if (victims == null || victims.isEmpty()) {
+            return;
+        }
+
+        double maxHpFraction = dotPercent * (FIELD_PULSE_INTERVAL_MS / 1000.0) / 100.0;
+        for (BuriedVictim victim : victims) {
+            if (victim.targetRef() != null && victim.targetRef().isValid()) {
+                applySuffocationTick(victim.targetRef(), store, field, maxHpFraction);
+            }
+        }
+    }
+
+    private void applySuffocationTick(Ref<EntityStore> targetRef,
+                                      Store<EntityStore> store,
+                                      ActiveField field,
+                                      double maxHpFraction) {
+        if (targetRef == null || !targetRef.isValid() || store == null || maxHpFraction <= 0.0) {
+            return;
+        }
+
+        EntityStatMap entityStatMap = store.getComponent(targetRef, EntityStatMap.getComponentType());
+        if (entityStatMap == null) {
+            return;
+        }
+
+        EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+        if (health == null || health.getMax() <= 0.0) {
+            return;
+        }
+
+        double resolvedDamage = health.getMax() * maxHpFraction;
+        if (resolvedDamage <= 0.0) {
+            return;
+        }
+
+        try {
+            DamageCause cause = DamageCause.getAssetMap().getAsset("Suffocation");
+            Damage damage = new Damage(new Damage.EntitySource(field.ownerRef()), cause, (float) resolvedDamage);
+            DamageSystems.executeDamage(targetRef, store, damage);
+            LOG.info("[MOTM] Sinkhole suffocation tick: target="
+                    + (resolveEntityId(targetRef, store) == null ? "<unknown>" : resolveEntityId(targetRef, store))
+                    + " damage=" + AbilityPresentation.formatDecimal(resolvedDamage));
+        } catch (RuntimeException e) {
+            LOG.warning("[MOTM] Sinkhole DoT failed: " + e.getMessage());
+        }
+    }
+
+    private void releaseSinkholeField(ActiveField field, Store<EntityStore> store) {
+        if (!isSinkhole(field.ability())) {
+            return;
+        }
+
+        List<BuriedVictim> victims = buriedVictimsByField.remove(buriedFieldKey(field));
+        if (victims == null || victims.isEmpty()) {
+            return;
+        }
+
+        for (BuriedVictim victim : victims) {
+            if (victim.targetRef() == null || !victim.targetRef().isValid() || victim.originalScale() == null) {
+                continue;
+            }
+            LOG.fine("[MOTM] Sinkhole scale restore skipped; EntityScaleComponent support is not enabled.");
+        }
+        LOG.info("[MOTM] Sinkhole released: " + victims.size() + " target(s)");
+    }
+
+    private boolean isSinkhole(AbilityData ability) {
+        return ability != null
+                && ("sinkhole".equalsIgnoreCase(ability.getId())
+                || lower(ability.getTerrainEffect()).contains("sinkhole"));
+    }
+
+    private String buriedFieldKey(ActiveField field) {
+        if (field == null) {
+            return "";
+        }
+        return field.ownerPlayerId() + "::" + lower(field.ability().getId()) + "::" + field.activateAtMillis();
     }
 
     private void applyFieldTargetEffects(ActiveField field,
@@ -2110,6 +2449,16 @@ public class GameplayPlaybackManager {
             return positions;
         }
 
+        return buildAreaVisualPositions(center, ability);
+    }
+
+    private List<Vector3d> buildAreaVisualPositions(Vector3d center, AbilityData ability) {
+        if (center == null || ability == null) {
+            return List.of();
+        }
+
+        List<Vector3d> positions = new ArrayList<>();
+        positions.add(center.clone());
         double radius = ability.getRadius() > 0 ? ability.getRadius() : DEFAULT_AREA_RADIUS;
         double ringRadius = Math.max(1.8, Math.min(radius * 0.62, 5.5));
         positions.add(center.clone().add(ringRadius, 0.0, 0.0));
@@ -2249,6 +2598,7 @@ public class GameplayPlaybackManager {
 
             Damage damage = new Damage(new Damage.EntitySource(playerRef), cause, (float) resolvedDamage);
             DamageSystems.executeDamage(targetRef, store, damage);
+            reportAbilityKillIfDead(player.getPlayerId(), player, targetRef, store, targetEntityId);
             applyPostDamageClassPassives(player, playerRef, targetEntityId, resolvedDamage, true);
             applyEffectById(targetRef, store, impactEffectId);
             if ("chain".equals(castType) && travelType.contains("chain_lightning")) {
@@ -4213,7 +4563,7 @@ public class GameplayPlaybackManager {
                     targets.add(candidate.ref());
                 }
             }
-            return List.copyOf(targets);
+            return filterGroundTargetsIfNeeded(List.copyOf(targets), store, ability);
         }
 
         if (AREA_CAST_TYPES.contains(castType)) {
@@ -4223,7 +4573,7 @@ public class GameplayPlaybackManager {
                     targets.add(candidate.ref());
                 }
             }
-            return List.copyOf(targets);
+            return filterGroundTargetsIfNeeded(List.copyOf(targets), store, ability);
         }
 
         if (MULTI_TARGET_CAST_TYPES.contains(castType)) {
@@ -4251,7 +4601,7 @@ public class GameplayPlaybackManager {
                 }
                 targets.add(candidate.ref());
             }
-            return List.copyOf(targets);
+            return filterGroundTargetsIfNeeded(List.copyOf(targets), store, ability);
         }
 
         if (LINE_CAST_TYPES.contains(castType)) {
@@ -4280,7 +4630,7 @@ public class GameplayPlaybackManager {
                     targets.add(nearestForward.ref());
                 }
             }
-            return List.copyOf(targets);
+            return filterGroundTargetsIfNeeded(List.copyOf(targets), store, ability);
         }
 
         if ("curse".equals(castType)) {
@@ -4288,18 +4638,64 @@ public class GameplayPlaybackManager {
                     .filter(candidate -> candidate.forwardDot() > -0.5 && candidate.distance() <= frame.range())
                     .min((left, right) -> Double.compare(left.distance(), right.distance()))
                     .orElse(null);
-            return nearestLooseFacing != null ? List.of(nearestLooseFacing.ref()) : List.of();
+            return filterGroundTargetsIfNeeded(nearestLooseFacing != null ? List.of(nearestLooseFacing.ref()) : List.of(), store, ability);
         }
 
         if (frame.explicitTarget() != null) {
-            return List.of(frame.explicitTarget());
+            return filterGroundTargetsIfNeeded(List.of(frame.explicitTarget()), store, ability);
         }
 
         TargetCandidate nearestForward = frame.candidates().stream()
                 .filter(candidate -> candidate.forwardDot() > 0.2 && candidate.distance() <= frame.range())
                 .min((left, right) -> Double.compare(left.distance(), right.distance()))
                 .orElse(null);
-        return nearestForward != null ? List.of(nearestForward.ref()) : List.of();
+        return filterGroundTargetsIfNeeded(nearestForward != null ? List.of(nearestForward.ref()) : List.of(), store, ability);
+    }
+
+    private List<Ref<EntityStore>> filterGroundTargetsIfNeeded(List<Ref<EntityStore>> targets,
+                                                               Store<EntityStore> store,
+                                                               AbilityData ability) {
+        if (targets.isEmpty() || ability == null || !ability.isGroundTargetsOnly()) {
+            return targets;
+        }
+
+        List<Ref<EntityStore>> groundedTargets = new ArrayList<>();
+        for (Ref<EntityStore> target : targets) {
+            if (isTargetGrounded(target, store)) {
+                groundedTargets.add(target);
+            }
+        }
+        return List.copyOf(groundedTargets);
+    }
+
+    private boolean isTargetGrounded(Ref<EntityStore> targetRef, Store<EntityStore> store) {
+        if (targetRef == null || !targetRef.isValid() || store == null) {
+            return false;
+        }
+
+        CollisionResultComponent collision = store.getComponent(targetRef, CollisionResultComponent.getComponentType());
+        if (collision != null && collision.getCollisionResult() != null) {
+            for (int i = 0; i < collision.getCollisionResult().getBlockCollisionCount(); i++) {
+                BlockCollisionData blockCollision = collision.getCollisionResult().getBlockCollision(i);
+                if (blockCollision != null
+                        && blockCollision.collisionNormal != null
+                        && blockCollision.collisionNormal.y > 0.45) {
+                    return true;
+                }
+            }
+        }
+
+        if (!warnedGroundedFallback) {
+            warnedGroundedFallback = true;
+            LOG.warning("[MOTM] Ground-target filtering is using the fractional-Y fallback because no active ground collision was available.");
+        }
+
+        Vector3d position = getPosition(targetRef, store);
+        if (position == null) {
+            return false;
+        }
+        double fractionalY = Math.abs(position.y - Math.floor(position.y));
+        return fractionalY <= 0.15;
     }
 
     private TargetingFrame createTargetingFrame(Ref<EntityStore> playerRef,
@@ -4519,6 +4915,12 @@ public class GameplayPlaybackManager {
         String themed = resolveThemedEffectId(classId, styleId, ability, RuntimeEffectKind.IMPACT);
         if (themed != null) {
             return themed;
+        }
+        if (ability != null) {
+            String impact = asRuntimeEffectId(HytaleAssetResolver.resolve(classId, styleId, ability).getImpactEffectAsset());
+            if (impact != null) {
+                return impact;
+            }
         }
         return switch (lower(classId)) {
             case "terra" -> "MOTM_Terra_Impact";
@@ -5098,6 +5500,41 @@ public class GameplayPlaybackManager {
         return health.getMax();
     }
 
+    private void reportAbilityKillIfDead(String ownerPlayerId,
+                                         PlayerData player,
+                                         Ref<EntityStore> targetRef,
+                                         Store<EntityStore> store,
+                                         String targetEntityId) {
+        if (ownerPlayerId == null || targetRef == null || !targetRef.isValid() || store == null) {
+            return;
+        }
+
+        boolean dead = store.getComponent(targetRef, DeathComponent.getComponentType()) != null;
+        EntityStatMap entityStatMap = store.getComponent(targetRef, EntityStatMap.getComponentType());
+        if (!dead && entityStatMap != null) {
+            EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+            dead = health != null && health.get() <= 0.0f;
+        }
+        if (!dead) {
+            return;
+        }
+
+        String killKey = targetEntityId != null ? targetEntityId : String.valueOf(targetRef.getIndex());
+        if (!reportedAbilityKillEntityIds.add(killKey)) {
+            return;
+        }
+
+        NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
+        String mobType = npc != null && npc.getRoleName() != null && !npc.getRoleName().isBlank()
+                ? npc.getRoleName()
+                : "ability_target";
+        int mobLevel = player != null ? Math.max(1, player.getLevel()) : 1;
+        LOG.info("[MOTM] ability kill detected: player=" + ownerPlayerId
+                + " target=" + killKey
+                + " mobType=" + mobType);
+        mod.onMobKilled(ownerPlayerId, killKey, mobType, mobLevel, false);
+    }
+
     private int clearNegativeEffects(String entityId) {
         int removed = 0;
         for (StatusEffect.Type type : List.of(
@@ -5552,7 +5989,31 @@ public class GameplayPlaybackManager {
         public static CastContext empty() {
             return new CastContext(null, null);
         }
+
+        public static CastContext atPosition(Vector3d position) {
+            if (position == null) {
+                return empty();
+            }
+            return new CastContext(null, new Vector3i(
+                    (int) Math.floor(position.x),
+                    (int) Math.floor(position.y),
+                    (int) Math.floor(position.z)
+            ));
+        }
     }
+
+    private record ArmedStomp(String playerId,
+                              PlayerData player,
+                              StyleData style,
+                              AbilityData ability,
+                              long armedAtMillis,
+                              long expireAtMillis,
+                              double previousY,
+                              boolean wasAirborne) {}
+
+    private record BuriedVictim(Ref<EntityStore> targetRef,
+                                Float originalScale,
+                                long expireAtMillis) {}
 
     public record ExecutionResult(
             PlaybackResult playback,

@@ -43,10 +43,15 @@ Implemented so far:
 - race manager runtime bonuses
 - mob stat loading and elite title support
 - plugin lifecycle alignment with Hytale's `setup/start/shutdown`
+- real server tick registration
+- real mob spawn/death event hooks
+- Terra/Quake vertical slice validated across two cold launches
+- custom spellbook UI page with seven working navigation tabs
+- Phase 7 perk runtime layer for stat modifiers and on-kill healing
+- Phase 9 live validation for Terra/Metal, Hydro/Icicle, Aero/Wind Blade, and Corruptus/Flame
 
 Still in progress:
 
-- real server tick registration
-- real mob spawn/death event hooks
-- deeper perk effect integration into live Hytale systems
-- full in-game validation and public release polish
+- deeper perk effect integration for damage triggers, transformations, auras, and advanced conditions
+- broader in-game validation for the remaining 35 styles
+- public release polish

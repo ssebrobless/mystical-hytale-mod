@@ -15,6 +15,7 @@ import com.motm.model.ClassData;
 import com.motm.model.Perk;
 import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
+import com.motm.model.StatusEffect;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.PassivePresentation;
@@ -253,6 +254,7 @@ public class MotmCommand {
         }
         mod.getPlayerDataManager().savePlayerData(player);
         mod.getPlayerDataManager().checkAchievements(player, "perks_selected", null);
+        mod.rebuildPlayerRuntime(player);
         return sb.toString();
     }
 
@@ -761,6 +763,7 @@ public class MotmCommand {
             case "book" -> handleDevBook(player, runtimePlayer);
             case "test" -> handleDevTest(player, args, runtimePlayer);
             case "freecast" -> handleDevFreeCast(player, args);
+            case "effects" -> handleDevEffects(player);
             case "clear" -> handleDevClear(player, args);
             case "level" -> handleDevLevel(player, args);
             case "xp" -> handleDevXp(player, args);
@@ -782,7 +785,7 @@ public class MotmCommand {
 
     private String handleDevTest(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 3) {
-            return "[MOTM] Usage: /motm dev test <style <styleId>|status|stop>";
+            return "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";
         }
         if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
             return "[MOTM] Join a world and run this in-game to start a live style test.";
@@ -795,9 +798,16 @@ public class MotmCommand {
                 }
                 yield mod.startStyleTest(player.getPlayerId(), args[3]);
             }
+            case "ability" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev test ability <abilityId>";
+                }
+                yield mod.startSingleAbilityTest(player.getPlayerId(), args[3]);
+            }
+            case "mobs" -> mod.spawnStyleTestMobs(player.getPlayerId());
             case "status" -> mod.getStyleTestStatus(player.getPlayerId());
             case "stop" -> mod.stopStyleTest(player.getPlayerId());
-            default -> "[MOTM] Usage: /motm dev test <style <styleId>|status|stop>";
+            default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";
         };
     }
 
@@ -821,6 +831,46 @@ public class MotmCommand {
             default -> "[MOTM] Usage: /motm dev freecast <on|off>";
         };
     }
+
+    private String handleDevEffects(PlayerData player) {
+        List<StatusEffect> effects = mod.getStatusEffectManager().getEffects(player.getPlayerId());
+        StringBuilder sb = new StringBuilder("[MOTM] Dev effects: ");
+        sb.append("count=").append(effects.size());
+        sb.append(" slowMultiplier=")
+                .append(String.format(java.util.Locale.ROOT, "%.3f",
+                        mod.getStatusEffectManager().getSlowMultiplier(player.getPlayerId())));
+        sb.append(" speedBonus=")
+                .append(String.format(java.util.Locale.ROOT, "%.3f",
+                        mod.getStatusEffectManager().getSpeedBonus(player.getPlayerId())));
+        sb.append(" immobilized=")
+                .append(mod.getStatusEffectManager().isImmobilized(player.getPlayerId()));
+        sb.append(" terraStationaryTicks=")
+                .append(mod.getClassPassiveManager().getTerraStationaryTicks(player.getPlayerId()));
+
+        if (effects.isEmpty()) {
+            sb.append(" effects=[]");
+        } else {
+            sb.append(" effects=[");
+            for (int i = 0; i < effects.size(); i++) {
+                StatusEffect effect = effects.get(i);
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append(effect.getType())
+                        .append(":")
+                        .append(effect.getRemainingTicks())
+                        .append("t")
+                        .append(":source=")
+                        .append(effect.getSourcePerkOrAbility());
+            }
+            sb.append("]");
+        }
+
+        String result = sb.toString();
+        LOG.info(result);
+        return result;
+    }
+
 
     private String handleDevLevel(PlayerData player, String[] args) {
         if (args.length < 4) {
@@ -1065,9 +1115,12 @@ public class MotmCommand {
         return "[MOTM] === Dev Commands ===\n"
                 + "  /motm dev book\n"
                 + "  /motm dev test style <styleId>\n"
+                + "  /motm dev test ability <abilityId>\n"
+                + "  /motm dev test mobs\n"
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
                 + "  /motm dev freecast <on|off>\n"
+                + "  /motm dev effects\n"
                 + "  /motm dev clear\n"
                 + "  /motm dev level set <n>\n"
                 + "  /motm dev level add <n>\n"

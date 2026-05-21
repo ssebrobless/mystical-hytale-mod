@@ -1,0 +1,20 @@
+{
+  "Duration": 0.85,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#f0dfab",
+    "EntityBottomTint": "#3e2d1d",
+    "Particles": [
+      {
+        "SystemId": "Earth_Brazier_Glow"
+      },
+      {
+        "SystemId": "Block_Break_Grass_Earth"
+      },
+      {
+        "SystemId": "Earth_Brazier_Glow"
+      }
+    ],
+    "ModelVFXId": "PrototypeBlockPlaceSuccess"
+  }
+}

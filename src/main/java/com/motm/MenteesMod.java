@@ -2,8 +2,11 @@ package com.motm;
 
 import com.motm.command.MotmCommand;
 import com.motm.command.MotmCommandBase;
+import com.motm.interaction.MotmSpellbookInteraction;
 import com.motm.manager.*;
 import com.motm.model.AbilityData;
+import com.motm.model.Perk;
+import com.motm.model.PerkTriggerBinding;
 import com.motm.model.StyleData;
 import com.motm.system.MotmMobRuntimeSystem;
 import com.motm.system.MotmServerTickSystem;
@@ -18,6 +21,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent;
@@ -43,6 +47,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.protocol.BenchType;
@@ -60,6 +65,7 @@ import java.nio.file.Files;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -138,7 +144,7 @@ public class MenteesMod extends JavaPlugin {
     private static final int TERRA_METAL_UNITS_PER_ITEM = 4;
     private static final int TERRA_GEM_UNITS_PER_ITEM = 6;
     private static final String PLAYER_LEVEL_HEALTH_MODIFIER_ID = "motm_player_level_health";
-    private static final boolean CUSTOM_PAGE_UI_ENABLED = false;
+    private static final boolean CUSTOM_PAGE_UI_ENABLED = true;
     private static final boolean CUSTOM_HUD_ENABLED = true;
     private static final String SERVER_CONFIG_FILE_NAME = "motm-server.properties";
     private static final int HUD_REFRESH_INTERVAL_TICKS = 4;
@@ -168,6 +174,7 @@ public class MenteesMod extends JavaPlugin {
     // Core systems
     private DataLoader dataLoader;
     private PerkManager perkManager;
+    private PlayerStatModifierManager playerStatModifierManager;
     private SynergyEngine synergyEngine;
     private LevelingManager levelingManager;
     private MobScalingManager mobScalingManager;
@@ -187,8 +194,12 @@ public class MenteesMod extends JavaPlugin {
     private boolean devToolsEnabled = false;
     private final Map<String, MotmStatusHud> statusHuds = new ConcurrentHashMap<>();
     private final Map<String, Player> onlineRuntimePlayers = new ConcurrentHashMap<>();
+    private final Map<String, List<PerkTriggerBinding>> perkTriggersByPlayer = new ConcurrentHashMap<>();
     private final Set<String> pendingSpellbookGrants = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingDevBookGrants = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingStyleTestMobSpawns = ConcurrentHashMap.newKeySet();
+    private final Map<String, List<Ref<EntityStore>>> styleTestTargetsByPlayer = new ConcurrentHashMap<>();
+    private final Map<String, String> pendingSingleAbilityTests = new ConcurrentHashMap<>();
     private final Set<String> pendingHydroContainerSyncs = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingRuntimeRebuilds = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingStatusHudRefreshs = ConcurrentHashMap.newKeySet();
@@ -201,6 +212,7 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, Long> recentSpellbookSlotInputs = new ConcurrentHashMap<>();
     private final Map<String, Double> lastAppliedTargetHealthByPlayer = new ConcurrentHashMap<>();
     private final Map<String, Float> lastObservedFreeCastHealthByPlayer = new ConcurrentHashMap<>();
+    private final Set<String> initializedRuntimePlayers = ConcurrentHashMap.newKeySet();
     private int hudRefreshTickCounter = 0;
     private volatile MotmPreflightAudit.AuditReport lastPreflightAudit;
 
@@ -218,7 +230,19 @@ public class MenteesMod extends JavaPlugin {
 
     @Override
     protected void start() {
+        LOG.info("[MOTM] >>> start() called");
         registerHytaleHooks();
+        for (InteractionType value : InteractionType.values()) {
+            LOG.info("[MOTM] InteractionType enum: "
+                    + value.name()
+                    + " / toString=" + value
+                    + " / valueOf=" + String.valueOf(value));
+        }
+        boolean spellbookAssetResolved =
+                com.hypixel.hytale.server.core.asset.type.item.config.Item.getAssetMap()
+                        .getAsset(DEFAULT_SPELLBOOK_ITEM_ID) != null;
+        LOG.info("[MOTM] Spellbook item asset resolved=" + spellbookAssetResolved
+                + " itemId=" + DEFAULT_SPELLBOOK_ITEM_ID);
         registerNativeHydroCraftingRecipe();
         playerDataManager.startAutoSave();
         LOG.info("[MOTM] Plugin enabled successfully!");
@@ -233,7 +257,8 @@ public class MenteesMod extends JavaPlugin {
      * Internal plugin bootstrap invoked from the real Hytale constructor.
      */
     public void onEnable(Path dataDir) {
-        this.pluginDirectory = dataDir;
+        Path operationalDataDir = resolveOperationalDataDirectory(dataDir);
+        this.pluginDirectory = operationalDataDir;
         loadServerConfig();
 
         LOG.info("========================================");
@@ -243,15 +268,16 @@ public class MenteesMod extends JavaPlugin {
         LOG.info("========================================");
 
         // Initialize data loader and load all JSON data
-        dataLoader = new DataLoader(dataDir);
+        dataLoader = new DataLoader(operationalDataDir);
         dataLoader.loadAll();
 
         // Initialize managers (order matters — dependencies)
         synergyEngine = new SynergyEngine(dataLoader);
-        perkManager = new PerkManager(dataLoader);
+        playerStatModifierManager = new PlayerStatModifierManager(this);
+        perkManager = new PerkManager(dataLoader, playerStatModifierManager);
         levelingManager = new LevelingManager(dataLoader, perkManager);
         mobScalingManager = new MobScalingManager(dataLoader);
-        playerDataManager = new PlayerDataManager(dataDir, dataLoader);
+        playerDataManager = new PlayerDataManager(operationalDataDir, dataLoader);
 
         // Phase 1 managers
         statusEffectManager = new StatusEffectManager();
@@ -300,7 +326,99 @@ public class MenteesMod extends JavaPlugin {
 
         // Initialize command handler
         motmCommand = new MotmCommand(this);
+        registerSpellbookInteractionCodecs();
         lastPreflightAudit = MotmPreflightAudit.run(this);
+    }
+
+    private Path resolveOperationalDataDirectory(Path hytaleDataDir) {
+        if (hytaleDataDir == null) {
+            return null;
+        }
+
+        hytaleDataDir = hytaleDataDir.toAbsolutePath().normalize();
+        writeScannerSafeLegacyManifest(hytaleDataDir);
+
+        Path parent = hytaleDataDir.getParent();
+        if (parent == null
+                || parent.getFileName() == null
+                || !"mods".equalsIgnoreCase(parent.getFileName().toString())) {
+            return hytaleDataDir;
+        }
+
+        Path saveRoot = parent.getParent();
+        if (saveRoot == null || hytaleDataDir.getFileName() == null) {
+            return hytaleDataDir;
+        }
+
+        Path operationalDataDir = saveRoot.resolve("motm-data").resolve(hytaleDataDir.getFileName().toString());
+        migrateLegacyPluginDataDirectory(hytaleDataDir, operationalDataDir);
+        LOG.info("[MOTM] Using operational data directory outside asset-scanned mods folder: "
+                + operationalDataDir);
+        return operationalDataDir;
+    }
+
+    private void migrateLegacyPluginDataDirectory(Path legacyDataDir, Path operationalDataDir) {
+        if (legacyDataDir == null || operationalDataDir == null || !Files.exists(legacyDataDir)) {
+            return;
+        }
+
+        try {
+            Files.createDirectories(operationalDataDir);
+            try (var paths = Files.walk(legacyDataDir)) {
+                paths.sorted(Comparator.naturalOrder()).forEach(source -> {
+                    Path target = operationalDataDir.resolve(legacyDataDir.relativize(source));
+                    try {
+                        if (Files.isDirectory(source)) {
+                            Files.createDirectories(target);
+                        } else {
+                            Files.createDirectories(target.getParent());
+                            if (!Files.exists(target)) {
+                                Files.copy(source, target);
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
+            }
+            LOG.info("[MOTM] Migrated legacy plugin data from asset-scanned mods folder: " + legacyDataDir);
+        } catch (RuntimeException | IOException e) {
+            LOG.warning("[MOTM] Failed to migrate legacy plugin data from " + legacyDataDir
+                    + " to " + operationalDataDir + ": " + e.getMessage());
+        }
+    }
+
+    private void writeScannerSafeLegacyManifest(Path hytaleDataDir) {
+        if (hytaleDataDir == null) {
+            return;
+        }
+
+        try {
+            Files.createDirectories(hytaleDataDir);
+            Path manifestPath = hytaleDataDir.resolve("manifest.json");
+            Files.writeString(manifestPath, """
+                    {
+                      "Group": "com.motm.runtime",
+                      "Name": "MOTM Runtime Data",
+                      "Version": "1.0.1",
+                      "Description": "Scanner-safe runtime data folder for Mentees of the Mystical.",
+                      "Authors": [
+                        {
+                          "Name": "fishe"
+                        }
+                      ],
+                      "Website": "",
+                      "ServerVersion": "*",
+                      "Dependencies": {},
+                      "OptionalDependencies": {},
+                      "DisabledByDefault": true,
+                      "IncludesAssetPack": false
+                    }
+                    """);
+        } catch (IOException e) {
+            LOG.warning("[MOTM] Failed to write scanner-safe manifest for legacy data directory "
+                    + hytaleDataDir + ": " + e.getMessage());
+        }
     }
 
     private void loadServerConfig() {
@@ -331,6 +449,7 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private void registerHytaleHooks() {
+        getEventRegistry().registerGlobal(PlayerConnectEvent.class, event -> onPlayerConnect(event.getPlayer()));
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> onPlayerReady(event.getPlayer()));
         getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event ->
                 onPlayerDisconnect(event.getPlayerRef().getUuid().toString())
@@ -342,6 +461,25 @@ public class MenteesMod extends JavaPlugin {
         getCommandRegistry().registerCommand(new MotmCommandBase(this));
         getEntityStoreRegistry().registerSystem(new MotmServerTickSystem(this));
         getEntityStoreRegistry().registerSystem(new MotmMobRuntimeSystem(this));
+    }
+
+    private void registerSpellbookInteractionCodecs() {
+        MotmSpellbookInteraction.setMod(this);
+        var interactionCodecRegistry = getCodecRegistry(
+                com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction.CODEC);
+        interactionCodecRegistry.register(
+                "motm_spellbook_primary",
+                MotmSpellbookInteraction.Primary.class,
+                MotmSpellbookInteraction.Primary.CODEC);
+        interactionCodecRegistry.register(
+                "motm_spellbook_secondary",
+                MotmSpellbookInteraction.Secondary.class,
+                MotmSpellbookInteraction.Secondary.CODEC);
+        interactionCodecRegistry.register(
+                "motm_spellbook_use",
+                MotmSpellbookInteraction.Use.class,
+                MotmSpellbookInteraction.Use.CODEC);
+        LOG.info("[MOTM] Registered MOTM spellbook custom interactions: primary/secondary/use");
     }
 
     /**
@@ -363,6 +501,7 @@ public class MenteesMod extends JavaPlugin {
      * Called when a player joins the server.
      */
     public void onPlayerJoin(String playerId, String playerName) {
+        LOG.info("[MOTM] >>> onPlayerJoin: " + playerName + " id=" + playerId);
         var player = playerDataManager.onPlayerJoin(playerId, playerName);
 
         // Update rested bonus
@@ -397,24 +536,50 @@ public class MenteesMod extends JavaPlugin {
         }
     }
 
-    public void onPlayerReady(Player runtimePlayer) {
+    public void onPlayerConnect(Player runtimePlayer) {
+        LOG.info("[MOTM] >>> onPlayerConnect: " + runtimePlayer);
         var playerRef = getUniversePlayerRef(runtimePlayer);
         if (playerRef == null || playerRef.getUuid() == null) {
             return;
         }
         String playerId = playerRef.getUuid().toString();
+        long t0 = System.currentTimeMillis();
+
         onlineRuntimePlayers.put(playerId, runtimePlayer);
-        onPlayerJoin(playerId, playerRef.getUsername());
+        if (initializedRuntimePlayers.add(playerId) || playerDataManager.getOnlinePlayer(playerId) == null) {
+            onPlayerJoin(playerId, playerRef.getUsername());
+        }
 
         var playerData = playerDataManager.getOnlinePlayer(playerId);
         boolean hasSavedLoadout = playerData != null
                 && playerData.getPlayerClass() != null
                 && playerData.getSelectedStyles() != null
                 && !playerData.getSelectedStyles().isEmpty();
+        LOG.info("[MOTM] onPlayerConnect hasSavedLoadout=" + hasSavedLoadout + " playerId=" + playerId);
+
         if (hasSavedLoadout) {
             rebuildPlayerRuntimeNow(playerData);
-            ensureSpellbookItem(runtimePlayer);
+            boolean ensured = ensureSpellbookItem(runtimePlayer);
+            LOG.info("[MOTM] onPlayerConnect ensureSpellbookItem=" + ensured
+                    + " hasSpellbook=" + playerHasSpellbook(runtimePlayer));
+            if (!ensured && !playerHasSpellbook(runtimePlayer)) {
+                queueSpellbookGrant(playerId);
+            }
+            refreshPlayerProgressionBonuses(playerId);
         }
+
+        LOG.info("[MOTM] onPlayerConnect done dt=" + (System.currentTimeMillis() - t0)
+                + "ms playerId=" + playerId);
+    }
+
+    public void onPlayerReady(Player runtimePlayer) {
+        LOG.info("[MOTM] >>> onPlayerReady: " + runtimePlayer);
+        var playerRef = getUniversePlayerRef(runtimePlayer);
+        if (playerRef == null || playerRef.getUuid() == null) {
+            return;
+        }
+        String playerId = playerRef.getUuid().toString();
+        onlineRuntimePlayers.put(playerId, runtimePlayer);
 
         if (isDevToolsEnabled()) {
             statusEffectManager.clearEffects(playerId);
@@ -423,12 +588,10 @@ public class MenteesMod extends JavaPlugin {
             if (!ensureSpellbookItem(runtimePlayer)) {
                 queueSpellbookGrant(playerId);
             }
-        } else if (hasSavedLoadout && !playerHasSpellbook(runtimePlayer)) {
-            queueSpellbookGrant(playerId);
         }
 
-        refreshPlayerProgressionBonuses(playerId);
         queueStatusHudInstall(playerId);
+        LOG.info("[MOTM] onPlayerReady done playerId=" + playerId);
     }
 
     /**
@@ -443,12 +606,21 @@ public class MenteesMod extends JavaPlugin {
         styleManager.onPlayerDisconnect(playerId);
         resourceManager.onPlayerDisconnect(playerId);
         classPassiveManager.clearPlayerState(playerId);
+        if (playerStatModifierManager != null) {
+            playerStatModifierManager.clearForPlayer(playerId);
+        } else {
+            clearPerkTriggers(playerId);
+        }
         statusEffectManager.clearEffects(playerId);
         elementalReactionManager.clearMarks(playerId);
         statusHuds.remove(playerId);
         onlineRuntimePlayers.remove(playerId);
+        initializedRuntimePlayers.remove(playerId);
         pendingSpellbookGrants.remove(playerId);
         pendingDevBookGrants.remove(playerId);
+        pendingStyleTestMobSpawns.remove(playerId);
+        styleTestTargetsByPlayer.remove(playerId);
+        pendingSingleAbilityTests.remove(playerId);
         pendingHydroContainerSyncs.remove(playerId);
         pendingRuntimeRebuilds.remove(playerId);
         pendingStatusHudRefreshs.remove(playerId);
@@ -456,6 +628,7 @@ public class MenteesMod extends JavaPlugin {
         pendingProgressionBonusRefreshs.remove(playerId);
         pendingFreeCastInvulnerabilityClears.remove(playerId);
         pendingAbilityCasts.removeIf(request -> playerId.equals(request.playerId()));
+        gameplayPlaybackManager.clearArmedStomp(playerId);
         activeStyleTests.remove(playerId);
         lastAppliedTargetHealthByPlayer.remove(playerId);
         lastObservedFreeCastHealthByPlayer.remove(playerId);
@@ -480,9 +653,81 @@ public class MenteesMod extends JavaPlugin {
         if (runtimePlayer != null) {
             classPassiveManager.onMobKilled(player, runtimePlayer, mobEntityId);
         }
+        for (PerkTriggerBinding trigger : getPerkTriggers(playerId, "on_kill")) {
+            LOG.info("[MOTM] perk on_kill trigger: perk=" + trigger.perkId()
+                    + " value=" + trigger.value());
+            if (runtimePlayer != null) {
+                applyHealFraction(runtimePlayer, trigger.value());
+            }
+        }
         playerDataManager.checkAchievements(player, "mob_killed", null);
         refreshPlayerProgressionBonuses(playerId);
         refreshStatusHud(playerId);
+    }
+
+    public void registerPerkTrigger(String playerId, Perk perk, Perk.Effect effect) {
+        if (playerId == null || perk == null || effect == null || effect.getType() == null) {
+            return;
+        }
+
+        double triggerValue = effect.getValue();
+        if (triggerValue == 0.0) {
+            triggerValue = effect.getHeal();
+        }
+        if (triggerValue == 0.0) {
+            triggerValue = effect.getHealAmount();
+        }
+
+        PerkTriggerBinding binding = new PerkTriggerBinding(perk.getId(), effect.getType(), triggerValue);
+        perkTriggersByPlayer.computeIfAbsent(playerId, ignored -> new ArrayList<>()).add(binding);
+        LOG.info("[MOTM] perk trigger registered: player=" + playerId
+                + " perk=" + binding.perkId()
+                + " type=" + binding.type()
+                + " value=" + binding.value());
+    }
+
+    public void clearPerkTriggers(String playerId) {
+        if (playerId != null) {
+            perkTriggersByPlayer.remove(playerId);
+        }
+    }
+
+    public List<PerkTriggerBinding> getPerkTriggers(String playerId, String type) {
+        if (playerId == null || type == null) {
+            return List.of();
+        }
+        List<PerkTriggerBinding> bindings = perkTriggersByPlayer.get(playerId);
+        if (bindings == null || bindings.isEmpty()) {
+            return List.of();
+        }
+        String normalizedType = type.trim().toLowerCase(Locale.ROOT);
+        return bindings.stream()
+                .filter(binding -> binding.type() != null
+                        && binding.type().trim().toLowerCase(Locale.ROOT).equals(normalizedType))
+                .toList();
+    }
+
+    private void applyHealFraction(Player runtimePlayer, double fraction) {
+        if (runtimePlayer == null || fraction <= 0.0) {
+            return;
+        }
+
+        try {
+            Ref<EntityStore> playerRef = runtimePlayer.getReference();
+            if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+                return;
+            }
+            EntityStatMap statMap = playerRef.getStore().getComponent(playerRef, EntityStatMap.getComponentType());
+            if (statMap == null) {
+                return;
+            }
+
+            float amount = (float) Math.max(1.0, 100.0 * fraction);
+            statMap.addStatValue(DefaultEntityStatTypes.getHealth(), amount);
+            LOG.info("[MOTM] perk heal applied: fraction=" + fraction + " amount=" + amount);
+        } catch (RuntimeException ex) {
+            LOG.warning("[MOTM] Failed to apply perk heal: " + ex.getMessage());
+        }
     }
 
     /**
@@ -499,6 +744,7 @@ public class MenteesMod extends JavaPlugin {
         classPassiveManager.onPlayerDeath(playerId);
         statusEffectManager.clearEffects(playerId);
         elementalReactionManager.clearMarks(playerId);
+        gameplayPlaybackManager.clearArmedStomp(playerId);
         refreshStatusHud(playerId);
     }
 
@@ -571,8 +817,11 @@ public class MenteesMod extends JavaPlugin {
         processFreeCastTestSafety(currentStore);
         classPassiveManager.tick(onlineRuntimePlayers, currentStore);
         processActiveStyleTests(currentStore);
+        processPendingSingleAbilityTests(currentStore);
+        processPendingStyleTestMobSpawns(currentStore);
         processPendingAbilityCasts(currentStore);
-        gameplayPlaybackManager.tick();
+        gameplayPlaybackManager.tickArmedStomps(currentStore);
+        gameplayPlaybackManager.tick(currentStore);
         processPendingInventoryGrants(currentStore);
         processPendingProgressionBonusRefreshs(currentStore);
         processPendingStatusHudInstalls(currentStore);
@@ -756,6 +1005,7 @@ public class MenteesMod extends JavaPlugin {
         }
 
         player.giveItem(new ItemStack(DEFAULT_SPELLBOOK_ITEM_ID), entityRef, entityRef.getStore());
+        LOG.info("[MOTM] Granted spellbook item: " + DEFAULT_SPELLBOOK_ITEM_ID);
         player.sendMessage(Message.raw(
                 "[MOTM] A Mentees spellbook has been placed in your inventory. "
                         + "Cast with Left Click / Right Click / Use while equipped. "
@@ -888,6 +1138,9 @@ public class MenteesMod extends JavaPlugin {
         if (playerId == null || playerId.isBlank() || abilityId == null || abilityId.isBlank()) {
             return;
         }
+        LOG.info("[MOTM] Queue ability cast: playerId=" + playerId
+                + " abilityId=" + abilityId
+                + " notifyFailures=" + notifyFailures);
         pendingAbilityCasts.add(new PendingAbilityCast(playerId, abilityId, targetRef, targetBlock, notifyFailures));
     }
 
@@ -954,6 +1207,45 @@ public class MenteesMod extends JavaPlugin {
         return "[MOTM] Stopped live style test for " + removed.styleName() + ".";
     }
 
+    public String startSingleAbilityTest(String playerId, String abilityId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+
+        Player runtimePlayer = onlineRuntimePlayers.get(playerId);
+        var playerData = playerDataManager.getOnlinePlayer(playerId);
+        if (runtimePlayer == null || playerData == null) {
+            return "[MOTM] Join a world and run this in-game to start a live ability test.";
+        }
+
+        StyleData style = null;
+        if (playerData.getPlayerClass() != null) {
+            for (String selectedStyleId : playerData.getSelectedStyles()) {
+                style = dataLoader.getStyleById(selectedStyleId, playerData.getPlayerClass());
+                if (style != null) {
+                    break;
+                }
+            }
+        }
+        if (style == null) {
+            return "[MOTM] Choose a style before running /motm dev test ability <abilityId>.";
+        }
+
+        AbilityData ability = styleManager.findAbility(playerData, abilityId);
+        if (ability == null) {
+            return "[MOTM] Unknown ability '" + abilityId + "' for current style.";
+        }
+
+        setFreeCastEnabled(playerId, true);
+        pendingSingleAbilityTests.put(playerId, ability.getId());
+
+        return "[MOTM] Live ability test queued: " + ability.getName()
+                + ". Free-cast ON. The mod will target the nearest test NPC.";
+    }
+
     public String getStyleTestStatus(String playerId) {
         if (playerId == null || playerId.isBlank()) {
             return "[MOTM] Runtime player context is unavailable.";
@@ -969,6 +1261,98 @@ public class MenteesMod extends JavaPlugin {
         return "[MOTM] Live style test: "
                 + humanize(active.classId()) + " > " + active.styleName()
                 + " | step " + nextStep + "/" + total + ".";
+    }
+
+    public String spawnStyleTestMobs(String playerId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+
+        Player runtimePlayer = onlineRuntimePlayers.get(playerId);
+        if (runtimePlayer == null) {
+            return "[MOTM] Join a world and run this in-game to spawn style-test mobs.";
+        }
+
+        boolean added = pendingStyleTestMobSpawns.add(playerId);
+        LOG.info("[MOTM] Style test mob spawn queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Style test mob spawn queued."
+                : "[MOTM] Style test mob spawn is already queued.";
+    }
+
+    private String spawnStyleTestMobsNow(String playerId, Player runtimePlayer) {
+        if (runtimePlayer == null) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+
+        Vector3d basePosition = getPlayerPosition(runtimePlayer);
+        Vector3d forward = getPlayerForward(runtimePlayer);
+        if (basePosition == null || forward == null) {
+            return "[MOTM] Could not resolve player position/direction for style-test mobs.";
+        }
+        if (basePosition.y < -16.0) {
+            String summary = "[MOTM] Style test mob spawn blocked: player appears below world at "
+                    + formatVector(basePosition)
+                    + ". Respawn before running setup.";
+            LOG.warning(summary);
+            return summary;
+        }
+
+        Vector3d horizontalForward = normalizeHorizontal(forward);
+        Vector3d right = new Vector3d(-horizontalForward.z, 0.0, horizontalForward.x);
+        Vector3d groundPosition = basePosition.clone()
+                .addScaled(horizontalForward, 5.0)
+                .addScaled(right, -8.0);
+        Vector3d floatingPosition = basePosition.clone()
+                .addScaled(horizontalForward, 5.0)
+                .addScaled(right, -5.0);
+        floatingPosition.y += 3.0;
+
+        World world = runtimePlayer.getWorld();
+        if (world == null) {
+            return "[MOTM] Runtime world is unavailable for style-test mobs.";
+        }
+
+        List<Ref<EntityStore>> targets = new ArrayList<>();
+        Ref<EntityStore> grounded = spawnStyleTestNpc(world, groundPosition, "Goblin_Scrapper");
+        if (grounded != null) {
+            targets.add(grounded);
+        }
+        Ref<EntityStore> floating = spawnStyleTestNpc(world, floatingPosition, "Bat");
+        if (floating != null) {
+            targets.add(floating);
+        }
+        styleTestTargetsByPlayer.put(playerId, targets);
+        int spawned = targets.size();
+
+        String summary = "[MOTM] Style test mobs spawned: count=" + spawned
+                + " grounded=" + formatVector(groundPosition)
+                + " floating=" + formatVector(floatingPosition);
+        LOG.info(summary);
+        return summary;
+    }
+
+    private Ref<EntityStore> spawnStyleTestNpc(World world, Vector3d position, String roleName) {
+        try {
+            NPCEntity npc = new NPCEntity(world);
+            npc.setRoleName(roleName);
+            npc.setDespawnTime(240.0f);
+            world.spawnEntity(npc, position.clone(), new Vector3f(0f, 0f, 0f));
+
+            Ref<EntityStore> ref = npc.getReference();
+            if (ref == null || !ref.isValid() || ref.getStore() == null) {
+                LOG.warning("[MOTM] Style test NPC spawned without a valid entity reference: role=" + roleName);
+                return null;
+            }
+            return ref;
+        } catch (Exception e) {
+            LOG.warning("[MOTM] Failed to spawn style test NPC role=" + roleName
+                    + " at " + formatVector(position) + ": " + e.getMessage());
+            return null;
+        }
     }
 
     private void installStatusHud(Player player) {
@@ -1006,6 +1390,8 @@ public class MenteesMod extends JavaPlugin {
         if (!CUSTOM_HUD_ENABLED || playerId == null || playerId.isBlank()) {
             return;
         }
+        LOG.info("[MOTM] Queue HUD install: playerId=" + playerId
+                + " delayTicks=" + HUD_INSTALL_DELAY_TICKS);
         pendingStatusHudInstalls.put(playerId, HUD_INSTALL_DELAY_TICKS);
     }
 
@@ -1033,6 +1419,7 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
+            LOG.info("[MOTM] Installing HUD: playerId=" + playerId);
             installStatusHud(player);
             pendingStatusHudInstalls.remove(playerId);
             refreshStatusHud(playerId);
@@ -1175,6 +1562,9 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
+            LOG.info("[MOTM] Processing queued ability cast: playerId="
+                    + request.playerId()
+                    + " abilityId=" + request.abilityId());
             String failureMessage = motmCommand.executeQueuedAbilityCast(
                     request.playerId(),
                     request.abilityId(),
@@ -1182,12 +1572,71 @@ public class MenteesMod extends JavaPlugin {
                     request.targetRef(),
                     request.targetBlock()
             );
+            LOG.info("[MOTM] Queued ability cast result: playerId="
+                    + request.playerId()
+                    + " abilityId=" + request.abilityId()
+                    + " result=" + (failureMessage == null || failureMessage.isBlank() ? "<success>" : failureMessage));
             if ((request.notifyFailures() || isDevToolsEnabled())
                     && failureMessage != null
                     && !failureMessage.isBlank()) {
                 player.sendMessage(Message.raw(failureMessage));
             }
             pendingAbilityCasts.remove(request);
+        }
+    }
+
+    private void processPendingSingleAbilityTests(Store<EntityStore> currentStore) {
+        for (Map.Entry<String, String> entry : Map.copyOf(pendingSingleAbilityTests).entrySet()) {
+            String playerId = entry.getKey();
+            String abilityId = entry.getValue();
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingSingleAbilityTests.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            Ref<EntityStore> targetRef = null;
+            Vector3i targetBlock = null;
+            for (Ref<EntityStore> candidate : styleTestTargetsByPlayer.getOrDefault(playerId, List.of())) {
+                Vector3d position = getEntityPosition(currentStore, candidate);
+                if (position == null) {
+                    continue;
+                }
+                targetRef = candidate;
+                targetBlock = new Vector3i(
+                        (int) Math.floor(position.x),
+                        (int) Math.floor(position.y),
+                        (int) Math.floor(position.z)
+                );
+                break;
+            }
+
+            LOG.info("[MOTM] Live ability test target: playerId=" + playerId
+                    + " abilityId=" + abilityId
+                    + " hasTarget=" + (targetRef != null)
+                    + " targetBlock=" + targetBlock);
+            queueAbilityCast(playerId, abilityId, targetRef, targetBlock, true);
+            pendingSingleAbilityTests.remove(playerId);
+        }
+    }
+
+    private void processPendingStyleTestMobSpawns(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingStyleTestMobSpawns)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingStyleTestMobSpawns.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = spawnStyleTestMobsNow(playerId, player);
+            player.sendMessage(Message.raw(result));
+            pendingStyleTestMobSpawns.remove(playerId);
         }
     }
 
@@ -1251,6 +1700,9 @@ public class MenteesMod extends JavaPlugin {
             }
 
             boolean granted = ensureSpellbookItem(player);
+            LOG.info("[MOTM] Pending spellbook grant processed: playerId=" + playerId
+                    + " granted=" + granted
+                    + " nowHasSpellbook=" + playerHasSpellbook(player));
             if (!granted && playerHasSpellbook(player)) {
                 player.sendMessage(Message.raw("[MOTM] You already have a spellbook in your inventory."));
             }
@@ -1641,6 +2093,25 @@ public class MenteesMod extends JavaPlugin {
         return playerId == null ? null : onlineRuntimePlayers.get(playerId);
     }
 
+    public Player getRuntimePlayer(Ref<EntityStore> entityRef) {
+        if (entityRef == null || !entityRef.isValid()) {
+            return null;
+        }
+        for (Player player : onlineRuntimePlayers.values()) {
+            if (player == null) {
+                continue;
+            }
+            Ref<EntityStore> playerRef = player.getReference();
+            if (playerRef != null
+                    && playerRef.isValid()
+                    && playerRef.getStore() == entityRef.getStore()
+                    && playerRef.getIndex() == entityRef.getIndex()) {
+                return player;
+            }
+        }
+        return null;
+    }
+
     public String findOnlinePlayerId(Player runtimePlayer) {
         if (runtimePlayer == null) {
             return null;
@@ -1657,6 +2128,15 @@ public class MenteesMod extends JavaPlugin {
     public PlayerRef getUniversePlayerRef(Player player) {
         if (player == null) {
             return null;
+        }
+
+        try {
+            PlayerRef playerRef = player.getPlayerRef();
+            if (playerRef != null && playerRef.getUuid() != null) {
+                return playerRef;
+            }
+        } catch (IllegalStateException ignored) {
+            // Fall back to the entity store lookup below.
         }
 
         try {
@@ -1748,6 +2228,7 @@ public class MenteesMod extends JavaPlugin {
         if (player == null || player.getPlayerId() == null) {
             return;
         }
+        LOG.info("[MOTM] Queue runtime rebuild: playerId=" + player.getPlayerId());
         pendingRuntimeRebuilds.add(player.getPlayerId());
     }
 
@@ -1757,11 +2238,15 @@ public class MenteesMod extends JavaPlugin {
         }
 
         String playerId = player.getPlayerId();
+        LOG.info("[MOTM] >>> rebuildPlayerRuntimeNow START playerId=" + playerId
+                + " class=" + player.getPlayerClass()
+                + " styles=" + player.getSelectedStyles());
 
         styleManager.resetCooldowns(playerId);
         classPassiveManager.clearPlayerState(playerId);
         statusEffectManager.clearEffects(playerId);
         elementalReactionManager.clearMarks(playerId);
+        gameplayPlaybackManager.clearArmedStomp(playerId);
         resourceManager.clearPlayerState(playerId);
         resourceManager.synchronizePersistentState(player);
 
@@ -1774,6 +2259,7 @@ public class MenteesMod extends JavaPlugin {
                 clearFreeCastInvulnerability(playerId);
             }
             refreshStatusHudNow(playerId);
+            LOG.info("[MOTM] <<< rebuildPlayerRuntimeNow END playerId=" + playerId + " class=<none>");
             return;
         }
 
@@ -1793,6 +2279,9 @@ public class MenteesMod extends JavaPlugin {
             }
         }
         refreshStatusHudNow(playerId);
+        LOG.info("[MOTM] <<< rebuildPlayerRuntimeNow END playerId=" + playerId
+                + " class=" + player.getPlayerClass()
+                + " styles=" + player.getSelectedStyles());
     }
 
     public int getAverageOnlinePlayerLevel() {
@@ -2093,6 +2582,48 @@ public class MenteesMod extends JavaPlugin {
         return transform.getTransform().getPosition();
     }
 
+    private Vector3d getPlayerForward(Player player) {
+        if (player == null) {
+            return null;
+        }
+
+        var playerRef = player.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return null;
+        }
+
+        TransformComponent transform = playerRef.getStore().getComponent(playerRef, TransformComponent.getComponentType());
+        if (transform == null || transform.getTransform() == null || transform.getTransform().getDirection() == null) {
+            return new Vector3d(0.0, 0.0, 1.0);
+        }
+
+        Vector3d direction = transform.getTransform().getDirection().clone();
+        if (!direction.isFinite() || direction.length() < 0.001) {
+            return new Vector3d(0.0, 0.0, 1.0);
+        }
+        return direction;
+    }
+
+    private Vector3d normalizeHorizontal(Vector3d direction) {
+        if (direction == null) {
+            return new Vector3d(0.0, 0.0, 1.0);
+        }
+
+        Vector3d horizontal = new Vector3d(direction.x, 0.0, direction.z);
+        if (!horizontal.isFinite() || horizontal.length() < 0.001) {
+            return new Vector3d(0.0, 0.0, 1.0);
+        }
+        horizontal.normalize();
+        return horizontal;
+    }
+
+    private String formatVector(Vector3d position) {
+        if (position == null) {
+            return "(unknown)";
+        }
+        return String.format(Locale.ROOT, "(%.2f, %.2f, %.2f)", position.x, position.y, position.z);
+    }
+
     private Vector3d getEntityPosition(Store<EntityStore> store, Ref<EntityStore> ref) {
         if (store == null || ref == null || !ref.isValid()) {
             return null;
@@ -2193,6 +2724,8 @@ public class MenteesMod extends JavaPlugin {
 
     private void handlePlayerInteract(PlayerInteractEvent event) {
         try {
+            LOG.info("[MOTM] >>> handlePlayerInteract ENTERED action="
+                    + (event != null ? event.getActionType() : "<null>"));
             Player player = event.getPlayer();
             if (player == null) {
                 return;
@@ -2214,9 +2747,9 @@ public class MenteesMod extends JavaPlugin {
             boolean crouching = isPlayerCrouching(player);
             InteractionType actionType = event.getActionType();
             int bookSlot = resolveSpellbookInteractSlot(actionType);
-            String heldItemId = itemInHand != null ? itemInHand.getItemId() : null;
+            String heldItemId = itemInHand != null ? itemInHand.getItemId() : "<none>";
             boolean hasSelectedStyle = playerData.getSelectedStyles() != null && !playerData.getSelectedStyles().isEmpty();
-            if (heldItemId != null && hasSelectedStyle) {
+            if (hasSelectedStyle && isDevToolsEnabled()) {
                 LOG.info("[MOTM] Input trace(interact): player="
                         + playerData.getPlayerName()
                         + " action=" + actionType
@@ -2387,6 +2920,10 @@ public class MenteesMod extends JavaPlugin {
 
     private void handlePlayerMouseButton(PlayerMouseButtonEvent event) {
         try {
+            LOG.info("[MOTM] >>> handlePlayerMouseButton ENTERED button="
+                    + (event != null && event.getMouseButton() != null
+                    ? event.getMouseButton().mouseButtonType + "/" + event.getMouseButton().state
+                    : "<null>"));
             Player player = event.getPlayer();
             if (player == null || event.getMouseButton() == null) {
                 return;
@@ -2405,16 +2942,17 @@ public class MenteesMod extends JavaPlugin {
             var eventItemInHand = event.getItemInHand();
             ItemStack inventoryItemInHand = player.getInventory() != null ? player.getInventory().getItemInHand() : null;
             String itemId = resolveMouseButtonItemId(eventItemInHand, inventoryItemInHand);
-            if (itemId == null || itemId.isBlank()) {
-                return;
-            }
             boolean hasSelectedStyle = playerData.getSelectedStyles() != null && !playerData.getSelectedStyles().isEmpty();
-            if (hasSelectedStyle) {
+            String loggedItemId = (itemId == null || itemId.isBlank()) ? "<none>" : itemId;
+            if (hasSelectedStyle && isDevToolsEnabled()) {
                 LOG.info("[MOTM] Input trace(mouse): player="
                         + playerData.getPlayerName()
                         + " button=" + event.getMouseButton().mouseButtonType
-                        + " item=" + itemId
-                        + " recognizedSpellbook=" + isSpellbookItemId(itemId));
+                        + " item=" + loggedItemId
+                        + " recognizedSpellbook=" + isSpellbookItemId(loggedItemId));
+            }
+            if (itemId == null || itemId.isBlank()) {
+                return;
             }
             if (isSpellbookItemId(itemId)) {
                 int slot = resolveSpellbookMouseSlot(event.getMouseButton().mouseButtonType);
@@ -2470,6 +3008,36 @@ public class MenteesMod extends JavaPlugin {
         }
     }
 
+    /**
+     * Entry point used by MotmSpellbookInteraction subclasses (custom item interaction codec).
+     * Resolves player data and routes into the existing cast pipeline.
+     * Phase 2 of CODEX_IMPLEMENTATION_PLAN_2026-05-13.md.
+     */
+    public void castSpellbookSlotFromInteraction(Player runtimePlayer, int slot) {
+        if (runtimePlayer == null || slot <= 0) {
+            return;
+        }
+        String playerId = getRuntimePlayerId(runtimePlayer);
+        if (playerId == null) {
+            return;
+        }
+        var playerData = playerDataManager.getOnlinePlayer(playerId);
+        if (playerData == null) {
+            return;
+        }
+        String response = tryCastSpellbookSlot(
+                runtimePlayer,
+                playerData,
+                slot,
+                "interaction:custom",
+                null,
+                null
+        );
+        if (response != null && !response.isBlank()) {
+            runtimePlayer.sendMessage(com.hypixel.hytale.server.core.Message.raw(response));
+        }
+    }
+
     private String tryCastSpellbookSlot(Player player,
                                         com.motm.model.PlayerData playerData,
                                         int slot,
@@ -2504,9 +3072,9 @@ public class MenteesMod extends JavaPlugin {
 
         String normalized = String.valueOf(actionType).toLowerCase(Locale.ROOT);
         return switch (normalized) {
-            case "primary", "ability1" -> 1;
-            case "secondary", "ability2" -> 2;
-            case "use", "ability3" -> 3;
+            case "primary", "ability1", "ability_1" -> 1;
+            case "secondary", "ability2", "ability_2" -> 2;
+            case "use", "ability3", "ability_3" -> 3;
             default -> 0;
         };
     }
@@ -2546,6 +3114,7 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private void handleDamageBlock(DamageBlockEvent event) {
+        LOG.info("[MOTM] >>> handleDamageBlock ENTERED");
         if (event == null || event.getItemInHand() == null || event.getTargetBlock() == null) {
             return;
         }
@@ -2639,6 +3208,7 @@ public class MenteesMod extends JavaPlugin {
 
     public DataLoader getDataLoader() { return dataLoader; }
     public PerkManager getPerkManager() { return perkManager; }
+    public PlayerStatModifierManager getPlayerStatModifierManager() { return playerStatModifierManager; }
     public SynergyEngine getSynergyEngine() { return synergyEngine; }
     public LevelingManager getLevelingManager() { return levelingManager; }
     public MobScalingManager getMobScalingManager() { return mobScalingManager; }

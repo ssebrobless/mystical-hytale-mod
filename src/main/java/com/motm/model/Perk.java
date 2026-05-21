@@ -42,6 +42,9 @@ public class Perk {
         private String ability;
         private JsonElement value;
         private JsonElement duration;
+        private JsonElement heal;
+        @SerializedName("heal_amount")
+        private JsonElement healAmount;
         private String condition;
 
         public String getType() { return type; }
@@ -53,6 +56,8 @@ public class Perk {
         public String getAbility() { return ability; }
         public double getValue() { return parseNumberish(value); }
         public double getDuration() { return parseNumberish(duration); }
+        public double getHeal() { return parseNumberish(heal); }
+        public double getHealAmount() { return parseNumberish(healAmount); }
         public String getValueRaw() { return toRawString(value); }
         public String getDurationRaw() { return toRawString(duration); }
         public String getCondition() { return condition; }

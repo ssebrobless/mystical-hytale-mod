@@ -27,7 +27,10 @@
           "target_type": "self_centered",
           "radius": 4,
           "knockback_force": 4.5,
-          "terrain_effect": "seismic_shockwave"
+          "terrain_effect": "seismic_shockwave",
+          "ground_targets_only": true,
+          "visual_overlay": "ground_cracks",
+          "trigger": "jump_land"
         },
         {
           "id": "aftershock",
@@ -46,7 +49,9 @@
           "target_type": "self_centered",
           "radius": 5,
           "duration_seconds": 4,
-          "terrain_effect": "lingering_tremor"
+          "terrain_effect": "lingering_tremor",
+          "ground_targets_only": true,
+          "visual_overlay": "ground_cracks"
         },
         {
           "id": "sinkhole",
@@ -68,7 +73,11 @@
           "radius": 3,
           "delay_seconds": 0.6,
           "duration_seconds": 2.5,
-          "terrain_effect": "sinkhole"
+          "terrain_effect": "sinkhole",
+          "ground_targets_only": true,
+          "visual_overlay": "ground_cracks",
+          "vertical_displace_blocks": 2.5,
+          "dot_percent_per_second": 6
         }
       ]
     },
