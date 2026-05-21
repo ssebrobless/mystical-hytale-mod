@@ -48,10 +48,10 @@ Implemented so far:
 - Terra/Quake vertical slice validated across two cold launches
 - custom spellbook UI page with seven working navigation tabs
 - Phase 7 perk runtime layer for stat modifiers and on-kill healing
-- Phase 9 live validation for Terra/Metal, Hydro/Icicle, Aero/Wind Blade, and Corruptus/Flame
+- Phase 9 live validation for Terra/Metal, Hydro/Icicle, Aero/Wind Blade, Corruptus/Flame, and Terra/Magma
 
 Still in progress:
 
 - deeper perk effect integration for damage triggers, transformations, auras, and advanced conditions
-- broader in-game validation for the remaining 35 styles
+- broader in-game validation for the remaining 34 styles
 - public release polish

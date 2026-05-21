@@ -129,7 +129,7 @@ Finish Order
 | --- | --- | --- |
 | `quake` | `Playable` | `aftershock` now lingers and `sinkhole` now behaves like a delayed trap field; revisit later only for richer visible terrain collapse representation. |
 | `metal` | `Partial` | Turn `iron_wall` into a real spawned barrier; keep `metal_coat` and `alloy_enhancement` as weapon-follow-up buff validation targets. |
-| `magma` | `Partial` | Make `lava_pool` persist and punish standing in it; convert `magma_sling` to a real projectile actor. |
+| `magma` | `Playable` | `lava_pool` now persists as a burning field, `obsidian_skin` reads as a hot defensive buff, and `magma_sling` uses the projectile runtime; revisit later only for richer lava-world presentation. |
 | `stone` | `Partial` | `rockslide` now arms and pulses like a falling-rock hazard; keep `rubble_rouser` as the main validation target for the projectile pass. |
 | `arbor` | `Partial` | `sapling` now has a real treant-summon role and owner-protection payoff; `vines` remains the main validation target for further control polish. |
 | `bloom` | `Partial` | `cacti_cluster` now fires a staggered volley instead of a flat burst; validate whether `frolick` should influence weapon follow-up or movement more strongly. |

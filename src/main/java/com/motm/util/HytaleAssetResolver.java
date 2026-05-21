@@ -209,6 +209,14 @@ public final class HytaleAssetResolver {
                 && ("stomp".equals(abilityId) || "aftershock".equals(abilityId) || "sinkhole".equals(abilityId))) {
             return FX_TERRA_QUAKE_CAST;
         }
+        if ("terra".equals(lower(classId)) && "magma".equals(style)) {
+            if (abilityId.contains("lava") || abilityId.contains("magma")) {
+                return FX_FIRE_CAST;
+            }
+            if (abilityId.contains("obsidian")) {
+                return FX_FIRE_SMOKE;
+            }
+        }
 
         return switch (lower(classId)) {
             case "terra" -> {
@@ -275,7 +283,8 @@ public final class HytaleAssetResolver {
         if (travelType.contains("ice") || abilityId.contains("frost") || abilityId.contains("ice")) {
             return FX_ICE_IMPACT;
         }
-        if (travelType.contains("fire") || travelType.contains("hellfire") || travelType.contains("boiling") || travelType.contains("heated")) {
+        if (travelType.contains("fire") || travelType.contains("hellfire") || travelType.contains("boiling") || travelType.contains("heated")
+                || abilityId.contains("magma") || abilityId.contains("lava")) {
             return FX_FIRE_SMOKE;
         }
         if (travelType.contains("sand")) {
@@ -307,6 +316,14 @@ public final class HytaleAssetResolver {
         if ("terra".equals(lower(classId)) && "quake".equals(style)
                 && ("stomp".equals(abilityId) || "aftershock".equals(abilityId) || "sinkhole".equals(abilityId))) {
             return FX_TERRA_QUAKE_IMPACT;
+        }
+        if ("terra".equals(lower(classId)) && "magma".equals(style)) {
+            if (abilityId.contains("lava") || abilityId.contains("magma")) {
+                return FX_FIRE_IMPACT;
+            }
+            if (abilityId.contains("obsidian")) {
+                return FX_FIRE_SMOKE;
+            }
         }
 
         return switch (lower(classId)) {
@@ -365,6 +382,14 @@ public final class HytaleAssetResolver {
         if ("terra".equals(lower(classId)) && "quake".equals(style)
                 && ("aftershock".equals(abilityId) || "sinkhole".equals(abilityId))) {
             return FX_TERRA_QUAKE_LOOP;
+        }
+        if ("terra".equals(lower(classId)) && "magma".equals(style)) {
+            if (abilityId.contains("lava") || abilityId.contains("magma")) {
+                return FX_FIRE_AOE;
+            }
+            if (abilityId.contains("obsidian")) {
+                return FX_FIRE_SMOKE;
+            }
         }
 
         if ("ground_zone".equals(castType) || "support_zone".equals(castType) || "barrier".equals(castType)) {
