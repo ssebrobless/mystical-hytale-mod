@@ -143,7 +143,7 @@ Finish Order
 | Style | Current | Finish Next |
 | --- | --- | --- |
 | `icicle` | `Partial` | `frozen_needles` now fires as a staggered shard volley; keep `stalactite_crash` and `skate` as validation targets after projectile polish. |
-| `snow` | `Partial` | `snowstorm` now persists as a real area, and `snow_imp` / `frosty` now have clearer summon behavior; keep `frosty` tank feel as the main validation target. |
+| `snow` | `Playable` | `snow_imp` and `frosty` now spawn as tracked summons, and `snowstorm` persists as a slow/attack-slow field; revisit later for final tank feel and summon presentation polish. |
 | `surf` | `Partial` | `riptide` now behaves more like a current pull and `high_tide` now sweeps through targets more like a traveling wave; `waverider` remains a validation target for speed support. |
 | `rain` | `Partial` | `piercing_rain` and `rainbow` now behave more like distinct weather/support fields, and `splash` now fires as a broader staggered burst; later polish the water-arc presentation. |
 | `boiling` | `Partial` | Convert `scald` into a projectile actor; validate `geyser` launch behavior and `overheat` weapon-follow-up synergy. |

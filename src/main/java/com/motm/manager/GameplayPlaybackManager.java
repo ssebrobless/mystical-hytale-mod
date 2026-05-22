@@ -3007,7 +3007,7 @@ public class GameplayPlaybackManager {
 
         World world = runtimePlayer.getWorld();
         NPCEntity summon = new NPCEntity(world);
-        summon.setRoleName(SUMMON_ROLE_NAME);
+        summon.setRoleName(modelId);
         summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
         world.spawnEntity(summon, spawnPosition, new Vector3f(0f, 0f, 0f));
 

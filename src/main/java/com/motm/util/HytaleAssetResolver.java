@@ -235,6 +235,9 @@ public final class HytaleAssetResolver {
                 if (abilityId.contains("rainbow") || abilityId.contains("heal")) {
                     yield FX_HEAL_SMOKE;
                 }
+                if ("snow".equals(style) || abilityId.contains("snow") || abilityId.contains("frost")) {
+                    yield FX_ICE_IMPACT;
+                }
                 yield FX_WATER_CAST;
             }
             case "aero" -> {
@@ -280,7 +283,8 @@ public final class HytaleAssetResolver {
                 || travelType.contains("splash") || travelType.contains("mist") || travelType.contains("river")) {
             return FX_WATER_TRAVEL;
         }
-        if (travelType.contains("ice") || abilityId.contains("frost") || abilityId.contains("ice")) {
+        if (travelType.contains("ice") || travelType.contains("snow") || abilityId.contains("frost")
+                || abilityId.contains("ice") || abilityId.contains("snow")) {
             return FX_ICE_IMPACT;
         }
         if (travelType.contains("fire") || travelType.contains("hellfire") || travelType.contains("boiling") || travelType.contains("heated")
@@ -397,7 +401,11 @@ public final class HytaleAssetResolver {
                 case "terra" -> {
                     yield abilityId.contains("sand") ? FX_SAND_DUST : FX_STONE_DUST;
                 }
-                case "hydro" -> abilityId.contains("rainbow") || abilityId.contains("heal") ? FX_HEAL_LOOP : FX_WATER_TRAVEL;
+                case "hydro" -> abilityId.contains("rainbow") || abilityId.contains("heal")
+                        ? FX_HEAL_LOOP
+                        : "snow".equals(style) || abilityId.contains("snow") || abilityId.contains("frost")
+                        ? FX_SLOW_LOOP
+                        : FX_WATER_TRAVEL;
                 case "aero" -> abilityId.contains("smoke") || terrainEffect.contains("smog")
                         ? FX_SMOKE_END
                         : abilityId.contains("acid") || abilityId.contains("toxic")
@@ -419,7 +427,9 @@ public final class HytaleAssetResolver {
         if ("self_buff".equals(castType) || "transformation".equals(castType)) {
             return switch (lower(classId)) {
                 case "terra" -> FX_EARTH_CAST;
-                case "hydro" -> FX_WATER_CAST;
+                case "hydro" -> "snow".equals(style) || abilityId.contains("snow") || abilityId.contains("frost")
+                        ? FX_ICE_IMPACT
+                        : FX_WATER_CAST;
                 case "aero" -> abilityId.contains("smoke") ? FX_SMOKE_END : FX_WIND_LOOP;
                 case "corruptus" -> abilityId.contains("sanctuary") ? FX_HEAL_LOOP : FX_VOID_SMOKE;
                 default -> null;
