@@ -105,8 +105,13 @@ if (Test-Path -LiteralPath $resolverPath) {
         ForEach-Object { $_.Groups[1].Value } |
         Sort-Object -Unique
     $usedAssets | Set-Content -LiteralPath (Join-Path $outDir "resolver-assets.txt") -Encoding UTF8
-    $missing = $usedAssets | Where-Object { $assetEntries -notcontains $_ }
-    @($missing) | Set-Content -LiteralPath (Join-Path $outDir "resolver-assets-missing-from-zip.txt") -Encoding UTF8
+    $missing = @($usedAssets | Where-Object { $assetEntries -notcontains $_ })
+    $missingPath = Join-Path $outDir "resolver-assets-missing-from-zip.txt"
+    if ($missing.Count -eq 0) {
+        "" | Set-Content -LiteralPath $missingPath -Encoding UTF8
+    } else {
+        $missing | Set-Content -LiteralPath $missingPath -Encoding UTF8
+    }
     $report.Add("- Resolver referenced assets: $($usedAssets.Count) -> resolver-assets.txt")
     $report.Add("- Resolver assets missing from Assets.zip: $($missing.Count) -> resolver-assets-missing-from-zip.txt")
 }
