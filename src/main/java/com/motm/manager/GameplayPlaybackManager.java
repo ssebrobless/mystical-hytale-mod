@@ -1971,6 +1971,16 @@ public class GameplayPlaybackManager {
             return;
         }
 
+        if (terrainEffect.contains("tempest")) {
+            String entityId = resolveEntityId(targetRef, store);
+            boolean stunned = applyTargetToken("stun", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            boolean slowed = applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            LOG.info("[MOTM] Tempest field tick applied: target=" + entityId
+                    + " stun=" + stunned
+                    + " slow=" + slowed);
+            return;
+        }
+
         if (terrainEffect.contains("funnel_cloud")) {
             applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             applyTargetToken("disoriented", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
@@ -2589,6 +2599,7 @@ public class GameplayPlaybackManager {
             double resolvedDamage = baseDamage * castBuffMultiplier;
             resolvedDamage *= resolveTargetSequenceDamageMultiplier(ability, castType, hitIndex);
             resolvedDamage = applySpecialDamageModifiers(player, ability, targetRef, store, targetEntityId, resolvedDamage);
+            applyTempestImpactEffects(ability, targetRef, store, playerRef, player.getPlayerId(), targetEntityId);
 
             if (targetEntityId != null) {
                 resolvedDamage *= resolveIncomingDamageMultiplier(targetEntityId);
@@ -2621,6 +2632,23 @@ public class GameplayPlaybackManager {
                 ? "1 hit for " + AbilityPresentation.formatDecimal(totalDamage) + " damage"
                 : hits + " hits for " + AbilityPresentation.formatDecimal(totalDamage) + " damage";
         return new CombatResolution(hits, totalDamage, summary);
+    }
+
+    private void applyTempestImpactEffects(AbilityData ability,
+                                           Ref<EntityStore> targetRef,
+                                           Store<EntityStore> store,
+                                           Ref<EntityStore> playerRef,
+                                           String playerId,
+                                           String targetEntityId) {
+        if (ability == null || !lower(ability.getTerrainEffect()).contains("tempest")) {
+            return;
+        }
+
+        boolean stunned = applyTargetToken("stun", targetRef, store, playerRef, playerId, ability);
+        boolean slowed = applyTargetToken("slow", targetRef, store, playerRef, playerId, ability);
+        LOG.info("[MOTM] Tempest impact effects applied: target=" + targetEntityId
+                + " stun=" + stunned
+                + " slow=" + slowed);
     }
 
     private SupportResolution applyCasterRuntime(Player runtimePlayer,
