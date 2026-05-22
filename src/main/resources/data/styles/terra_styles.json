@@ -399,7 +399,7 @@
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "heal+attack_buff",
+          "effect": "heal+attack_buff+speed",
           "categories": [
             "healing",
             "buff"
@@ -570,7 +570,7 @@
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.32,
           "recovery_seconds": 0.22,
-          "effect": "vulnerability",
+          "effect": "vulnerability+blind",
           "categories": [
             "damage",
             "debuff"
@@ -715,7 +715,7 @@
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "attack_buff",
+          "effect": "attack_buff+speed",
           "categories": [
             "buff"
           ],

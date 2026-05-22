@@ -1,0 +1,149 @@
+﻿[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Migrated legacy plugin data from asset-scanned mods folder: C:\Users\fishe\AppData\Roaming\Hytale\UserData\Saves\MOTM Creative Test\mods\com.motm_Mentees of the Mystical
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Using operational data directory outside asset-scanned mods folder: C:\Users\fishe\AppData\Roaming\Hytale\UserData\Saves\MOTM Creative Test\motm-data\com.motm_Mentees of the Mystical
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Dev tools enabled via motm-server.properties
+[2026/05/22 01:50:05   INFO]                   [MOTM] ========================================
+[2026/05/22 01:50:05   INFO]                   [MOTM]   Mentees of the Mystical v1.0.0
+[2026/05/22 01:50:05   INFO]                   [MOTM]   4 Classes | 40 Styles | 800 Perks | Level 1-200
+[2026/05/22 01:50:05   INFO]                   [MOTM]   Build Channel: internal
+[2026/05/22 01:50:05   INFO]                   [MOTM] ========================================
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded class: terra
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded class: hydro
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded class: aero
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded class: corruptus
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 200 perks for class: terra
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 200 perks for class: hydro
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 200 perks for class: aero
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 200 perks for class: corruptus
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Filtered 240 unimplemented high-tier perks (tier > 14)
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 10 styles (30 abilities) for class: terra
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 10 styles (30 abilities) for class: hydro
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 10 styles (30 abilities) for class: aero
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 10 styles (30 abilities) for class: corruptus
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 6 elemental reactions.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded 12 races.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded leveling data.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded mob data.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Loaded elite titles data.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Data loading complete.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Registered MOTM spellbook custom interactions: primary/secondary/use
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Preflight audit: ISSUES found before live gameplay validation.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Classes=4 Styles=40 Abilities=120 Errors=1 Warnings=218
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] ERROR ability:brood_surge - Summon cast is missing summon_name.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] WARN perk:aero_t01_charged_attacks - Perk effect type 'on_crit' is not recognized as implemented.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] WARN perk:aero_t01_wind_barrier - Perk effect type 'projectile_evasion' is not recognized as implemented.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] WARN perk:aero_t02_shock_aura - Perk effect type 'aura_damage' is not recognized as implemented.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] WARN perk:aero_t02_afterimage - Perk effect type 'on_dodge' is not recognized as implemented.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] WARN perk:aero_t02_storm_build - Perk effect type 'stacking_buff' is not recognized as implemented.
+[2026/05/22 01:50:05   INFO]                   [MOTM] [MOTM] Preflight report written to C:\Users\fishe\AppData\Roaming\Hytale\UserData\Saves\MOTM Creative Test\motm-data\com.motm_Mentees of the Mystical\motm-preflight-report.txt
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] >>> start() called
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Primary / toString=Primary / valueOf=Primary
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Secondary / toString=Secondary / valueOf=Secondary
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Ability1 / toString=Ability1 / valueOf=Ability1
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Ability2 / toString=Ability2 / valueOf=Ability2
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Ability3 / toString=Ability3 / valueOf=Ability3
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Use / toString=Use / valueOf=Use
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Pick / toString=Pick / valueOf=Pick
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Pickup / toString=Pickup / valueOf=Pickup
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: CollisionEnter / toString=CollisionEnter / valueOf=CollisionEnter
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: CollisionLeave / toString=CollisionLeave / valueOf=CollisionLeave
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Collision / toString=Collision / valueOf=Collision
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: EntityStatEffect / toString=EntityStatEffect / valueOf=EntityStatEffect
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: SwapTo / toString=SwapTo / valueOf=SwapTo
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: SwapFrom / toString=SwapFrom / valueOf=SwapFrom
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Death / toString=Death / valueOf=Death
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Wielding / toString=Wielding / valueOf=Wielding
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: ProjectileSpawn / toString=ProjectileSpawn / valueOf=ProjectileSpawn
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: ProjectileHit / toString=ProjectileHit / valueOf=ProjectileHit
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: ProjectileMiss / toString=ProjectileMiss / valueOf=ProjectileMiss
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: ProjectileBounce / toString=ProjectileBounce / valueOf=ProjectileBounce
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Held / toString=Held / valueOf=Held
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: HeldOffhand / toString=HeldOffhand / valueOf=HeldOffhand
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Equipped / toString=Equipped / valueOf=Equipped
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: Dodge / toString=Dodge / valueOf=Dodge
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] InteractionType enum: GameModeSwap / toString=GameModeSwap / valueOf=GameModeSwap
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] Spellbook item asset resolved=true itemId=MOTM_Spellbook_Focus
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] Registered native Hydro waterskin fieldcraft recipe.
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] Auto-save started (interval: 300s)
+[2026/05/22 01:50:11   INFO]                 [MOTM] [MOTM] Plugin enabled successfully!
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] >>> onPlayerConnect: Player{uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, clientViewRadius='9', LivingEntity{, Entity{id=-1, uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, reference='null', world=null, displayName='null', wasRemoved='false', removedBy='null'}}}
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] >>> onPlayerJoin: imseb id=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:17   WARN]                  [MOTM] [MOTM] Could not rebuild perk stat modifiers: missing EntityStatMap for player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] imseb has pending Tier 1 perk selection
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] onPlayerConnect hasSavedLoadout=true playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[gem]
+[2026/05/22 01:50:17   WARN]                  [MOTM] [MOTM] Could not rebuild perk stat modifiers: missing EntityStatMap for player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[gem]
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] onPlayerConnect ensureSpellbookItem=false hasSpellbook=false
+[2026/05/22 01:50:17   INFO]                  [MOTM] [MOTM] onPlayerConnect done dt=20ms playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:18   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 01:50:19   INFO]                  [MOTM] [MOTM] >>> onPlayerReady: Player{uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, clientViewRadius='9', LivingEntity{, Entity{id=1, uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, reference='Ref{store=class com.hypixel.hytale.component.Store@416823499, index=0}', world=instance-CreativeHub-cca8454e-929e-462b-8ba3-d787622bc80b, displayName='null', wasRemoved='false', removedBy='null'}}}
+[2026/05/22 01:50:19   INFO]                  [MOTM] [MOTM] Queue HUD install: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d delayTicks=4
+[2026/05/22 01:50:19   INFO]                  [MOTM] [MOTM] onPlayerReady done playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:19   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 01:50:19   INFO]                  [MOTM] [MOTM] Installing HUD: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:22   INFO]                  [MOTM] [MOTM] Free-cast health drop detected: player=imseb class=terra styles=[gem] from=272.0 to=0.0 burn=false dot=false
+[2026/05/22 01:50:29   INFO]                  [MOTM] [MOTM] Custom spellbook interaction fired: type=Primary slot=1 player=Player{uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, clientViewRadius='9', LivingEntity{, Entity{id=1, uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, reference='Ref{store=class com.hypixel.hytale.component.Store@416823499, index=0}', world=instance-CreativeHub-cca8454e-929e-462b-8ba3-d787622bc80b, displayName='null', wasRemoved='false', removedBy='null'}}}
+[2026/05/22 01:50:29   INFO]                  [MOTM] [MOTM] Spellbook cast attempt: player=imseb slot=1 source=interaction:custom
+[2026/05/22 01:50:29   INFO]                  [MOTM] [MOTM] Slot cast resolved: player=imseb style=gem slot=1 ability=lapidary
+[2026/05/22 01:50:29   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=lapidary notifyFailures=false
+[2026/05/22 01:50:29   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=lapidary
+[2026/05/22 01:50:29   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=lapidary result=[MOTM] Cast Lapidary! Runtime: terra gem cast visuals | shield 83.9 | weapon follow-up ready x2 via Lapidary.
+[2026/05/22 01:50:38   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 01:50:40   INFO]        [CommandManager] imseb executed command: motm dev class set terra
+[2026/05/22 01:50:40   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:40   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:50:40   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:50:40   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:50:40   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:50:41   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 01:50:41   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:41   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:50:41   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:50:41   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:50:41   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:50:43   INFO]        [CommandManager] imseb executed command: motm style quake
+[2026/05/22 01:50:43   INFO]                  [MOTM] [MOTM] imseb selected styles: [quake]
+[2026/05/22 01:50:43   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:50:43   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[quake]
+[2026/05/22 01:50:43   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:50:43   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:50:43   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[quake]
+[2026/05/22 01:50:43   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 01:50:44   INFO]        [CommandManager] imseb executed command: motm dev test mobs
+[2026/05/22 01:50:44   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:50:45   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=standard grounded=(5095.50, 168.00, 4977.50) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:50:45   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Goblin_Scrapper, modelAssetId=Goblin_Scrapper
+[2026/05/22 01:50:45   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Bat, modelAssetId=Bat
+[2026/05/22 01:50:46   INFO]        [CommandManager] imseb executed command: motm spellbook overview
+[2026/05/22 01:50:49   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:50:49   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:50:49   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:50:52   INFO]        [CommandManager] imseb executed command: motm dev test ability stomp
+[2026/05/22 01:50:52   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=stomp hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:50:52   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=stomp notifyFailures=true
+[2026/05/22 01:50:52   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=stomp
+[2026/05/22 01:50:52   INFO]                  [MOTM] [MOTM] Stomp armed: player=imseb - next jump's landing will trigger the shockwave
+[2026/05/22 01:50:52   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=stomp result=[MOTM] Cast Stomp! Charges 3/4. Runtime: Stomp armed (jump -> land to release the shockwave).
+[2026/05/22 01:50:54   INFO]                  [MOTM] [MOTM] Stomp fired at landing: player=imseb pos=Vector3d{x=5103.5, y=169.08912658691406, z=4982.5}
+[2026/05/22 01:50:54   WARN]                  [MOTM] [MOTM] Ground-target filtering is using the fractional-Y fallback because no active ground collision was available.
+[2026/05/22 01:50:54   INFO]                  [MOTM] [MOTM] Quake impact ring spawned at Vector3d{x=5103.5, y=169.08912658691406, z=4982.5} positions=5 applied=0
+[2026/05/22 01:50:54   INFO]                  [MOTM] [MOTM] Stomp landing resolved: targets=1 damage=11.3 effects=1 visual=applied
+[2026/05/22 01:50:57   INFO]        [CommandManager] imseb executed command: motm dev test ability aftershock
+[2026/05/22 01:50:57   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=aftershock hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4975}
+[2026/05/22 01:50:57   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=aftershock notifyFailures=true
+[2026/05/22 01:50:57   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=aftershock
+[2026/05/22 01:50:57   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=aftershock result=[MOTM] Cast Aftershock! Runtime: terra cast visuals | field active for 4s | radius 5.0m | applied slow, disoriented to 1 target.
+[2026/05/22 01:51:03   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:51:03   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:51:03   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:51:06   INFO]        [CommandManager] imseb executed command: motm dev test ability sinkhole
+[2026/05/22 01:51:06   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sinkhole hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:51:06   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sinkhole notifyFailures=true
+[2026/05/22 01:51:06   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sinkhole
+[2026/05/22 01:51:06   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sinkhole result=[MOTM] Cast Sinkhole! Runtime: terra cast visuals | hazard arms in 0.6s | lasts 2.5s | radius 3.0m | 1 hit for 34.0 damage | applied stun to 1 target.
+[2026/05/22 01:51:07   INFO]                  [MOTM] [MOTM] Sinkhole engaged: buried 1 target(s) at center=Vector3d{x=5103.5, y=169.0, z=4980.5}
+[2026/05/22 01:51:07   INFO]                  [MOTM] [MOTM] Sinkhole suffocation tick: target=debb82dc-159b-3db4-9f42-80b4eaedb0c4 damage=2.1
+[2026/05/22 01:51:08   INFO]                  [MOTM] [MOTM] Sinkhole suffocation tick: target=debb82dc-159b-3db4-9f42-80b4eaedb0c4 damage=2.1
+[2026/05/22 01:51:09   INFO]                  [MOTM] [MOTM] Sinkhole released: 1 target(s)

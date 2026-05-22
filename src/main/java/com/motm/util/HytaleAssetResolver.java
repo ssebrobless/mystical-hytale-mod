@@ -347,6 +347,9 @@ public final class HytaleAssetResolver {
                 return FX_FIRE_SMOKE;
             }
         }
+        if ("terra".equals(lower(classId)) && "gem".equals(style) && "fracture".equals(abilityId)) {
+            return FX_CRYSTAL_SPARKS;
+        }
 
         return switch (lower(classId)) {
             case "terra" -> {
