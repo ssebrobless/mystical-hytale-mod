@@ -158,7 +158,7 @@
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.35,
           "recovery_seconds": 0.24,
-          "effect": "knockback",
+          "effect": "knockback+speed",
           "categories": [
             "damage",
             "crowd_control"
