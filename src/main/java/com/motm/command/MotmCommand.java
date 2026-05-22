@@ -804,7 +804,8 @@ public class MotmCommand {
                 }
                 yield mod.startSingleAbilityTest(player.getPlayerId(), args[3]);
             }
-            case "mobs" -> mod.spawnStyleTestMobs(player.getPlayerId());
+            case "mobs" -> mod.spawnStyleTestMobs(player.getPlayerId(),
+                    args.length >= 4 && "close".equalsIgnoreCase(args[3]));
             case "status" -> mod.getStyleTestStatus(player.getPlayerId());
             case "stop" -> mod.stopStyleTest(player.getPlayerId());
             default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";

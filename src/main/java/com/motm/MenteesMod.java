@@ -197,7 +197,7 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, List<PerkTriggerBinding>> perkTriggersByPlayer = new ConcurrentHashMap<>();
     private final Set<String> pendingSpellbookGrants = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingDevBookGrants = ConcurrentHashMap.newKeySet();
-    private final Set<String> pendingStyleTestMobSpawns = ConcurrentHashMap.newKeySet();
+    private final Map<String, Boolean> pendingStyleTestMobSpawns = new ConcurrentHashMap<>();
     private final Map<String, List<Ref<EntityStore>>> styleTestTargetsByPlayer = new ConcurrentHashMap<>();
     private final Map<String, String> pendingSingleAbilityTests = new ConcurrentHashMap<>();
     private final Set<String> pendingHydroContainerSyncs = ConcurrentHashMap.newKeySet();
@@ -1264,6 +1264,10 @@ public class MenteesMod extends JavaPlugin {
     }
 
     public String spawnStyleTestMobs(String playerId) {
+        return spawnStyleTestMobs(playerId, false);
+    }
+
+    public String spawnStyleTestMobs(String playerId, boolean closeGroundedTarget) {
         if (!devToolsEnabled) {
             return devToolsDisabledMessage();
         }
@@ -1276,14 +1280,14 @@ public class MenteesMod extends JavaPlugin {
             return "[MOTM] Join a world and run this in-game to spawn style-test mobs.";
         }
 
-        boolean added = pendingStyleTestMobSpawns.add(playerId);
+        boolean added = pendingStyleTestMobSpawns.put(playerId, closeGroundedTarget) == null;
         LOG.info("[MOTM] Style test mob spawn queued: playerId=" + playerId + " added=" + added);
         return added
                 ? "[MOTM] Style test mob spawn queued."
                 : "[MOTM] Style test mob spawn is already queued.";
     }
 
-    private String spawnStyleTestMobsNow(String playerId, Player runtimePlayer) {
+    private String spawnStyleTestMobsNow(String playerId, Player runtimePlayer, boolean closeGroundedTarget) {
         if (runtimePlayer == null) {
             return "[MOTM] Runtime player context is unavailable.";
         }
@@ -1303,9 +1307,11 @@ public class MenteesMod extends JavaPlugin {
 
         Vector3d horizontalForward = normalizeHorizontal(forward);
         Vector3d right = new Vector3d(-horizontalForward.z, 0.0, horizontalForward.x);
-        Vector3d groundPosition = basePosition.clone()
-                .addScaled(horizontalForward, 5.0)
-                .addScaled(right, -8.0);
+        Vector3d groundPosition = closeGroundedTarget
+                ? basePosition.clone().addScaled(horizontalForward, 2.2)
+                : basePosition.clone()
+                        .addScaled(horizontalForward, 5.0)
+                        .addScaled(right, -8.0);
         Vector3d floatingPosition = basePosition.clone()
                 .addScaled(horizontalForward, 5.0)
                 .addScaled(right, -5.0);
@@ -1329,6 +1335,7 @@ public class MenteesMod extends JavaPlugin {
         int spawned = targets.size();
 
         String summary = "[MOTM] Style test mobs spawned: count=" + spawned
+                + " mode=" + (closeGroundedTarget ? "close" : "standard")
                 + " grounded=" + formatVector(groundPosition)
                 + " floating=" + formatVector(floatingPosition);
         LOG.info(summary);
@@ -1624,7 +1631,7 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private void processPendingStyleTestMobSpawns(Store<EntityStore> currentStore) {
-        for (String playerId : Set.copyOf(pendingStyleTestMobSpawns)) {
+        for (String playerId : Set.copyOf(pendingStyleTestMobSpawns.keySet())) {
             Player player = onlineRuntimePlayers.get(playerId);
             if (player == null) {
                 pendingStyleTestMobSpawns.remove(playerId);
@@ -1634,7 +1641,8 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
-            String result = spawnStyleTestMobsNow(playerId, player);
+            boolean closeGroundedTarget = Boolean.TRUE.equals(pendingStyleTestMobSpawns.get(playerId));
+            String result = spawnStyleTestMobsNow(playerId, player, closeGroundedTarget);
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobSpawns.remove(playerId);
         }
