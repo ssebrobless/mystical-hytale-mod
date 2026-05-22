@@ -46,12 +46,15 @@ Non-blocking findings discovered during successful style validation runs. These 
 
 ## Aero
 
+- Flatlands re-audit 2026-05-22T05-09-26: all 10 Aero styles and all 30 Aero abilities passed with no blocking class/runtime errors. Evidence: `audits/phase9-aero-flatlands/2026-05-22T05-09-26/report.md` and screenshots in the same folder.
 - `scream`: `shriek`, `sonic_boom`, and `battle_cry` validate successfully in `audits/phase9-scream/2026-05-21T22-57-54/`; `battle_cry` confirms both `self attack buff` and `self speed` at runtime. `sonic_boom` logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living`, and `battle_cry` logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
 - `jet`: `jet_burst`, `afterburner`, and `mach_punch` validate successfully in `audits/phase9-jet/2026-05-21T23-00-09/`; improved-control re-review in `audits/phase9-aero-review-controls/2026-05-22T00-36-24/` confirms `afterburner` hits and applies burn, and `mach_punch` hits.
 - `thunder`: `thunderclap`, `smite`, and `chain_lightning` validate successfully in `audits/phase9-thunder/2026-05-21T23-20-44/`; `smite` now applies its 1.25x shocked-target bonus through the projectile-impact path. `smite` logs `Unmapped NPC type encountered. npcTypeId=Spirit_Thunder, modelAssetId=Spirit_Thunder` for projectile proxy mapping cleanup.
 - `jump`: `leap`, `divebomb`, and `hang_time` validate successfully in `audits/phase9-jump/2026-05-21T23-25-23/`; `leap` hits and applies knockback plus vulnerability, and `hang_time` grants self evasion. Improved-control re-review in `audits/phase9-aero-review-controls/2026-05-22T00-36-24/` confirms `divebomb` now hits.
+- `jump`: flatlands re-audit captured `leap` and `divebomb` as successful movement casts but with `No valid target in range`; keep their earlier improved-control hit evidence, and treat this as a target-position/acquisition residual for movement abilities.
 - `pressure`: `air_shot`, `bullet_storm`, and `pressure_burst` validate successfully in `audits/phase9-pressure/2026-05-21T23-42-48/`; `pressure_burst` hits. `air_shot` and `bullet_storm` prove projectile launch/volley cadence, but the cast log does not prove target-side impact or `bullet_storm` slow application; keep for the later projectile-impact audit.
 - `pollution`: `smog`, `toxic_breath`, and `acid_rain` validate successfully in `audits/phase9-pollution/2026-05-21T23-46-54/`; `smog` now proves blind, slow, and dot in the terrain branch. Improved-control re-review in `audits/phase9-aero-review-controls/2026-05-22T00-36-24/` confirms `toxic_breath` applies dot and vulnerability, and `acid_rain` applies dot and vulnerability.
+- `pollution`: flatlands re-audit captured `toxic_breath` as a successful cast but with `No valid target in range`; keep the earlier improved-control target-side evidence and classify this with cone/facing acquisition residuals.
 
 ## Harness
 
