@@ -2,115 +2,103 @@
 
 ## Role
 
-The spellbook is the primary player-facing interface for the mod.
+The spellbook is the player-facing build and ability reference for the mod.
 
 ```text
-styles  -> active combat kit
-perks   -> passive build modifiers
-races   -> passive identity bonuses
-journal -> story and world integration
+Spellbook
++-- Class
+|   +-- selected class
+|   +-- class resource / passive summary
+|   +-- class identity notes
++-- Style
+|   +-- selected style
+|   +-- style theme
+|   +-- active ability slots
++-- Abilities
+|   +-- left click ability
+|   +-- right click ability
+|   +-- use / third ability
+|   +-- descriptions must match real runtime behavior
++-- Perks
+    +-- unlocked perks
+    +-- active perks
+    +-- available selections
+    +-- passive modifiers / triggers / synergies
 ```
 
-The spellbook should answer three questions quickly:
+No story sections belong in the spellbook. Do not add Journey, Codex, Journal,
+Grimoire, lore, quest, reaction glossary, or world-story tabs.
+
+## Variants
+
+### Player Spellbook
 
 ```text
-Who am I?
-What can I do right now?
-What should I pursue next?
+Player Spellbook
++-- Class / Style overview
++-- Active abilities with descriptions
++-- Perks
 ```
 
-## Sections
+This is the normal survival/play experience. It explains what the player has and
+what their selected build does. It does not expose test controls.
+
+### Dev/Test Spellbook
 
 ```text
-overview
-├ identity snapshot
-├ current progression state
-└ next-step guidance
-
-journey
-├ class
-├ race
-├ style
-├ level
-└ milestone progress
-
-grimoire
-├ 3 active style abilities
-├ class passive
-├ cooldown / resource info
-└ ability summaries
-
-perks
-├ unlocked perk tiers
-├ pending selections
-├ active synergies
-└ future giant perk web entry point
-
-resources
-├ current class resource state
-├ regen / refill rules
-└ class-specific sustain notes
-
-codex
-├ reactions
-├ mob scaling
-├ elite variants
-└ system glossary
-
-journal
-├ story chapters
-├ lore entries
-├ discoveries
-└ future quest threads
+Dev/Test Spellbook
++-- Class / Style overview
++-- Active abilities with descriptions
++-- Perks
++-- Test controls
+    +-- change class
+    +-- change style
+    +-- refresh current spellbook
+    +-- trigger or inspect current abilities
 ```
+
+The dev/test variant exists to speed validation and should be gated behind the
+mod's internal/dev build path or dev commands. It must not become the default
+player experience.
 
 ## Interaction Model
 
-### MVP
-
 ```text
 /motm spellbook
-/motm spellbook <section>
+/motm spellbook player
+/motm spellbook dev
+/motm spellbook perks
 ```
 
-This command-backed version establishes the information architecture.
-
-### Future UI
+Long-term item flow:
 
 ```text
 join world
-  └─ receive spellbook item
-       └─ right click
-            └─ open spellbook custom UI
+  +-- receive spellbook item
+      +-- right click
+          +-- open Player Spellbook
 ```
 
-Onboarding behavior:
+Dev/test controls may be opened by command while validating:
 
 ```text
-no class   -> open class selection
-no race    -> open race selection
-no style   -> open style selection
-otherwise  -> open overview
+/motm spellbook dev
 ```
 
 ## Design Rules
 
 ```text
 styles = only source of active abilities
-perks  = always passive modifiers / triggers / synergies
-races  = passive identity bonuses
+perks  = passive modifiers / triggers / synergies
+ui     = must describe current runtime truth, not future intent
 ```
 
 Perks should never function as standalone active abilities.
 
-## Long-Term Goal
+## Acceptance
 
-The `perks` section should eventually become a large organized visual web:
-
-```text
-center      = current style identity
-inner ring  = core stat / survival / utility perks
-mid ring    = ability modifiers / trigger perks
-outer ring  = capstones / cross-effects / rare synergies
-links       = prerequisites or synergy relationships
-```
+- The player spellbook has only Class, Style/Abilities, and Perks sections.
+- The dev/test spellbook contains every player section plus class/style test controls.
+- No story/lore/codex/journey/grimoire/journal tabs are visible.
+- Ability descriptions are sourced from the active class/style data and audited
+  against runtime behavior during Phase 9.
