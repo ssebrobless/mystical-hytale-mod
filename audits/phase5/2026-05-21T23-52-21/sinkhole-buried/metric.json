@@ -1,0 +1,26 @@
+﻿{
+    "mode":  "avg-rgb",
+    "pass":  true,
+    "screenshotPath":  "C:\\Users\\fishe\\Documents\\projects\\Mystical-Hytale-Mod\\audits\\phase5\\2026-05-21T23-52-21\\sinkhole-active.png",
+    "cropPath":  "C:\\Users\\fishe\\Documents\\projects\\Mystical-Hytale-Mod\\audits\\phase5\\2026-05-21T23-52-21\\sinkhole-buried\\visual-443x304-60x50.png",
+    "region":  {
+                   "x":  443,
+                   "y":  304,
+                   "width":  60,
+                   "height":  50
+               },
+    "avgRgb":  {
+                   "r":  64.4,
+                   "g":  66.58,
+                   "b":  50.22
+               },
+    "stdevRgb":  {
+                     "r":  12.25,
+                     "g":  12.01,
+                     "b":  8.73,
+                     "mean":  11
+                 },
+    "expected":  "#505050",
+    "toleranceRgb":  50,
+    "requireDarkAtOrBelow":  true
+}
