@@ -57,6 +57,15 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `pollution`: `smog`, `toxic_breath`, and `acid_rain` validate successfully in `audits/phase9-pollution/2026-05-21T23-46-54/`; `smog` now proves blind, slow, and dot in the terrain branch. Improved-control re-review in `audits/phase9-aero-review-controls/2026-05-22T00-36-24/` confirms `toxic_breath` applies dot and vulnerability, and `acid_rain` applies dot and vulnerability.
 - `pollution`: flatlands re-audit captured `toxic_breath` as a successful cast but with `No valid target in range`; keep the earlier improved-control target-side evidence and classify this with cone/facing acquisition residuals.
 
+## Corruptus
+
+- Flatlands re-audit 2026-05-22T05-21-17: all 10 Corruptus styles and all 30 Corruptus abilities passed with no blocking class/runtime errors. Evidence: `audits/phase9-corruptus-flatlands/2026-05-22T05-21-17/report.md` and screenshots in the same folder.
+- `flame`: `fireball` passed but logged `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living`; classify with the shared projectile/proxy type-mapping cleanup.
+- `necro`: `raise_dead` passed but logged `Unmapped NPC type encountered. npcTypeId=Shadow_Knight, modelAssetId=Shadow_Knight`; classify with summon/proxy type-mapping cleanup.
+- `hell_flame`: `hellfire` passed but logged `Unmapped NPC type encountered. npcTypeId=Golem_Firesteel, modelAssetId=Golem_Firesteel`; classify with summon/proxy type-mapping cleanup.
+- `void`: `void_spawn` passed but logged `Unmapped NPC type encountered. npcTypeId=Spawn_Void, modelAssetId=Spawn_Void`; classify with summon/proxy type-mapping cleanup.
+- `scarak`: `scarak_egg` and `locust_queen` passed but logged `Scarak_Fighter` and `Scarak_Broodmother` as unmapped NPC types; classify with summon/proxy type-mapping cleanup.
+
 ## Harness
 
 - 2026-05-22: the top compass/debug overlay is useful audit evidence for facing/orientation and should remain visible in screenshots. The flatlands detector now accepts horizon, down-angle, and top-down grass-dominant views; `audit-phase9-class.ps1` no longer presses `V` by default because camera toggles are not idempotent.
