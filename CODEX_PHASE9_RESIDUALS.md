@@ -31,6 +31,10 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `freshwater`: `leap_frog`, `river_rapids`, and `swamp_monster` validate successfully in `audits/phase9-freshwater/2026-05-21T22-43-55/`; `river_rapids` now grants `self speed` after the surgical data fix. `swamp_monster` logs `Unmapped NPC type encountered. npcTypeId=Frog_Green, modelAssetId=Frog_Green` for summon proxy mapping cleanup.
 - `bilgewater`: `bilge_dump`, `anchor_haul`, and `oil_spill` validate successfully in `audits/phase9-bilgewater/2026-05-21T22-47-02/`. `anchor_haul` logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for projectile proxy mapping cleanup.
 
+## Aero
+
+- `scream`: `shriek`, `sonic_boom`, and `battle_cry` validate successfully in `audits/phase9-scream/2026-05-21T22-57-54/`; `battle_cry` confirms both `self attack buff` and `self speed` at runtime. `sonic_boom` logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living`, and `battle_cry` logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
+
 ## Harness
 
 - During Snow validation, sending `{ESC}` while no custom UI was open put Hytale in the pause menu, causing subsequent chat commands to be swallowed until returning to game. Acceptance recovered manually; future harness work should use a less ambiguous close-overlay primitive.
