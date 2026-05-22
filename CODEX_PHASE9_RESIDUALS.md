@@ -38,6 +38,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `thunder`: `thunderclap`, `smite`, and `chain_lightning` validate successfully in `audits/phase9-thunder/2026-05-21T23-20-44/`; `smite` now applies its 1.25x shocked-target bonus through the projectile-impact path. `smite` logs `Unmapped NPC type encountered. npcTypeId=Spirit_Thunder, modelAssetId=Spirit_Thunder` for projectile proxy mapping cleanup.
 - `jump`: `leap`, `divebomb`, and `hang_time` validate successfully in `audits/phase9-jump/2026-05-21T23-25-23/`; `leap` hits and applies knockback plus vulnerability, and `hang_time` grants self evasion. `divebomb` proves aerial dive movement but reports `No valid target in range`; keep for the later movement hit-position audit.
 - `pressure`: `air_shot`, `bullet_storm`, and `pressure_burst` validate successfully in `audits/phase9-pressure/2026-05-21T23-42-48/`; `pressure_burst` hits. `air_shot` and `bullet_storm` prove projectile launch/volley cadence, but the cast log does not prove target-side impact or `bullet_storm` slow application; keep for the later projectile-impact audit.
+- `pollution`: `smog`, `toxic_breath`, and `acid_rain` validate successfully in `audits/phase9-pollution/2026-05-21T23-46-54/`; `smog` now proves blind, slow, and dot in the terrain branch. `toxic_breath` and `acid_rain` hit successfully, but the cast log does not explicitly prove target-side vulnerability/DoT riders; keep for the later target-effect audit.
 
 ## Harness
 

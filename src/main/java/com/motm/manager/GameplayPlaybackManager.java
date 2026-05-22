@@ -2000,7 +2000,14 @@ public class GameplayPlaybackManager {
         }
 
         if (terrainEffect.contains("smog")) {
-            applyTargetToken("blind", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            String entityId = resolveEntityId(targetRef, store);
+            boolean blinded = applyTargetToken("blind", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            boolean slowed = applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            boolean dotted = applyTargetToken("dot", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            LOG.info("[MOTM] Smog field tick applied: target=" + entityId
+                    + " blind=" + blinded
+                    + " slow=" + slowed
+                    + " dot=" + dotted);
             return;
         }
 
