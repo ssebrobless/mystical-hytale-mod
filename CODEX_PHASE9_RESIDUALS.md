@@ -26,7 +26,10 @@ Non-blocking findings discovered during successful style validation runs. These 
 
 ## Hydro
 
+- Flatlands re-audit 2026-05-22T04-57-18: all 10 Hydro styles and all 30 Hydro abilities passed with no blocking class/runtime errors. Evidence: `audits/phase9-hydro-flatlands/2026-05-22T04-57-18/report.md` and screenshots in the same folder. The prior `motm_field` reload warning did not recur after the field proxy was routed through verified `Empty_Role`.
+- `icicle`: `frozen_needles`, `stalactite_crash`, and `skate` passed in the flatlands re-audit, but `frozen_needles` logged `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for the shared projectile/proxy type-mapping cleanup.
 - `snow`: `frosty` spawns and casts successfully, but the server logs `Unmapped NPC type encountered. npcTypeId=Golem_Crystal_Frost, modelAssetId=Golem_Crystal_Frost`. This did not block summon creation or crash the world; later mob-XP/type mapping should recognize MOTM summon proxy types or explicitly ignore them.
+- `snow`: flatlands re-audit also logged `Unmapped NPC type encountered. npcTypeId=Spirit_Frost, modelAssetId=Spirit_Frost` for `snow_imp`; classify with the same summon/proxy type-mapping cleanup.
 - `surf`: `high_tide`, `waverider`, and `riptide` validate successfully in `audits/phase9-surf/2026-05-21T22-19-09/`; `high_tide` now grants `self speed` after the surgical data fix. The run logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for projectile proxy mapping cleanup.
 - `rain`: `piercing_rain`, `rainbow`, and `splash` validate successfully in `audits/phase9-rain/2026-05-21T22-21-49/`, but field visuals for `piercing_rain` and `rainbow` log `Reloading nonexistent role motm_field!`. This is the field-proxy equivalent of the earlier projectile proxy-role issue; abilities still cast and the world stayed connected.
 - `boiling`: `scald`, `geyser`, and `overheat` validate successfully in `audits/phase9-boiling/2026-05-21T22-24-51/`, but `geyser` still needs the delayed vertical telegraph/activation called out by the realignment plan. `overheat` also logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
@@ -35,6 +38,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `saltwater`: `tide_pool`, `abyssal_assist`, and `rip_current` validate successfully in `audits/phase9-saltwater/2026-05-21T22-33-30/`, but `tide_pool` still needs caster speed while standing in the field. It also logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
 - `freshwater`: `leap_frog`, `river_rapids`, and `swamp_monster` validate successfully in `audits/phase9-freshwater/2026-05-21T22-43-55/`; `river_rapids` now grants `self speed` after the surgical data fix. `swamp_monster` logs `Unmapped NPC type encountered. npcTypeId=Frog_Green, modelAssetId=Frog_Green` for summon proxy mapping cleanup.
 - `bilgewater`: `bilge_dump`, `anchor_haul`, and `oil_spill` validate successfully in `audits/phase9-bilgewater/2026-05-21T22-47-02/`. `anchor_haul` logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for projectile proxy mapping cleanup.
+- `bilgewater`: flatlands re-audit captured `bilge_dump` as a successful cast but with `No valid target in range` despite close mobs being present. Treat this as a target-position/acquisition residual for wave-style casts, not as proof of target-side effect quality.
 
 ## Aero
 
