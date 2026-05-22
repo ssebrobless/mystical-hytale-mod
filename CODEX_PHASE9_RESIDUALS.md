@@ -36,6 +36,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `scream`: `shriek`, `sonic_boom`, and `battle_cry` validate successfully in `audits/phase9-scream/2026-05-21T22-57-54/`; `battle_cry` confirms both `self attack buff` and `self speed` at runtime. `sonic_boom` logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living`, and `battle_cry` logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
 - `jet`: `jet_burst`, `afterburner`, and `mach_punch` validate successfully in `audits/phase9-jet/2026-05-21T23-00-09/`; `jet_burst` hits and applies knockback. `afterburner` proves dash plus ember trail but reports `No valid target in range`, and `mach_punch` proves dash-strike movement but also reports `No valid target in range`; keep both for a later dash hit-position audit.
 - `thunder`: `thunderclap`, `smite`, and `chain_lightning` validate successfully in `audits/phase9-thunder/2026-05-21T23-20-44/`; `smite` now applies its 1.25x shocked-target bonus through the projectile-impact path. `smite` logs `Unmapped NPC type encountered. npcTypeId=Spirit_Thunder, modelAssetId=Spirit_Thunder` for projectile proxy mapping cleanup.
+- `jump`: `leap`, `divebomb`, and `hang_time` validate successfully in `audits/phase9-jump/2026-05-21T23-25-23/`; `leap` hits and applies knockback plus vulnerability, and `hang_time` grants self evasion. `divebomb` proves aerial dive movement but reports `No valid target in range`; keep for the later movement hit-position audit.
 
 ## Harness
 
