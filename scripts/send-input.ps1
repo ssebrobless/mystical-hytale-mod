@@ -1,9 +1,11 @@
 param(
-    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Command", "Jump", "Stomp", "ThirdPerson")]
+    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Command", "Jump", "Stomp", "ThirdPerson", "Forward", "Back", "StrafeLeft", "StrafeRight", "ForwardJump", "FaceLeft", "FaceRight")]
     [string]$Action = "Key",
     [string]$Keys,
     [string]$Text,
-    [int]$DelayMilliseconds = 150
+    [int]$DelayMilliseconds = 150,
+    [int]$HoldMilliseconds = 650,
+    [int]$MouseDelta = 180
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,7 +35,7 @@ public static class MotmInputWin32 {
     public static extern bool SetCursorPos(int X, int Y);
 
     [DllImport("user32.dll")]
-    public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
+    public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);
 
     [DllImport("user32.dll")]
     public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
@@ -42,6 +44,7 @@ public static class MotmInputWin32 {
     public const uint MOUSEEVENTF_LEFTUP = 0x0004;
     public const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
     public const uint MOUSEEVENTF_RIGHTUP = 0x0010;
+    public const uint MOUSEEVENTF_MOVE = 0x0001;
     public const uint KEYEVENTF_KEYUP = 0x0002;
 }
 "@
@@ -94,6 +97,29 @@ function Press-Key([byte]$VirtualKey, [int]$HoldMilliseconds = 80) {
     [MotmInputWin32]::keybd_event($VirtualKey, 0, 0, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds $HoldMilliseconds
     [MotmInputWin32]::keybd_event($VirtualKey, 0, [MotmInputWin32]::KEYEVENTF_KEYUP, [UIntPtr]::Zero)
+}
+
+function Hold-Key([byte]$VirtualKey, [int]$Milliseconds) {
+    [MotmInputWin32]::keybd_event($VirtualKey, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds $Milliseconds
+    [MotmInputWin32]::keybd_event($VirtualKey, 0, [MotmInputWin32]::KEYEVENTF_KEYUP, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds $DelayMilliseconds
+}
+
+function Send-ForwardJump {
+    [MotmInputWin32]::keybd_event([byte]0x57, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 120
+    [MotmInputWin32]::keybd_event([byte]0x20, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 120
+    [MotmInputWin32]::keybd_event([byte]0x20, 0, [MotmInputWin32]::KEYEVENTF_KEYUP, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds ([Math]::Max(250, $HoldMilliseconds))
+    [MotmInputWin32]::keybd_event([byte]0x57, 0, [MotmInputWin32]::KEYEVENTF_KEYUP, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds $DelayMilliseconds
+}
+
+function Send-MouseNudge([int]$DeltaX) {
+    [MotmInputWin32]::mouse_event([MotmInputWin32]::MOUSEEVENTF_MOVE, $DeltaX, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds $DelayMilliseconds
 }
 
 function Send-TextValue([string]$Value) {
@@ -173,6 +199,27 @@ switch ($Action) {
     }
     "ThirdPerson" {
         Send-KeyChord "v"
+    }
+    "Forward" {
+        Hold-Key ([byte]0x57) $HoldMilliseconds
+    }
+    "Back" {
+        Hold-Key ([byte]0x53) $HoldMilliseconds
+    }
+    "StrafeLeft" {
+        Hold-Key ([byte]0x41) $HoldMilliseconds
+    }
+    "StrafeRight" {
+        Hold-Key ([byte]0x44) $HoldMilliseconds
+    }
+    "ForwardJump" {
+        Send-ForwardJump
+    }
+    "FaceLeft" {
+        Send-MouseNudge (-1 * [Math]::Abs($MouseDelta))
+    }
+    "FaceRight" {
+        Send-MouseNudge ([Math]::Abs($MouseDelta))
     }
 }
 

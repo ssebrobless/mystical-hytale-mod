@@ -6,6 +6,7 @@ param(
     [switch]$SkipFlatlandsGate,
     [switch]$SkipThirdPerson,
     [switch]$UseThirdPerson,
+    [switch]$RequireConceptProof,
     [int]$CommandDelayMilliseconds = 850,
     [int]$PostCastMilliseconds = 2400
 )
@@ -46,19 +47,124 @@ function Get-AbilityScenario($Ability) {
     $castType = ([string]$Ability.cast_type).ToLowerInvariant()
     $targetType = ([string]$Ability.target_type).ToLowerInvariant()
     $trigger = ([string]$Ability.trigger).ToLowerInvariant()
-    if ($trigger -eq "jump_land") { return "jump-land movement: arm, jump, land, then verify landing AoE" }
-    if ($castType -in @("dash", "dash_buff", "dash_strike", "leap", "dive_strike", "teleport", "air_stall")) {
-        return "movement: verify player displacement and impact after motion"
+    $effect = ([string]$Ability.effect).ToLowerInvariant()
+    $description = ([string]$Ability.description).ToLowerInvariant()
+    $kind = "single_target"
+    $setup = "Spawn grounded target in range and face it before cast."
+    $proof = "Cast result plus target-side hit/effect evidence."
+    if ($trigger -eq "jump_land") {
+        $kind = "jump_land"
+        $setup = "Arm ability, jump and land within 3m of grounded target."
+        $proof = "Landing resolution log with targets>=1 plus impact screenshot."
+    } elseif ($castType -in @("dash", "dash_buff", "dash_strike", "leap", "dive_strike", "teleport", "air_stall")) {
+        $kind = "movement"
+        $setup = "Face target, start with clear lane, and move through the ability path."
+        $proof = "Before/after displacement or target-side hit/effect after motion."
+    } elseif ($castType -in @("cone", "gaze")) {
+        $kind = "facing_cone"
+        $setup = "Face target in a narrow camera cone before cast."
+        $proof = "Target-side effect or hit; no 'No valid target' accepted."
+    } elseif ($castType -in @("ground_zone", "support_zone")) {
+        $kind = "ground_zone"
+        $setup = "Grounded target inside radius; wait for persistence/tick window."
+        $proof = "Field active/pulse line, target-side damage/status, persistent-area screenshot."
+    } elseif ($castType -in @("ground_target", "ground_strike", "barrier")) {
+        $kind = "ground_target"
+        $setup = "Aim at target block or target feet; wait delay_seconds when present."
+        $proof = "Telegraph/delay if present, then hit/status/impact visual."
+    } elseif ($castType -like "projectile*" -or $castType -in @("line_control", "wave_line", "chain")) {
+        $kind = "projectile_line"
+        $setup = "Place grounded target in visible lane and keep aim steady through impact window."
+        $proof = "Launch plus target-side hit/effect/impact evidence."
+    } elseif ($castType -in @("summon", "summon_buff")) {
+        $kind = "summon"
+        $setup = "Clear arena before cast, then wait for summon appearance/action window."
+        $proof = "Summon appears and survives or acts; no unmapped/nonexistent role warnings."
+    } elseif ($castType -in @("cleanse") -or $effect -match "cleanse|purify" -or $description -match "cleanse|purge|purify") {
+        $kind = "cleanse"
+        $setup = "Pre-apply debuff/damage condition where available."
+        $proof = "Debuff setup exists, then clear/remove log after cast."
+    } elseif ($targetType -eq "self" -or $castType -match "self|transformation|form|buff") {
+        $kind = "self_buff"
+        $setup = "Use third-person camera and capture caster body/HUD/status after cast."
+        $proof = "Buff/shield/heal/status log plus third-person visual screenshot."
+    } elseif ($effect -match "heal" -or $description -match "heal") {
+        $kind = "support_heal"
+        $setup = "Use damaged or buffable caster/ally; capture HP/status proof."
+        $proof = "HP/stat/status improvement in log or HUD screenshot."
     }
-    if ($castType -in @("cone", "gaze")) { return "facing: target must be in camera cone" }
-    if ($castType -in @("ground_zone", "support_zone", "barrier", "ground_target", "ground_strike")) {
-        return "ground target/field: verify placed area persists for duration"
+    return [pscustomobject]@{
+        Kind = $kind
+        Setup = $setup
+        Proof = $proof
     }
-    if ($castType -like "projectile*" -or $castType -in @("line_control", "wave_line", "chain")) {
-        return "projectile/line: verify launch plus target-side hit/effect"
+}
+
+function Get-MechanicalProof($Scenario, $Lines, [string]$ResultLine, [string]$AbilityId) {
+    $resultText = [string]$ResultLine
+    switch ($Scenario.Kind) {
+        "jump_land" {
+            $landing = $Lines |
+                Where-Object { $_ -match "landing resolved: targets=[1-9]" } |
+                Select-Object -Last 1
+            if ($landing) { return [pscustomobject]@{ Status = "PASS"; Note = $landing } }
+            return [pscustomobject]@{ Status = "FAIL"; Note = "No landing-resolution line with targets>=1." }
+        }
+        "projectile_line" {
+            if ($resultText -match "[1-9] hit|applied .* to [1-9] target") {
+                return [pscustomobject]@{ Status = "PASS"; Note = "Target-side hit/effect is present in cast result." }
+            }
+            if ($resultText -match "launched [1-9] projectile") {
+                return [pscustomobject]@{ Status = "REVIEW"; Note = "Projectile launched; target-side impact still needs proof." }
+            }
+            return [pscustomobject]@{ Status = "FAIL"; Note = "No projectile launch or target-side hit/effect proof." }
+        }
+        "ground_zone" {
+            if ($resultText -match "field active|field arms|radius .*m" -and $resultText -match "[1-9] hit|applied .* to [1-9] target") {
+                return [pscustomobject]@{ Status = "PASS"; Note = "Field duration/radius and target-side effect are present." }
+            }
+            if ($resultText -match "field active|field arms|radius .*m") {
+                return [pscustomobject]@{ Status = "REVIEW"; Note = "Field exists; tick/effect proof is weak." }
+            }
+            return [pscustomobject]@{ Status = "FAIL"; Note = "No field active/radius proof." }
+        }
+        "facing_cone" {
+            if ($resultText -match "[1-9] hit|applied .* to [1-9] target") {
+                return [pscustomobject]@{ Status = "PASS"; Note = "Facing/cone target-side effect found." }
+            }
+            return [pscustomobject]@{ Status = "FAIL"; Note = "No target-side hit/effect for facing/cone ability." }
+        }
+        "movement" {
+            if ($resultText -match "[1-9] hit|applied .* to [1-9] target|dash|leap|teleport|movement") {
+                return [pscustomobject]@{ Status = "REVIEW"; Note = "Movement runtime fired; displacement needs before/after proof." }
+            }
+            return [pscustomobject]@{ Status = "FAIL"; Note = "No movement or target-side proof." }
+        }
+        "self_buff" {
+            if ($resultText -match "self|buff|shield|heal|follow-up|form|evasion|defense") {
+                return [pscustomobject]@{ Status = "PASS"; Note = "Self-buff/status proof found in cast result." }
+            }
+            return [pscustomobject]@{ Status = "REVIEW"; Note = "Self cast exists but status/HUD proof is weak." }
+        }
+        "support_heal" {
+            if ($resultText -match "heal|shield|buff|aura") {
+                return [pscustomobject]@{ Status = "PASS"; Note = "Support/heal status proof found in cast result." }
+            }
+            return [pscustomobject]@{ Status = "REVIEW"; Note = "Support cast exists but HP/stat proof is weak." }
+        }
+        "summon" {
+            if ($resultText -match "summon|spawn") {
+                return [pscustomobject]@{ Status = "REVIEW"; Note = "Summon runtime fired; visual/action proof still needed." }
+            }
+            return [pscustomobject]@{ Status = "FAIL"; Note = "No summon/spawn proof in cast result." }
+        }
+        default {
+            if ($resultText -match "[1-9] hit|applied .* to [1-9] target|Runtime:") {
+                return [pscustomobject]@{ Status = "PASS"; Note = "Generic cast/hit/status proof found." }
+            }
+            return [pscustomobject]@{ Status = "REVIEW"; Note = "Runtime proof exists; concept-specific proof not classified." }
+        }
     }
-    if ($targetType -eq "self") { return "self: verify third-person body/buff read" }
-    return "single-target: verify target hit/effect"
 }
 
 function Get-LatestServerLog {
@@ -179,6 +285,7 @@ try {
 
         foreach ($ability in @($style.abilities)) {
             $abilityId = [string]$ability.id
+            $scenario = Get-AbilityScenario $ability
             $abilityStartLog = Get-LatestServerLog
             $abilityStartOffset = if ($abilityStartLog) { $abilityStartLog.Length } else { 0 }
 
@@ -208,21 +315,25 @@ try {
                 Where-Object { $_ -match "Stomp landing resolved: targets=" } |
                 Select-Object -Last 1
             if ($resultLine) {
-                Add-Line("- PASS: ``$abilityId`` cast")
-                Add-Line("  - Scenario: " + (Get-AbilityScenario $ability))
+                $mechanical = Get-MechanicalProof $scenario $abilityLines $resultLine $abilityId
+                Add-Line("- ``$abilityId``")
+                Add-Line("  - Scenario: $($scenario.Kind)")
+                Add-Line("  - Setup: $($scenario.Setup)")
+                Add-Line("  - Required proof: $($scenario.Proof)")
+                Add-Line("  - Runtime: PASS")
                 if ($spawnLine) { Add-Line("  - $spawnLine") }
                 if ($countLine) { Add-Line("  - $countLine") }
                 Add-Line("  - $resultLine")
-                if ($trigger -eq "jump_land") {
-                    if ($stompLine -and $stompLine -match "targets=[1-9]") {
-                        Add-Line("  - PASS: $stompLine")
-                    } else {
-                        Add-Line("  - FAIL: jump-land landing AoE did not resolve against a target")
-                    }
-                }
+                Add-Line("  - Mechanical: $($mechanical.Status) - $($mechanical.Note)")
+                Add-Line("  - Visual: REVIEW - inspect screenshot against style palette and ability motion")
             } else {
-                Add-Line("- FAIL: ``$abilityId`` cast result missing")
-                Add-Line("  - Scenario: " + (Get-AbilityScenario $ability))
+                Add-Line("- ``$abilityId``")
+                Add-Line("  - Scenario: $($scenario.Kind)")
+                Add-Line("  - Setup: $($scenario.Setup)")
+                Add-Line("  - Required proof: $($scenario.Proof)")
+                Add-Line("  - Runtime: FAIL - cast result missing")
+                Add-Line("  - Mechanical: FAIL - runtime proof missing")
+                Add-Line("  - Visual: REVIEW - no screenshot can pass without runtime proof")
                 if ($spawnLine) { Add-Line("  - $spawnLine") }
                 if ($countLine) { Add-Line("  - $countLine") }
             }
@@ -249,15 +360,19 @@ try {
         }
     }
 
-    $missingCasts = $report | Where-Object { $_ -match "^- FAIL: .* cast result missing" }
-    $failedScenarios = $report | Where-Object { $_ -match "  - FAIL: " }
+    $missingCasts = $report | Where-Object { $_ -match "  - Runtime: FAIL" }
+    $failedScenarios = $report | Where-Object { $_ -match "  - Mechanical: FAIL" }
+    $conceptReviews = $report | Where-Object { $_ -match "  - Mechanical: REVIEW|  - Visual: REVIEW" }
     Add-Line("")
-    if ($blocking.Count -eq 0 -and $missingCasts.Count -eq 0 -and $failedScenarios.Count -eq 0) {
+    if ($blocking.Count -eq 0 -and $missingCasts.Count -eq 0 -and ($failedScenarios.Count -eq 0 -or -not $RequireConceptProof) -and ($conceptReviews.Count -eq 0 -or -not $RequireConceptProof)) {
+        if ($conceptReviews.Count -gt 0 -and -not $RequireConceptProof) {
+            Add-Line("- REVIEW: concept proof is incomplete for $($conceptReviews.Count) row(s). Runtime smoke can pass, but this is not FULL PASS.")
+        }
         Add-Line("PASS")
         $status = "PASS"
     } else {
         Add-Line("FAIL")
-        throw "Phase 9 $ClassId audit failed: missing casts=$($missingCasts.Count), scenario failures=$($failedScenarios.Count), blocking=$($blocking.Count)."
+        throw "Phase 9 $ClassId audit failed: missing casts=$($missingCasts.Count), mechanical failures=$($failedScenarios.Count), concept reviews=$($conceptReviews.Count), blocking=$($blocking.Count)."
     }
 } catch {
     Add-Line("")

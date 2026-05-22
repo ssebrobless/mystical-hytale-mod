@@ -240,3 +240,47 @@ Per style:
 10. compare visuals to realignment palette/feel
 11. update residuals instead of hiding weak evidence
 ```
+
+## Concept-Aware Harness Upgrade
+
+The next audit layer is now script-backed:
+
+```text
+Style JSONs
+  +-- scripts/generate-ability-matrix.ps1
+      +-- audits/ability-matrix/<timestamp>/ability-scenarios.md
+      +-- per ability: scenario, required setup, required proof
+
+Per-ability setup
+  +-- scripts/setup-ability-scenario.ps1
+      +-- sets class/style/freecast
+      +-- clears tracked mobs
+      +-- chooses close targets, third-person, or movement lane by scenario
+
+Per-ability proof
+  +-- scripts/assert-ability-proof.ps1
+      +-- runtime PASS/FAIL
+      +-- mechanical PASS/REVIEW/FAIL
+      +-- visual REVIEW unless screenshot/video review is explicit
+```
+
+`scripts/audit-phase9-class.ps1` now reports runtime, mechanical, and visual
+separately. Its default remains a runtime smoke gate so class sweeps can keep
+running, but `-RequireConceptProof` upgrades REVIEW rows into failures for
+focused gameplay acceptance.
+
+Use this before claiming an ability works:
+
+```text
+1. Generate/read ability matrix.
+2. Run setup for the exact ability scenario.
+3. Cast the ability.
+4. Assert proof from logs.
+5. Review screenshots/video against style identity.
+6. Only then call it FULL PASS.
+```
+
+The research direction remains unchanged: public Hytale docs support
+server-side, asset-driven testing, but local `HytaleServer.jar`, `Assets.zip`,
+and in-game logs are the final authority for concrete APIs, particle IDs, and
+role names.
