@@ -15,8 +15,22 @@ using System;
 using System.Runtime.InteropServices;
 
 public static class MotmInputWin32 {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
     [DllImport("user32.dll")]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+
+    [DllImport("user32.dll")]
+    public static extern bool SetCursorPos(int X, int Y);
 
     [DllImport("user32.dll")]
     public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
@@ -43,6 +57,22 @@ function Focus-Hytale {
     [MotmInputWin32]::SetForegroundWindow($window.MainWindowHandle) | Out-Null
     Start-Sleep -Milliseconds 250
     Write-Host "[send-input] Focused Hytale PID=$($window.Id)"
+    return $window
+}
+
+function Click-HytaleCenter($Window) {
+    $rect = New-Object MotmInputWin32+RECT
+    if (-not [MotmInputWin32]::GetWindowRect($Window.MainWindowHandle, [ref]$rect)) {
+        return
+    }
+    $x = [int](($rect.Left + $rect.Right) / 2)
+    $y = [int](($rect.Top + $rect.Bottom) / 2)
+    [MotmInputWin32]::SetCursorPos($x, $y) | Out-Null
+    Start-Sleep -Milliseconds 80
+    [MotmInputWin32]::mouse_event([MotmInputWin32]::MOUSEEVENTF_LEFTDOWN, 0, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 60
+    [MotmInputWin32]::mouse_event([MotmInputWin32]::MOUSEEVENTF_LEFTUP, 0, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 180
 }
 
 function Send-KeyChord([string]$Chord) {
@@ -60,6 +90,12 @@ function Send-Jump {
     Start-Sleep -Milliseconds $DelayMilliseconds
 }
 
+function Press-Key([byte]$VirtualKey, [int]$HoldMilliseconds = 80) {
+    [MotmInputWin32]::keybd_event($VirtualKey, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds $HoldMilliseconds
+    [MotmInputWin32]::keybd_event($VirtualKey, 0, [MotmInputWin32]::KEYEVENTF_KEYUP, [UIntPtr]::Zero)
+}
+
 function Send-TextValue([string]$Value) {
     if ($null -eq $Value) { $Value = "" }
     [System.Windows.Forms.SendKeys]::SendWait($Value)
@@ -71,6 +107,25 @@ function Send-ClipboardText([string]$Value) {
     [System.Windows.Forms.Clipboard]::SetText($Value)
     Start-Sleep -Milliseconds 80
     [System.Windows.Forms.SendKeys]::SendWait("^v")
+    Start-Sleep -Milliseconds $DelayMilliseconds
+}
+
+function Send-GameCommand([string]$Value) {
+    if ($null -eq $Value) { $Value = "" }
+    if ($Value.StartsWith("/")) {
+        $Value = $Value.Substring(1)
+    }
+    [System.Windows.Forms.Clipboard]::SetText($Value)
+    Start-Sleep -Milliseconds 80
+    Press-Key ([byte]0xBF) 90
+    Start-Sleep -Milliseconds 180
+    [MotmInputWin32]::keybd_event([byte]0x11, 0, 0, [UIntPtr]::Zero)
+    [MotmInputWin32]::keybd_event([byte]0x56, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 80
+    [MotmInputWin32]::keybd_event([byte]0x56, 0, [MotmInputWin32]::KEYEVENTF_KEYUP, [UIntPtr]::Zero)
+    [MotmInputWin32]::keybd_event([byte]0x11, 0, [MotmInputWin32]::KEYEVENTF_KEYUP, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 160
+    Press-Key ([byte]0x0D) 90
     Start-Sleep -Milliseconds $DelayMilliseconds
 }
 
@@ -87,7 +142,7 @@ function Send-Click([string]$Button) {
     Start-Sleep -Milliseconds $DelayMilliseconds
 }
 
-Focus-Hytale
+$hytaleWindow = Focus-Hytale
 
 switch ($Action) {
     "Key" {
@@ -104,9 +159,8 @@ switch ($Action) {
     }
     "Command" {
         if ([string]::IsNullOrWhiteSpace($Text)) { throw "Text is required for Action=Command." }
-        Send-KeyChord "/"
-        Send-ClipboardText $Text
-        Send-KeyChord "{ENTER}"
+        Click-HytaleCenter $hytaleWindow
+        Send-GameCommand $Text
     }
     "Jump" {
         Send-Jump

@@ -151,7 +151,10 @@ function Test-Flatlands([string]$ScreenshotPath, $Rect) {
         $sky = Get-RegionMetrics $bitmap $Rect 0.20 0.08 0.82 0.48
         $ground = Get-RegionMetrics $bitmap $Rect 0.20 0.58 0.82 0.88
         $center = Get-RegionMetrics $bitmap $Rect 0.34 0.32 0.66 0.72
-        $pass = $sky.sky_ratio -ge 0.55 -and $ground.grass_ratio -ge 0.35 -and $center.dark_ratio -le 0.22
+        $horizonFlatland = $sky.sky_ratio -ge 0.55 -and $ground.grass_ratio -ge 0.35 -and $center.dark_ratio -le 0.22
+        $downAngleFlatland = $sky.sky_ratio -ge 0.25 -and $ground.grass_ratio -ge 0.55 -and $center.grass_ratio -ge 0.45 -and $center.dark_ratio -le 0.18
+        $topdownFlatland = $sky.grass_ratio -ge 0.80 -and $ground.grass_ratio -ge 0.80 -and $center.grass_ratio -ge 0.70 -and $center.dark_ratio -le 0.30
+        $pass = $horizonFlatland -or $downAngleFlatland -or $topdownFlatland
         return [PSCustomObject]@{
             pass = $pass
             sky = $sky

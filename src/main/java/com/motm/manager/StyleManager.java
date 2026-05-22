@@ -7,6 +7,8 @@ import com.motm.util.AbilityPresentation;
 import com.motm.util.DataLoader;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 
 /**
@@ -27,13 +29,13 @@ public class StyleManager {
     private final java.util.function.Predicate<String> freeCastChecker;
 
     // playerId -> (abilityId -> remaining cooldown ticks)
-    private final Map<String, Map<String, Integer>> cooldowns = new HashMap<>();
+    private final Map<String, Map<String, Integer>> cooldowns = new ConcurrentHashMap<>();
     // playerId -> (abilityId -> recharge timers for spent charges)
-    private final Map<String, Map<String, List<Integer>>> chargeRecharges = new HashMap<>();
+    private final Map<String, Map<String, List<Integer>>> chargeRecharges = new ConcurrentHashMap<>();
     // playerId -> currently active cast / recovery window
-    private final Map<String, ActionWindow> actionWindows = new HashMap<>();
+    private final Map<String, ActionWindow> actionWindows = new ConcurrentHashMap<>();
     // playerId -> (abilityId -> active toggle state)
-    private final Map<String, Map<String, ToggleState>> activeToggles = new HashMap<>();
+    private final Map<String, Map<String, ToggleState>> activeToggles = new ConcurrentHashMap<>();
 
     public StyleManager(DataLoader dataLoader,
                         ResourceManager resourceManager,
@@ -455,7 +457,7 @@ public class StyleManager {
             }
             return;
         }
-        cooldowns.computeIfAbsent(playerId, k -> new HashMap<>()).put(abilityId, ticks);
+        cooldowns.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>()).put(abilityId, ticks);
     }
 
     private void startActionWindow(String playerId, AbilityData ability) {
@@ -532,27 +534,21 @@ public class StyleManager {
         }
         chargeRecharges.values().removeIf(Map::isEmpty);
 
-        Iterator<Map.Entry<String, ActionWindow>> iterator = actionWindows.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, ActionWindow> entry = iterator.next();
+        for (Map.Entry<String, ActionWindow> entry : actionWindows.entrySet()) {
             entry.getValue().tick();
             if (entry.getValue().isFinished()) {
-                iterator.remove();
+                actionWindows.remove(entry.getKey(), entry.getValue());
             }
         }
 
-        Iterator<Map.Entry<String, Map<String, ToggleState>>> toggleIterator = activeToggles.entrySet().iterator();
-        while (toggleIterator.hasNext()) {
-            Map.Entry<String, Map<String, ToggleState>> entry = toggleIterator.next();
+        for (Map.Entry<String, Map<String, ToggleState>> entry : activeToggles.entrySet()) {
             String playerId = entry.getKey();
             Map<String, ToggleState> playerToggles = entry.getValue();
-            Iterator<Map.Entry<String, ToggleState>> stateIterator = playerToggles.entrySet().iterator();
-            while (stateIterator.hasNext()) {
-                Map.Entry<String, ToggleState> stateEntry = stateIterator.next();
+            for (Map.Entry<String, ToggleState> stateEntry : playerToggles.entrySet()) {
                 ToggleState state = stateEntry.getValue();
                 state.tick();
                 if (state.isExpired()) {
-                    stateIterator.remove();
+                    playerToggles.remove(stateEntry.getKey(), state);
                     double toggleCooldown = resolveToggleCooldownSeconds(state.ability());
                     if (toggleCooldown > 0) {
                         startCooldown(playerId, stateEntry.getKey(), toggleCooldown);
@@ -561,7 +557,7 @@ public class StyleManager {
             }
 
             if (playerToggles.isEmpty()) {
-                toggleIterator.remove();
+                activeToggles.remove(playerId, playerToggles);
             }
         }
     }
@@ -754,8 +750,8 @@ public class StyleManager {
         }
 
         chargeRecharges
-                .computeIfAbsent(playerId, ignored -> new HashMap<>())
-                .computeIfAbsent(ability.getId(), ignored -> new ArrayList<>())
+                .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>())
+                .computeIfAbsent(ability.getId(), ignored -> new CopyOnWriteArrayList<>())
                 .add(secondsToTicks(resolveChargeRechargeSeconds(ability)));
     }
 
@@ -811,7 +807,7 @@ public class StyleManager {
                 : -1;
 
         activeToggles
-                .computeIfAbsent(playerId, ignored -> new HashMap<>())
+                .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>())
                 .put(ability.getId(), new ToggleState(ability, totalTicks));
     }
 
@@ -821,9 +817,7 @@ public class StyleManager {
             return;
         }
 
-        Iterator<Map.Entry<String, ToggleState>> iterator = playerToggles.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, ToggleState> entry = iterator.next();
+        for (Map.Entry<String, ToggleState> entry : new ArrayList<>(playerToggles.entrySet())) {
             if (activatedAbilityId.equals(entry.getKey())) {
                 continue;
             }
@@ -833,7 +827,7 @@ public class StyleManager {
                 continue;
             }
 
-            iterator.remove();
+            playerToggles.remove(entry.getKey(), state);
             double toggleCooldown = resolveToggleCooldownSeconds(state.ability());
             if (toggleCooldown > 0) {
                 startCooldown(playerId, entry.getKey(), toggleCooldown);

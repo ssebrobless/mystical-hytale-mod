@@ -170,6 +170,14 @@ public class MenteesMod extends JavaPlugin {
             DEFAULT_DEV_GRIMOIRE_ITEM_ID
     );
     private static final Set<String> HYDRO_CONTAINER_ID_SET = Set.of(HYDRO_CONTAINER_ITEM_IDS);
+    private static final Set<String> STYLE_TEST_CLEANUP_ROLES = Set.of(
+            "Goblin_Scrapper",
+            "Test_Dummy_Stationary",
+            "Bat",
+            "Empty_Role",
+            "Slug_Magma",
+            "Spark_Living"
+    );
 
     // Core systems
     private DataLoader dataLoader;
@@ -1334,7 +1342,7 @@ public class MenteesMod extends JavaPlugin {
         Vector3d horizontalForward = normalizeHorizontal(forward);
         Vector3d right = new Vector3d(-horizontalForward.z, 0.0, horizontalForward.x);
         Vector3d groundPosition = closeGroundedTarget
-                ? basePosition.clone().addScaled(horizontalForward, 2.2)
+                ? basePosition.clone().addScaled(horizontalForward, 1.6)
                 : basePosition.clone()
                         .addScaled(horizontalForward, 5.0)
                         .addScaled(right, -8.0);
@@ -1350,7 +1358,7 @@ public class MenteesMod extends JavaPlugin {
 
         int cleared = clearTrackedStyleTestTargets(playerId);
         List<Ref<EntityStore>> targets = new ArrayList<>();
-        Ref<EntityStore> grounded = spawnStyleTestNpc(world, groundPosition, "Goblin_Scrapper");
+        Ref<EntityStore> grounded = spawnStyleTestNpc(world, groundPosition, "Test_Dummy_Stationary");
         if (grounded != null) {
             targets.add(grounded);
         }
@@ -1371,18 +1379,72 @@ public class MenteesMod extends JavaPlugin {
         return summary;
     }
 
-    private String clearStyleTestMobsNow(String playerId) {
+    private String clearStyleTestMobsNow(String playerId, Store<EntityStore> currentStore, Player player) {
         int cleared = clearTrackedStyleTestTargets(playerId);
-        String summary = "[MOTM] Style test mobs cleared: count=" + cleared;
+        int staleCleared = clearNearbyStyleTestTargets(currentStore, player);
+        String summary = "[MOTM] Style test mobs cleared: count=" + (cleared + staleCleared)
+                + " tracked=" + cleared
+                + " staleNearby=" + staleCleared;
         LOG.info(summary + " playerId=" + playerId);
         return summary;
     }
 
-    private String countStyleTestMobsNow(String playerId) {
+    private String countStyleTestMobsNow(String playerId, Store<EntityStore> currentStore, Player player) {
         int count = countTrackedStyleTestTargets(playerId);
-        String summary = "[MOTM] Style test mobs tracked: count=" + count;
+        int nearby = countNearbyStyleTestTargets(currentStore, player);
+        String summary = "[MOTM] Style test mobs tracked: count=" + count
+                + " nearbyCleanupRoles=" + nearby;
         LOG.info(summary + " playerId=" + playerId);
         return summary;
+    }
+
+    private int clearNearbyStyleTestTargets(Store<EntityStore> currentStore, Player player) {
+        return visitNearbyStyleTestTargets(currentStore, player, true);
+    }
+
+    private int countNearbyStyleTestTargets(Store<EntityStore> currentStore, Player player) {
+        return visitNearbyStyleTestTargets(currentStore, player, false);
+    }
+
+    private int visitNearbyStyleTestTargets(Store<EntityStore> currentStore, Player player, boolean despawn) {
+        if (currentStore == null || player == null) {
+            return 0;
+        }
+
+        Vector3d playerPosition = getPlayerPosition(player);
+        if (playerPosition == null) {
+            return 0;
+        }
+
+        int[] visited = {0};
+        currentStore.forEachChunk((chunk, commandBuffer) -> {
+            for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
+                NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
+                if (npc == null || npc.isDespawning() || !isStyleTestCleanupRole(npc)) {
+                    continue;
+                }
+
+                Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
+                Vector3d position = getEntityPosition(currentStore, ref);
+                if (position == null || distance(playerPosition, position) > 28.0) {
+                    continue;
+                }
+
+                if (despawn) {
+                    npc.setToDespawn();
+                }
+                visited[0]++;
+            }
+        });
+        return visited[0];
+    }
+
+    private boolean isStyleTestCleanupRole(NPCEntity npc) {
+        if (npc == null) {
+            return false;
+        }
+        return STYLE_TEST_CLEANUP_ROLES.contains(npc.getRoleName())
+                || STYLE_TEST_CLEANUP_ROLES.contains(npc.getNPCTypeId());
     }
 
     private int clearTrackedStyleTestTargets(String playerId) {
@@ -1751,7 +1813,7 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
-            String result = clearStyleTestMobsNow(playerId);
+            String result = clearStyleTestMobsNow(playerId, currentStore, player);
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobClears.remove(playerId);
         }
@@ -1768,7 +1830,7 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
-            String result = countStyleTestMobsNow(playerId);
+            String result = countStyleTestMobsNow(playerId, currentStore, player);
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobCounts.remove(playerId);
         }

@@ -80,6 +80,7 @@ public final class HytaleAssetResolver {
     private static final String MODEL_VOID_SPAWN = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
     private static final String MODEL_VOID_EYE = "Common/NPC/Void/Eye_Void/Models/Model.blockymodel";
     private static final String MODEL_FROG = "Common/NPC/Critter/Frog/Models/Model.blockymodel";
+    private static final String ROLE_EMPTY = "Empty_Role";
     private static final String ROLE_SLUG_MAGMA = "Slug_Magma";
     private static final String ROLE_SPARK_LIVING = "Spark_Living";
 
@@ -146,6 +147,10 @@ public final class HytaleAssetResolver {
         }
 
         return ROLE_SPARK_LIVING;
+    }
+
+    public static String resolveFieldRoleId(String classId, String styleId, AbilityData ability) {
+        return ROLE_EMPTY;
     }
 
     private static String resolveAnimation(String classId, String styleId, AbilityData ability) {

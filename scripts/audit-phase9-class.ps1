@@ -5,6 +5,7 @@ param(
     [string[]]$Styles = @(),
     [switch]$SkipFlatlandsGate,
     [switch]$SkipThirdPerson,
+    [switch]$UseThirdPerson,
     [int]$CommandDelayMilliseconds = 850,
     [int]$PostCastMilliseconds = 2400
 )
@@ -138,7 +139,8 @@ try {
     Add-Line("- World: $WorldName")
     Add-Line("- Style source: $stylePath")
     Add-Line("- Styles: " + (($allStyles | ForEach-Object { $_.id }) -join ", "))
-    Add-Line("- Camera: " + ($(if ($SkipThirdPerson) { "unchanged" } else { "third-person requested with V" })))
+    Add-Line("- Camera: " + ($(if ($UseThirdPerson -and -not $SkipThirdPerson) { "third-person requested with V" } else { "unchanged" })))
+    Add-Line("- Facing aid: top compass/debug heading should remain visible in screenshots")
     Add-Line("- Mob hygiene: clear tracked test mobs before each ability, then assert tracked count from logs")
     Add-Line("")
 
@@ -146,7 +148,7 @@ try {
         & (Join-Path $PSScriptRoot "ensure-flatlands.ps1") -VerifyOnly
     }
 
-    if (-not $SkipThirdPerson) {
+    if ($UseThirdPerson -and -not $SkipThirdPerson) {
         & (Join-Path $PSScriptRoot "send-input.ps1") -Action ThirdPerson -DelayMilliseconds 350 | Out-Host
     }
 

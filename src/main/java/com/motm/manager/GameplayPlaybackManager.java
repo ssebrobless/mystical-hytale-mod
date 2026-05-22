@@ -120,6 +120,7 @@ public class GameplayPlaybackManager {
     private final List<ActiveField> activeFields = new ArrayList<>();
     private final List<ActiveChannel> activeChannels = new ArrayList<>();
     private final List<ActiveLineControl> activeLineControls = new ArrayList<>();
+    private final Set<Ref<EntityStore>> visualProxyRefs = ConcurrentHashMap.newKeySet();
     private final Map<String, List<BuriedVictim>> buriedVictimsByField = new HashMap<>();
     private final Set<String> reportedAbilityKillEntityIds = ConcurrentHashMap.newKeySet();
     private final Map<String, Long> recentShockedTargets = new ConcurrentHashMap<>();
@@ -378,14 +379,16 @@ public class GameplayPlaybackManager {
         String effectId = "MOTM_Terra_Quake_Impact";
         float despawnSeconds = 1.0f;
         int spawned = 0;
+        String roleId = HytaleAssetResolver.resolveFieldRoleId("terra", "quake", ability);
         for (Vector3d position : positions) {
             NPCEntity proxy = new NPCEntity(world);
-            proxy.setRoleName(FIELD_VISUAL_ROLE_NAME);
+            proxy.setRoleName(roleId);
             proxy.setDespawnTime(despawnSeconds);
             world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
 
             Ref<EntityStore> proxyRef = proxy.getReference();
             if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
+                visualProxyRefs.add(proxyRef);
                 applyEffectById(proxyRef, proxyRef.getStore(), effectId);
                 spawned++;
             }
@@ -2257,6 +2260,7 @@ public class GameplayPlaybackManager {
             return ProjectileVisualRuntime.none();
         }
 
+        visualProxyRefs.add(proxyRef);
         return new ProjectileVisualRuntime(proxyRef, effectId, activateAtMillis);
     }
 
@@ -2285,15 +2289,17 @@ public class GameplayPlaybackManager {
         }
 
         List<Ref<EntityStore>> refs = new ArrayList<>();
+        String roleId = HytaleAssetResolver.resolveFieldRoleId(classId, styleId, ability);
         float despawnTimeSeconds = (float) Math.max(1.0, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.75);
         for (Vector3d position : positions) {
             NPCEntity proxy = new NPCEntity(world);
-            proxy.setRoleName(FIELD_VISUAL_ROLE_NAME);
+            proxy.setRoleName(roleId);
             proxy.setDespawnTime(despawnTimeSeconds);
             world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
 
             Ref<EntityStore> proxyRef = proxy.getReference();
             if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
+                visualProxyRefs.add(proxyRef);
                 refs.add(proxyRef);
             }
         }
@@ -2359,6 +2365,7 @@ public class GameplayPlaybackManager {
         if (npc != null) {
             npc.setToDespawn();
         }
+        visualProxyRefs.remove(projectile.visualRef());
     }
 
     private void syncFieldVisual(ActiveField field, long now) {
@@ -2440,6 +2447,7 @@ public class GameplayPlaybackManager {
             if (npc != null) {
                 npc.setToDespawn();
             }
+            visualProxyRefs.remove(visualRef);
         }
     }
 
@@ -4631,6 +4639,13 @@ public class GameplayPlaybackManager {
 
         LinkedHashSet<Ref<EntityStore>> targets = new LinkedHashSet<>();
         String castType = lower(ability.getCastType());
+        if ("ground_burst".equals(castType) && "self_centered".equals(lower(ability.getTargetType()))) {
+            return filterGroundTargetsIfNeeded(
+                    collectTargetsAroundPoint(playerRef, store, frame.areaCenter(), frame.areaRadius(), 16.0),
+                    store,
+                    ability
+            );
+        }
 
         if (CONE_CAST_TYPES.contains(castType)) {
             for (TargetCandidate candidate : frame.candidates()) {
@@ -4727,6 +4742,61 @@ public class GameplayPlaybackManager {
         return filterGroundTargetsIfNeeded(nearestForward != null ? List.of(nearestForward.ref()) : List.of(), store, ability);
     }
 
+    private List<Ref<EntityStore>> collectTargetsAroundPoint(Ref<EntityStore> playerRef,
+                                                             Store<EntityStore> store,
+                                                             Vector3d center,
+                                                             double radius,
+                                                             double verticalTolerance) {
+        if (playerRef == null || store == null || center == null) {
+            return List.of();
+        }
+
+        LinkedHashSet<Ref<EntityStore>> targets = new LinkedHashSet<>();
+        int[] scanned = {0};
+        double[] nearest = {Double.MAX_VALUE};
+        store.forEachChunk((chunk, commandBuffer) -> {
+            for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
+                Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
+                if (ref == null || !ref.isValid() || ref.equals(playerRef) || isMotmVisualProxy(ref)) {
+                    continue;
+                }
+
+                NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
+                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                    continue;
+                }
+
+                if (chunk.getComponent(entityIndex, DeathComponent.getComponentType()) != null) {
+                    continue;
+                }
+
+                TransformComponent transform = chunk.getComponent(entityIndex, TransformComponent.getComponentType());
+                if (transform == null || transform.getTransform() == null || transform.getTransform().getPosition() == null) {
+                    continue;
+                }
+
+                scanned[0]++;
+                Vector3d position = transform.getTransform().getPosition();
+                double horizontal = Math.hypot(position.x - center.x, position.z - center.z);
+                double vertical = Math.abs(position.y - center.y);
+                nearest[0] = Math.min(nearest[0], horizontal);
+                if (horizontal <= radius && vertical <= verticalTolerance) {
+                    targets.add(ref);
+                }
+            }
+        });
+
+        if (targets.isEmpty()) {
+            String nearestLabel = nearest[0] == Double.MAX_VALUE ? "none" : AbilityPresentation.formatDecimal(nearest[0]);
+            LOG.info("[MOTM] Landing AoE target scan found no targets: center=" + center
+                    + " radius=" + AbilityPresentation.formatDecimal(radius)
+                    + " verticalTolerance=" + AbilityPresentation.formatDecimal(verticalTolerance)
+                    + " scanned=" + scanned[0]
+                    + " nearestHorizontal=" + nearestLabel);
+        }
+        return List.copyOf(targets);
+    }
+
     private List<Ref<EntityStore>> filterGroundTargetsIfNeeded(List<Ref<EntityStore>> targets,
                                                                Store<EntityStore> store,
                                                                AbilityData ability) {
@@ -4800,7 +4870,7 @@ public class GameplayPlaybackManager {
         store.forEachChunk((chunk, commandBuffer) -> {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
-                if (ref == null || !ref.isValid() || ref.equals(playerRef)) {
+                if (ref == null || !ref.isValid() || ref.equals(playerRef) || isMotmVisualProxy(ref)) {
                     continue;
                 }
 
@@ -5992,6 +6062,10 @@ public class GameplayPlaybackManager {
         return SUMMON_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
                 || PROJECTILE_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
                 || FIELD_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName());
+    }
+
+    private boolean isMotmVisualProxy(Ref<EntityStore> ref) {
+        return ref != null && visualProxyRefs.contains(ref);
     }
 
     private String buildMovementSummary(String castType, double horizontalDistance, double verticalDistance) {
