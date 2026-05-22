@@ -4,7 +4,8 @@ Non-blocking findings discovered during successful style validation runs. These 
 
 ## Terra
 
-- `magma`: Hytale logs `Reloading nonexistent role motm_projectile!` when `magma_sling` spawns the projectile visual proxy. The ability still casts and launches successfully. Likely a cross-cutting projectile proxy-role issue, not Magma-specific.
+- ~~`magma`: Hytale logs `Reloading nonexistent role motm_projectile!` when `magma_sling` spawns the projectile visual proxy. The ability still casts and launches successfully. Likely a cross-cutting projectile proxy-role issue, not Magma-specific.~~ Resolved 2026-05-21: projectile proxy now uses resolved role `Slug_Magma`; audit `audits/blockers/2026-05-21/projectile-role/report.md` confirms `motm_projectile reload lines: 0`.
+- `magma`: the projectile proxy now logs `Unmapped NPC type encountered. npcTypeId=Slug_Magma, modelAssetId=Slug_Magma`. This did not block `magma_sling`; classify with the existing summon/proxy type-mapping cleanup.
 
 ## Hydro
 

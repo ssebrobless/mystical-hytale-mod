@@ -80,6 +80,8 @@ public final class HytaleAssetResolver {
     private static final String MODEL_VOID_SPAWN = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
     private static final String MODEL_VOID_EYE = "Common/NPC/Void/Eye_Void/Models/Model.blockymodel";
     private static final String MODEL_FROG = "Common/NPC/Critter/Frog/Models/Model.blockymodel";
+    private static final String ROLE_SLUG_MAGMA = "Slug_Magma";
+    private static final String ROLE_SPARK_LIVING = "Spark_Living";
 
     private HytaleAssetResolver() {
     }
@@ -128,6 +130,22 @@ public final class HytaleAssetResolver {
     public static String resolveModelId(String classId, String styleId, AbilityData ability) {
         AbilityActionAssets assets = resolve(classId, styleId, ability);
         return extractModelId(assets.getModelAsset());
+    }
+
+    public static String resolveProjectileRoleId(String classId, String styleId, AbilityData ability) {
+        String abilityId = ability == null ? "" : lower(ability.getId());
+        String style = lower(styleId);
+
+        if ("terra".equals(lower(classId)) && "magma".equals(style) && "magma_sling".equals(abilityId)) {
+            return ROLE_SLUG_MAGMA;
+        }
+
+        String modelId = resolveModelId(classId, styleId, ability);
+        if (modelId != null && !modelId.isBlank()) {
+            return modelId;
+        }
+
+        return ROLE_SPARK_LIVING;
     }
 
     private static String resolveAnimation(String classId, String styleId, AbilityData ability) {

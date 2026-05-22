@@ -2226,8 +2226,9 @@ public class GameplayPlaybackManager {
             return ProjectileVisualRuntime.none();
         }
 
+        String roleId = HytaleAssetResolver.resolveProjectileRoleId(classId, styleId, ability);
         NPCEntity proxy = new NPCEntity(world);
-        proxy.setRoleName(PROJECTILE_VISUAL_ROLE_NAME);
+        proxy.setRoleName(roleId);
         proxy.setDespawnTime((float) Math.max(0.6, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5));
         world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
 
