@@ -4,6 +4,7 @@ param(
     [string]$WorldName = "MOTM Creative Test",
     [string[]]$Styles = @(),
     [switch]$SkipFlatlandsGate,
+    [switch]$SkipThirdPerson,
     [int]$CommandDelayMilliseconds = 850,
     [int]$PostCastMilliseconds = 2400
 )
@@ -38,6 +39,25 @@ function Add-Line([string]$Line) {
 
 function Add-RunMarker([string]$Marker) {
     Send-MotmCommand "motm dev audit marker $Marker" 350
+}
+
+function Get-AbilityScenario($Ability) {
+    $castType = ([string]$Ability.cast_type).ToLowerInvariant()
+    $targetType = ([string]$Ability.target_type).ToLowerInvariant()
+    $trigger = ([string]$Ability.trigger).ToLowerInvariant()
+    if ($trigger -eq "jump_land") { return "jump-land movement: arm, jump, land, then verify landing AoE" }
+    if ($castType -in @("dash", "dash_buff", "dash_strike", "leap", "dive_strike", "teleport", "air_stall")) {
+        return "movement: verify player displacement and impact after motion"
+    }
+    if ($castType -in @("cone", "gaze")) { return "facing: target must be in camera cone" }
+    if ($castType -in @("ground_zone", "support_zone", "barrier", "ground_target", "ground_strike")) {
+        return "ground target/field: verify placed area persists for duration"
+    }
+    if ($castType -like "projectile*" -or $castType -in @("line_control", "wave_line", "chain")) {
+        return "projectile/line: verify launch plus target-side hit/effect"
+    }
+    if ($targetType -eq "self") { return "self: verify third-person body/buff read" }
+    return "single-target: verify target hit/effect"
 }
 
 function Get-LatestServerLog {
@@ -118,10 +138,16 @@ try {
     Add-Line("- World: $WorldName")
     Add-Line("- Style source: $stylePath")
     Add-Line("- Styles: " + (($allStyles | ForEach-Object { $_.id }) -join ", "))
+    Add-Line("- Camera: " + ($(if ($SkipThirdPerson) { "unchanged" } else { "third-person requested with V" })))
+    Add-Line("- Mob hygiene: clear tracked test mobs before each ability, then assert tracked count from logs")
     Add-Line("")
 
     if (-not $SkipFlatlandsGate) {
         & (Join-Path $PSScriptRoot "ensure-flatlands.ps1") -VerifyOnly
+    }
+
+    if (-not $SkipThirdPerson) {
+        & (Join-Path $PSScriptRoot "send-input.ps1") -Action ThirdPerson -DelayMilliseconds 350 | Out-Host
     }
 
     $log = Get-LatestServerLog
@@ -151,19 +177,52 @@ try {
 
         foreach ($ability in @($style.abilities)) {
             $abilityId = [string]$ability.id
-            Send-MotmCommand "motm dev test mobs close" 1350
             $abilityStartLog = Get-LatestServerLog
             $abilityStartOffset = if ($abilityStartLog) { $abilityStartLog.Length } else { 0 }
-            Send-MotmCommand "motm dev test ability $abilityId" $PostCastMilliseconds
+
+            Send-MotmCommand "motm dev test mobs clear" 500
+            Send-MotmCommand "motm dev test mobs close" 1350
+            Send-MotmCommand "motm dev test mobs count" 450
+
+            $trigger = ([string]$ability.trigger).ToLowerInvariant()
+            if ($trigger -eq "jump_land") {
+                Send-MotmCommand "motm dev test ability $abilityId" 900
+                & (Join-Path $PSScriptRoot "send-input.ps1") -Action Jump -DelayMilliseconds 1600 | Out-Host
+                Start-Sleep -Milliseconds 900
+            } else {
+                Send-MotmCommand "motm dev test ability $abilityId" $PostCastMilliseconds
+            }
             Capture "$styleId-$abilityId"
 
             $abilityLines = Read-NewLogLines $abilityStartLog.FullName $abilityStartOffset
             $resultLine = Get-AbilityResult $abilityLines $abilityId
+            $spawnLine = $abilityLines |
+                Where-Object { $_ -match "Style test mobs spawned: count=" } |
+                Select-Object -Last 1
+            $countLine = $abilityLines |
+                Where-Object { $_ -match "Style test mobs tracked: count=" } |
+                Select-Object -Last 1
+            $stompLine = $abilityLines |
+                Where-Object { $_ -match "Stomp landing resolved: targets=" } |
+                Select-Object -Last 1
             if ($resultLine) {
                 Add-Line("- PASS: ``$abilityId`` cast")
+                Add-Line("  - Scenario: " + (Get-AbilityScenario $ability))
+                if ($spawnLine) { Add-Line("  - $spawnLine") }
+                if ($countLine) { Add-Line("  - $countLine") }
                 Add-Line("  - $resultLine")
+                if ($trigger -eq "jump_land") {
+                    if ($stompLine -and $stompLine -match "targets=[1-9]") {
+                        Add-Line("  - PASS: $stompLine")
+                    } else {
+                        Add-Line("  - FAIL: jump-land landing AoE did not resolve against a target")
+                    }
+                }
             } else {
                 Add-Line("- FAIL: ``$abilityId`` cast result missing")
+                Add-Line("  - Scenario: " + (Get-AbilityScenario $ability))
+                if ($spawnLine) { Add-Line("  - $spawnLine") }
+                if ($countLine) { Add-Line("  - $countLine") }
             }
             $residuals = Get-ResidualLines $abilityLines
             foreach ($residual in $residuals) {
@@ -189,13 +248,14 @@ try {
     }
 
     $missingCasts = $report | Where-Object { $_ -match "^- FAIL: .* cast result missing" }
+    $failedScenarios = $report | Where-Object { $_ -match "  - FAIL: " }
     Add-Line("")
-    if ($blocking.Count -eq 0 -and $missingCasts.Count -eq 0) {
+    if ($blocking.Count -eq 0 -and $missingCasts.Count -eq 0 -and $failedScenarios.Count -eq 0) {
         Add-Line("PASS")
         $status = "PASS"
     } else {
         Add-Line("FAIL")
-        throw "Phase 9 $ClassId audit failed: missing casts=$($missingCasts.Count), blocking=$($blocking.Count)."
+        throw "Phase 9 $ClassId audit failed: missing casts=$($missingCasts.Count), scenario failures=$($failedScenarios.Count), blocking=$($blocking.Count)."
     }
 } catch {
     Add-Line("")

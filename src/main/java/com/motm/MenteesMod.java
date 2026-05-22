@@ -1267,6 +1267,20 @@ public class MenteesMod extends JavaPlugin {
         return spawnStyleTestMobs(playerId, false);
     }
 
+    public String clearStyleTestMobs(String playerId) {
+        int cleared = clearTrackedStyleTestTargets(playerId);
+        String summary = "[MOTM] Style test mobs cleared: count=" + cleared;
+        LOG.info(summary + " playerId=" + playerId);
+        return summary;
+    }
+
+    public String countStyleTestMobs(String playerId) {
+        int count = countTrackedStyleTestTargets(playerId);
+        String summary = "[MOTM] Style test mobs tracked: count=" + count;
+        LOG.info(summary + " playerId=" + playerId);
+        return summary;
+    }
+
     public String spawnStyleTestMobs(String playerId, boolean closeGroundedTarget) {
         if (!devToolsEnabled) {
             return devToolsDisabledMessage();
@@ -1322,6 +1336,7 @@ public class MenteesMod extends JavaPlugin {
             return "[MOTM] Runtime world is unavailable for style-test mobs.";
         }
 
+        int cleared = clearTrackedStyleTestTargets(playerId);
         List<Ref<EntityStore>> targets = new ArrayList<>();
         Ref<EntityStore> grounded = spawnStyleTestNpc(world, groundPosition, "Goblin_Scrapper");
         if (grounded != null) {
@@ -1336,10 +1351,61 @@ public class MenteesMod extends JavaPlugin {
 
         String summary = "[MOTM] Style test mobs spawned: count=" + spawned
                 + " mode=" + (closeGroundedTarget ? "close" : "standard")
+                + " clearedPrevious=" + cleared
+                + " tracked=" + countValidRefs(targets)
                 + " grounded=" + formatVector(groundPosition)
                 + " floating=" + formatVector(floatingPosition);
         LOG.info(summary);
         return summary;
+    }
+
+    private int clearTrackedStyleTestTargets(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return 0;
+        }
+        List<Ref<EntityStore>> targets = styleTestTargetsByPlayer.remove(playerId);
+        if (targets == null || targets.isEmpty()) {
+            return 0;
+        }
+
+        int cleared = 0;
+        for (Ref<EntityStore> target : targets) {
+            if (target == null || !target.isValid()) {
+                continue;
+            }
+            Store<EntityStore> store = target.getStore();
+            NPCEntity npc = store != null ? store.getComponent(target, NPCEntity.getComponentType()) : null;
+            if (npc != null && !npc.isDespawning()) {
+                npc.setToDespawn();
+                cleared++;
+            }
+        }
+        return cleared;
+    }
+
+    private int countTrackedStyleTestTargets(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return 0;
+        }
+        return countValidRefs(styleTestTargetsByPlayer.get(playerId));
+    }
+
+    private int countValidRefs(List<Ref<EntityStore>> refs) {
+        if (refs == null || refs.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        for (Ref<EntityStore> ref : refs) {
+            if (ref == null || !ref.isValid()) {
+                continue;
+            }
+            Store<EntityStore> store = ref.getStore();
+            NPCEntity npc = store != null ? store.getComponent(ref, NPCEntity.getComponentType()) : null;
+            if (npc != null && !npc.isDespawning() && store.getComponent(ref, DeathComponent.getComponentType()) == null) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private Ref<EntityStore> spawnStyleTestNpc(World world, Vector3d position, String roleName) {

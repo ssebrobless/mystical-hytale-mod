@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Command", "Jump", "Stomp")]
+    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Command", "Jump", "Stomp", "ThirdPerson")]
     [string]$Action = "Key",
     [string]$Keys,
     [string]$Text,
@@ -110,6 +110,9 @@ switch ($Action) {
         Start-Sleep -Milliseconds 400
         Send-Jump
         Start-Sleep -Milliseconds 1300
+    }
+    "ThirdPerson" {
+        Send-KeyChord "v"
     }
 }
 

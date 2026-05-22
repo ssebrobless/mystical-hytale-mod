@@ -11,11 +11,14 @@ spawn geometry.
 ```text
 Cold launch / load world
   +-- ensure flatlands visual gate
+      +-- switch to third-person camera (V)
+      +-- clear tracked test mobs
       +-- spawn close + distant targets
+      +-- log tracked mob count
           +-- cast ability
               +-- capture screenshot
               +-- tail log
-              +-- write PASS/FAIL + residuals
+              +-- write runtime smoke / gameplay acceptance / residuals
 ```
 
 ## Current Plan Index
@@ -135,6 +138,63 @@ audits/harness/assets/<timestamp>/
 This does not replace user judgment for artistic style identity. It only proves
 the test arena is visually clean enough to make screenshots meaningful.
 
+## Runtime Smoke Is Not Gameplay Acceptance
+
+The 2026-05-22 Terra flatlands run proved that the command path can cast all
+30 Terra abilities without blocking class/runtime errors. That is only a
+runtime smoke pass. It is not enough to claim an ability is mechanically or
+visually accepted.
+
+```text
+╔══════════════════════╦══════════════════════════════╦══════════════════════════════╗
+║ Gate                 ║ Evidence                     ║ Status Meaning               ║
+╠══════════════════════╬══════════════════════════════╬══════════════════════════════╣
+║ Runtime smoke        ║ Cast log + no crash           ║ Command path works           ║
+║ Mechanical gameplay  ║ Required hit/status/movement  ║ Description is performed     ║
+║ Visual identity      ║ Third-person screenshot/video  ║ Style reads at a glance      ║
+╚══════════════════════╩══════════════════════════════╩══════════════════════════════╝
+```
+
+Future class/style reports must keep these separate. A cast line with
+`No valid target in range`, no jump-land resolution, or no target-side projectile
+impact is a runtime smoke result at best, not a gameplay acceptance pass.
+
+## Mob Hygiene
+
+Repeated `/motm dev test mobs close` calls can crowd the arena and make both
+targeting and screenshots dishonest. The harness must:
+
+```text
+Before each ability
+├── /motm dev test mobs clear
+├── /motm dev test mobs close
+├── /motm dev test mobs count
+└── require spawn log with clearedPrevious=<n> and tracked=2
+```
+
+The Java dev command now despawns tracked test mobs before spawning the next
+pair and logs `clearedPrevious` plus `tracked`. This is still scoped to tracked
+MOTM test mobs; wild/leftover mobs from older sessions should be handled by
+cold-launch/world reset if they pollute screenshots.
+
+## Scenario-Aware Visual Checks
+
+Ability descriptions and cast metadata decide the audit setup:
+
+```text
+cast_type / trigger
+├── jump_land       ▶ arm ability, jump, land, require landing-resolution log
+├── cone / gaze     ▶ face target before cast; camera cone matters
+├── movement        ▶ capture before/after displacement, not only cast log
+├── projectile      ▶ prove launch and target-side hit/effect
+├── ground field    ▶ prove field persists for duration_seconds
+└── self buff       ▶ use third-person camera for body/tint/status readability
+```
+
+Pressing `V` toggles third person in Hytale and is now part of the default
+class audit runner. Use first person only when aiming precision is the thing
+being tested.
+
 ## Spellbook Scope Correction
 
 The spellbook is no longer a story/lore/codex surface.
@@ -170,10 +230,13 @@ Per style:
 ```text
 1. ensure flatlands
 2. set class/style
-3. spawn close target and distance target
-4. cast each of 3 abilities
-5. screenshot each impact/active state
-6. log-scan for hit/effect proof
-7. compare visuals to realignment palette/feel
-8. update residuals instead of hiding weak evidence
+3. switch third-person unless aiming precision is under test
+4. clear tracked test mobs
+5. spawn close target and distance target
+6. log tracked mob count
+7. cast each of 3 abilities with scenario-specific movement
+8. screenshot each impact/active state
+9. log-scan for hit/effect/movement proof
+10. compare visuals to realignment palette/feel
+11. update residuals instead of hiding weak evidence
 ```

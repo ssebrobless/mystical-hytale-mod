@@ -804,8 +804,16 @@ public class MotmCommand {
                 }
                 yield mod.startSingleAbilityTest(player.getPlayerId(), args[3]);
             }
-            case "mobs" -> mod.spawnStyleTestMobs(player.getPlayerId(),
-                    args.length >= 4 && "close".equalsIgnoreCase(args[3]));
+            case "mobs" -> {
+                if (args.length >= 4 && "clear".equalsIgnoreCase(args[3])) {
+                    yield mod.clearStyleTestMobs(player.getPlayerId());
+                }
+                if (args.length >= 4 && "count".equalsIgnoreCase(args[3])) {
+                    yield mod.countStyleTestMobs(player.getPlayerId());
+                }
+                yield mod.spawnStyleTestMobs(player.getPlayerId(),
+                        args.length >= 4 && "close".equalsIgnoreCase(args[3]));
+            }
             case "status" -> mod.getStyleTestStatus(player.getPlayerId());
             case "stop" -> mod.stopStyleTest(player.getPlayerId());
             default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";
@@ -1117,7 +1125,7 @@ public class MotmCommand {
                 + "  /motm dev book\n"
                 + "  /motm dev test style <styleId>\n"
                 + "  /motm dev test ability <abilityId>\n"
-                + "  /motm dev test mobs\n"
+                + "  /motm dev test mobs [close|clear|count]\n"
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
                 + "  /motm dev freecast <on|off>\n"
