@@ -1,0 +1,67 @@
+﻿[2026/05/22 02:21:50   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 02:21:51   INFO]        [CommandManager] imseb executed command: motm dev class set hydro
+[2026/05/22 02:21:51   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:21:51   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:21:51   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:21:51   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:21:51   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:21:53   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 02:21:53   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:21:53   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:21:53   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:21:53   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:21:53   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:21:55   INFO]        [CommandManager] imseb executed command: motm style rain
+[2026/05/22 02:21:55   INFO]                  [MOTM] [MOTM] imseb selected styles: [rain]
+[2026/05/22 02:21:55   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:21:55   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[rain]
+[2026/05/22 02:21:55   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:21:55   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:21:55   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[rain]
+[2026/05/22 02:21:55   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:21:56   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:21:56   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:21:56   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5102.16, 168.00, 4980.76) floating=(5096.49, 171.00, 4981.60)
+[2026/05/22 02:22:00   INFO]        [CommandManager] imseb executed command: motm dev test ability piercing_rain
+[2026/05/22 02:22:00   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=piercing_rain hasTarget=true targetBlock=Vector3i{x=5102, y=168, z=4980}
+[2026/05/22 02:22:00   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=piercing_rain notifyFailures=true
+[2026/05/22 02:22:00   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=piercing_rain
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:00   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=piercing_rain result=[MOTM] Cast Piercing Rain! Runtime: hydro wave cast visuals | field active for 6s | radius 6.0m | self attack buff | 4 hits for 82.9 damage | applied dot to 4 targets.
+[2026/05/22 02:22:09   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:22:09   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:22:09   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5101.64, 168.00, 4983.98) floating=(5101.22, 171.00, 4989.70)
+[2026/05/22 02:22:13   INFO]        [CommandManager] imseb executed command: motm dev test ability rainbow
+[2026/05/22 02:22:13   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rainbow hasTarget=true targetBlock=Vector3i{x=5101, y=168, z=4983}
+[2026/05/22 02:22:13   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rainbow notifyFailures=true
+[2026/05/22 02:22:13   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rainbow
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:22:13   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rainbow result=[MOTM] Cast Rainbow! Runtime: hydro wave cast visuals | field active for 6s | radius 5.0m.
+[2026/05/22 02:22:21   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:22:21   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:22:21   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5101.64, 168.00, 4983.98) floating=(5101.22, 171.00, 4989.70)
+[2026/05/22 02:22:25   INFO]        [CommandManager] imseb executed command: motm dev test ability splash
+[2026/05/22 02:22:25   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=splash hasTarget=true targetBlock=Vector3i{x=5101, y=168, z=4983}
+[2026/05/22 02:22:25   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=splash notifyFailures=true
+[2026/05/22 02:22:25   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=splash
+[2026/05/22 02:22:25   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=splash result=[MOTM] Cast Splash! Runtime: hydro wave cast visuals | launched 4 projectiles at 20.0m/s | burst spread | shield 39.1.
+[2026/05/22 02:22:25   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=3c58789f-3823-3a6c-94f5-6bcbe3251790 mobType=Goblin_Scrapper
+[2026/05/22 02:22:25   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 02:22:25   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=5724f627-6a21-3bf6-880e-b7414fff1f45 mobType=Goblin_Scrapper
+[2026/05/22 02:22:25   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50

@@ -23,6 +23,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 
 - `snow`: `frosty` spawns and casts successfully, but the server logs `Unmapped NPC type encountered. npcTypeId=Golem_Crystal_Frost, modelAssetId=Golem_Crystal_Frost`. This did not block summon creation or crash the world; later mob-XP/type mapping should recognize MOTM summon proxy types or explicitly ignore them.
 - `surf`: `high_tide`, `waverider`, and `riptide` validate successfully in `audits/phase9-surf/2026-05-21T22-19-09/`; `high_tide` now grants `self speed` after the surgical data fix. The run logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for projectile proxy mapping cleanup.
+- `rain`: `piercing_rain`, `rainbow`, and `splash` validate successfully in `audits/phase9-rain/2026-05-21T22-21-49/`, but field visuals for `piercing_rain` and `rainbow` log `Reloading nonexistent role motm_field!`. This is the field-proxy equivalent of the earlier projectile proxy-role issue; abilities still cast and the world stayed connected.
 
 ## Harness
 
