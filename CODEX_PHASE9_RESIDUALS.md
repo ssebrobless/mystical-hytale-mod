@@ -12,6 +12,9 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `arbor`: `rooted`, `vines`, and `sapling` validate successfully in `audits/phase9-arbor/2026-05-21T21-25-32/`, but `vines` still behaves as immediate damage plus stun. Realignment calls for root plus damage-over-time across `duration_seconds`.
 - `arbor`: `sapling` summons successfully, but the server logs `Unmapped NPC type encountered. npcTypeId=Spirit_Root, modelAssetId=Spirit_Root`. Classify with the existing summon/proxy type-mapping cleanup.
 - `bloom`: `nightshade`, `frolick`, and `cacti_cluster` validate successfully in `audits/phase9-bloom/2026-05-21T21-30-15/`; `frolick` now grants speed after the surgical data fix. `cacti_cluster` still logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for projectile proxy mapping cleanup.
+- `self_petrification`: `gargoyle`, `glare`, and `tunnel` validate successfully in `audits/phase9-self-petrification/2026-05-21T21-33-46/`, but `gargoyle` still needs the stronger gray stone-form tint called out by the realignment plan.
+- `self_petrification`: `glare` stuns targets successfully, but still needs the stronger attached eye/proxy cast visual called out by the realignment plan.
+- `self_petrification`: `tunnel` moves and damages successfully, but still reads as a surface dash/trail. Realignment calls for an underground concealment visual during travel.
 
 ## Hydro
 
