@@ -1,0 +1,45 @@
+﻿[2026/05/22 02:27:42   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 02:27:44   INFO]        [CommandManager] imseb executed command: motm dev class set hydro
+[2026/05/22 02:27:44   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:27:44   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:27:44   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:27:44   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:27:44   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:27:45   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 02:27:45   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:27:45   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:27:45   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:27:45   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:27:45   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:27:47   INFO]        [CommandManager] imseb executed command: motm style vapor
+[2026/05/22 02:27:47   INFO]                  [MOTM] [MOTM] imseb selected styles: [vapor]
+[2026/05/22 02:27:47   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:27:47   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[vapor]
+[2026/05/22 02:27:47   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:27:47   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:27:47   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[vapor]
+[2026/05/22 02:27:47   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:27:49   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:27:49   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:27:49   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5101.63, 168.00, 4983.96) floating=(5101.15, 171.00, 4989.67)
+[2026/05/22 02:27:52   INFO]        [CommandManager] imseb executed command: motm dev test ability vapor_vanish
+[2026/05/22 02:27:52   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=vapor_vanish hasTarget=true targetBlock=Vector3i{x=5101, y=168, z=4983}
+[2026/05/22 02:27:52   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=vapor_vanish notifyFailures=true
+[2026/05/22 02:27:52   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=vapor_vanish
+[2026/05/22 02:27:52   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=vapor_vanish result=[MOTM] Cast Vapor Vanish! Runtime: hydro cast visuals | mist shroud aura | radius 3.6m | 5s | self evasion | weapon follow-up ready x2 via Vapor Vanish.
+[2026/05/22 02:27:58   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:27:58   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:27:58   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5101.63, 168.00, 4983.96) floating=(5101.15, 171.00, 4989.67)
+[2026/05/22 02:28:02   INFO]        [CommandManager] imseb executed command: motm dev test ability dispersion
+[2026/05/22 02:28:02   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=dispersion hasTarget=true targetBlock=Vector3i{x=5101, y=168, z=4983}
+[2026/05/22 02:28:02   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=dispersion notifyFailures=true
+[2026/05/22 02:28:02   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=dispersion
+[2026/05/22 02:28:02   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=dispersion result=[MOTM] Cast Dispersion! Charges 2/3. Runtime: hydro move visuals | dash 11.0m forward | 1 hit for 22.7 damage.
+[2026/05/22 02:28:10   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:28:10   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:28:10   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5091.62, 168.00, 4988.52) floating=(5091.14, 171.00, 4994.23)
+[2026/05/22 02:28:13   INFO]        [CommandManager] imseb executed command: motm dev test ability hidrosis
+[2026/05/22 02:28:13   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=hidrosis hasTarget=true targetBlock=Vector3i{x=5091, y=168, z=4988}
+[2026/05/22 02:28:13   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=hidrosis notifyFailures=true
+[2026/05/22 02:28:13   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=hidrosis
+[2026/05/22 02:28:13   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=hidrosis result=[MOTM] Cast Hidrosis! Runtime: hydro cast visuals | condensation veil aura | radius 3.6m | 7s | self evasion | weapon follow-up ready x2 via Hidrosis.

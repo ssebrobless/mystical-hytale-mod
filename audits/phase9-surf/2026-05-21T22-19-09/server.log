@@ -1,0 +1,50 @@
+﻿[2026/05/22 02:18:50   INFO]                  [MOTM] [MOTM] Stomp arm expired: player=imseb
+[2026/05/22 02:19:10   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 02:19:12   INFO]        [CommandManager] imseb executed command: motm dev class set hydro
+[2026/05/22 02:19:12   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:19:12   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:19:12   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:19:12   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:19:12   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:19:12   INFO]                  [MOTM] [MOTM] Free-cast health drop detected: player=imseb class=hydro styles=[] from=272.0 to=190.0 burn=false dot=false
+[2026/05/22 02:19:14   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 02:19:14   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:19:14   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:19:14   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:19:14   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:19:14   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:19:15   INFO]        [CommandManager] imseb executed command: motm style surf
+[2026/05/22 02:19:15   INFO]                  [MOTM] [MOTM] imseb selected styles: [surf]
+[2026/05/22 02:19:15   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:19:15   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[surf]
+[2026/05/22 02:19:15   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:19:15   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:19:15   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[surf]
+[2026/05/22 02:19:15   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:19:17   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:19:17   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:19:17   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5102.16, 168.00, 4980.76) floating=(5096.49, 171.00, 4981.60)
+[2026/05/22 02:19:17   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Goblin_Scrapper, modelAssetId=Goblin_Scrapper
+[2026/05/22 02:19:17   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Bat, modelAssetId=Bat
+[2026/05/22 02:19:21   INFO]        [CommandManager] imseb executed command: motm dev test ability high_tide
+[2026/05/22 02:19:21   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=high_tide hasTarget=true targetBlock=Vector3i{x=5102, y=168, z=4980}
+[2026/05/22 02:19:21   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=high_tide notifyFailures=true
+[2026/05/22 02:19:21   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=high_tide
+[2026/05/22 02:19:21   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=high_tide result=[MOTM] Cast High Tide! Runtime: hydro wave cast visuals | launched 1 projectile at 20.0m/s | self speed.
+[2026/05/22 02:19:21   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living
+[2026/05/22 02:19:28   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:19:28   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:19:28   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5102.16, 168.00, 4980.76) floating=(5096.49, 171.00, 4981.60)
+[2026/05/22 02:19:32   INFO]        [CommandManager] imseb executed command: motm dev test ability waverider
+[2026/05/22 02:19:32   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=waverider hasTarget=true targetBlock=Vector3i{x=5102, y=168, z=4980}
+[2026/05/22 02:19:32   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=waverider notifyFailures=true
+[2026/05/22 02:19:32   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=waverider
+[2026/05/22 02:19:32   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=waverider result=[MOTM] Cast Waverider! Runtime: hydro wave cast visuals | shield 39.1 | self speed | weapon follow-up ready x3 via Waverider.
+[2026/05/22 02:19:38   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:19:38   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:19:38   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5102.16, 168.00, 4980.76) floating=(5096.49, 171.00, 4981.60)
+[2026/05/22 02:19:41   INFO]        [CommandManager] imseb executed command: motm dev test ability riptide
+[2026/05/22 02:19:41   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=riptide hasTarget=true targetBlock=Vector3i{x=5102, y=168, z=4980}
+[2026/05/22 02:19:41   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=riptide notifyFailures=true
+[2026/05/22 02:19:41   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=riptide
+[2026/05/22 02:19:41   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=riptide result=[MOTM] Cast Riptide! Runtime: hydro wave cast visuals | 3 hits for 34.0 damage | applied vulnerability to 3 targets | pulled 3 targets | current pull 1.8s.
