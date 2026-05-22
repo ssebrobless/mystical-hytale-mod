@@ -11,6 +11,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `stone`: `rockslide` casts and damages targets, but the realignment plan calls for the falling-rocks field to apply slow per tick. Current `falling_rocks` terrain behavior is knockback-only; schedule for a later Stone polish pass.
 - `arbor`: `rooted`, `vines`, and `sapling` validate successfully in `audits/phase9-arbor/2026-05-21T21-25-32/`, but `vines` still behaves as immediate damage plus stun. Realignment calls for root plus damage-over-time across `duration_seconds`.
 - `arbor`: `sapling` summons successfully, but the server logs `Unmapped NPC type encountered. npcTypeId=Spirit_Root, modelAssetId=Spirit_Root`. Classify with the existing summon/proxy type-mapping cleanup.
+- `bloom`: `nightshade`, `frolick`, and `cacti_cluster` validate successfully in `audits/phase9-bloom/2026-05-21T21-30-15/`; `frolick` now grants speed after the surgical data fix. `cacti_cluster` still logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for projectile proxy mapping cleanup.
 
 ## Hydro
 

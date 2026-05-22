@@ -399,7 +399,7 @@
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "heal+attack_buff",
+          "effect": "heal+attack_buff+speed",
           "categories": [
             "healing",
             "buff"
