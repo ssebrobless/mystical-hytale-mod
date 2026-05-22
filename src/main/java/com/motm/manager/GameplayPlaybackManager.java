@@ -88,6 +88,7 @@ public class GameplayPlaybackManager {
     private static final double DEFAULT_PROJECTILE_TTL_SECONDS = 2.5;
     private static final double MAX_PROJECTILE_STEP_DISTANCE = 2.6;
     private static final double DEFAULT_LIGHTNING_ARC_RADIUS = 5.5;
+    private static final long SHOCKED_DAMAGE_WINDOW_MS = 3_500L;
     private static final double DEFAULT_IMPACT_RADIUS = 0.0;
     private static final long DEFAULT_VOLLEY_STAGGER_MS = 80L;
     private static final long DEFAULT_BURST_STAGGER_MS = 22L;
@@ -121,6 +122,7 @@ public class GameplayPlaybackManager {
     private final List<ActiveLineControl> activeLineControls = new ArrayList<>();
     private final Map<String, List<BuriedVictim>> buriedVictimsByField = new HashMap<>();
     private final Set<String> reportedAbilityKillEntityIds = ConcurrentHashMap.newKeySet();
+    private final Map<String, Long> recentShockedTargets = new ConcurrentHashMap<>();
     private boolean warnedGroundedFallback;
 
     public GameplayPlaybackManager(MenteesMod mod) {
@@ -1185,6 +1187,7 @@ public class GameplayPlaybackManager {
             String targetEntityId = resolveEntityId(targetRef, store);
             double resolvedDamage = projectile.baseDamage() * castBuffMultiplier;
             if (targetEntityId != null) {
+                resolvedDamage = applySpecialDamageModifiers(player, projectile.ability(), targetRef, store, targetEntityId, resolvedDamage);
                 resolvedDamage *= resolveIncomingDamageMultiplier(targetEntityId);
                 resolvedDamage = mod.getStatusEffectManager().absorbDamage(targetEntityId, resolvedDamage);
             }
@@ -1968,6 +1971,16 @@ public class GameplayPlaybackManager {
             return;
         }
 
+        if (terrainEffect.contains("tempest")) {
+            String entityId = resolveEntityId(targetRef, store);
+            boolean stunned = applyTargetToken("stun", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            boolean slowed = applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            LOG.info("[MOTM] Tempest field tick applied: target=" + entityId
+                    + " stun=" + stunned
+                    + " slow=" + slowed);
+            return;
+        }
+
         if (terrainEffect.contains("funnel_cloud")) {
             applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             applyTargetToken("disoriented", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
@@ -1987,7 +2000,14 @@ public class GameplayPlaybackManager {
         }
 
         if (terrainEffect.contains("smog")) {
-            applyTargetToken("blind", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            String entityId = resolveEntityId(targetRef, store);
+            boolean blinded = applyTargetToken("blind", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            boolean slowed = applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            boolean dotted = applyTargetToken("dot", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            LOG.info("[MOTM] Smog field tick applied: target=" + entityId
+                    + " blind=" + blinded
+                    + " slow=" + slowed
+                    + " dot=" + dotted);
             return;
         }
 
@@ -2586,6 +2606,7 @@ public class GameplayPlaybackManager {
             double resolvedDamage = baseDamage * castBuffMultiplier;
             resolvedDamage *= resolveTargetSequenceDamageMultiplier(ability, castType, hitIndex);
             resolvedDamage = applySpecialDamageModifiers(player, ability, targetRef, store, targetEntityId, resolvedDamage);
+            applyTempestImpactEffects(ability, targetRef, store, playerRef, player.getPlayerId(), targetEntityId);
 
             if (targetEntityId != null) {
                 resolvedDamage *= resolveIncomingDamageMultiplier(targetEntityId);
@@ -2618,6 +2639,23 @@ public class GameplayPlaybackManager {
                 ? "1 hit for " + AbilityPresentation.formatDecimal(totalDamage) + " damage"
                 : hits + " hits for " + AbilityPresentation.formatDecimal(totalDamage) + " damage";
         return new CombatResolution(hits, totalDamage, summary);
+    }
+
+    private void applyTempestImpactEffects(AbilityData ability,
+                                           Ref<EntityStore> targetRef,
+                                           Store<EntityStore> store,
+                                           Ref<EntityStore> playerRef,
+                                           String playerId,
+                                           String targetEntityId) {
+        if (ability == null || !lower(ability.getTerrainEffect()).contains("tempest")) {
+            return;
+        }
+
+        boolean stunned = applyTargetToken("stun", targetRef, store, playerRef, playerId, ability);
+        boolean slowed = applyTargetToken("slow", targetRef, store, playerRef, playerId, ability);
+        LOG.info("[MOTM] Tempest impact effects applied: target=" + targetEntityId
+                + " stun=" + stunned
+                + " slow=" + slowed);
     }
 
     private SupportResolution applyCasterRuntime(Player runtimePlayer,
@@ -4498,6 +4536,19 @@ public class GameplayPlaybackManager {
             return damage * 1.75;
         }
 
+        if (lower(ability.getEffect()).contains("lightning")) {
+            boolean shocked = hasActiveOrRecentShock(targetEntityId);
+            LOG.info("[MOTM] Lightning bonus check: ability=" + ability.getId()
+                    + " target=" + targetEntityId
+                    + " shocked=" + shocked);
+            if (shocked) {
+                LOG.info("[MOTM] Lightning bonus applied: ability=" + ability.getId()
+                        + " target=" + targetEntityId
+                        + " multiplier=1.25");
+                return damage * 1.25;
+            }
+        }
+
         if ("consume".equals(abilityId)) {
             double healthRatio = resolveHealthRatio(targetRef, store);
             double modifier = 1.0;
@@ -4512,6 +4563,29 @@ public class GameplayPlaybackManager {
         }
 
         return damage;
+    }
+
+    private boolean hasActiveOrRecentShock(String targetEntityId) {
+        if (targetEntityId == null || targetEntityId.isBlank()) {
+            return false;
+        }
+
+        if (mod.getStatusEffectManager().hasEffect(targetEntityId, StatusEffect.Type.SHOCKED)) {
+            return true;
+        }
+
+        Long appliedAt = recentShockedTargets.get(targetEntityId);
+        if (appliedAt == null) {
+            return false;
+        }
+
+        long age = System.currentTimeMillis() - appliedAt;
+        if (age <= SHOCKED_DAMAGE_WINDOW_MS) {
+            return true;
+        }
+
+        recentShockedTargets.remove(targetEntityId, appliedAt);
+        return false;
     }
 
     private double resolveTargetSequenceDamageMultiplier(AbilityData ability, String castType, int hitIndex) {
@@ -5712,6 +5786,12 @@ public class GameplayPlaybackManager {
         }
 
         mod.getStatusEffectManager().applyEffect(entityId, effect);
+        if (effect.getType() == StatusEffect.Type.SHOCKED) {
+            recentShockedTargets.put(entityId, System.currentTimeMillis());
+            LOG.info("[MOTM] Shocked token applied: ability=" + ability.getId()
+                    + " target=" + entityId
+                    + " durationTicks=" + effect.getInitialDurationTicks());
+        }
         return true;
     }
 
