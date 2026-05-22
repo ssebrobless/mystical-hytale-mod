@@ -4,7 +4,8 @@ param(
     [switch]$SkipLogRotate,
     [switch]$SkipClassAudit,
     [switch]$LaunchAndLoad,
-    [switch]$Setup
+    [switch]$Setup,
+    [switch]$EnsureFlatlands
 )
 
 $ErrorActionPreference = "Stop"
@@ -108,6 +109,12 @@ if ($LaunchAndLoad) {
     & (Join-Path $PSScriptRoot "load-world.ps1") -WorldName $WorldName
     if ($LASTEXITCODE -ne 0) {
         throw "load-world failed."
+    }
+    if ($EnsureFlatlands) {
+        & (Join-Path $PSScriptRoot "ensure-flatlands.ps1")
+        if ($LASTEXITCODE -ne 0) {
+            throw "ensure-flatlands failed."
+        }
     }
     if ($Setup) {
         & (Join-Path $PSScriptRoot "setup-test-world.ps1") -WorldName $WorldName

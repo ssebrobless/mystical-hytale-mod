@@ -104,9 +104,7 @@ try {
     Add-Line("")
 
     if ($Autonomous -and -not $SkipColdLaunch) {
-        & (Join-Path $PSScriptRoot "cold-launch.ps1") -WorldName $WorldName -LaunchAndLoad -Setup
-        Send-Key "{ESC}"
-        Start-Sleep -Seconds 1
+        & (Join-Path $PSScriptRoot "cold-launch.ps1") -WorldName $WorldName -LaunchAndLoad -EnsureFlatlands -Setup
     }
 
     $log = Get-LatestServerLog
