@@ -15,6 +15,8 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `self_petrification`: `gargoyle`, `glare`, and `tunnel` validate successfully in `audits/phase9-self-petrification/2026-05-21T21-33-46/`, but `gargoyle` still needs the stronger gray stone-form tint called out by the realignment plan.
 - `self_petrification`: `glare` stuns targets successfully, but still needs the stronger attached eye/proxy cast visual called out by the realignment plan.
 - `self_petrification`: `tunnel` moves and damages successfully, but still reads as a surface dash/trail. Realignment calls for an underground concealment visual during travel.
+- `soil`: `burrow`, `mudpit`, and `debris` validate successfully in `audits/phase9-soil/2026-05-21T21-38-16/`; `debris` now includes blind after the surgical data fix. `burrow` still needs the underground concealment visual called out by the realignment plan.
+- `soil`: `debris` launches its projectile volley successfully, but the cast log does not prove target-side blind/vulnerability application on impact. Keep this for a later projectile-impact audit, alongside the `Spark_Living` proxy mapping cleanup.
 
 ## Hydro
 

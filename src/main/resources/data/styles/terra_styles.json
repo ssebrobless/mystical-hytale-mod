@@ -570,7 +570,7 @@
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.32,
           "recovery_seconds": 0.22,
-          "effect": "vulnerability",
+          "effect": "vulnerability+blind",
           "categories": [
             "damage",
             "debuff"
