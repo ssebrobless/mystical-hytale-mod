@@ -1,0 +1,46 @@
+﻿[2026/05/22 02:47:03   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 02:47:05   INFO]        [CommandManager] imseb executed command: motm dev class set hydro
+[2026/05/22 02:47:05   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:47:05   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:47:05   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:47:05   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:47:05   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:47:06   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 02:47:06   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:47:06   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:47:06   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:47:06   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:47:06   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:47:08   INFO]        [CommandManager] imseb executed command: motm style bilgewater
+[2026/05/22 02:47:08   INFO]                  [MOTM] [MOTM] imseb selected styles: [bilgewater]
+[2026/05/22 02:47:08   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:47:08   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[bilgewater]
+[2026/05/22 02:47:08   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:47:08   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:47:08   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[bilgewater]
+[2026/05/22 02:47:08   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:47:10   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:47:10   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:47:10   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 170.00, 4971.30) floating=(5098.50, 173.00, 4968.50)
+[2026/05/22 02:47:13   INFO]        [CommandManager] imseb executed command: motm dev test ability bilge_dump
+[2026/05/22 02:47:13   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bilge_dump hasTarget=true targetBlock=Vector3i{x=5103, y=170, z=4971}
+[2026/05/22 02:47:13   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bilge_dump notifyFailures=true
+[2026/05/22 02:47:13   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bilge_dump
+[2026/05/22 02:47:13   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bilge_dump result=[MOTM] Cast Bilge Dump! Runtime: hydro wave cast visuals | 3 hits for 34.0 damage | applied dot, slow to 3 targets.
+[2026/05/22 02:47:21   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:47:21   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:47:21   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5102.89, 170.00, 4971.39) floating=(5097.31, 173.00, 4970.09)
+[2026/05/22 02:47:25   INFO]        [CommandManager] imseb executed command: motm dev test ability anchor_haul
+[2026/05/22 02:47:25   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=anchor_haul hasTarget=true targetBlock=Vector3i{x=5102, y=170, z=4971}
+[2026/05/22 02:47:25   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=anchor_haul notifyFailures=true
+[2026/05/22 02:47:25   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=anchor_haul
+[2026/05/22 02:47:25   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=anchor_haul result=[MOTM] Cast Anchor Haul! Runtime: hydro wave cast visuals | launched 1 projectile at 18.0m/s.
+[2026/05/22 02:47:25   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living
+[2026/05/22 02:47:33   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:47:33   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:47:33   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5102.89, 170.00, 4971.39) floating=(5097.31, 173.00, 4970.09)
+[2026/05/22 02:47:36   INFO]        [CommandManager] imseb executed command: motm dev test ability oil_spill
+[2026/05/22 02:47:36   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=oil_spill hasTarget=true targetBlock=Vector3i{x=5102, y=170, z=4971}
+[2026/05/22 02:47:36   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=oil_spill notifyFailures=true
+[2026/05/22 02:47:36   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=oil_spill
+[2026/05/22 02:47:36   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=oil_spill result=[MOTM] Cast Oil Spill! Runtime: hydro wave cast visuals | self defense buff | self attack buff | weapon follow-up ready x3 via Oil Spill.

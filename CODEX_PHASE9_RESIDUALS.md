@@ -29,6 +29,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `iceberg`: `ice_cap`, `glacier`, and `ice_shelf` validate successfully in `audits/phase9-iceberg/2026-05-21T22-30-24/`, but `ice_cap` still needs a future on-hit freeze-attacker hook, `glacier` needs a more physically readable barrier visual, and `ice_shelf` needs delayed strike telegraph/activation.
 - `saltwater`: `tide_pool`, `abyssal_assist`, and `rip_current` validate successfully in `audits/phase9-saltwater/2026-05-21T22-33-30/`, but `tide_pool` still needs caster speed while standing in the field. It also logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
 - `freshwater`: `leap_frog`, `river_rapids`, and `swamp_monster` validate successfully in `audits/phase9-freshwater/2026-05-21T22-43-55/`; `river_rapids` now grants `self speed` after the surgical data fix. `swamp_monster` logs `Unmapped NPC type encountered. npcTypeId=Frog_Green, modelAssetId=Frog_Green` for summon proxy mapping cleanup.
+- `bilgewater`: `bilge_dump`, `anchor_haul`, and `oil_spill` validate successfully in `audits/phase9-bilgewater/2026-05-21T22-47-02/`. `anchor_haul` logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for projectile proxy mapping cleanup.
 
 ## Harness
 
