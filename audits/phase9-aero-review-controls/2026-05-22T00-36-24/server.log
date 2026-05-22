@@ -1,0 +1,155 @@
+﻿[2026/05/22 04:30:59   INFO]                  [MOTM] [MOTM] Stomp arm expired: player=imseb
+[2026/05/22 04:36:25   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 04:36:27   INFO]        [CommandManager] imseb executed command: motm dev class set aero
+[2026/05/22 04:36:27   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:36:27   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:36:27   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:36:27   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:36:27   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:36:27   INFO]                  [MOTM] [MOTM] Free-cast health drop detected: player=imseb class=aero styles=[] from=272.0 to=161.0 burn=false dot=false
+[2026/05/22 04:36:29   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 04:36:29   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:36:29   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:36:29   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:36:29   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:36:29   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:36:31   INFO]        [CommandManager] imseb executed command: motm style jet
+[2026/05/22 04:36:31   INFO]                  [MOTM] [MOTM] imseb selected styles: [jet]
+[2026/05/22 04:36:31   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 04:36:31   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:36:31   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[jet]
+[2026/05/22 04:36:31   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:36:31   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:36:31   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[jet]
+[2026/05/22 04:36:33   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 04:36:33   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 04:36:33   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5090.66, 168.00, 4973.24) floating=(5093.55, 171.00, 4978.19)
+[2026/05/22 04:36:33   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Goblin_Scrapper, modelAssetId=Goblin_Scrapper
+[2026/05/22 04:36:33   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Bat, modelAssetId=Bat
+[2026/05/22 04:36:35   INFO]        [CommandManager] imseb executed command: motm dev test ability afterburner
+[2026/05/22 04:36:35   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=afterburner hasTarget=true targetBlock=Vector3i{x=5090, y=168, z=4973}
+[2026/05/22 04:36:35   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=afterburner notifyFailures=true
+[2026/05/22 04:36:35   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=afterburner
+[2026/05/22 04:36:35   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=afterburner result=[MOTM] Cast Afterburner! Runtime: aero move visuals | dash 12.0m forward | ember trail trail | 4 nodes | 3s | 1 hit for 34.0 damage | applied burn to 1 target.
+[2026/05/22 04:36:40   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 04:36:40   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 04:36:40   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5084.58, 168.00, 4983.59) floating=(5087.47, 171.00, 4988.54)
+[2026/05/22 04:36:42   INFO]        [CommandManager] imseb executed command: motm dev test ability mach_punch
+[2026/05/22 04:36:42   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=mach_punch hasTarget=true targetBlock=Vector3i{x=5084, y=168, z=4983}
+[2026/05/22 04:36:42   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=mach_punch notifyFailures=true
+[2026/05/22 04:36:42   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=mach_punch
+[2026/05/22 04:36:42   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=0df1ecc3-1d0c-3c2f-813f-f133f6ed10b5 mobType=Goblin_Scrapper
+[2026/05/22 04:36:42   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 04:36:42   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=mach_punch result=[MOTM] Cast Mach Punch! Runtime: aero move visuals | dash strike 8.0m forward | 1 hit for 45.4 damage.
+[2026/05/22 04:36:47   INFO]        [CommandManager] imseb executed command: motm dev class set aero
+[2026/05/22 04:36:47   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:36:47   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:36:47   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:36:47   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:36:47   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:36:49   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 04:36:49   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:36:49   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:36:49   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:36:49   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:36:49   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:36:51   INFO]        [CommandManager] imseb executed command: motm style jump
+[2026/05/22 04:36:51   INFO]                  [MOTM] [MOTM] imseb selected styles: [jump]
+[2026/05/22 04:36:51   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:36:51   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[jump]
+[2026/05/22 04:36:51   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:36:51   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:36:51   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[jump]
+[2026/05/22 04:36:51   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 04:36:53   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 04:36:53   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 04:36:53   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5080.52, 168.00, 4990.48) floating=(5083.41, 171.00, 4995.43)
+[2026/05/22 04:36:55   INFO]        [CommandManager] imseb executed command: motm dev test ability divebomb
+[2026/05/22 04:36:55   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=divebomb hasTarget=true targetBlock=Vector3i{x=5080, y=168, z=4990}
+[2026/05/22 04:36:55   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=divebomb notifyFailures=true
+[2026/05/22 04:36:55   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=divebomb
+[2026/05/22 04:36:55   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=03f7e997-c553-3398-bc71-8e94c7d32f2e mobType=Goblin_Scrapper
+[2026/05/22 04:36:55   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 04:36:55   INFO]                  [MOTM] [MOTM] imseb leveled up: 20 -> 21
+[2026/05/22 04:36:55   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=divebomb result=[MOTM] Cast Divebomb! Runtime: aero move visuals | dive strike 12.0m forward +6.0m vertical | 1 hit for 45.4 damage.
+[2026/05/22 04:37:00   INFO]        [CommandManager] imseb executed command: motm dev class set aero
+[2026/05/22 04:37:00   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:37:00   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:37:00   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:37:00   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:37:00   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:37:02   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 04:37:02   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:37:02   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:37:02   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:37:02   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:37:02   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:37:04   INFO]        [CommandManager] imseb executed command: motm style pressure
+[2026/05/22 04:37:04   INFO]                  [MOTM] [MOTM] imseb selected styles: [pressure]
+[2026/05/22 04:37:04   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:37:04   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[pressure]
+[2026/05/22 04:37:04   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:37:04   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:37:04   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[pressure]
+[2026/05/22 04:37:04   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 04:37:06   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 04:37:06   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 04:37:06   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5074.44, 174.00, 5000.83) floating=(5077.33, 177.00, 5005.78)
+[2026/05/22 04:37:08   INFO]        [CommandManager] imseb executed command: motm dev test ability air_shot
+[2026/05/22 04:37:08   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=air_shot hasTarget=true targetBlock=Vector3i{x=5074, y=174, z=5000}
+[2026/05/22 04:37:08   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=air_shot notifyFailures=true
+[2026/05/22 04:37:08   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=air_shot
+[2026/05/22 04:37:08   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=air_shot result=[MOTM] Cast Air Shot! Runtime: aero cast visuals | launched 1 projectile at 32.0m/s.
+[2026/05/22 04:37:08   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living
+[2026/05/22 04:37:13   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 04:37:13   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 04:37:13   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5074.44, 174.00, 5000.83) floating=(5077.33, 177.00, 5005.78)
+[2026/05/22 04:37:15   INFO]        [CommandManager] imseb executed command: motm dev test ability bullet_storm
+[2026/05/22 04:37:15   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bullet_storm hasTarget=true targetBlock=Vector3i{x=5074, y=174, z=5000}
+[2026/05/22 04:37:15   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bullet_storm notifyFailures=true
+[2026/05/22 04:37:15   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bullet_storm
+[2026/05/22 04:37:15   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bullet_storm result=[MOTM] Cast Bullet Storm! Runtime: aero cast visuals | launched 6 projectiles at 34.0m/s | volley cadence.
+[2026/05/22 04:37:15   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=db01799a-d469-3a50-8127-1af786c7018e mobType=Spark_Living
+[2026/05/22 04:37:15   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Spark_Living, using default 50
+[2026/05/22 04:37:20   INFO]        [CommandManager] imseb executed command: motm dev class set aero
+[2026/05/22 04:37:20   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:37:20   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:37:20   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:37:20   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:37:20   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:37:22   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 04:37:22   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:37:22   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:37:22   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:37:22   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:37:22   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[]
+[2026/05/22 04:37:23   INFO]        [CommandManager] imseb executed command: motm style pollution
+[2026/05/22 04:37:23   INFO]                  [MOTM] [MOTM] imseb selected styles: [pollution]
+[2026/05/22 04:37:23   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 04:37:23   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[pollution]
+[2026/05/22 04:37:23   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 04:37:23   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 04:37:23   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=aero styles=[pollution]
+[2026/05/22 04:37:23   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 04:37:26   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 04:37:26   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 04:37:26   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5074.44, 174.00, 5000.83) floating=(5077.33, 177.00, 5005.78)
+[2026/05/22 04:37:28   INFO]        [CommandManager] imseb executed command: motm dev test ability toxic_breath
+[2026/05/22 04:37:28   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=toxic_breath hasTarget=true targetBlock=Vector3i{x=5074, y=174, z=5000}
+[2026/05/22 04:37:28   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=toxic_breath notifyFailures=true
+[2026/05/22 04:37:28   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=toxic_breath
+[2026/05/22 04:37:28   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=20dfb132-1a0f-3875-a1dd-f97e261836b8 mobType=Goblin_Scrapper
+[2026/05/22 04:37:28   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 04:37:28   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=toxic_breath result=[MOTM] Cast Toxic Breath! Runtime: aero cast visuals | 3 hits for 56.1 damage | applied dot, vulnerability to 2 targets.
+[2026/05/22 04:37:33   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 04:37:33   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 04:37:33   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5074.44, 174.00, 5000.83) floating=(5077.33, 177.00, 5005.78)
+[2026/05/22 04:37:35   INFO]        [CommandManager] imseb executed command: motm dev test ability acid_rain
+[2026/05/22 04:37:35   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=acid_rain hasTarget=true targetBlock=Vector3i{x=5074, y=174, z=5000}
+[2026/05/22 04:37:35   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=acid_rain notifyFailures=true
+[2026/05/22 04:37:35   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=acid_rain
+[2026/05/22 04:37:35   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=8677418a-7fd3-3623-9039-59b456b221a6 mobType=Goblin_Scrapper
+[2026/05/22 04:37:35   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 04:37:35   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=66c8ef2b-e757-3c22-9102-34500f17b684 mobType=Goblin_Scrapper
+[2026/05/22 04:37:35   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 04:37:35   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=acid_rain result=[MOTM] Cast Acid Rain! Runtime: aero cast visuals | field active for 7s | radius 6.0m | 3 hits for 70.1 damage | applied dot, vulnerability to 1 target.
