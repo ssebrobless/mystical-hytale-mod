@@ -2,6 +2,10 @@
 
 Non-blocking findings discovered during successful style validation runs. These should be batched for Claude or a later polish pass after each class's style group, unless one starts causing crashes, failed casts, or failed acceptance gates.
 
+## Checkpoints
+
+- 2026-05-22T05-05-20: post-Hydro Phase 5 regression passed from cold launch. Evidence: `audits/phase5/2026-05-22T05-05-20/report.md`.
+
 ## Terra
 
 - Flatlands re-audit 2026-05-22T04-40-56: all 10 Terra styles and all 30 Terra abilities passed with the improved flatlands harness, stationary grounded test target, mob cleanup/count logging, and no blocking class/runtime errors. Evidence: `audits/phase9-terra-flatlands/2026-05-22T04-40-56/report.md` and screenshots in the same folder. Stomp specifically resolved `targets=1 damage=11.7 effects=1 visual=applied`.
