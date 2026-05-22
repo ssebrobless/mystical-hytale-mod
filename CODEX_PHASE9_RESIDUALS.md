@@ -34,6 +34,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 ## Aero
 
 - `scream`: `shriek`, `sonic_boom`, and `battle_cry` validate successfully in `audits/phase9-scream/2026-05-21T22-57-54/`; `battle_cry` confirms both `self attack buff` and `self speed` at runtime. `sonic_boom` logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living`, and `battle_cry` logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
+- `jet`: `jet_burst`, `afterburner`, and `mach_punch` validate successfully in `audits/phase9-jet/2026-05-21T23-00-09/`; `jet_burst` hits and applies knockback. `afterburner` proves dash plus ember trail but reports `No valid target in range`, and `mach_punch` proves dash-strike movement but also reports `No valid target in range`; keep both for a later dash hit-position audit.
 
 ## Harness
 

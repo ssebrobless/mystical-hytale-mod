@@ -1,0 +1,12 @@
+﻿[2026/05/22 03:00:11   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=jet_burst hasTarget=true targetBlock=Vector3i{x=5094, y=168, z=4980}
+[2026/05/22 03:00:11   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=jet_burst notifyFailures=true
+[2026/05/22 03:00:11   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=jet_burst
+[2026/05/22 03:00:11   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=jet_burst result=[MOTM] Cast Jet Burst! Charges 2/3. Runtime: aero move visuals | dash 10.0m forward +2.5m vertical | 1 hit for 22.7 damage | applied knockback to 1 target.
+[2026/05/22 03:00:16   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=afterburner hasTarget=true targetBlock=Vector3i{x=5092, y=170, z=4981}
+[2026/05/22 03:00:16   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=afterburner notifyFailures=true
+[2026/05/22 03:00:16   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=afterburner
+[2026/05/22 03:00:16   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=afterburner result=[MOTM] Cast Afterburner! Runtime: aero move visuals | dash 12.0m forward | ember trail trail | 4 nodes | 3s | No valid target in range.
+[2026/05/22 03:00:19   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=mach_punch hasTarget=true targetBlock=Vector3i{x=5092, y=170, z=4981}
+[2026/05/22 03:00:19   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=mach_punch notifyFailures=true
+[2026/05/22 03:00:19   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=mach_punch
+[2026/05/22 03:00:19   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=mach_punch result=[MOTM] Cast Mach Punch! Runtime: aero move visuals | dash strike 8.0m forward | No valid target in range.
