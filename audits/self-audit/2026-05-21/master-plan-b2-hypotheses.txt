@@ -1,0 +1,90 @@
+﻿## 8. "Idle slow after standing still" â€” diagnosis plan
+
+**Symptom (user-reported):** While standing still, the player accumulates some
+slow or movement-impairment effect that is not part of the Phase 5 abilities.
+
+**What I know from the code (2026-05-21):**
+- `ClassPassiveManager` tracks `stationaryTicksByPlayer` (line 68) and increments
+  while the player is stationary; clears on movement (line 365-372).
+- Terra class passive (`data/classes/terra.json:39`) reads:
+  *"Standing still for 2 seconds grants a shield equal to 5% of max health..."*
+  That's a shield-on-stationary, not a slow.
+- Terra perks with `condition: stationary` (and similar):
+  - `terra_t01_root_stance` â€” +10% damage reduction at 1.5s
+  - `terra_t04_deep_roots` â€” immunity to displacement
+  - `terra_t05_verdant_growth` â€” 2Ã— health regen
+  - `terra_t11_fortress_master` â€” 2Ã— armor
+  - `terra_t12_mountain_stance` â€” +5%/s damage reduction up to 30%
+- `PerkManager.applyPerkEffects` is currently a log-only stub (Phase 7 fixes this).
+  So perks themselves should not be applying any runtime stat change today.
+- That leaves: **a class-passive side effect**, **an unrelated status-effect tick**, or **a HUD-driven UI animation that visually reads as "slow" but isn't really a movement debuff**.
+
+### 8.1 Decision table â€” idle slow
+
+| Step | Hypothesis | Verification | Action |
+| --- | --- | --- | --- |
+| H1 | Terra class passive ("Earthen Resilience") applies more than just the shield while stationary â€” e.g. a movement modifier as a "rooted" feel. | Read `ClassPassiveManager.java:365-372` and the branches around `terraPassive.stationaryTicksRequired()`. Look for any `StatusEffectManager` calls keyed on `slow` / `root` / movement. | If found: remove or guard the slow-emit. Verify the description says nothing about slow. |
+| H2 | A non-Phase-5 ability (Aftershock or Sinkhole) left a slow active on the player as the field expired with the player inside it. | Reproduce: cast Aftershock, stand inside it, wait it out, then stand still. Check `applyFieldTerrainEffects` and `processFieldTick` whether owner targets are excluded. | If owner is included: add `if (entity == field.ownerRef()) continue;` for slow tokens. The realignment plan Â§3.1 already flags this kind of gap. |
+| H3 | HUD progress bar (`MotmStatusHud.java:129-138`) animates the stationary ticks â†’ looks like a slow indicator but is actually shield charging. | Compare the in-game visual against the HUD ui markup. | If purely visual: clarify the HUD label (`Earthen Resilience charging`, not generic). |
+| H4 | `Mountain Stance`-style stacking buff is *intended* to be defensive (damage reduction), but `applyPerkEffects` somewhere flipped sign and stored as a SLOW status effect on the player. | Search: `Grep "Mountain Stance\|terra_t12_mountain_stance\|stationary"` across the manager classes; confirm `PerkManager.applyPerkEffects` is still a stub (it is per parent plan Â§0). | Confirm zero perk runtime today â†’ rules out H4 *until* Phase 7 lands. Phase 7 must NOT treat damage_reduction or armor as a slow. |
+| H5 | The "slow" is actually a slow walk-back animation triggered by a Hytale-side default movement state when the spellbook is held. | Equip and unequip the spellbook; compare. | If only happens with the spellbook equipped: revisit the `MOTM_Spellbook_Focus.json` JSON for any stray movement-impairing field. (Phase 2 should already have removed `Block_Secondary` etc.) |
+| H6 | A status effect that was applied during a Phase 5 test never expired. | Run `/motm status` (if such command exists) or inspect `StatusEffectManager` state via a debug log. | Add a one-shot `LOG.info` of the active status set on each tick for the test player and observe what's actually present. Remove any stale effect when found. |
+| H7 | `applyFieldTerrainEffects` `lingering_tremor` branch (realignment R5) is silently re-applying slow to the caster as they sit in the Aftershock zone. | Check whether `lingering_tremor` is in the switch yet. Per realignment Â§3.1 this branch was a "gap" pre-R5. | If present: gate by owner. If absent: skip â€” H7 ruled out. |
+
+### 8.2 Action sequence
+
+1. Walk H1 first (highest prior: class passive is the only system definitely
+   running today that keys on stationary state).
+2. Then H6 (cheap to add a debug log).
+3. Then H2 (reproduce specifically by walking inside an expiring field).
+4. H3-H5 only if 1-3 don't surface the cause.
+
+### 8.3 Self-audit after fix
+
+1. From cold launch, no Phase 5 abilities cast. Stand still 60s. No HP/movement change.
+2. Cast Stomp (arm + jump + land); wait 5s; stand still 30s. No persistent slow.
+3. Cast Aftershock; let it expire; stand still 30s outside any field. No slow.
+4. Cast Sinkhole on a mob; let it release; stand still 30s. No slow.
+
+---
+
+## 9. Self-audit checklists (Codex runs these unprompted)
+
+### 9.1 Pre-implementation (each phase begins with these)
+
+- [ ] Have I read the source plan section for THIS phase end-to-end?
+- [ ] Are all prerequisite phases marked PASS in `audits/`?
+- [ ] Are any of `data/styles/*.json`, `data/perks/*.json`, `data/classes/*.json`
+      about to be modified? If yes, are the edits surgical (add fields / change
+      single values; never reformat, reorder, or rewrite)?
+- [ ] Are there any `// removed` / `// TODO` / `--no-verify` / empty catch blocks
+      in the planned diff? If yes, restructure to avoid them.
+- [ ] Is there a documented fallback path for every uncertain API call (`probe-hytale-api.ps1`)?
+
+### 9.2 Post-implementation (each phase ends with these before the gate)
+
+- [ ] `./scripts/build-install.ps1` is green.
+- [ ] `./scripts/audit-classes.ps1` reports no diff.
+- [ ] `./scripts/cold-launch.ps1` ran successfully.
+- [ ] The phase's acceptance script (in-game) ran and all required log patterns matched.
+- [ ] All required visible behaviors were observed (Codex prompts the user to confirm
+      visuals it cannot programmatically verify â€” see Â§11).
+- [ ] No regressions: re-run Phase 5 acceptance after every Phase â‰¥ 6 change.
+      If Phase 5 fails, Codex stops and walks the Phase 5 decision tables before
+      proceeding.
+- [ ] Evidence bundle written to `audits/<phase>/<timestamp>/`.
+- [ ] No new `WARN`/`ERROR` lines unrelated to known Hytale-side issues in this run's log.
+- [ ] No data-file regenerations occurred (`git diff data/styles/`, `data/perks/`,
+      `data/classes/` shows only additive surgical edits).
+
+### 9.3 Phase 9 per-style audit (extra checks)
+
+- [ ] The style's three abilities each fired cleanly via LMB / RMB / Use.
+- [ ] Each ability's tint visibly matched the palette table (`CODEX_REALIGNMENT_PLAN_2026-05-13.md` Â§2).
+- [ ] None of the three abilities looked identical to abilities of another style in the same class.
+- [ ] The description in `*_styles.json` matches the visible behavior (cross-check realignment Â§3).
+- [ ] Cooldowns enforced; resource cost deducted; no idle damage.
+
+---
+
+## 10. Evidence capture and acceptance reporting

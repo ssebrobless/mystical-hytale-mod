@@ -1,0 +1,29 @@
+﻿
+src\main\java\com\motm\manager\StyleManager.java:52:    public synchronized boolean selectStyles(PlayerData player, 
+List<String> styleIds) {
+src\main\java\com\motm\manager\StyleManager.java:110:    public synchronized AbilityUseResult useAbility(PlayerData 
+player, String abilityId) {
+src\main\java\com\motm\manager\StyleManager.java:197:    public synchronized boolean isOnCooldown(String playerId, 
+String abilityId) {
+src\main\java\com\motm\manager\StyleManager.java:218:    public synchronized int getRemainingCooldown(String playerId, 
+String abilityId) {
+src\main\java\com\motm\manager\StyleManager.java:224:    public synchronized double getRemainingCooldownSeconds(String 
+playerId, String abilityId) {
+src\main\java\com\motm\manager\StyleManager.java:245:    public synchronized boolean isActionLocked(String playerId) {
+src\main\java\com\motm\manager\StyleManager.java:250:    public synchronized boolean isToggleActive(String playerId, 
+String abilityId) {
+src\main\java\com\motm\manager\StyleManager.java:260:    public synchronized int getCurrentCharges(String playerId, 
+AbilityData ability) {
+src\main\java\com\motm\manager\StyleManager.java:340:    public synchronized ActionState getActionState(String 
+playerId) {
+src\main\java\com\motm\manager\StyleManager.java:355:    public synchronized AbilitySlotStatus 
+getAbilitySlotStatus(PlayerData player, int slot) {
+src\main\java\com\motm\manager\StyleManager.java:518:    public synchronized void tickCooldowns() {
+src\main\java\com\motm\manager\StyleManager.java:572:    public synchronized void applyCooldownReduction(String 
+playerId, int reductionSeconds) {
+src\main\java\com\motm\manager\StyleManager.java:597:    public synchronized void resetCooldowns(String playerId) {
+src\main\java\com\motm\manager\StyleManager.java:607:    public synchronized void onPlayerDisconnect(String playerId) {
+src\main\java\com\motm\manager\StyleManager.java:652:    public synchronized String getUseFailureReason(PlayerData 
+player, AbilityData ability) {
+
+

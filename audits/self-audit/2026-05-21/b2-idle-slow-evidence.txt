@@ -1,0 +1,172 @@
+﻿
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:1:# B2 Idle Slow Diagnosis
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:3:- Status: PASS
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:6:- Slow/root/stun/freeze probe failures: 0
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:9:H1 Terra stationary passive: source inspection shows 
+stationary ticks only prime SHIELD; no slow/root movement calls.
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:12:H4 perks: PerkManager.applyPerkEffects remains 
+log-only; stationary perks cannot apply runtime slow yet.
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:14:H6 runtime status probe: all checkpoints report 
+slowMultiplier=1.000 and immobilized=false.
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:18:[2026/05/21 21:15:12   INFO]                  [MOTM] 
+[MOTM] Dev effects: count=1 slowMultiplier=1.000 speedBonus=0.000 immobilized=false terraStationaryTicks=158 
+effects=[ATTACK_BUFF:2147483176t:source=Adaptable: +5% to all damage dealt and healing received]
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:19:[2026/05/21 21:16:13   INFO]                  [MOTM] 
+[MOTM] Dev effects: count=1 slowMultiplier=1.000 speedBonus=0.000 immobilized=false terraStationaryTicks=1997 
+effects=[ATTACK_BUFF:2147477726t:source=Adaptable: +5% to all damage dealt and healing received]
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:20:[2026/05/21 21:16:52   INFO]                  [MOTM] 
+[MOTM] Dev effects: count=1 slowMultiplier=1.000 speedBonus=0.000 immobilized=false terraStationaryTicks=1075 
+effects=[ATTACK_BUFF:2147474259t:source=Adaptable: +5% to all damage dealt and healing received]
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:21:[2026/05/21 21:17:33   INFO]                  [MOTM] 
+[MOTM] Dev effects: count=1 slowMultiplier=1.000 speedBonus=0.000 immobilized=false terraStationaryTicks=2294 
+effects=[ATTACK_BUFF:2147470650t:source=Adaptable: +5% to all damage dealt and healing received]
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:22:[2026/05/21 21:18:12   INFO]                  [MOTM] 
+[MOTM] Dev effects: count=1 slowMultiplier=1.000 speedBonus=0.000 immobilized=false terraStationaryTicks=3450 
+effects=[ATTACK_BUFF:2147467222t:source=Adaptable: +5% to all damage dealt and healing received]
+audits\blockers\2026-05-21\b2-idle-slow\idle-slow-diagnosis.md:25:No MOTM slow/root/immobilize status reproduced 
+during idle, after Stomp, after Aftershock expiry, or after Sinkhole release. The only active effect was Human 
+Adaptable ATTACK_BUFF, which is unrelated to movement. Keep /motm dev effects for future live checks if the visual 
+symptom returns.
+audits\blockers\2026-05-21\b2-idle-slow\server.log:359:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Furniture_Temple_Light_Statue'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:360:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Ingredient_Hay'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:361:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Wood_Softwood_Planks'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:362:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Furniture_Feran_Bed'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:363:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Coop_Chicken'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:364:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:365:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Gate'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:366:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Gate_Open_In'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:367:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Gate_Open_Out'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:368:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Thin'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:369:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Thick'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:370:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Corner'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:371:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Corner_Thin'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:372:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Corner_Thick'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:373:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Furniture_Crude_Bed'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:374:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Grass'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:375:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Dirt'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:376:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Dirt_Poisoned'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:377:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Mud'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:378:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Deco_Bone_Pile'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:379:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Deco_Bone_Skulls'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:380:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Gravel_Sand'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:381:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Dirt'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:382:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Clay'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:383:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Rock_Stone'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:384:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Rock_Marble'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:385:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Rock_Chalk'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:386:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Ingredient_Hay'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:387:[2026/05/21 21:14:30   WARN]              [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Bench_Trough'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:431:[2026/05/21 21:14:31   WARN]        [AssetStore|EntityEffect] 
+Unused key(s) in 'Food_EffectCondition_Buff_Medium' file 
+/Server/Entity/Effects/Food/Buff/_Deprecated/Food_EffectCondition_Buff_Medium.json: Type, EntityEffectIds, Match, 
+Next, Failed
+audits\blockers\2026-05-21\b2-idle-slow\server.log:432:[2026/05/21 21:14:31   WARN]        [AssetStore|EntityEffect] 
+Unused key(s) in 'Food_EffectCondition_Buff_Small' file 
+/Server/Entity/Effects/Food/Buff/_Deprecated/Food_EffectCondition_Buff_Small.json: Type, EntityEffectIds, Match, Next, 
+Failed
+audits\blockers\2026-05-21\b2-idle-slow\server.log:445:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Furniture_Temple_Light_Statue'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:446:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Ingredient_Hay'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:447:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Wood_Softwood_Planks'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:448:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Furniture_Feran_Bed'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:449:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Coop_Chicken'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:450:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:451:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Gate'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:452:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Gate_Open_In'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:453:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Gate_Open_Out'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:454:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Thin'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:455:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Thick'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:456:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Corner'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:457:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Corner_Thin'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:458:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find hitbox name 'Fence_Corner_Thick'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:459:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Furniture_Crude_Bed'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:460:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Grass'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:461:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Dirt'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:462:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Dirt_Poisoned'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:463:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Mud'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:464:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Deco_Bone_Pile'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:465:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Deco_Bone_Skulls'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:466:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Gravel_Sand'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:467:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Dirt'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:468:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Soil_Clay'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:469:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Rock_Stone'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:470:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Rock_Marble'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:471:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Rock_Chalk'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:472:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Ingredient_Hay'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:473:[2026/05/21 21:14:31   WARN]               [BlockSetModule|P] 
+Creating block sets: Failed to find block name 'Bench_Trough'
+audits\blockers\2026-05-21\b2-idle-slow\server.log:544:[2026/05/21 21:14:31   WARN]                [AssetStore|Item] 
+Failed to find inherited parent asset Deco_Bucket (BlockType) for *Deco_Bucket_State_Filled_Mosshorn_Milk
+audits\blockers\2026-05-21\b2-idle-slow\server.log:545:[2026/05/21 21:14:31   WARN]                [AssetStore|Item] 
+Failed to find inherited parent asset Deco_Tankard (BlockType) for *Deco_Tankard_State_Filled_Water
+audits\blockers\2026-05-21\b2-idle-slow\server.log:546:[2026/05/21 21:14:31   WARN]                [AssetStore|Item] 
+Failed to find inherited parent asset Deco_Bucket (BlockType) for *Deco_Bucket_State_Filled_Water
+audits\blockers\2026-05-21\b2-idle-slow\server.log:547:[2026/05/21 21:14:31   WARN]                [AssetStore|Item] 
+Failed to find inherited parent asset Deco_Bucket (BlockType) for *Deco_Bucket_State_Filled_Milk
+audits\blockers\2026-05-21\b2-idle-slow\server.log:548:[2026/05/21 21:14:31   WARN]                [AssetStore|Item] 
+Failed to find inherited parent asset Container_Bucket (BlockType) for *Container_Bucket_State_Filled_Water
+audits\blockers\2026-05-21\b2-idle-slow\server.log:549:[2026/05/21 21:14:31   WARN]                [AssetStore|Item] 
+Failed to find inherited parent asset Template_Tool_Watering_Can (BlockType) for 
+*Template_Tool_Watering_Can_State_Filled_Water
+audits\blockers\2026-05-21\b2-idle-slow\server.log:550:[2026/05/21 21:14:31   WARN]                [AssetStore|Item] 
+Failed to find inherited parent asset Container_Bucket (BlockType) for *Container_Bucket_State_Filled_Mosshorn_Milk
+audits\blockers\2026-05-21\b2-idle-slow\server.log:551:[2026/05/21 21:14:31   WARN]                [AssetStore|Item] 
+Failed to find inherited parent asset Deco_Mug (BlockType) for *Deco_Mug_State_Filled_Water
+
+

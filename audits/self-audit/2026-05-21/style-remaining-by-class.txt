@@ -1,0 +1,4 @@
+﻿[aero] gale_wizard, jet, jump, pollution, pressure, scream, smoke, thunder, tornado
+[corruptus] attonement, hell_flame, imbuement, mentokinesis, necro, primordial, scarak, shadow, void
+[hydro] bilgewater, boiling, freshwater, iceberg, rain, saltwater, surf, vapor
+[terra] arbor, bloom, gem, sand, self_petrification, soil, stone

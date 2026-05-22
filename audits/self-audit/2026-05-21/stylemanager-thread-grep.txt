@@ -1,0 +1,45 @@
+﻿C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:11:import com.motm.manager.StyleManager;
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:370:boolean success = mod.getStyleManager().selectStyles(player, List.of(styleId));
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:527:List<AbilityData> abilities = mod.getStyleManager().getAvailableAbilities(player);
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:537:double remainingCooldown = mod.getStyleManager()
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:582:AbilityData ability = mod.getStyleManager().findAbility(player, abilityId);
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:670:AbilityData ability = mod.getStyleManager().findAbility(player, abilityId);
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:676:StyleManager styleManager = mod.getStyleManager();
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:677:StyleManager.ActionState actionState = styleManager.getActionState(player.getPlayerId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:679:String phase = actionState.phase() == StyleManager.AbilityPhase.CASTING ? "casting" : "recovering";
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:684:String useFailureReason = styleManager.getUseFailureReason(player, ability);
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:689:boolean deactivatingToggle = styleManager.isToggleActive(player.getPlayerId(), abilityId);
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:695:StyleManager.AbilityUseResult useResult = styleManager.useAbility(player, abilityId);
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:1326:mod.getStyleManager().resetCooldowns(player.getPlayerId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\command\MotmCommand.java:1382:mod.getStyleManager().resetCooldowns(player.getPlayerId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\BookInteractionManager.java:309:mod.getStyleManager().resetCooldowns(player.getPlayerId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\BookInteractionManager.java:343:mod.getStyleManager().resetCooldowns(player.getPlayerId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\BookInteractionManager.java:510:mod.getStyleManager().resetCooldowns(player.getPlayerId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\BookInteractionManager.java:1099:mod.getStyleManager().resetCooldowns(player.getPlayerId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\GameplayPlaybackManager.java:311:|| dy > STOMP_JUMP_THRESHOLD_BLOCKS / StyleManager.TICKS_PER_SECOND;
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\GameplayPlaybackManager.java:605:+ formatDistance(speedPerTick * StyleManager.TICKS_PER_SECOND) + "m/s"
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\GameplayPlaybackManager.java:5153:return clamp(speedPerSecond, 6.0, MAX_PROJECTILE_SPEED) / StyleManager.TICKS_PER_SECOND;
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\GameplayPlaybackManager.java:5229:maxDistance / Math.max(0.1, speedPerTick * StyleManager.TICKS_PER_SECOND)
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\GameplayPlaybackManager.java:5620:return Math.max(1, (int) Math.round(seconds * StyleManager.TICKS_PER_SECOND));
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\MobScalingManager.java:8:import java.util.concurrent.ThreadLocalRandom;
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\MobScalingManager.java:161:int variation = ThreadLocalRandom.current().nextInt(-2, 3); // -2 to +2
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\MobScalingManager.java:220:if (ThreadLocalRandom.current().nextDouble() >= dataLoader.getEliteSpawnChance()) {
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\MobScalingManager.java:232:titlePool.get(ThreadLocalRandom.current().nextInt(titlePool.size()));
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\PerkManager.java:146:// the queued world-thread rebuild after command selection completes.
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\PlayerDataManager.java:33:private final ScheduledExecutorService autoSaveScheduler = Executors.newSingleThreadScheduledExecutor();
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\PlayerDataManager.java:313:autoSaveScheduler.scheduleAtFixedRate(() -> {
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\SpellbookManager.java:34:private final StyleManager styleManager;
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\SpellbookManager.java:41:StyleManager styleManager,
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\SpellbookManager.java:47:this.styleManager = styleManager;
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\SpellbookManager.java:175:double cooldown = styleManager.getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\SpellbookManager.java:281:sb.append("  Quest and faction threads\n");
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\StyleManager.java:17:public class StyleManager {
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\manager\StyleManager.java:38:public StyleManager(DataLoader dataLoader,
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\ui\MotmStatusHud.java:431:? mod.getStyleManager().getAbilitySlotStatus(player, slot)
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\ui\MotmStatusHud.java:432:: com.motm.manager.StyleManager.AbilitySlotStatus.unavailable();
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\ui\MotmStatusHud.java:445:boolean ready = slotStatus.phase() == com.motm.manager.StyleManager.AbilityPhase.READY && !slotStatus.toggleActive();
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\ui\MotmStatusHud.java:477:private String buildAbilityTimerText(com.motm.manager.StyleManager.AbilitySlotStatus slotStatus) {
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\ui\MotmStatusHud.java:522:AbilityData ability = mod.getStyleManager().findAbility(player, abilityId);
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\ui\SpellbookPage.java:798:return mod.getStyleManager().getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\util\MotmPreflightAudit.java:118:if (mod.getStyleManager() == null) {
+C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\java\com\motm\util\MotmPreflightAudit.java:119:audit.error("bootstrap", "StyleManager is missing.");

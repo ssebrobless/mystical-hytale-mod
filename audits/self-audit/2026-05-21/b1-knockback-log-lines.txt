@@ -1,0 +1,1 @@
+﻿C:\Users\fishe\AppData\Roaming\Hytale\UserData\Saves\MOTM Creative Test\logs\2026-05-21_20-19-09_server.log:1393:[2026/05/22 00:26:05   INFO]                  [MOTM] [MOTM] Stomp landing resolved: targets=0 damage=0 effects=0 visual=applied

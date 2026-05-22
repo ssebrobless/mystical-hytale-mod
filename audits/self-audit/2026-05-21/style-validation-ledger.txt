@@ -1,0 +1,45 @@
+﻿
+Class     Style              Name               Status    Source                                                                                                    
+-----     -----              ----               ------    ------                                                                                                    
+aero      gale_wizard        Gale Wizard        REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      jet                Jet                REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      jump               Jump               REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      pollution          Pollution          REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      pressure           Pressure           REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      scream             Scream             REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      smoke              Smoke              REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      thunder            Thunder            REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      tornado            Tornado            REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+aero      wind_blade         Wind Blade         VALIDATED C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\aero_styles.json     
+corruptus attonement         Attonement         REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus flame              Flame              VALIDATED C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus hell_flame         Hell Flame         REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus imbuement          Imbuement          REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus mentokinesis       Mentokinesis       REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus necro              Necro              REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus primordial         Primordial         REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus scarak             Scarak             REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus shadow             Shadow             REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+corruptus void               Void               REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\corruptus_styles.json
+hydro     bilgewater         Bilgewater         REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     boiling            Boiling            REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     freshwater         Freshwater         REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     iceberg            Iceberg            REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     icicle             Icicle             VALIDATED C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     rain               Rain               REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     saltwater          Saltwater          REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     snow               Snow               VALIDATED C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     surf               Surf               REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+hydro     vapor              Vapor              REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\hydro_styles.json    
+terra     arbor              Arbor              REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     bloom              Bloom              REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     gem                Gem                REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     magma              Magma              VALIDATED C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     metal              Metal              VALIDATED C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     quake              Quake              VALIDATED C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     sand               Sand               REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     self_petrification Self Petrification REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     soil               Soil               REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+terra     stone              Stone              REMAINING C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\src\main\resources\data\styles\terra_styles.json    
+
+

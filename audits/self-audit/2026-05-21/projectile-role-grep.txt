@@ -1,0 +1,27 @@
+﻿
+  src\main\java\com\motm\manager\GameplayPlaybackManager.java:76:    private static final int 
+DEFAULT_PROJECTILE_CLUSTER_COUNT = 3;
+> src\main\java\com\motm\manager\GameplayPlaybackManager.java:77:    private static final String SUMMON_ROLE_NAME = 
+"motm_summon";
+> src\main\java\com\motm\manager\GameplayPlaybackManager.java:78:    private static final String 
+PROJECTILE_VISUAL_ROLE_NAME = "motm_projectile";
+  src\main\java\com\motm\manager\GameplayPlaybackManager.java:79:    private static final String 
+FIELD_VISUAL_ROLE_NAME = "motm_field";
+  src\main\java\com\motm\manager\GameplayPlaybackManager.java:2229:        NPCEntity proxy = new NPCEntity(world);
+> src\main\java\com\motm\manager\GameplayPlaybackManager.java:2230:        
+proxy.setRoleName(PROJECTILE_VISUAL_ROLE_NAME);
+  src\main\java\com\motm\manager\GameplayPlaybackManager.java:2231:        proxy.setDespawnTime((float) Math.max(0.6, 
+((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5));
+  src\main\java\com\motm\manager\GameplayPlaybackManager.java:3009:        NPCEntity summon = new NPCEntity(world);
+> src\main\java\com\motm\manager\GameplayPlaybackManager.java:3010:        summon.setRoleName(modelId);
+  src\main\java\com\motm\manager\GameplayPlaybackManager.java:3011:        summon.setDespawnTime((float) Math.max(2.0, 
+ability.getDurationSeconds()));
+  src\main\java\com\motm\manager\GameplayPlaybackManager.java:5910:        }
+> src\main\java\com\motm\manager\GameplayPlaybackManager.java:5911:        return 
+SUMMON_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
+> src\main\java\com\motm\manager\GameplayPlaybackManager.java:5912:                || 
+PROJECTILE_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
+  src\main\java\com\motm\manager\GameplayPlaybackManager.java:5913:                || 
+FIELD_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName());
+
+

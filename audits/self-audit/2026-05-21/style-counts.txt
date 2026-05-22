@@ -1,0 +1,3 @@
+﻿Total styles: 40
+Validated: 7
+Remaining: 33
