@@ -1,0 +1,48 @@
+﻿[2026/05/22 02:43:56   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 02:43:58   INFO]        [CommandManager] imseb executed command: motm dev class set hydro
+[2026/05/22 02:43:58   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:43:58   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:43:58   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:43:58   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:43:58   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:44:00   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 02:44:00   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:44:00   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:44:00   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:44:00   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:44:00   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:44:01   INFO]        [CommandManager] imseb executed command: motm style freshwater
+[2026/05/22 02:44:01   INFO]                  [MOTM] [MOTM] imseb selected styles: [freshwater]
+[2026/05/22 02:44:01   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:44:01   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[freshwater]
+[2026/05/22 02:44:01   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:44:01   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:44:01   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[freshwater]
+[2026/05/22 02:44:01   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:44:03   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:44:03   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:44:03   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 02:44:03   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Goblin_Scrapper, modelAssetId=Goblin_Scrapper
+[2026/05/22 02:44:03   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Bat, modelAssetId=Bat
+[2026/05/22 02:44:07   INFO]        [CommandManager] imseb executed command: motm dev test ability leap_frog
+[2026/05/22 02:44:07   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=leap_frog hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 02:44:07   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=leap_frog notifyFailures=true
+[2026/05/22 02:44:07   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=leap_frog
+[2026/05/22 02:44:07   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=leap_frog result=[MOTM] Cast Leap Frog! Charges 1/2. Runtime: hydro wave cast visuals | dash 9.0m forward +2.0m vertical | 1 hit for 22.7 damage | applied vulnerability to 1 target.
+[2026/05/22 02:44:15   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:44:15   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:44:15   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 170.00, 4971.30) floating=(5098.50, 173.00, 4968.50)
+[2026/05/22 02:44:18   INFO]        [CommandManager] imseb executed command: motm dev test ability river_rapids
+[2026/05/22 02:44:18   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=river_rapids hasTarget=true targetBlock=Vector3i{x=5103, y=170, z=4971}
+[2026/05/22 02:44:18   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=river_rapids notifyFailures=true
+[2026/05/22 02:44:18   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=river_rapids
+[2026/05/22 02:44:18   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=river_rapids result=[MOTM] Cast River Rapids! Runtime: hydro wave cast visuals | self attack buff | self speed | weapon follow-up ready x3 via River Rapids.
+[2026/05/22 02:44:24   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:44:24   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:44:24   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 170.00, 4971.30) floating=(5098.50, 173.00, 4968.50)
+[2026/05/22 02:44:28   INFO]        [CommandManager] imseb executed command: motm dev test ability swamp_monster
+[2026/05/22 02:44:28   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=swamp_monster hasTarget=true targetBlock=Vector3i{x=5103, y=170, z=4971}
+[2026/05/22 02:44:28   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=swamp_monster notifyFailures=true
+[2026/05/22 02:44:28   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=swamp_monster
+[2026/05/22 02:44:28   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=swamp_monster result=[MOTM] Cast Swamp Monster! Runtime: hydro wave cast visuals | summoned Frog Green.
+[2026/05/22 02:44:28   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Frog_Green, modelAssetId=Frog_Green
