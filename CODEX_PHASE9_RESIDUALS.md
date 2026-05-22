@@ -27,6 +27,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `boiling`: `scald`, `geyser`, and `overheat` validate successfully in `audits/phase9-boiling/2026-05-21T22-24-51/`, but `geyser` still needs the delayed vertical telegraph/activation called out by the realignment plan. `overheat` also logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
 - `vapor`: `vapor_vanish`, `dispersion`, and `hidrosis` validate successfully in `audits/phase9-vapor/2026-05-21T22-27-41/`, but `dispersion` still needs stronger start/end vapor reform visuals called out by the realignment plan.
 - `iceberg`: `ice_cap`, `glacier`, and `ice_shelf` validate successfully in `audits/phase9-iceberg/2026-05-21T22-30-24/`, but `ice_cap` still needs a future on-hit freeze-attacker hook, `glacier` needs a more physically readable barrier visual, and `ice_shelf` needs delayed strike telegraph/activation.
+- `saltwater`: `tide_pool`, `abyssal_assist`, and `rip_current` validate successfully in `audits/phase9-saltwater/2026-05-21T22-33-30/`, but `tide_pool` still needs caster speed while standing in the field. It also logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
 
 ## Harness
 
