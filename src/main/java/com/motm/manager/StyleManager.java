@@ -49,7 +49,7 @@ public class StyleManager {
      * Select styles for a player. Validates they belong to the player's class.
      * @return true if selection was valid and applied
      */
-    public synchronized boolean selectStyles(PlayerData player, List<String> styleIds) {
+    public boolean selectStyles(PlayerData player, List<String> styleIds) {
         if (styleIds.size() > MAX_SELECTED_STYLES) return false;
         if (player.getPlayerClass() == null) return false;
 
@@ -107,7 +107,7 @@ public class StyleManager {
      * Attempt to use an ability. Checks cooldown and resource cost.
      * @return the AbilityData if usable, null if on cooldown or insufficient resources
      */
-    public synchronized AbilityUseResult useAbility(PlayerData player, String abilityId) {
+    public AbilityUseResult useAbility(PlayerData player, String abilityId) {
         AbilityData ability = findAbility(player, abilityId);
         if (ability == null) {
             return AbilityUseResult.failed("That ability is unavailable.");
@@ -194,7 +194,7 @@ public class StyleManager {
 
     // --- Cooldown Management ---
 
-    public synchronized boolean isOnCooldown(String playerId, String abilityId) {
+    public boolean isOnCooldown(String playerId, String abilityId) {
         Map<String, Integer> playerCooldowns = cooldowns.get(playerId);
         if (playerCooldowns == null) return false;
         Integer remaining = playerCooldowns.get(abilityId);
@@ -215,13 +215,13 @@ public class StyleManager {
                 && getNextChargeSeconds(playerId, ability) > 0;
     }
 
-    public synchronized int getRemainingCooldown(String playerId, String abilityId) {
+    public int getRemainingCooldown(String playerId, String abilityId) {
         Map<String, Integer> playerCooldowns = cooldowns.get(playerId);
         if (playerCooldowns == null) return 0;
         return playerCooldowns.getOrDefault(abilityId, 0);
     }
 
-    public synchronized double getRemainingCooldownSeconds(String playerId, String abilityId) {
+    public double getRemainingCooldownSeconds(String playerId, String abilityId) {
         return getRemainingCooldown(playerId, abilityId) / (double) TICKS_PER_SECOND;
     }
 
@@ -242,12 +242,12 @@ public class StyleManager {
         return 0.0;
     }
 
-    public synchronized boolean isActionLocked(String playerId) {
+    public boolean isActionLocked(String playerId) {
         ActionWindow window = actionWindows.get(playerId);
         return window != null && !window.isFinished();
     }
 
-    public synchronized boolean isToggleActive(String playerId, String abilityId) {
+    public boolean isToggleActive(String playerId, String abilityId) {
         Map<String, ToggleState> playerToggles = activeToggles.get(playerId);
         if (playerToggles == null) {
             return false;
@@ -257,7 +257,7 @@ public class StyleManager {
         return state != null && !state.isExpired();
     }
 
-    public synchronized int getCurrentCharges(String playerId, AbilityData ability) {
+    public int getCurrentCharges(String playerId, AbilityData ability) {
         if (!usesCharges(ability)) {
             return 0;
         }
@@ -337,7 +337,7 @@ public class StyleManager {
         return Math.min(base, Math.max(0.08, ability.getCooldownSeconds() * 0.25));
     }
 
-    public synchronized ActionState getActionState(String playerId) {
+    public ActionState getActionState(String playerId) {
         ActionWindow window = actionWindows.get(playerId);
         if (window == null || window.isFinished()) {
             return null;
@@ -352,7 +352,7 @@ public class StyleManager {
         );
     }
 
-    public synchronized AbilitySlotStatus getAbilitySlotStatus(PlayerData player, int slot) {
+    public AbilitySlotStatus getAbilitySlotStatus(PlayerData player, int slot) {
         if (player == null || slot < 1) {
             return AbilitySlotStatus.unavailable();
         }
@@ -515,7 +515,7 @@ public class StyleManager {
     /**
      * Tick all cooldowns. Called each server tick.
      */
-    public synchronized void tickCooldowns() {
+    public void tickCooldowns() {
         for (Map<String, Integer> playerCooldowns : cooldowns.values()) {
             playerCooldowns.replaceAll((id, ticks) -> Math.max(0, ticks - 1));
             playerCooldowns.values().removeIf(v -> v <= 0);
@@ -569,7 +569,7 @@ public class StyleManager {
     /**
      * Apply cooldown reduction (from race/perks). Reduces by a flat number of seconds.
      */
-    public synchronized void applyCooldownReduction(String playerId, int reductionSeconds) {
+    public void applyCooldownReduction(String playerId, int reductionSeconds) {
         Map<String, Integer> playerCooldowns = cooldowns.get(playerId);
         int reductionTicks = reductionSeconds * TICKS_PER_SECOND;
         if (playerCooldowns != null) {
@@ -594,7 +594,7 @@ public class StyleManager {
     /**
      * Reset all cooldowns for a player (on death, style change, etc.).
      */
-    public synchronized void resetCooldowns(String playerId) {
+    public void resetCooldowns(String playerId) {
         cooldowns.remove(playerId);
         chargeRecharges.remove(playerId);
         actionWindows.remove(playerId);
@@ -604,7 +604,7 @@ public class StyleManager {
     /**
      * Clean up when player disconnects.
      */
-    public synchronized void onPlayerDisconnect(String playerId) {
+    public void onPlayerDisconnect(String playerId) {
         cooldowns.remove(playerId);
         chargeRecharges.remove(playerId);
         actionWindows.remove(playerId);
@@ -649,7 +649,7 @@ public class StyleManager {
         return sb.toString();
     }
 
-    public synchronized String getUseFailureReason(PlayerData player, AbilityData ability) {
+    public String getUseFailureReason(PlayerData player, AbilityData ability) {
         return buildUseFailureReason(player, ability, player != null && ability != null
                 ? findStyleForAbility(player, ability.getId())
                 : null);
