@@ -25,6 +25,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `surf`: `high_tide`, `waverider`, and `riptide` validate successfully in `audits/phase9-surf/2026-05-21T22-19-09/`; `high_tide` now grants `self speed` after the surgical data fix. The run logs `Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living` for projectile proxy mapping cleanup.
 - `rain`: `piercing_rain`, `rainbow`, and `splash` validate successfully in `audits/phase9-rain/2026-05-21T22-21-49/`, but field visuals for `piercing_rain` and `rainbow` log `Reloading nonexistent role motm_field!`. This is the field-proxy equivalent of the earlier projectile proxy-role issue; abilities still cast and the world stayed connected.
 - `boiling`: `scald`, `geyser`, and `overheat` validate successfully in `audits/phase9-boiling/2026-05-21T22-24-51/`, but `geyser` still needs the delayed vertical telegraph/activation called out by the realignment plan. `overheat` also logs the known field-proxy role warning `Reloading nonexistent role motm_field!`.
+- `vapor`: `vapor_vanish`, `dispersion`, and `hidrosis` validate successfully in `audits/phase9-vapor/2026-05-21T22-27-41/`, but `dispersion` still needs stronger start/end vapor reform visuals called out by the realignment plan.
 
 ## Harness
 
