@@ -3,6 +3,7 @@ param(
     [string]$ClassId = "terra",
     [string]$StyleId = "quake",
     [switch]$CloseGroundedTarget,
+    [switch]$SkipSpellbookOverview,
     [int]$CommandDelayMilliseconds = 650,
     [int]$TimeoutSeconds = 45
 )
@@ -23,6 +24,7 @@ $report.Add("- World: $WorldName")
 $report.Add("- Class: $ClassId")
 $report.Add("- Style: $StyleId")
 $report.Add("- Close grounded target: $CloseGroundedTarget")
+$report.Add("- Spellbook overview: " + ($(if ($SkipSpellbookOverview) { "skipped" } else { "requested" })))
 $report.Add("")
 
 function Add-ReportLine([string]$Line) {
@@ -91,7 +93,9 @@ try {
     } else {
         Send-MotmCommand "motm dev test mobs"
     }
-    Send-MotmCommand "motm spellbook overview"
+    if (-not $SkipSpellbookOverview) {
+        Send-MotmCommand "motm spellbook overview"
+    }
 
     $classLine = Wait-LogPattern "\[CommandManager\].*motm dev class set $ClassId" $startOffset
     $styleLine = Wait-LogPattern "\[MOTM\].*selected styles: \[$StyleId\]" $startOffset

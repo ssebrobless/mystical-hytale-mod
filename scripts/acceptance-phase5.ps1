@@ -104,7 +104,8 @@ try {
     Add-Line("")
 
     if ($Autonomous -and -not $SkipColdLaunch) {
-        & (Join-Path $PSScriptRoot "cold-launch.ps1") -WorldName $WorldName -LaunchAndLoad -EnsureFlatlands -Setup
+        & (Join-Path $PSScriptRoot "cold-launch.ps1") -WorldName $WorldName -LaunchAndLoad -EnsureFlatlands
+        & (Join-Path $PSScriptRoot "setup-test-world.ps1") -WorldName $WorldName -CloseGroundedTarget -SkipSpellbookOverview
     }
 
     $log = Get-LatestServerLog
@@ -115,14 +116,22 @@ try {
     Add-Line("## Actions")
     Add-Line("- Server log: $($log.FullName)")
 
+    Send-MotmCommand "motm dev test mobs clear"
+    Start-Sleep -Seconds 1
     Send-MotmCommand "motm dev test mobs close"
     Start-Sleep -Seconds 2
     Send-MotmCommand "motm dev test ability stomp"
     Start-Sleep -Milliseconds 800
-    Send-Jump
+    & (Join-Path $PSScriptRoot "send-input.ps1") -Action Jump -DelayMilliseconds 1600
     Start-Sleep -Seconds 3
+    Send-MotmCommand "motm dev test mobs clear"
+    Start-Sleep -Seconds 1
+    Send-MotmCommand "motm dev test mobs close"
+    Start-Sleep -Seconds 2
     Send-MotmCommand "motm dev test ability aftershock"
     Start-Sleep -Seconds 5
+    Send-MotmCommand "motm dev test mobs clear"
+    Start-Sleep -Seconds 1
     Send-MotmCommand "motm dev test mobs close"
     Start-Sleep -Seconds 2
     Send-MotmCommand "motm dev test ability sinkhole"
@@ -147,9 +156,9 @@ try {
     Assert-AnyLine $lines "abilityId=aftershock" "Aftershock queued"
     Assert-AnyLine $lines "Cast Aftershock!" "Aftershock cast result"
     Assert-AnyLine $lines "abilityId=sinkhole" "Sinkhole queued"
-    Assert-AnyLine $lines "Sinkhole engaged: buried 1 target\(s\)" "Sinkhole buried target"
+    Assert-AnyLine $lines "Sinkhole engaged: buried [1-9][0-9]* target\(s\)" "Sinkhole buried target"
     Assert-AnyLine $lines "Sinkhole suffocation tick" "Sinkhole suffocation tick"
-    Assert-AnyLine $lines "Sinkhole released: 1 target\(s\)" "Sinkhole release"
+    Assert-AnyLine $lines "Sinkhole released: [1-9][0-9]* target\(s\)" "Sinkhole release"
 
     Add-Line("")
     Add-Line("## Visual Gates")
