@@ -5,6 +5,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 ## Checkpoints
 
 - 2026-05-22T05-05-20: post-Hydro Phase 5 regression passed from cold launch. Evidence: `audits/phase5/2026-05-22T05-05-20/report.md`.
+- 2026-05-22T05-17-25: post-Aero Phase 5 regression passed from cold launch. Evidence: `audits/phase5/2026-05-22T05-17-25/report.md`.
 
 ## Terra
 
