@@ -37,6 +37,7 @@ Non-blocking findings discovered during successful style validation runs. These 
 - `jet`: `jet_burst`, `afterburner`, and `mach_punch` validate successfully in `audits/phase9-jet/2026-05-21T23-00-09/`; `jet_burst` hits and applies knockback. `afterburner` proves dash plus ember trail but reports `No valid target in range`, and `mach_punch` proves dash-strike movement but also reports `No valid target in range`; keep both for a later dash hit-position audit.
 - `thunder`: `thunderclap`, `smite`, and `chain_lightning` validate successfully in `audits/phase9-thunder/2026-05-21T23-20-44/`; `smite` now applies its 1.25x shocked-target bonus through the projectile-impact path. `smite` logs `Unmapped NPC type encountered. npcTypeId=Spirit_Thunder, modelAssetId=Spirit_Thunder` for projectile proxy mapping cleanup.
 - `jump`: `leap`, `divebomb`, and `hang_time` validate successfully in `audits/phase9-jump/2026-05-21T23-25-23/`; `leap` hits and applies knockback plus vulnerability, and `hang_time` grants self evasion. `divebomb` proves aerial dive movement but reports `No valid target in range`; keep for the later movement hit-position audit.
+- `pressure`: `air_shot`, `bullet_storm`, and `pressure_burst` validate successfully in `audits/phase9-pressure/2026-05-21T23-42-48/`; `pressure_burst` hits. `air_shot` and `bullet_storm` prove projectile launch/volley cadence, but the cast log does not prove target-side impact or `bullet_storm` slow application; keep for the later projectile-impact audit.
 
 ## Harness
 
