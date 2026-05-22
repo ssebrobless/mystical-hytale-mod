@@ -1,0 +1,46 @@
+﻿[2026/05/22 02:24:52   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 02:24:53   INFO]        [CommandManager] imseb executed command: motm dev class set hydro
+[2026/05/22 02:24:53   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:24:53   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:24:53   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:24:53   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:24:53   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:24:55   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 02:24:55   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:24:55   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:24:55   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:24:55   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:24:55   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[]
+[2026/05/22 02:24:57   INFO]        [CommandManager] imseb executed command: motm style boiling
+[2026/05/22 02:24:57   INFO]                  [MOTM] [MOTM] imseb selected styles: [boiling]
+[2026/05/22 02:24:57   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:24:57   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[boiling]
+[2026/05/22 02:24:57   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:24:57   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:24:57   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[boiling]
+[2026/05/22 02:24:57   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:24:58   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:24:58   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:24:58   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5101.64, 168.00, 4983.98) floating=(5101.22, 171.00, 4989.70)
+[2026/05/22 02:25:02   INFO]        [CommandManager] imseb executed command: motm dev test ability scald
+[2026/05/22 02:25:02   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=scald hasTarget=true targetBlock=Vector3i{x=5101, y=168, z=4983}
+[2026/05/22 02:25:02   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=scald notifyFailures=true
+[2026/05/22 02:25:02   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=scald
+[2026/05/22 02:25:02   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=scald result=[MOTM] Cast Scald! Runtime: hydro wave cast visuals | launched 1 projectile at 24.0m/s.
+[2026/05/22 02:25:10   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:25:10   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:25:10   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5101.64, 168.00, 4983.98) floating=(5101.22, 171.00, 4989.70)
+[2026/05/22 02:25:14   INFO]        [CommandManager] imseb executed command: motm dev test ability geyser
+[2026/05/22 02:25:14   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=geyser hasTarget=true targetBlock=Vector3i{x=5101, y=168, z=4983}
+[2026/05/22 02:25:14   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=geyser notifyFailures=true
+[2026/05/22 02:25:14   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=geyser
+[2026/05/22 02:25:14   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=geyser result=[MOTM] Cast Geyser! Runtime: hydro wave cast visuals | 2 hits for 68.0 damage | applied burn to 2 targets.
+[2026/05/22 02:25:21   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:25:21   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:25:21   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5101.64, 168.00, 4983.98) floating=(5101.22, 171.00, 4989.70)
+[2026/05/22 02:25:25   INFO]        [CommandManager] imseb executed command: motm dev test ability overheat
+[2026/05/22 02:25:25   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=overheat hasTarget=true targetBlock=Vector3i{x=5101, y=168, z=4983}
+[2026/05/22 02:25:25   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=overheat notifyFailures=true
+[2026/05/22 02:25:25   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=overheat
+[2026/05/22 02:25:25 SEVERE]                 [NPC|P] Reloading nonexistent role motm_field!
+[2026/05/22 02:25:25   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=overheat result=[MOTM] Cast Overheat! Runtime: hydro wave cast visuals | steam pressure aura | radius 3.5m | 8s | self attack buff | self self burn | weapon follow-up ready x3 via Overheat.
