@@ -1,0 +1,46 @@
+﻿[2026/05/22 01:25:33   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 01:25:34   INFO]        [CommandManager] imseb executed command: motm dev class set terra
+[2026/05/22 01:25:34   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:25:34   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:25:34   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:25:34   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:25:34   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:25:36   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 01:25:36   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:25:36   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:25:36   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:25:36   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:25:36   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:25:38   INFO]        [CommandManager] imseb executed command: motm style arbor
+[2026/05/22 01:25:38   INFO]                  [MOTM] [MOTM] imseb selected styles: [arbor]
+[2026/05/22 01:25:38   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:25:38   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[arbor]
+[2026/05/22 01:25:38   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:25:38   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:25:38   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[arbor]
+[2026/05/22 01:25:38   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 01:25:39   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:25:39   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:25:39   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:25:43   INFO]        [CommandManager] imseb executed command: motm dev test ability rooted
+[2026/05/22 01:25:43   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rooted hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:25:43   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rooted notifyFailures=true
+[2026/05/22 01:25:43   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rooted
+[2026/05/22 01:25:43   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rooted result=[MOTM] Cast Rooted! Runtime: terra cast visuals | root circle aura | radius 3.4m | 5s.
+[2026/05/22 01:25:49   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:25:49   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:25:49   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:25:52   INFO]        [CommandManager] imseb executed command: motm dev test ability vines
+[2026/05/22 01:25:52   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=vines hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:25:52   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=vines notifyFailures=true
+[2026/05/22 01:25:52   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=vines
+[2026/05/22 01:25:52   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=vines result=[MOTM] Cast Vines! Runtime: terra cast visuals | 2 hits for 22.7 damage | applied stun to 2 targets.
+[2026/05/22 01:26:00   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:26:00   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:26:00   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:26:04   INFO]        [CommandManager] imseb executed command: motm dev test ability sapling
+[2026/05/22 01:26:04   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sapling hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:26:04   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sapling notifyFailures=true
+[2026/05/22 01:26:04   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sapling
+[2026/05/22 01:26:04   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sapling result=[MOTM] Cast Sapling! Runtime: terra cast visuals | summoned Spirit Root.
+[2026/05/22 01:26:04   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Spirit_Root, modelAssetId=Spirit_Root
