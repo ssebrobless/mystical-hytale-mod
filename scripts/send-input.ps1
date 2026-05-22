@@ -21,10 +21,14 @@ public static class MotmInputWin32 {
     [DllImport("user32.dll")]
     public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
 
+    [DllImport("user32.dll")]
+    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+
     public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
     public const uint MOUSEEVENTF_LEFTUP = 0x0004;
     public const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
     public const uint MOUSEEVENTF_RIGHTUP = 0x0010;
+    public const uint KEYEVENTF_KEYUP = 0x0002;
 }
 "@
 
@@ -50,7 +54,9 @@ function Send-KeyChord([string]$Chord) {
 }
 
 function Send-Jump {
-    [System.Windows.Forms.SendKeys]::SendWait(" ")
+    [MotmInputWin32]::keybd_event([byte]0x20, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 120
+    [MotmInputWin32]::keybd_event([byte]0x20, 0, [MotmInputWin32]::KEYEVENTF_KEYUP, [UIntPtr]::Zero)
     Start-Sleep -Milliseconds $DelayMilliseconds
 }
 

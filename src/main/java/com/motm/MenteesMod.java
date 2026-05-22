@@ -198,6 +198,8 @@ public class MenteesMod extends JavaPlugin {
     private final Set<String> pendingSpellbookGrants = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingDevBookGrants = ConcurrentHashMap.newKeySet();
     private final Map<String, Boolean> pendingStyleTestMobSpawns = new ConcurrentHashMap<>();
+    private final Set<String> pendingStyleTestMobClears = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingStyleTestMobCounts = ConcurrentHashMap.newKeySet();
     private final Map<String, List<Ref<EntityStore>>> styleTestTargetsByPlayer = new ConcurrentHashMap<>();
     private final Map<String, String> pendingSingleAbilityTests = new ConcurrentHashMap<>();
     private final Set<String> pendingHydroContainerSyncs = ConcurrentHashMap.newKeySet();
@@ -818,7 +820,9 @@ public class MenteesMod extends JavaPlugin {
         classPassiveManager.tick(onlineRuntimePlayers, currentStore);
         processActiveStyleTests(currentStore);
         processPendingSingleAbilityTests(currentStore);
+        processPendingStyleTestMobClears(currentStore);
         processPendingStyleTestMobSpawns(currentStore);
+        processPendingStyleTestMobCounts(currentStore);
         processPendingAbilityCasts(currentStore);
         gameplayPlaybackManager.tickArmedStomps(currentStore);
         gameplayPlaybackManager.tick(currentStore);
@@ -1268,17 +1272,25 @@ public class MenteesMod extends JavaPlugin {
     }
 
     public String clearStyleTestMobs(String playerId) {
-        int cleared = clearTrackedStyleTestTargets(playerId);
-        String summary = "[MOTM] Style test mobs cleared: count=" + cleared;
-        LOG.info(summary + " playerId=" + playerId);
-        return summary;
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+        boolean added = pendingStyleTestMobClears.add(playerId);
+        LOG.info("[MOTM] Style test mob clear queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Style test mob clear queued."
+                : "[MOTM] Style test mob clear is already queued.";
     }
 
     public String countStyleTestMobs(String playerId) {
-        int count = countTrackedStyleTestTargets(playerId);
-        String summary = "[MOTM] Style test mobs tracked: count=" + count;
-        LOG.info(summary + " playerId=" + playerId);
-        return summary;
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+        boolean added = pendingStyleTestMobCounts.add(playerId);
+        LOG.info("[MOTM] Style test mob count queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Style test mob count queued."
+                : "[MOTM] Style test mob count is already queued.";
     }
 
     public String spawnStyleTestMobs(String playerId, boolean closeGroundedTarget) {
@@ -1356,6 +1368,20 @@ public class MenteesMod extends JavaPlugin {
                 + " grounded=" + formatVector(groundPosition)
                 + " floating=" + formatVector(floatingPosition);
         LOG.info(summary);
+        return summary;
+    }
+
+    private String clearStyleTestMobsNow(String playerId) {
+        int cleared = clearTrackedStyleTestTargets(playerId);
+        String summary = "[MOTM] Style test mobs cleared: count=" + cleared;
+        LOG.info(summary + " playerId=" + playerId);
+        return summary;
+    }
+
+    private String countStyleTestMobsNow(String playerId) {
+        int count = countTrackedStyleTestTargets(playerId);
+        String summary = "[MOTM] Style test mobs tracked: count=" + count;
+        LOG.info(summary + " playerId=" + playerId);
         return summary;
     }
 
@@ -1711,6 +1737,40 @@ public class MenteesMod extends JavaPlugin {
             String result = spawnStyleTestMobsNow(playerId, player, closeGroundedTarget);
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobSpawns.remove(playerId);
+        }
+    }
+
+    private void processPendingStyleTestMobClears(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingStyleTestMobClears)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingStyleTestMobClears.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = clearStyleTestMobsNow(playerId);
+            player.sendMessage(Message.raw(result));
+            pendingStyleTestMobClears.remove(playerId);
+        }
+    }
+
+    private void processPendingStyleTestMobCounts(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingStyleTestMobCounts)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingStyleTestMobCounts.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = countStyleTestMobsNow(playerId);
+            player.sendMessage(Message.raw(result));
+            pendingStyleTestMobCounts.remove(playerId);
         }
     }
 
