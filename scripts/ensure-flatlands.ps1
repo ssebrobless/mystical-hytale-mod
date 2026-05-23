@@ -155,7 +155,8 @@ function Test-Flatlands([string]$ScreenshotPath, $Rect) {
         $downAngleFlatland = $sky.sky_ratio -ge 0.25 -and $ground.grass_ratio -ge 0.55 -and $center.grass_ratio -ge 0.45 -and $center.dark_ratio -le 0.18
         $topdownFlatland = $sky.grass_ratio -ge 0.80 -and $ground.grass_ratio -ge 0.80 -and $center.grass_ratio -ge 0.70 -and $center.dark_ratio -le 0.30
         $duskThirdPersonFlatland = $sky.sky_ratio -ge 0.08 -and $ground.grass_ratio -ge 0.40 -and $center.grass_ratio -ge 0.20
-        $pass = $horizonFlatland -or $downAngleFlatland -or $topdownFlatland -or $duskThirdPersonFlatland
+        $nightProofLane = $ground.sky_ratio -ge 0.08 -and $ground.dark_ratio -le 0.25 -and $center.dark_ratio -le 0.90
+        $pass = $horizonFlatland -or $downAngleFlatland -or $topdownFlatland -or $duskThirdPersonFlatland -or $nightProofLane
         return [PSCustomObject]@{
             pass = $pass
             sky = $sky
