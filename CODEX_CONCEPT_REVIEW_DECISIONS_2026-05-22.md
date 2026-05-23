@@ -133,6 +133,106 @@ Terra / Bloom
 ```
 
 ```text
+Terra / Self Petrification
++-- Gargoyle visual/function:
+    +-- Player uses a tight stone coating that hugs the player model.
+    +-- Cooldown starts after the ability ends naturally or is manually canceled.
+    +-- Cooldown is 6 seconds.
++-- Glare visual/function:
+    +-- Affected targets use the same tight stone coating as Gargoyle while petrified.
+    +-- When released, the stone effect vanishes.
+    +-- Released targets remain slowed for 2 seconds after the stone effect vanishes.
++-- Tunnel visual/function:
+    +-- Player transforms into a singular stone block.
+    +-- Player can traverse through the ground/terrain while transformed.
+    +-- Tunnel consumes stone blocks as the movement resource.
+    +-- Tunnel can be used while the player is in Gargoyle mode.
+    +-- Gargoyle and Tunnel should work hand in hand rather than block each other.
+    +-- If the player runs out of stone blocks while still inside existing terrain blocks, automatically return/raise the player to the surface.
+    +-- Tunnel must never leave the player stuck inside terrain.
+```
+
+```text
+Terra / Soil
++-- Burrow function/visual:
+    +-- Burrow is distinct from Tunnel.
+    +-- Tunnel is controlled/free movement as a transformed stone block.
+    +-- Burrow is a quick whack-a-mole / prairie-dog style dash.
+    +-- Player visually drops down into the ground, dashes 4 blocks forward, then re-emerges from the ground.
+    +-- Damage and knockback happen on the exit/re-emerge moment.
+    +-- Burrow should feel usable as evasion and short dash mobility.
++-- Mudpit function/visual:
+    +-- Similar interaction family as Magma/Lava Pool, but water-based.
+    +-- Instead of only a ring, Mudpit expands outward as a ground pool/field of water blocks.
+    +-- Water blocks should be tinted brown to read as muddy water.
+    +-- Mudpit passes through mobs and applies its debuff effects.
+    +-- Mudpit counts as water for Hydro-style/passive interactions when relevant.
+    +-- Mudpit must not slow or negatively affect the caster, allies, or allied summons.
+    +-- Caster/allies should be able to walk through it normally even though it is water-block based.
+    +-- It functions as an AoE field.
++-- Debris function/visual:
+    +-- Debris should not look like a thrown dirt block.
+    +-- It should look like a forward-traveling brown smoke/debris wave.
+    +-- Use heavily brown-tinted smoke plus dirt-block and stone-block break particles.
+    +-- The visual should read as dust and debris traveling forward from the player.
+```
+
+```text
+Terra / Sand
++-- Sandstorm visual/function:
+    +-- Visual should be similar to Soil/Debris, but as a surrounding cloud around the player.
+    +-- Use heavily tinted smoke/cloud effects with beige-yellow coloring.
+    +-- The cloud should depict the ability radius around the player.
++-- Dust Devil visual/function:
+    +-- Uses the same visual effect family as Sandstorm.
+    +-- Main visual cue is the player dashing forward while Sandstorm is active.
+    +-- Sandstorm cloud should move with the dash.
+    +-- Enemies caught in Sandstorm should be dragged during the dash.
+    +-- At dash end, enemies are expelled/knocked away from the tornado/sandstorm.
+    +-- Dust Devil ends/deactivates Sandstorm when the dash/expel finishes.
+    +-- Sandstorm must be reactivated after Dust Devil is used.
++-- Vitrification combo rule:
+    +-- Must be usable in conjunction with Sandstorm and Dust Devil.
+    +-- Sandstorm, Dust Devil, and Vitrification are intended to work together as a combo kit.
+    +-- Vitrification visuals/effects must layer without canceling or visually hiding the Sandstorm/Dust Devil cloud.
+```
+
+```text
+Terra / Gem
++-- Lapidary visual/function:
+    +-- Persistent controllable object that can be recalled.
+    +-- Needs active HP tracking/bar.
+    +-- If a true gem model is difficult, use a floating 2x2 block cluster made from the closest gem/crystal-like blocks.
+    +-- Lapidary should float one block off the ground.
+    +-- Green gem/crystal is preferred if available.
+    +-- If green is unavailable, all Gem ability colors should match whatever gem/crystal asset is selected.
++-- Fracture visual/function:
+    +-- Must not affect caster, allies, or allied summons.
+    +-- Visual explosion should be a bright colored expanding circle/sphere from the gem epicenter.
+    +-- Explosion should expand quickly outward rather than hit the whole radius instantly.
+    +-- Green visual preferred if the Lapidary gem is green; otherwise match selected gem color.
++-- Refraction visual/function:
+    +-- Bright light sphere aura surrounding the gem while active.
+    +-- Aura should reflect/show the active radius.
+    +-- Green visual preferred if the Lapidary gem is green; otherwise match selected gem color.
+```
+
+```text
+Terra / Quake
++-- Stomp visual:
+    +-- Preserve the earlier tested flash + ground-crack combined impact effect.
+    +-- Landing impact should use that combined visual read.
++-- Aftershock function/visual:
+    +-- Radius becomes an 8 block spherical radius.
+    +-- Preserve the earlier flash + ground-crack/tremor style for visual impact.
++-- Sinkhole visual/function:
+    +-- Do not require physically ripping the ground open.
+    +-- Use repeated/overlaid breaking-block effects on top of the ground where the target was hit to mark cracks.
+    +-- Apply the approved buried effect to targets for Sinkhole duration.
+    +-- Add brown dust above/around the crack marker so buried target locations remain easy to track.
+```
+
+```text
 Hydro
 +-- Aqua Barrier visual: giant bubble surrounding the player's whole body.
 +-- Aqua Barrier stacking rule:
