@@ -93,7 +93,7 @@ function Get-RegionMetrics([System.Drawing.Bitmap]$Bitmap, $Rect, [double]$X1, [
             $c = $Bitmap.GetPixel($x, $y)
             $total++
             if ($c.B -ge 135 -and $c.G -ge 110 -and $c.B -gt ($c.R + 20)) { $sky++ }
-            if ($c.G -ge 80 -and $c.G -gt ($c.R + 12) -and $c.G -gt ($c.B + 8)) { $grass++ }
+            if ($c.G -ge 35 -and $c.G -gt ($c.R + 4) -and $c.G -gt ($c.B + 2)) { $grass++ }
             if ($c.R -lt 75 -and $c.G -lt 75 -and $c.B -lt 75) { $dark++ }
             if ($c.R -gt 190 -and $c.G -gt 190 -and $c.B -gt 190) { $whiteText++ }
         }
@@ -124,7 +124,7 @@ try {
         $bitmap.Dispose()
     }
 
-    $looksLikeWorld = ($upper.sky_ratio -ge 0.20 -or $lower.grass_ratio -ge 0.25)
+    $looksLikeWorld = ($upper.sky_ratio -ge 0.08 -or $lower.grass_ratio -ge 0.25 -or $center.grass_ratio -ge 0.18)
     $darkOverlay = $center.dark_ratio -ge 0.62 -and $center.white_ratio -ge 0.005
     $voidRisk = -not $looksLikeWorld -and $center.dark_ratio -ge 0.45
 

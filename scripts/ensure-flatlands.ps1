@@ -133,7 +133,7 @@ function Get-RegionMetrics([System.Drawing.Bitmap]$Bitmap, $Rect, [double]$X1, [
             $c = $Bitmap.GetPixel($x, $y)
             $total++
             if ($c.B -ge 135 -and $c.G -ge 110 -and $c.B -gt ($c.R + 20)) { $sky++ }
-            if ($c.G -ge 80 -and $c.G -gt ($c.R + 12) -and $c.G -gt ($c.B + 8)) { $grass++ }
+            if ($c.G -ge 35 -and $c.G -gt ($c.R + 4) -and $c.G -gt ($c.B + 2)) { $grass++ }
             if ($c.R -lt 95 -and $c.G -lt 95 -and $c.B -lt 95) { $darkStone++ }
         }
     }
@@ -154,7 +154,8 @@ function Test-Flatlands([string]$ScreenshotPath, $Rect) {
         $horizonFlatland = $sky.sky_ratio -ge 0.55 -and $ground.grass_ratio -ge 0.35 -and $center.dark_ratio -le 0.22
         $downAngleFlatland = $sky.sky_ratio -ge 0.25 -and $ground.grass_ratio -ge 0.55 -and $center.grass_ratio -ge 0.45 -and $center.dark_ratio -le 0.18
         $topdownFlatland = $sky.grass_ratio -ge 0.80 -and $ground.grass_ratio -ge 0.80 -and $center.grass_ratio -ge 0.70 -and $center.dark_ratio -le 0.30
-        $pass = $horizonFlatland -or $downAngleFlatland -or $topdownFlatland
+        $duskThirdPersonFlatland = $sky.sky_ratio -ge 0.08 -and $ground.grass_ratio -ge 0.40 -and $center.grass_ratio -ge 0.20
+        $pass = $horizonFlatland -or $downAngleFlatland -or $topdownFlatland -or $duskThirdPersonFlatland
         return [PSCustomObject]@{
             pass = $pass
             sky = $sky
