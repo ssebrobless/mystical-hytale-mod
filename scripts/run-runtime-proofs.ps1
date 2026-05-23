@@ -2,6 +2,7 @@ param(
     [string]$WorldName = "MOTM Creative Test",
     [string]$RunId = "",
     [string[]]$Proofs = @(),
+    [string]$PhaseId = "proofs/p0-p4",
     [switch]$ColdLaunch,
     [switch]$SkipFlatlandsGate,
     [int]$CommandDelayMilliseconds = 900,
@@ -15,7 +16,7 @@ if ([string]::IsNullOrWhiteSpace($RunId)) {
     $RunId = Get-Date -Format "yyyy-MM-ddTHH-mm-ss"
 }
 
-$phaseId = "proofs/p0-p4"
+$phaseId = $PhaseId
 $outDir = Join-Path $repoRoot (Join-Path "audits" (Join-Path $phaseId $RunId))
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 
@@ -106,8 +107,9 @@ function Invoke-ThirdPersonGate {
     Add-Line("## Third-Person Gate")
     Add-Line("")
     & (Join-Path $PSScriptRoot "send-input.ps1") -Action ThirdPerson -DelayMilliseconds 550 | Out-Host
+    & (Join-Path $PSScriptRoot "move-test-lane.ps1") -RunId $RunId -ForwardMilliseconds 0 -StrafeMilliseconds 0 -LookDy -900 -SkipScreenshot | Out-Host
     Capture "third-person-confirmation"
-    Add-Line("- Pressed V and captured third-person-confirmation.png before visual proofs.")
+    Add-Line("- Pressed V, tilted camera toward the test lane, and captured third-person-confirmation.png before visual proofs.")
     Add-Line("")
 }
 
@@ -224,6 +226,9 @@ try {
         & (Join-Path $PSScriptRoot "ensure-flatlands.ps1") -VerifyOnly
         & (Join-Path $PSScriptRoot "move-test-lane.ps1") -RunId $RunId -ForwardMilliseconds 2600 -StrafeMilliseconds 700 | Out-Host
         Add-Line("- Flatlands verified and moved into a clearer test lane.")
+        Send-MotmCommand "motm dev daylight" 1100
+        Capture "after-time-noon"
+        Add-Line("- Requested MOTM dev daylight for readable visual evidence.")
         Add-Line("")
     }
 

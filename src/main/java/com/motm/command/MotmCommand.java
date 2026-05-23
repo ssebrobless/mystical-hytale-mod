@@ -765,6 +765,7 @@ public class MotmCommand {
             case "proof" -> handleDevProof(player, args, runtimePlayer);
             case "position", "where" -> handleDevPosition(player);
             case "relocate", "unstuck" -> handleDevRelocate(player, args);
+            case "daylight", "noon" -> mod.queueDaylightForTesting(player.getPlayerId());
             case "freecast" -> handleDevFreeCast(player, args);
             case "effects" -> handleDevEffects(player);
             case "clear" -> handleDevClear(player, args);
@@ -1158,6 +1159,7 @@ public class MotmCommand {
                 + "  /motm dev proof <proofId>\n"
                 + "  /motm dev position\n"
                 + "  /motm dev relocate <up|flatlands>\n"
+                + "  /motm dev daylight\n"
                 + "  /motm dev freecast <on|off>\n"
                 + "  /motm dev effects\n"
                 + "  /motm dev clear\n"

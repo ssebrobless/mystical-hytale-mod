@@ -47,6 +47,7 @@ import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.Modifier;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.StaticModifier;
+import com.hypixel.hytale.server.core.modules.time.WorldTimeResource;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
@@ -215,6 +216,7 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, String> pendingStyleTestMobSpawns = new ConcurrentHashMap<>();
     private final Set<String> pendingStyleTestMobClears = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingStyleTestMobCounts = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingDaylightRequests = ConcurrentHashMap.newKeySet();
     private final Map<String, List<Ref<EntityStore>>> styleTestTargetsByPlayer = new ConcurrentHashMap<>();
     private final Map<String, String> pendingSingleAbilityTests = new ConcurrentHashMap<>();
     private final Map<String, String> pendingProofRequests = new ConcurrentHashMap<>();
@@ -840,6 +842,7 @@ public class MenteesMod extends JavaPlugin {
         processActiveStyleTests(currentStore);
         processPendingSingleAbilityTests(currentStore);
         processPendingDevRelocations(currentStore);
+        processPendingDaylightRequests(currentStore);
         processPendingProofRequests(currentStore);
         processActiveProofCleanups(currentStore);
         processPendingStyleTestMobClears(currentStore);
@@ -1353,7 +1356,7 @@ public class MenteesMod extends JavaPlugin {
         }
         String normalizedProofId = proofId == null ? "" : proofId.trim().toLowerCase(Locale.ROOT);
         if (normalizedProofId.isBlank()) {
-            return "[MOTM] Usage: /motm dev proof <coating-metal|tempblock-metal-wall|tempfluid-lava-ring|proxy-magma-blob|movement-burrow|...>";
+            return "[MOTM] Usage: /motm dev proof <coating-metal|tempblock-metal-wall|tempblock-gem-cluster|tempfluid-lava-ring|proxy-magma-blob|movement-burrow|...>";
         }
         boolean added = pendingProofRequests.put(playerId, normalizedProofId) == null;
         LOG.info("[MOTM] Proof request queued: playerId=" + playerId
@@ -1945,6 +1948,43 @@ public class MenteesMod extends JavaPlugin {
         }
     }
 
+    private void processPendingDaylightRequests(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingDaylightRequests)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingDaylightRequests.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result;
+            try {
+                World world = currentStore != null && currentStore.getExternalData() != null
+                        ? currentStore.getExternalData().getWorld()
+                        : player.getWorld();
+                WorldTimeResource time = currentStore == null
+                        ? null
+                        : currentStore.getResource(WorldTimeResource.getResourceType());
+                if (world == null || time == null) {
+                    result = "[MOTM] Dev daylight failed: world time resource unavailable.";
+                } else {
+                    time.setDayTime(0.5d, world, currentStore);
+                    result = "[MOTM] Dev daylight applied: dayTime=0.5 sunlight="
+                            + String.format(Locale.ROOT, "%.2f", time.getSunlightFactor());
+                }
+            } catch (Throwable e) {
+                result = "[MOTM] Dev daylight failed safely: " + e.getMessage();
+                LOG.log(java.util.logging.Level.SEVERE, result, e);
+            } finally {
+                pendingDaylightRequests.remove(playerId);
+            }
+            LOG.info(result);
+            player.sendMessage(Message.raw(result));
+        }
+    }
+
     private void processActiveProofCleanups(Store<EntityStore> currentStore) {
         long now = System.currentTimeMillis();
         World currentWorld = currentStore != null && currentStore.getExternalData() != null
@@ -2011,12 +2051,32 @@ public class MenteesMod extends JavaPlugin {
             case "tempblock-stone-pillar" -> runTempBlockProof(player, proofId, "Rock_Stone_Brick_Pillar_Middle", 1, 3, 0);
             case "tempblock-flower" -> runTempBlockProof(player, proofId, "Plant_Flower_Common_Purple", 1, 1, 0);
             case "tempblock-sapling" -> runTempBlockProof(player, proofId, "Plant_Sapling_Oak", 1, 1, 0);
+            case "tempblock-gem-cluster" -> runTempBlockProof(player, proofId, 2, 2, 1,
+                    "Rock_Crystal_Green_Block",
+                    "Rock_Crystal_Green_Large",
+                    "Plant_Bush_Crystal",
+                    "Plant_Leaves_Crystal",
+                    "Plant_Sapling_Crystal");
+            case "tempblock-cactus" -> runTempBlockProof(player, proofId, 1, 2, 0,
+                    "Plant_Cactus_1",
+                    "Prototype_Cactus_Kit_Tall_Base",
+                    "Prototype_Cactus_One",
+                    "Plant_Cactus_Ball_1");
+            case "tempblock-roots" -> runTempBlockProof(player, proofId, 2, 1, 0,
+                    "Plant_Roots_Leafy",
+                    "Plant_Roots_Cave",
+                    "Plant_Roots_Cave_Small",
+                    "Plant_Vine_Thick_Roots");
             case "tempfluid-lava-ring" -> runTempFluidProof(player, proofId, 2, "Fluid_Lava", "Lava", "lava");
             case "tempfluid-water-field" -> runTempFluidProof(player, proofId, 2, "Fluid_Water", "Water", "water");
+            case "tempfluid-mud-field" -> runTempFluidProof(player, proofId, 3, "Fluid_Water", "Water", "water");
             case "proxy-magma-blob" -> runProxyProof(player, proofId, "Slug_Magma", "MOTM_Terra_Impact", 2.5);
             case "proxy-cactus-projectile" -> runProxyProof(player, proofId, "Test_Dummy_Stationary", "MOTM_Terra_Cast", 2.5);
             case "proxy-gem" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Terra_Gem_Field", 3.0);
+            case "proxy-gem-aura" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Proof_Gem_Green", 3.0);
             case "proxy-glass-shards" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Terra_Gem_Cast", 2.5);
+            case "proxy-sand-cloud" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Proof_Sand_Cloud", 3.0);
+            case "proxy-debris-wave" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Proof_Debris_Wave", 3.0);
             case "movement-burrow" -> runMovementProof(player, currentStore, proofId, forward, 4.0, false);
             case "movement-tunnel" -> runMovementProof(player, currentStore, proofId, forward, 2.0, true);
             case "movement-dust-devil" -> runMovementProof(player, currentStore, proofId, forward, 5.0, false);
@@ -2068,7 +2128,21 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private String runTempBlockProof(Player player, String proofId, String blockId, int width, int height, int depth) {
-        int blockTypeId = BlockType.getBlockIdOrUnknown(blockId, "MOTM proof " + proofId);
+        return runTempBlockProof(player, proofId, width, height, 0, blockId);
+    }
+
+    private String runTempBlockProof(Player player, String proofId, int width, int height, int yOffset, String... blockIds) {
+        BlockResolution blockResolution = resolveProofBlockId(blockIds);
+        String blockId = blockResolution.blockId();
+        int blockTypeId = blockResolution.blockTypeId();
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            return "[MOTM] Proof " + proofId + " FAIL: block id did not resolve: candidates="
+                    + String.join(",", blockIds);
+        }
+        return runTempBlockProof(player, proofId, blockId, blockTypeId, width, height, yOffset);
+    }
+
+    private String runTempBlockProof(Player player, String proofId, String blockId, int blockTypeId, int width, int height, int yOffset) {
         if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
             return "[MOTM] Proof " + proofId + " FAIL: block id did not resolve: " + blockId;
         }
@@ -2079,7 +2153,8 @@ public class MenteesMod extends JavaPlugin {
             return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
         }
 
-        Vector3i anchor = proofAnchor(base, forward, 4.0);
+        Vector3i baseAnchor = proofAnchor(base, forward, 4.0);
+        Vector3i anchor = new Vector3i(baseAnchor.getX(), baseAnchor.getY() + yOffset, baseAnchor.getZ());
         BlockSelection selection = new BlockSelection();
         selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
         selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
@@ -2096,6 +2171,16 @@ public class MenteesMod extends JavaPlugin {
         }
         return placeTemporarySelection(proofId, world, anchor, selection, 4000L,
                 "block=" + blockId + " blockTypeId=" + blockTypeId + " blocks=" + selection.getBlockCount());
+    }
+
+    private BlockResolution resolveProofBlockId(String... blockIds) {
+        for (String candidate : blockIds) {
+            int blockTypeId = BlockType.getBlockIdOrUnknown(candidate, "MOTM proof block resolution");
+            if (blockTypeId != BlockType.UNKNOWN_ID && blockTypeId != BlockType.EMPTY_ID) {
+                return new BlockResolution(candidate, blockTypeId);
+            }
+        }
+        return new BlockResolution("", BlockType.UNKNOWN_ID);
     }
 
     private Vector3i proofHorizontalRightStep(Vector3d forward) {
@@ -2751,6 +2836,17 @@ public class MenteesMod extends JavaPlugin {
         return added
                 ? "[MOTM] Dev relocate queued: " + normalizedTarget + "."
                 : "[MOTM] A dev relocate request is already queued.";
+    }
+
+    public String queueDaylightForTesting(String playerId) {
+        if (playerId == null || playerId.isBlank() || onlineRuntimePlayers.get(playerId) == null) {
+            return "[MOTM] Join a world and run this in-game to force daylight.";
+        }
+        boolean added = pendingDaylightRequests.add(playerId);
+        LOG.info("[MOTM] Dev daylight queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Dev daylight queued."
+                : "[MOTM] Dev daylight is already queued.";
     }
 
     private String relocateRuntimePlayerForTesting(String playerId, String target) {
@@ -4040,6 +4136,11 @@ public class MenteesMod extends JavaPlugin {
     private record FluidResolution(
             String fluidId,
             int fluidTypeId
+    ) {}
+
+    private record BlockResolution(
+            String blockId,
+            int blockTypeId
     ) {}
 
     private record StyleLookup(
