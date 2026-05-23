@@ -16,8 +16,12 @@ import com.motm.util.DataLoader;
 import com.motm.util.MotmPreflightAudit;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
+import com.hypixel.hytale.server.core.asset.type.fluid.Fluid;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
@@ -30,11 +34,14 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
+import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
+import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
@@ -205,11 +212,14 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, List<PerkTriggerBinding>> perkTriggersByPlayer = new ConcurrentHashMap<>();
     private final Set<String> pendingSpellbookGrants = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingDevBookGrants = ConcurrentHashMap.newKeySet();
-    private final Map<String, Boolean> pendingStyleTestMobSpawns = new ConcurrentHashMap<>();
+    private final Map<String, String> pendingStyleTestMobSpawns = new ConcurrentHashMap<>();
     private final Set<String> pendingStyleTestMobClears = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingStyleTestMobCounts = ConcurrentHashMap.newKeySet();
     private final Map<String, List<Ref<EntityStore>>> styleTestTargetsByPlayer = new ConcurrentHashMap<>();
     private final Map<String, String> pendingSingleAbilityTests = new ConcurrentHashMap<>();
+    private final Map<String, String> pendingProofRequests = new ConcurrentHashMap<>();
+    private final Queue<TemporaryProofSelection> activeProofSelections = new ConcurrentLinkedQueue<>();
+    private final Queue<TemporaryProofProxy> activeProofProxies = new ConcurrentLinkedQueue<>();
     private final Set<String> pendingHydroContainerSyncs = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingRuntimeRebuilds = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingStatusHudRefreshs = ConcurrentHashMap.newKeySet();
@@ -828,6 +838,8 @@ public class MenteesMod extends JavaPlugin {
         classPassiveManager.tick(onlineRuntimePlayers, currentStore);
         processActiveStyleTests(currentStore);
         processPendingSingleAbilityTests(currentStore);
+        processPendingProofRequests(currentStore);
+        processActiveProofCleanups(currentStore);
         processPendingStyleTestMobClears(currentStore);
         processPendingStyleTestMobSpawns(currentStore);
         processPendingStyleTestMobCounts(currentStore);
@@ -1276,7 +1288,7 @@ public class MenteesMod extends JavaPlugin {
     }
 
     public String spawnStyleTestMobs(String playerId) {
-        return spawnStyleTestMobs(playerId, false);
+        return spawnStyleTestMobs(playerId, "standard");
     }
 
     public String clearStyleTestMobs(String playerId) {
@@ -1302,6 +1314,10 @@ public class MenteesMod extends JavaPlugin {
     }
 
     public String spawnStyleTestMobs(String playerId, boolean closeGroundedTarget) {
+        return spawnStyleTestMobs(playerId, closeGroundedTarget ? "close" : "standard");
+    }
+
+    public String spawnStyleTestMobs(String playerId, String mode) {
         if (!devToolsEnabled) {
             return devToolsDisabledMessage();
         }
@@ -1314,14 +1330,47 @@ public class MenteesMod extends JavaPlugin {
             return "[MOTM] Join a world and run this in-game to spawn style-test mobs.";
         }
 
-        boolean added = pendingStyleTestMobSpawns.put(playerId, closeGroundedTarget) == null;
+        String normalizedMode = normalizeStyleTestMobMode(mode);
+        boolean added = pendingStyleTestMobSpawns.put(playerId, normalizedMode) == null;
         LOG.info("[MOTM] Style test mob spawn queued: playerId=" + playerId + " added=" + added);
         return added
-                ? "[MOTM] Style test mob spawn queued."
+                ? "[MOTM] Style test mob spawn queued mode=" + normalizedMode + "."
                 : "[MOTM] Style test mob spawn is already queued.";
     }
 
-    private String spawnStyleTestMobsNow(String playerId, Player runtimePlayer, boolean closeGroundedTarget) {
+    public String queueDevProof(String playerId, String proofId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+        Player runtimePlayer = onlineRuntimePlayers.get(playerId);
+        if (runtimePlayer == null) {
+            return "[MOTM] Join a world and run this in-game to run a proof.";
+        }
+        String normalizedProofId = proofId == null ? "" : proofId.trim().toLowerCase(Locale.ROOT);
+        if (normalizedProofId.isBlank()) {
+            return "[MOTM] Usage: /motm dev proof <coating-metal|tempblock-metal-wall|tempfluid-lava-ring|proxy-magma-blob|movement-burrow|...>";
+        }
+        boolean added = pendingProofRequests.put(playerId, normalizedProofId) == null;
+        LOG.info("[MOTM] Proof request queued: playerId=" + playerId
+                + " proofId=" + normalizedProofId
+                + " added=" + added);
+        return added
+                ? "[MOTM] Proof queued: " + normalizedProofId + "."
+                : "[MOTM] A proof request is already queued.";
+    }
+
+    private String normalizeStyleTestMobMode(String mode) {
+        String normalized = mode == null ? "" : mode.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "close", "stationary", "standard" -> normalized;
+            default -> "standard";
+        };
+    }
+
+    private String spawnStyleTestMobsNow(String playerId, Player runtimePlayer, String mode) {
         if (runtimePlayer == null) {
             return "[MOTM] Runtime player context is unavailable.";
         }
@@ -1341,6 +1390,8 @@ public class MenteesMod extends JavaPlugin {
 
         Vector3d horizontalForward = normalizeHorizontal(forward);
         Vector3d right = new Vector3d(-horizontalForward.z, 0.0, horizontalForward.x);
+        String normalizedMode = normalizeStyleTestMobMode(mode);
+        boolean closeGroundedTarget = "close".equals(normalizedMode) || "stationary".equals(normalizedMode);
         Vector3d groundPosition = closeGroundedTarget
                 ? basePosition.clone().addScaled(horizontalForward, 1.6)
                 : basePosition.clone()
@@ -1362,15 +1413,17 @@ public class MenteesMod extends JavaPlugin {
         if (grounded != null) {
             targets.add(grounded);
         }
-        Ref<EntityStore> floating = spawnStyleTestNpc(world, floatingPosition, "Bat");
-        if (floating != null) {
-            targets.add(floating);
+        if (!"stationary".equals(normalizedMode)) {
+            Ref<EntityStore> floating = spawnStyleTestNpc(world, floatingPosition, "Bat");
+            if (floating != null) {
+                targets.add(floating);
+            }
         }
         styleTestTargetsByPlayer.put(playerId, targets);
         int spawned = targets.size();
 
         String summary = "[MOTM] Style test mobs spawned: count=" + spawned
-                + " mode=" + (closeGroundedTarget ? "close" : "standard")
+                + " mode=" + normalizedMode
                 + " clearedPrevious=" + cleared
                 + " tracked=" + countValidRefs(targets)
                 + " grounded=" + formatVector(groundPosition)
@@ -1795,8 +1848,8 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
-            boolean closeGroundedTarget = Boolean.TRUE.equals(pendingStyleTestMobSpawns.get(playerId));
-            String result = spawnStyleTestMobsNow(playerId, player, closeGroundedTarget);
+            String mode = pendingStyleTestMobSpawns.get(playerId);
+            String result = spawnStyleTestMobsNow(playerId, player, mode);
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobSpawns.remove(playerId);
         }
@@ -1834,6 +1887,295 @@ public class MenteesMod extends JavaPlugin {
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobCounts.remove(playerId);
         }
+    }
+
+    private void processPendingProofRequests(Store<EntityStore> currentStore) {
+        for (Map.Entry<String, String> entry : Map.copyOf(pendingProofRequests).entrySet()) {
+            String playerId = entry.getKey();
+            String proofId = entry.getValue();
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingProofRequests.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result;
+            try {
+                result = runProofNow(playerId, player, currentStore, proofId);
+            } catch (Exception e) {
+                result = "[MOTM] Proof " + proofId + " failed safely: " + e.getMessage();
+                LOG.log(java.util.logging.Level.SEVERE, result, e);
+            }
+            LOG.info(result);
+            player.sendMessage(Message.raw(result));
+            pendingProofRequests.remove(playerId);
+        }
+    }
+
+    private void processActiveProofCleanups(Store<EntityStore> currentStore) {
+        long now = System.currentTimeMillis();
+        for (TemporaryProofSelection proof : List.copyOf(activeProofSelections)) {
+            if (now < proof.cleanupAtMillis()) {
+                continue;
+            }
+            try {
+                proof.originalSelection().place(null, proof.world(), Vector3i.ZERO, BlockMask.EMPTY);
+                LOG.info("[MOTM] Proof cleanup restored selection: proofId=" + proof.proofId()
+                        + " anchor=" + proof.anchor());
+            } catch (Exception e) {
+                LOG.warning("[MOTM] Proof cleanup failed for " + proof.proofId()
+                        + " anchor=" + proof.anchor()
+                        + ": " + e.getMessage());
+            }
+            activeProofSelections.remove(proof);
+        }
+
+        for (TemporaryProofProxy proof : List.copyOf(activeProofProxies)) {
+            if (now < proof.cleanupAtMillis()) {
+                continue;
+            }
+            try {
+                if (proof.ref() != null && proof.ref().isValid() && proof.ref().getStore() != null) {
+                    NPCEntity npc = proof.ref().getStore().getComponent(proof.ref(), NPCEntity.getComponentType());
+                    if (npc != null) {
+                        npc.setToDespawn();
+                    }
+                }
+                LOG.info("[MOTM] Proof cleanup despawned proxy: proofId=" + proof.proofId());
+            } catch (Exception e) {
+                LOG.warning("[MOTM] Proof proxy cleanup failed for " + proof.proofId()
+                        + ": " + e.getMessage());
+            }
+            activeProofProxies.remove(proof);
+        }
+    }
+
+    private String runProofNow(String playerId, Player player, Store<EntityStore> currentStore, String proofId) {
+        Vector3d basePosition = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        if (basePosition == null || forward == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: could not resolve player position/facing.";
+        }
+        if (basePosition.y < -16.0) {
+            return "[MOTM] Proof " + proofId + " FAIL: player appears below world at " + formatVector(basePosition);
+        }
+
+        return switch (proofId) {
+            case "coating-metal" -> applyProofEffect(player, "MOTM_Proof_Coating_Metal", proofId);
+            case "coating-obsidian" -> applyProofEffect(player, "MOTM_Proof_Coating_Obsidian", proofId);
+            case "coating-stone" -> applyProofEffect(player, "MOTM_Proof_Coating_Stone", proofId);
+            case "coating-poison-target" -> applyProofTargetEffect(playerId, currentStore, "MOTM_Proof_Coating_Poison", proofId);
+            case "tempblock-metal-wall" -> runTempBlockProof(player, proofId, "Metal_Iron_Smooth", 2, 2, 0);
+            case "tempblock-stone-pillar" -> runTempBlockProof(player, proofId, "Rock_Stone_Brick_Pillar_Middle", 1, 3, 0);
+            case "tempblock-flower" -> runTempBlockProof(player, proofId, "Plant_Flower_Common_Purple", 1, 1, 0);
+            case "tempblock-sapling" -> runTempBlockProof(player, proofId, "Plant_Sapling_Oak", 1, 1, 0);
+            case "tempfluid-lava-ring" -> runTempFluidProof(player, proofId, "Fluid_Lava", 2);
+            case "tempfluid-water-field" -> runTempFluidProof(player, proofId, "Fluid_Water", 2);
+            case "proxy-magma-blob" -> runProxyProof(player, proofId, "Slug_Magma", "MOTM_Terra_Impact", 2.5);
+            case "proxy-cactus-projectile" -> runProxyProof(player, proofId, "Test_Dummy_Stationary", "MOTM_Terra_Cast", 2.5);
+            case "proxy-gem" -> runProxyProof(player, proofId, "Golem_Crystal", "MOTM_Terra_Gem_Field", 3.0);
+            case "proxy-glass-shards" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Terra_Gem_Cast", 2.5);
+            case "movement-burrow" -> runMovementProof(player, currentStore, proofId, forward, 4.0, false);
+            case "movement-tunnel" -> runMovementProof(player, currentStore, proofId, forward, 2.0, true);
+            case "movement-dust-devil" -> runMovementProof(player, currentStore, proofId, forward, 5.0, false);
+            default -> "[MOTM] Proof " + proofId + " FAIL: unknown proof id.";
+        };
+    }
+
+    private String applyProofEffect(Player player, String effectId, String proofId) {
+        Ref<EntityStore> ref = player.getReference();
+        boolean applied = applyProofEffectToRef(ref, effectId);
+        return "[MOTM] Proof " + proofId + " " + (applied ? "PASS" : "FAIL")
+                + ": effect=" + effectId
+                + " target=player";
+    }
+
+    private String applyProofTargetEffect(String playerId, Store<EntityStore> store, String effectId, String proofId) {
+        Ref<EntityStore> target = null;
+        for (Ref<EntityStore> candidate : styleTestTargetsByPlayer.getOrDefault(playerId, List.of())) {
+            if (candidate != null && candidate.isValid()) {
+                target = candidate;
+                break;
+            }
+        }
+        if (target == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: no tracked stationary target. Run /motm dev test mobs stationary first.";
+        }
+        boolean applied = applyProofEffectToRef(target, effectId);
+        return "[MOTM] Proof " + proofId + " " + (applied ? "PASS" : "FAIL")
+                + ": effect=" + effectId
+                + " target=trackedNpc";
+    }
+
+    private boolean applyProofEffectToRef(Ref<EntityStore> ref, String effectId) {
+        if (ref == null || !ref.isValid() || ref.getStore() == null || effectId == null || effectId.isBlank()) {
+            return false;
+        }
+        EntityEffect effect = EntityEffect.getAssetMap().getAsset(effectId);
+        if (effect == null) {
+            LOG.warning("[MOTM] Proof effect missing: " + effectId);
+            return false;
+        }
+        Store<EntityStore> store = ref.getStore();
+        EffectControllerComponent controller = store.getComponent(ref, EffectControllerComponent.getComponentType());
+        if (controller == null) {
+            LOG.warning("[MOTM] Proof target missing EffectControllerComponent: " + effectId);
+            return false;
+        }
+        return controller.addEffect(ref, effect, store);
+    }
+
+    private String runTempBlockProof(Player player, String proofId, String blockId, int width, int height, int depth) {
+        int blockTypeId = BlockType.getBlockIdOrUnknown(blockId, "MOTM proof " + proofId);
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            return "[MOTM] Proof " + proofId + " FAIL: block id did not resolve: " + blockId;
+        }
+        World world = player.getWorld();
+        Vector3d base = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        if (world == null || base == null || forward == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
+        }
+
+        Vector3i anchor = proofAnchor(base, forward, 4.0);
+        BlockSelection selection = new BlockSelection();
+        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        Vector3d right = new Vector3d(-forward.z, 0.0, forward.x);
+        int half = width / 2;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int wx = (int) Math.floor(anchor.getX() + (right.x * (x - half)));
+                int wy = anchor.getY() + y;
+                int wz = (int) Math.floor(anchor.getZ() + (right.z * (x - half)));
+                selection.addBlockAtWorldPos(wx, wy, wz, blockTypeId, 0, 0, 0);
+            }
+        }
+        return placeTemporarySelection(proofId, world, anchor, selection, 4000L,
+                "block=" + blockId + " blockTypeId=" + blockTypeId + " blocks=" + selection.getBlockCount());
+    }
+
+    private String runTempFluidProof(Player player, String proofId, String fluidId, int radius) {
+        int fluidTypeId = Fluid.getFluidIdOrUnknown(fluidId, "MOTM proof " + proofId);
+        Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
+        if (fluidTypeId == Fluid.UNKNOWN_ID || fluidTypeId == Fluid.EMPTY_ID || fluid == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: fluid id did not resolve: " + fluidId;
+        }
+        World world = player.getWorld();
+        Vector3d base = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        if (world == null || base == null || forward == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
+        }
+
+        Vector3i anchor = proofAnchor(base, forward, 5.0);
+        BlockSelection selection = new BlockSelection();
+        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        byte fluidLevel = (byte) Math.max(1, fluid.getMaxFluidLevel());
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                double dist = Math.sqrt((x * x) + (z * z));
+                if (dist > radius + 0.2) {
+                    continue;
+                }
+                selection.addFluidAtWorldPos(anchor.getX() + x, anchor.getY(), anchor.getZ() + z, fluidTypeId, fluidLevel);
+            }
+        }
+        return placeTemporarySelection(proofId, world, anchor, selection, 4000L,
+                "fluid=" + fluidId + " fluidTypeId=" + fluidTypeId + " fluids=" + selection.getFluidCount());
+    }
+
+    private String placeTemporarySelection(String proofId,
+                                           World world,
+                                           Vector3i anchor,
+                                           BlockSelection selection,
+                                           long lifetimeMillis,
+                                           String summary) {
+        try {
+            BlockSelection original = selection.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            activeProofSelections.add(new TemporaryProofSelection(
+                    proofId,
+                    world,
+                    anchor,
+                    original,
+                    System.currentTimeMillis() + lifetimeMillis
+            ));
+            return "[MOTM] Proof " + proofId + " PASS: placed temporary selection "
+                    + summary
+                    + " anchor=" + anchor
+                    + " cleanupMs=" + lifetimeMillis;
+        } catch (Exception e) {
+            LOG.log(java.util.logging.Level.SEVERE, "[MOTM] Proof temporary selection failed: " + proofId, e);
+            return "[MOTM] Proof " + proofId + " FAIL: temporary selection placement failed: " + e.getMessage();
+        }
+    }
+
+    private String runProxyProof(Player player, String proofId, String roleId, String effectId, double distanceAhead) {
+        World world = player.getWorld();
+        Vector3d base = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        if (world == null || base == null || forward == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
+        }
+        Vector3d position = base.clone().addScaled(forward, distanceAhead);
+        NPCEntity proxy = new NPCEntity(world);
+        proxy.setRoleName(roleId);
+        proxy.setDespawnTime(4.5f);
+        world.spawnEntity(proxy, position, new Vector3f(0f, 0f, 0f));
+
+        Ref<EntityStore> ref = proxy.getReference();
+        boolean effectApplied = applyProofEffectToRef(ref, effectId);
+        if (ref != null && ref.isValid()) {
+            activeProofProxies.add(new TemporaryProofProxy(proofId, ref, System.currentTimeMillis() + 4500L));
+        }
+        return "[MOTM] Proof " + proofId + " PASS: proxy role=" + roleId
+                + " effect=" + effectId
+                + " effectApplied=" + effectApplied
+                + " position=" + formatVector(position);
+    }
+
+    private String runMovementProof(Player player,
+                                    Store<EntityStore> currentStore,
+                                    String proofId,
+                                    Vector3d forward,
+                                    double distance,
+                                    boolean surfaceRecovery) {
+        Ref<EntityStore> ref = player.getReference();
+        if (ref == null || !ref.isValid() || currentStore == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing player ref/store.";
+        }
+        TransformComponent transform = currentStore.getComponent(ref, TransformComponent.getComponentType());
+        if (transform == null || transform.getPosition() == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing TransformComponent.";
+        }
+        Vector3d start = transform.getPosition().clone();
+        Vector3d destination = start.clone().addScaled(forward, distance);
+        if (surfaceRecovery) {
+            destination.y = Math.max(start.y, destination.y);
+        }
+        Velocity velocity = currentStore.getComponent(ref, Velocity.getComponentType());
+        if (velocity != null && !surfaceRecovery) {
+            velocity.addForce(forward.x * 1.8, 0.15, forward.z * 1.8);
+        } else {
+            transform.teleportPosition(destination);
+        }
+        return "[MOTM] Proof " + proofId + " PASS: movement start=" + formatVector(start)
+                + " destination=" + formatVector(destination)
+                + " usedVelocity=" + (velocity != null && !surfaceRecovery)
+                + " surfaceRecovery=" + surfaceRecovery;
+    }
+
+    private Vector3i proofAnchor(Vector3d base, Vector3d forward, double distanceAhead) {
+        Vector3d anchor = base.clone().addScaled(forward, distanceAhead);
+        return new Vector3i(
+                (int) Math.floor(anchor.x),
+                (int) Math.floor(base.y),
+                (int) Math.floor(anchor.z)
+        );
     }
 
     private void processActiveStyleTests(Store<EntityStore> currentStore) {
@@ -3473,6 +3815,20 @@ public class MenteesMod extends JavaPlugin {
             com.hypixel.hytale.component.Ref<EntityStore> targetRef,
             Vector3i targetBlock,
             boolean notifyFailures
+    ) {}
+
+    private record TemporaryProofSelection(
+            String proofId,
+            World world,
+            Vector3i anchor,
+            BlockSelection originalSelection,
+            long cleanupAtMillis
+    ) {}
+
+    private record TemporaryProofProxy(
+            String proofId,
+            Ref<EntityStore> ref,
+            long cleanupAtMillis
     ) {}
 
     private record StyleLookup(

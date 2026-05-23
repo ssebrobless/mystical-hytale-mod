@@ -762,6 +762,7 @@ public class MotmCommand {
             case "help" -> getDevHelpMessage();
             case "book" -> handleDevBook(player, runtimePlayer);
             case "test" -> handleDevTest(player, args, runtimePlayer);
+            case "proof" -> handleDevProof(player, args, runtimePlayer);
             case "freecast" -> handleDevFreeCast(player, args);
             case "effects" -> handleDevEffects(player);
             case "clear" -> handleDevClear(player, args);
@@ -811,6 +812,9 @@ public class MotmCommand {
                 if (args.length >= 4 && "count".equalsIgnoreCase(args[3])) {
                     yield mod.countStyleTestMobs(player.getPlayerId());
                 }
+                if (args.length >= 4 && "stationary".equalsIgnoreCase(args[3])) {
+                    yield mod.spawnStyleTestMobs(player.getPlayerId(), "stationary");
+                }
                 yield mod.spawnStyleTestMobs(player.getPlayerId(),
                         args.length >= 4 && "close".equalsIgnoreCase(args[3]));
             }
@@ -818,6 +822,18 @@ public class MotmCommand {
             case "stop" -> mod.stopStyleTest(player.getPlayerId());
             default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";
         };
+    }
+
+    private String handleDevProof(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev proof <proofId>\n"
+                    + "Examples: coating-metal, tempblock-metal-wall, tempfluid-lava-ring, "
+                    + "proxy-magma-blob, movement-burrow";
+        }
+        if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
+            return "[MOTM] Join a world and run this in-game to run a proof.";
+        }
+        return mod.queueDevProof(player.getPlayerId(), args[2]);
     }
 
     private String handleDevFreeCast(PlayerData player, String[] args) {
@@ -1125,9 +1141,10 @@ public class MotmCommand {
                 + "  /motm dev book\n"
                 + "  /motm dev test style <styleId>\n"
                 + "  /motm dev test ability <abilityId>\n"
-                + "  /motm dev test mobs [close|clear|count]\n"
+                + "  /motm dev test mobs [close|stationary|clear|count]\n"
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
+                + "  /motm dev proof <proofId>\n"
                 + "  /motm dev freecast <on|off>\n"
                 + "  /motm dev effects\n"
                 + "  /motm dev clear\n"
