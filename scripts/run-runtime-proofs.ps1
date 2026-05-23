@@ -210,7 +210,7 @@ try {
     Add-Line("")
 
     if ($ColdLaunch) {
-        & (Join-Path $PSScriptRoot "cold-launch.ps1") -WorldName $WorldName -LaunchAndLoad
+        & (Join-Path $PSScriptRoot "cold-launch.ps1") -WorldName $WorldName -LaunchAndLoad -LaunchStrategy Launcher
     }
 
     Invoke-EntryGate
