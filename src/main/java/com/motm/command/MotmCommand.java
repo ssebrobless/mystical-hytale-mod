@@ -844,7 +844,7 @@ public class MotmCommand {
 
     private String handleDevRelocate(PlayerData player, String[] args) {
         String target = args.length >= 3 ? args[2] : "up";
-        return mod.relocateRuntimePlayerForTesting(player.getPlayerId(), target);
+        return mod.queueRuntimePlayerRelocationForTesting(player.getPlayerId(), target);
     }
 
     private String handleDevFreeCast(PlayerData player, String[] args) {

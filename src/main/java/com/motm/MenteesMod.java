@@ -218,6 +218,7 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, List<Ref<EntityStore>>> styleTestTargetsByPlayer = new ConcurrentHashMap<>();
     private final Map<String, String> pendingSingleAbilityTests = new ConcurrentHashMap<>();
     private final Map<String, String> pendingProofRequests = new ConcurrentHashMap<>();
+    private final Map<String, String> pendingDevRelocations = new ConcurrentHashMap<>();
     private final Queue<TemporaryProofSelection> activeProofSelections = new ConcurrentLinkedQueue<>();
     private final Queue<TemporaryProofProxy> activeProofProxies = new ConcurrentLinkedQueue<>();
     private final Set<String> pendingHydroContainerSyncs = ConcurrentHashMap.newKeySet();
@@ -838,6 +839,7 @@ public class MenteesMod extends JavaPlugin {
         classPassiveManager.tick(onlineRuntimePlayers, currentStore);
         processActiveStyleTests(currentStore);
         processPendingSingleAbilityTests(currentStore);
+        processPendingDevRelocations(currentStore);
         processPendingProofRequests(currentStore);
         processActiveProofCleanups(currentStore);
         processPendingStyleTestMobClears(currentStore);
@@ -1916,6 +1918,33 @@ public class MenteesMod extends JavaPlugin {
         }
     }
 
+    private void processPendingDevRelocations(Store<EntityStore> currentStore) {
+        for (Map.Entry<String, String> entry : Map.copyOf(pendingDevRelocations).entrySet()) {
+            String playerId = entry.getKey();
+            String target = entry.getValue();
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingDevRelocations.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result;
+            try {
+                result = relocateRuntimePlayerForTesting(playerId, target);
+            } catch (Throwable e) {
+                result = "[MOTM] Dev relocate failed safely: " + e.getMessage();
+                LOG.log(java.util.logging.Level.SEVERE, result, e);
+            } finally {
+                pendingDevRelocations.remove(playerId);
+            }
+            LOG.info(result);
+            player.sendMessage(Message.raw(result));
+        }
+    }
+
     private void processActiveProofCleanups(Store<EntityStore> currentStore) {
         long now = System.currentTimeMillis();
         World currentWorld = currentStore != null && currentStore.getExternalData() != null
@@ -2640,17 +2669,37 @@ public class MenteesMod extends JavaPlugin {
 
     public String describeRuntimePlayerPosition(String playerId) {
         Player player = getRuntimePlayer(playerId);
-        Vector3d position = getPlayerPosition(player);
-        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
-        String worldId = player != null && player.getWorld() != null ? player.getWorld().getName() : "unknown";
-        String summary = "[MOTM] Dev position: world=" + worldId
-                + " position=" + formatVector(position)
-                + " forward=" + formatVector(forward);
-        LOG.info(summary);
-        return summary;
+        try {
+            Vector3d position = getPlayerPosition(player);
+            Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+            String worldId = player != null && player.getWorld() != null ? player.getWorld().getName() : "unknown";
+            String summary = "[MOTM] Dev position: world=" + worldId
+                    + " position=" + formatVector(position)
+                    + " forward=" + formatVector(forward);
+            LOG.info(summary);
+            return summary;
+        } catch (Throwable e) {
+            String summary = "[MOTM] Dev position failed safely: " + e.getMessage();
+            LOG.log(java.util.logging.Level.WARNING, summary, e);
+            return summary;
+        }
     }
 
-    public String relocateRuntimePlayerForTesting(String playerId, String target) {
+    public String queueRuntimePlayerRelocationForTesting(String playerId, String target) {
+        String normalizedTarget = target == null ? "up" : target.toLowerCase(Locale.ROOT);
+        if (!List.of("up", "flatlands", "lane").contains(normalizedTarget)) {
+            return "[MOTM] Dev relocate usage: /motm dev relocate <up|flatlands>";
+        }
+        boolean added = pendingDevRelocations.put(playerId, normalizedTarget) == null;
+        LOG.info("[MOTM] Dev relocate queued: playerId=" + playerId
+                + " target=" + normalizedTarget
+                + " added=" + added);
+        return added
+                ? "[MOTM] Dev relocate queued: " + normalizedTarget + "."
+                : "[MOTM] A dev relocate request is already queued.";
+    }
+
+    private String relocateRuntimePlayerForTesting(String playerId, String target) {
         Player player = getRuntimePlayer(playerId);
         if (player == null || player.getReference() == null || !player.getReference().isValid()
                 || player.getReference().getStore() == null) {
