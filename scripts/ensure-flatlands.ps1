@@ -133,7 +133,7 @@ function Get-RegionMetrics([System.Drawing.Bitmap]$Bitmap, $Rect, [double]$X1, [
             $c = $Bitmap.GetPixel($x, $y)
             $total++
             if ($c.B -ge 135 -and $c.G -ge 110 -and $c.B -gt ($c.R + 20)) { $sky++ }
-            if ($c.G -ge 35 -and $c.G -gt ($c.R + 4) -and $c.G -gt ($c.B + 2)) { $grass++ }
+            if ($c.G -ge 18 -and $c.G -gt ($c.R + 2) -and $c.G -gt ($c.B + 1)) { $grass++ }
             if ($c.R -lt 95 -and $c.G -lt 95 -and $c.B -lt 95) { $darkStone++ }
         }
     }
@@ -154,9 +154,10 @@ function Test-Flatlands([string]$ScreenshotPath, $Rect) {
         $horizonFlatland = $sky.sky_ratio -ge 0.55 -and $ground.grass_ratio -ge 0.35 -and $center.dark_ratio -le 0.22
         $downAngleFlatland = $sky.sky_ratio -ge 0.25 -and $ground.grass_ratio -ge 0.55 -and $center.grass_ratio -ge 0.45 -and $center.dark_ratio -le 0.18
         $topdownFlatland = $sky.grass_ratio -ge 0.80 -and $ground.grass_ratio -ge 0.80 -and $center.grass_ratio -ge 0.70 -and $center.dark_ratio -le 0.30
+        $nightTopdownFlatland = $sky.grass_ratio -ge 0.85 -and $ground.grass_ratio -ge 0.85 -and $center.grass_ratio -ge 0.85
         $duskThirdPersonFlatland = $sky.sky_ratio -ge 0.08 -and $ground.grass_ratio -ge 0.40 -and $center.grass_ratio -ge 0.20
         $nightProofLane = $ground.sky_ratio -ge 0.08 -and $ground.dark_ratio -le 0.25 -and $center.dark_ratio -le 0.90
-        $pass = $horizonFlatland -or $downAngleFlatland -or $topdownFlatland -or $duskThirdPersonFlatland -or $nightProofLane
+        $pass = $horizonFlatland -or $downAngleFlatland -or $topdownFlatland -or $nightTopdownFlatland -or $duskThirdPersonFlatland -or $nightProofLane
         return [PSCustomObject]@{
             pass = $pass
             sky = $sky
@@ -223,7 +224,7 @@ try {
     $report.Add("- Initial screenshot: $screenshot")
     $report.Add("- Initial metrics: $(($result | ConvertTo-Json -Compress))")
 
-    if (-not $result.pass -and -not $NoPauseRecovery -and $result.center.dark_ratio -ge 0.70) {
+    if (-not $result.pass -and -not $NoPauseRecovery -and $result.center.dark_ratio -ge 0.70 -and $result.center.grass_ratio -lt 0.35) {
         $report.Add("- Pause/menu overlay suspected; sending ESC once and recapturing.")
         Send-Escape
         $window = Focus-Hytale
@@ -232,7 +233,7 @@ try {
         $result = Test-Flatlands $screenshot $rect
         $report.Add("- Resumed screenshot: $screenshot")
         $report.Add("- Resumed metrics: $(($result | ConvertTo-Json -Compress))")
-        if (-not $result.pass -and $result.center.dark_ratio -ge 0.70) {
+        if (-not $result.pass -and $result.center.dark_ratio -ge 0.70 -and $result.center.grass_ratio -lt 0.35) {
             $report.Add("- Pause/menu overlay still present; clicking Return to Game and recapturing.")
             Click-ReturnToGame
             $window = Focus-Hytale

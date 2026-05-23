@@ -93,7 +93,7 @@ function Get-RegionMetrics([System.Drawing.Bitmap]$Bitmap, $Rect, [double]$X1, [
             $c = $Bitmap.GetPixel($x, $y)
             $total++
             if ($c.B -ge 135 -and $c.G -ge 110 -and $c.B -gt ($c.R + 20)) { $sky++ }
-            if ($c.G -ge 35 -and $c.G -gt ($c.R + 4) -and $c.G -gt ($c.B + 2)) { $grass++ }
+            if ($c.G -ge 18 -and $c.G -gt ($c.R + 2) -and $c.G -gt ($c.B + 1)) { $grass++ }
             if ($c.R -lt 75 -and $c.G -lt 75 -and $c.B -lt 75) { $dark++ }
             if ($c.R -gt 190 -and $c.G -gt 190 -and $c.B -gt 190) { $whiteText++ }
         }

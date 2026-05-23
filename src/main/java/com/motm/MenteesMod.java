@@ -1973,6 +1973,9 @@ public class MenteesMod extends JavaPlugin {
             if (now < proof.cleanupAtMillis()) {
                 continue;
             }
+            if (currentWorld == null || (currentWorld != proof.world() && !currentWorld.equals(proof.world()))) {
+                continue;
+            }
             try {
                 if (proof.ref() != null && proof.ref().isValid() && proof.ref().getStore() != null) {
                     NPCEntity npc = proof.ref().getStore().getComponent(proof.ref(), NPCEntity.getComponentType());
@@ -2008,11 +2011,11 @@ public class MenteesMod extends JavaPlugin {
             case "tempblock-stone-pillar" -> runTempBlockProof(player, proofId, "Rock_Stone_Brick_Pillar_Middle", 1, 3, 0);
             case "tempblock-flower" -> runTempBlockProof(player, proofId, "Plant_Flower_Common_Purple", 1, 1, 0);
             case "tempblock-sapling" -> runTempBlockProof(player, proofId, "Plant_Sapling_Oak", 1, 1, 0);
-            case "tempfluid-lava-ring" -> runTempFluidProof(player, proofId, "Fluid_Lava", 2);
-            case "tempfluid-water-field" -> runTempFluidProof(player, proofId, "Fluid_Water", 2);
+            case "tempfluid-lava-ring" -> runTempFluidProof(player, proofId, 2, "Fluid_Lava", "Lava", "lava");
+            case "tempfluid-water-field" -> runTempFluidProof(player, proofId, 2, "Fluid_Water", "Water", "water");
             case "proxy-magma-blob" -> runProxyProof(player, proofId, "Slug_Magma", "MOTM_Terra_Impact", 2.5);
             case "proxy-cactus-projectile" -> runProxyProof(player, proofId, "Test_Dummy_Stationary", "MOTM_Terra_Cast", 2.5);
-            case "proxy-gem" -> runProxyProof(player, proofId, "Golem_Crystal", "MOTM_Terra_Gem_Field", 3.0);
+            case "proxy-gem" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Terra_Gem_Field", 3.0);
             case "proxy-glass-shards" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Terra_Gem_Cast", 2.5);
             case "movement-burrow" -> runMovementProof(player, currentStore, proofId, forward, 4.0, false);
             case "movement-tunnel" -> runMovementProof(player, currentStore, proofId, forward, 2.0, true);
@@ -2080,13 +2083,14 @@ public class MenteesMod extends JavaPlugin {
         BlockSelection selection = new BlockSelection();
         selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
         selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
-        Vector3d right = new Vector3d(-forward.z, 0.0, forward.x);
+        Vector3i rightStep = proofHorizontalRightStep(forward);
         int half = width / 2;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                int wx = (int) Math.floor(anchor.getX() + (right.x * (x - half)));
+                int offset = x - half;
+                int wx = anchor.getX() + (rightStep.getX() * offset);
                 int wy = anchor.getY() + y;
-                int wz = (int) Math.floor(anchor.getZ() + (right.z * (x - half)));
+                int wz = anchor.getZ() + (rightStep.getZ() * offset);
                 selection.addBlockAtWorldPos(wx, wy, wz, blockTypeId, 0, 0, 0);
             }
         }
@@ -2094,11 +2098,22 @@ public class MenteesMod extends JavaPlugin {
                 "block=" + blockId + " blockTypeId=" + blockTypeId + " blocks=" + selection.getBlockCount());
     }
 
-    private String runTempFluidProof(Player player, String proofId, String fluidId, int radius) {
-        int fluidTypeId = Fluid.getAssetMap().getIndexOrDefault(fluidId, Fluid.UNKNOWN_ID);
+    private Vector3i proofHorizontalRightStep(Vector3d forward) {
+        Vector3d right = new Vector3d(-forward.z, 0.0, forward.x);
+        if (Math.abs(right.x) >= Math.abs(right.z)) {
+            return new Vector3i(right.x >= 0.0 ? 1 : -1, 0, 0);
+        }
+        return new Vector3i(0, 0, right.z >= 0.0 ? 1 : -1);
+    }
+
+    private String runTempFluidProof(Player player, String proofId, int radius, String... fluidIds) {
+        FluidResolution fluidResolution = resolveProofFluidId(fluidIds);
+        int fluidTypeId = fluidResolution.fluidTypeId();
         Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
         if (fluidTypeId == Fluid.UNKNOWN_ID || fluidTypeId == Fluid.EMPTY_ID || fluid == null) {
-            return "[MOTM] Proof " + proofId + " FAIL: fluid id did not resolve: " + fluidId;
+            return "[MOTM] Proof " + proofId + " FAIL: fluid id did not resolve: candidates="
+                    + String.join(",", fluidIds)
+                    + " available=" + listProofFluidIds();
         }
         World world = player.getWorld();
         Vector3d base = getPlayerPosition(player);
@@ -2122,7 +2137,46 @@ public class MenteesMod extends JavaPlugin {
             }
         }
         return placeTemporarySelection(proofId, world, anchor, selection, 4000L,
-                "fluid=" + fluidId + " fluidTypeId=" + fluidTypeId + " fluids=" + selection.getFluidCount());
+                "fluid=" + fluidResolution.fluidId()
+                        + " fluidTypeId=" + fluidTypeId
+                        + " fluids=" + selection.getFluidCount());
+    }
+
+    private FluidResolution resolveProofFluidId(String... fluidIds) {
+        for (String candidate : fluidIds) {
+            int directId = Fluid.getAssetMap().getIndexOrDefault(candidate, Fluid.UNKNOWN_ID);
+            if (isUsableProofFluidId(directId)) {
+                return new FluidResolution(candidate, directId);
+            }
+        }
+        for (String candidate : fluidIds) {
+            int convertedId = Fluid.getFluidIdOrUnknown(candidate, "MOTM proof fluid resolution");
+            if (isUsableProofFluidId(convertedId)) {
+                Fluid fluid = Fluid.getAssetMap().getAsset(convertedId);
+                return new FluidResolution(fluid != null ? fluid.getId() : candidate, convertedId);
+            }
+        }
+        return new FluidResolution("", Fluid.UNKNOWN_ID);
+    }
+
+    private boolean isUsableProofFluidId(int fluidTypeId) {
+        if (fluidTypeId == Fluid.UNKNOWN_ID || fluidTypeId == Fluid.EMPTY_ID) {
+            return false;
+        }
+        Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
+        return fluid != null && !fluid.isUnknown();
+    }
+
+    private String listProofFluidIds() {
+        List<String> ids = new ArrayList<>();
+        int max = Math.min(Fluid.getAssetMap().getNextIndex(), 64);
+        for (int index = 0; index < max; index++) {
+            Fluid fluid = Fluid.getAssetMap().getAsset(index);
+            if (fluid != null && !fluid.isUnknown()) {
+                ids.add(index + ":" + fluid.getId());
+            }
+        }
+        return ids.isEmpty() ? "<none>" : String.join("|", ids);
     }
 
     private String placeTemporarySelection(String proofId,
@@ -2166,7 +2220,7 @@ public class MenteesMod extends JavaPlugin {
         Ref<EntityStore> ref = proxy.getReference();
         boolean effectApplied = applyProofEffectToRef(ref, effectId);
         if (ref != null && ref.isValid()) {
-            activeProofProxies.add(new TemporaryProofProxy(proofId, ref, System.currentTimeMillis() + 4500L));
+            activeProofProxies.add(new TemporaryProofProxy(proofId, world, ref, System.currentTimeMillis() + 4500L));
         }
         return "[MOTM] Proof " + proofId + " PASS: proxy role=" + roleId
                 + " effect=" + effectId
@@ -3978,8 +4032,14 @@ public class MenteesMod extends JavaPlugin {
 
     private record TemporaryProofProxy(
             String proofId,
+            World world,
             Ref<EntityStore> ref,
             long cleanupAtMillis
+    ) {}
+
+    private record FluidResolution(
+            String fluidId,
+            int fluidTypeId
     ) {}
 
     private record StyleLookup(

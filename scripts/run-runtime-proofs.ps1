@@ -219,6 +219,8 @@ try {
         Send-MotmCommand "motm dev class clear" 1300
         Send-MotmCommand "motm dev relocate flatlands" 1500
         Capture "after-relocate-flatlands"
+        & (Join-Path $PSScriptRoot "move-test-lane.ps1") -RunId $RunId -ForwardMilliseconds 0 -StrafeMilliseconds 0 -LookDy 1400 -SkipScreenshot | Out-Host
+        Capture "after-view-normalize"
         & (Join-Path $PSScriptRoot "ensure-flatlands.ps1") -VerifyOnly
         & (Join-Path $PSScriptRoot "move-test-lane.ps1") -RunId $RunId -ForwardMilliseconds 2600 -StrafeMilliseconds 700 | Out-Host
         Add-Line("- Flatlands verified and moved into a clearer test lane.")
