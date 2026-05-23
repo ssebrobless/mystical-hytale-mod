@@ -1902,30 +1902,37 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
-            String result;
+            String result = null;
             try {
                 result = runProofNow(playerId, player, currentStore, proofId);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 result = "[MOTM] Proof " + proofId + " failed safely: " + e.getMessage();
                 LOG.log(java.util.logging.Level.SEVERE, result, e);
+            } finally {
+                pendingProofRequests.remove(playerId);
             }
             LOG.info(result);
             player.sendMessage(Message.raw(result));
-            pendingProofRequests.remove(playerId);
         }
     }
 
     private void processActiveProofCleanups(Store<EntityStore> currentStore) {
         long now = System.currentTimeMillis();
+        World currentWorld = currentStore != null && currentStore.getExternalData() != null
+                ? currentStore.getExternalData().getWorld()
+                : null;
         for (TemporaryProofSelection proof : List.copyOf(activeProofSelections)) {
             if (now < proof.cleanupAtMillis()) {
+                continue;
+            }
+            if (currentWorld == null || (currentWorld != proof.world() && !currentWorld.equals(proof.world()))) {
                 continue;
             }
             try {
                 proof.originalSelection().place(null, proof.world(), Vector3i.ZERO, BlockMask.EMPTY);
                 LOG.info("[MOTM] Proof cleanup restored selection: proofId=" + proof.proofId()
                         + " anchor=" + proof.anchor());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LOG.warning("[MOTM] Proof cleanup failed for " + proof.proofId()
                         + " anchor=" + proof.anchor()
                         + ": " + e.getMessage());
@@ -2059,7 +2066,7 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private String runTempFluidProof(Player player, String proofId, String fluidId, int radius) {
-        int fluidTypeId = Fluid.getFluidIdOrUnknown(fluidId, "MOTM proof " + proofId);
+        int fluidTypeId = Fluid.getAssetMap().getIndexOrDefault(fluidId, Fluid.UNKNOWN_ID);
         Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
         if (fluidTypeId == Fluid.UNKNOWN_ID || fluidTypeId == Fluid.EMPTY_ID || fluid == null) {
             return "[MOTM] Proof " + proofId + " FAIL: fluid id did not resolve: " + fluidId;

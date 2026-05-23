@@ -75,6 +75,19 @@ function Send-MotmCommand([string]$Text, [int]$Delay = $CommandDelayMilliseconds
     Start-Sleep -Milliseconds $Delay
 }
 
+function Get-ProofSettleMilliseconds([string]$Proof) {
+    if ($Proof -like "tempblock-*" -or $Proof -like "tempfluid-*") {
+        return [Math]::Max($ProofSettleMilliseconds, 5600)
+    }
+    if ($Proof -like "movement-*") {
+        return [Math]::Max($ProofSettleMilliseconds, 2600)
+    }
+    if ($Proof -like "proxy-*") {
+        return [Math]::Max($ProofSettleMilliseconds, 2200)
+    }
+    return $ProofSettleMilliseconds
+}
+
 function Capture([string]$Name) {
     & (Join-Path $PSScriptRoot "capture-evidence.ps1") -Phase $phaseId -RunId $RunId -Name $Name | Out-Host
 }
@@ -160,7 +173,7 @@ function Invoke-Proof([string]$Proof) {
         Capture "$Proof-before"
     }
 
-    Send-MotmCommand "motm dev proof $Proof" $ProofSettleMilliseconds
+    Send-MotmCommand "motm dev proof $Proof" (Get-ProofSettleMilliseconds $Proof)
     Capture $Proof
 
     $lines = Read-NewLogLines $log.FullName $offset
