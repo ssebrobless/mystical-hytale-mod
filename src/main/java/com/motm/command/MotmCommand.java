@@ -763,6 +763,8 @@ public class MotmCommand {
             case "book" -> handleDevBook(player, runtimePlayer);
             case "test" -> handleDevTest(player, args, runtimePlayer);
             case "proof" -> handleDevProof(player, args, runtimePlayer);
+            case "position", "where" -> handleDevPosition(player);
+            case "relocate", "unstuck" -> handleDevRelocate(player, args);
             case "freecast" -> handleDevFreeCast(player, args);
             case "effects" -> handleDevEffects(player);
             case "clear" -> handleDevClear(player, args);
@@ -834,6 +836,15 @@ public class MotmCommand {
             return "[MOTM] Join a world and run this in-game to run a proof.";
         }
         return mod.queueDevProof(player.getPlayerId(), args[2]);
+    }
+
+    private String handleDevPosition(PlayerData player) {
+        return mod.describeRuntimePlayerPosition(player.getPlayerId());
+    }
+
+    private String handleDevRelocate(PlayerData player, String[] args) {
+        String target = args.length >= 3 ? args[2] : "up";
+        return mod.relocateRuntimePlayerForTesting(player.getPlayerId(), target);
     }
 
     private String handleDevFreeCast(PlayerData player, String[] args) {
@@ -1145,6 +1156,8 @@ public class MotmCommand {
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
                 + "  /motm dev proof <proofId>\n"
+                + "  /motm dev position\n"
+                + "  /motm dev relocate <up|flatlands>\n"
                 + "  /motm dev freecast <on|off>\n"
                 + "  /motm dev effects\n"
                 + "  /motm dev clear\n"

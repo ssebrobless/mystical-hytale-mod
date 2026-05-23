@@ -2638,6 +2638,55 @@ public class MenteesMod extends JavaPlugin {
         return playerId == null ? null : onlineRuntimePlayers.get(playerId);
     }
 
+    public String describeRuntimePlayerPosition(String playerId) {
+        Player player = getRuntimePlayer(playerId);
+        Vector3d position = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        String worldId = player != null && player.getWorld() != null ? player.getWorld().getName() : "unknown";
+        String summary = "[MOTM] Dev position: world=" + worldId
+                + " position=" + formatVector(position)
+                + " forward=" + formatVector(forward);
+        LOG.info(summary);
+        return summary;
+    }
+
+    public String relocateRuntimePlayerForTesting(String playerId, String target) {
+        Player player = getRuntimePlayer(playerId);
+        if (player == null || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null) {
+            return "[MOTM] Dev relocate failed: player runtime/store missing.";
+        }
+        TransformComponent transform = player.getReference().getStore()
+                .getComponent(player.getReference(), TransformComponent.getComponentType());
+        if (transform == null || transform.getTransform() == null || transform.getTransform().getPosition() == null) {
+            return "[MOTM] Dev relocate failed: TransformComponent missing.";
+        }
+
+        Vector3d start = transform.getTransform().getPosition().clone();
+        String normalizedTarget = target == null ? "up" : target.toLowerCase(Locale.ROOT);
+        Vector3d destination = switch (normalizedTarget) {
+            case "flatlands", "lane" -> new Vector3d(start.x + 36.0, Math.max(start.y + 12.0, 86.0), start.z + 36.0);
+            case "up" -> new Vector3d(start.x, start.y + 12.0, start.z);
+            default -> null;
+        };
+        if (destination == null) {
+            return "[MOTM] Dev relocate usage: /motm dev relocate <up|flatlands>";
+        }
+
+        try {
+            transform.teleportPosition(destination);
+            String summary = "[MOTM] Dev relocate " + normalizedTarget
+                    + ": start=" + formatVector(start)
+                    + " destination=" + formatVector(destination);
+            LOG.info(summary);
+            return summary;
+        } catch (Throwable e) {
+            String summary = "[MOTM] Dev relocate failed safely: " + e.getMessage();
+            LOG.log(java.util.logging.Level.SEVERE, summary, e);
+            return summary;
+        }
+    }
+
     public Player getRuntimePlayer(Ref<EntityStore> entityRef) {
         if (entityRef == null || !entityRef.isValid()) {
             return null;

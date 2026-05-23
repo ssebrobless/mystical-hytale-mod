@@ -210,12 +210,14 @@ try {
     Add-Line("")
 
     if ($ColdLaunch) {
-        & (Join-Path $PSScriptRoot "cold-launch.ps1") -WorldName $WorldName -LaunchAndLoad -EnsureFlatlands
+        & (Join-Path $PSScriptRoot "cold-launch.ps1") -WorldName $WorldName -LaunchAndLoad
     }
 
     Invoke-EntryGate
 
     if (-not $SkipFlatlandsGate) {
+        Send-MotmCommand "motm dev relocate flatlands" 1500
+        Capture "after-relocate-flatlands"
         & (Join-Path $PSScriptRoot "ensure-flatlands.ps1") -VerifyOnly
         & (Join-Path $PSScriptRoot "move-test-lane.ps1") -RunId $RunId -ForwardMilliseconds 2600 -StrafeMilliseconds 700 | Out-Host
         Add-Line("- Flatlands verified and moved into a clearer test lane.")
