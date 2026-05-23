@@ -216,6 +216,7 @@ try {
     Invoke-EntryGate
 
     if (-not $SkipFlatlandsGate) {
+        Send-MotmCommand "motm dev class clear" 1300
         Send-MotmCommand "motm dev relocate flatlands" 1500
         Capture "after-relocate-flatlands"
         & (Join-Path $PSScriptRoot "ensure-flatlands.ps1") -VerifyOnly

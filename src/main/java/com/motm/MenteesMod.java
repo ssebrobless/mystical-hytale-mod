@@ -2714,7 +2714,7 @@ public class MenteesMod extends JavaPlugin {
         Vector3d start = transform.getTransform().getPosition().clone();
         String normalizedTarget = target == null ? "up" : target.toLowerCase(Locale.ROOT);
         Vector3d destination = switch (normalizedTarget) {
-            case "flatlands", "lane" -> new Vector3d(start.x + 36.0, Math.max(start.y + 12.0, 86.0), start.z + 36.0);
+            case "flatlands", "lane" -> new Vector3d(start.x + 96.0, Math.max(start.y + 40.0, 160.0), start.z + 96.0);
             case "up" -> new Vector3d(start.x, start.y + 12.0, start.z);
             default -> null;
         };
@@ -2723,6 +2723,9 @@ public class MenteesMod extends JavaPlugin {
         }
 
         try {
+            if ("flatlands".equals(normalizedTarget) || "lane".equals(normalizedTarget)) {
+                placeRelocationPlatform(player, destination, normalizedTarget);
+            }
             transform.teleportPosition(destination);
             String summary = "[MOTM] Dev relocate " + normalizedTarget
                     + ": start=" + formatVector(start)
@@ -2733,6 +2736,49 @@ public class MenteesMod extends JavaPlugin {
             String summary = "[MOTM] Dev relocate failed safely: " + e.getMessage();
             LOG.log(java.util.logging.Level.SEVERE, summary, e);
             return summary;
+        }
+    }
+
+    private void placeRelocationPlatform(Player player, Vector3d destination, String target) {
+        World world = player.getWorld();
+        if (world == null || destination == null) {
+            return;
+        }
+        int blockTypeId = BlockType.getBlockIdOrUnknown("Soil_Grass", "MOTM dev relocation platform");
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            blockTypeId = BlockType.getBlockIdOrUnknown("Rock_Stone_Brick_Pillar_Middle", "MOTM dev relocation platform");
+        }
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            LOG.warning("[MOTM] Dev relocate platform skipped: no platform block resolved.");
+            return;
+        }
+
+        int floorY = (int) Math.floor(destination.y) - 1;
+        int centerX = (int) Math.floor(destination.x);
+        int centerZ = (int) Math.floor(destination.z);
+        BlockSelection platform = new BlockSelection();
+        platform.setPosition(centerX, floorY, centerZ);
+        platform.setAnchorAtWorldPos(centerX, floorY, centerZ);
+        for (int x = -7; x <= 7; x++) {
+            for (int z = -7; z <= 7; z++) {
+                platform.addBlockAtWorldPos(centerX + x, floorY, centerZ + z, blockTypeId, 0, 0, 0);
+            }
+        }
+        try {
+            BlockSelection original = platform.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            activeProofSelections.add(new TemporaryProofSelection(
+                    "dev-relocate-" + target,
+                    world,
+                    new Vector3i(centerX, floorY, centerZ),
+                    original,
+                    System.currentTimeMillis() + 180000L
+            ));
+            LOG.info("[MOTM] Dev relocate platform placed: target=" + target
+                    + " center=(" + centerX + "," + floorY + "," + centerZ + ")"
+                    + " blocks=" + platform.getBlockCount()
+                    + " blockTypeId=" + blockTypeId);
+        } catch (Throwable e) {
+            LOG.log(java.util.logging.Level.WARNING, "[MOTM] Dev relocate platform failed safely.", e);
         }
     }
 
