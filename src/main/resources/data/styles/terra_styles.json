@@ -47,7 +47,7 @@
           "resource_cost": 2,
           "cast_type": "ground_zone",
           "target_type": "self_centered",
-          "radius": 5,
+          "radius": 8,
           "duration_seconds": 4,
           "terrain_effect": "lingering_tremor",
           "ground_targets_only": true,
@@ -101,13 +101,15 @@
             "healing"
           ],
           "heal_percent": 10,
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "barrier",
           "target_type": "line",
           "range": 7,
-          "width": 6,
+          "width": 3,
           "height": 3,
-          "duration_seconds": 6,
+          "duration_seconds": 4,
+          "toggleable": true,
+          "toggle_cooldown_seconds": 4,
           "terrain_effect": "iron_wall"
         },
         {
@@ -122,7 +124,7 @@
           "categories": [
             "buff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 6,
@@ -133,14 +135,14 @@
           "name": "Alloy Enhancement",
           "description": "Boost next attack by 35%",
           "damage_percent": 0,
-          "cooldown_seconds": 4,
+          "cooldown_seconds": 0,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
           "effect": "damage_buff",
           "categories": [
             "buff"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 8
@@ -167,7 +169,7 @@
             "dot",
             "aoe"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 12,
@@ -188,7 +190,7 @@
             "shielding"
           ],
           "shield_percent": 30,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 6,
@@ -207,12 +209,12 @@
             "dot",
             "debuff"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "projectile",
           "target_type": "enemy",
           "range": 18,
           "max_range": 18,
-          "projectile_speed": 22,
+          "projectile_speed": 12,
           "travel_type": "arcing_shot"
         }
       ]
@@ -374,20 +376,22 @@
         {
           "id": "nightshade",
           "name": "Nightshade",
-          "description": "Release toxic spores that poison the enemy",
+          "description": "Launch a nightshade seed that blooms into a poisonous lure",
           "damage_percent": 8,
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.25,
           "recovery_seconds": 0.18,
-          "effect": "dot",
+          "effect": "dot+slow",
           "categories": [
             "dot"
           ],
           "resource_cost": 2,
-          "cast_type": "cone",
-          "target_type": "cone",
-          "range": 9,
-          "cone_angle": 75,
+          "cast_type": "projectile_line",
+          "target_type": "ground_target",
+          "range": 12,
+          "radius": 5,
+          "projectile_speed": 18,
+          "travel_type": "nightshade_seed",
           "duration_seconds": 5,
           "terrain_effect": "toxic_spores"
         },
@@ -413,7 +417,7 @@
         {
           "id": "cacti_cluster",
           "name": "Cacti Cluster",
-          "description": "Launch cactus needles that slow and poison",
+          "description": "Launch a heavy cactus cluster that sticks, poisons, slows, then bursts",
           "damage_percent": 10,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.32,
@@ -424,12 +428,14 @@
             "debuff"
           ],
           "resource_cost": 2,
-          "cast_type": "projectile_volley",
+          "cast_type": "projectile",
           "target_type": "enemy",
           "range": 14,
-          "width": 3,
-          "projectile_speed": 24,
-          "travel_type": "needle_spread"
+          "radius": 4,
+          "width": 2,
+          "duration_seconds": 4,
+          "projectile_speed": 10,
+          "travel_type": "cactus_cluster"
         }
       ]
     },
@@ -445,7 +451,7 @@
           "name": "Gargoyle",
           "description": "Turn to stone, healing and gaining a shield",
           "damage_percent": 0,
-          "cooldown_seconds": 5,
+          "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
           "effect": "heal+shield",
@@ -497,7 +503,7 @@
           "cast_type": "dash",
           "target_type": "enemy",
           "range": 10,
-          "dash_distance": 10,
+          "dash_distance": 5,
           "delay_seconds": 0.4,
           "launch_height": 2.5,
           "knockup": true,
@@ -533,7 +539,7 @@
           "cast_type": "dash",
           "target_type": "enemy",
           "range": 9,
-          "dash_distance": 9,
+          "dash_distance": 4,
           "radius": 2.5,
           "launch_height": 3,
           "knockback_force": 4.5,
@@ -607,9 +613,8 @@
             "aoe"
           ],
           "resource_cost": 2,
-          "cast_type": "ground_zone",
-          "target_type": "ground_target",
-          "range": 14,
+          "cast_type": "self_buff",
+          "target_type": "self",
           "radius": 5,
           "duration_seconds": 6,
           "terrain_effect": "sandstorm"
@@ -628,11 +633,12 @@
             "crowd_control"
           ],
           "resource_cost": 2,
-          "cast_type": "ground_zone",
-          "target_type": "ground_target",
-          "range": 12,
+          "cast_type": "dash",
+          "target_type": "self_centered",
+          "range": 5,
+          "dash_distance": 5,
           "radius": 3,
-          "duration_seconds": 4,
+          "duration_seconds": 2,
           "knockback_force": 4,
           "travel_type": "rolling_tornado",
           "terrain_effect": "dust_devil"

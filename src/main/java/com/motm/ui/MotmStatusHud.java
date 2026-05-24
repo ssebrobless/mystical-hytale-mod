@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public class MotmStatusHud extends CustomUIHud {
 
-    private static final String HUD_DOCUMENT = "HUD/MOTM_StatusHud.ui";
+    private static final String HUD_DOCUMENT = "Hud/MOTM_StatusHud.ui";
     private static final int MAX_BUFF_SLOTS = 3;
     private static final int MAX_DEBUFF_SLOTS = 3;
     private static final int TICKS_PER_SECOND = 20;
@@ -640,6 +640,10 @@ public class MotmStatusHud extends CustomUIHud {
         }
 
         StyleData selectedStyle = getSelectedStyle(player);
+        if (selectedStyle != null && !styleUsesResources(selectedStyle)) {
+            return ResourceSnapshot.hidden();
+        }
+
         String resourceType = resolveResourceType(classId, selectedStyle);
 
         if (resourceType == null) {
@@ -671,6 +675,19 @@ public class MotmStatusHud extends CustomUIHud {
                 : displayName + ": " + current + " / " + actualMax;
 
         return new ResourceSnapshot(true, classId, title, label, progress);
+    }
+
+    private boolean styleUsesResources(StyleData style) {
+        if (style == null || style.getAbilities() == null || style.getAbilities().isEmpty()) {
+            return false;
+        }
+
+        for (AbilityData ability : style.getAbilities()) {
+            if (ability != null && ability.getResourceCost() > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String resolveResourceType(String classId, StyleData selectedStyle) {

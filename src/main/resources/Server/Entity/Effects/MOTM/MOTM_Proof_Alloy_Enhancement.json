@@ -1,5 +1,5 @@
 {
-  "Duration": 6.25,
+  "Duration": 8.0,
   "OverlapBehavior": "Overwrite",
   "ApplicationEffects": {
     "EntityTopTint": "#2f3539",

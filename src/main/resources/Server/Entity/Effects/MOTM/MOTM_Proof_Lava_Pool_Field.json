@@ -1,0 +1,17 @@
+{
+  "Duration": 1.0,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#ff5a10",
+    "EntityBottomTint": "#4a0800",
+    "Particles": [
+      {
+        "SystemId": "Fire_AoE_Grow"
+      },
+      {
+        "SystemId": "Block_Lava_Bubbles"
+      }
+    ],
+    "ModelVFXId": "PrototypeBlockPlaceSuccess"
+  }
+}

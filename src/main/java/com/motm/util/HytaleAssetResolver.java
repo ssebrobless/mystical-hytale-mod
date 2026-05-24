@@ -34,6 +34,17 @@ public final class HytaleAssetResolver {
     private static final String FX_TERRA_QUAKE_CAST = "MOTM_Terra_Quake_Cast";
     private static final String FX_TERRA_QUAKE_IMPACT = "MOTM_Terra_Quake_Impact";
     private static final String FX_TERRA_QUAKE_LOOP = "MOTM_Terra_Quake_Loop";
+    private static final String FX_PROOF_METAL_COAT = "MOTM_Proof_Coating_Metal";
+    private static final String FX_PROOF_ALLOY_ENHANCEMENT = "MOTM_Proof_Alloy_Enhancement";
+    private static final String FX_PROOF_ALLOY_IMPACT = "MOTM_Proof_Alloy_Impact";
+    private static final String FX_PROOF_MAGMA_SLING_TRAVEL = "MOTM_Proof_Magma_Sling_Travel";
+    private static final String FX_PROOF_LAVA_POOL_FIELD = "MOTM_Proof_Lava_Pool_Field";
+    private static final String FX_PROOF_OBSIDIAN_COAT = "MOTM_Proof_Coating_Obsidian";
+    private static final String FX_PROOF_STONE_COAT = "MOTM_Proof_Coating_Stone";
+    private static final String FX_PROOF_POISON_COAT = "MOTM_Proof_Coating_Poison";
+    private static final String FX_PROOF_SAND_CLOUD = "MOTM_Proof_Sand_Cloud";
+    private static final String FX_PROOF_DEBRIS_WAVE = "MOTM_Proof_Debris_Wave";
+    private static final String FX_PROOF_GEM_GREEN = "MOTM_Proof_Gem_Green";
     private static final String FX_STONE_DUST = "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner";
     private static final String FX_METAL_SPARKS = "Server/Particles/Block/Metal/Spawners/Block_Break_Metal_Sparks.particlespawner";
     private static final String FX_CRYSTAL_SPARKS = "Server/Particles/Block/Crystal/Spawners/Block_Break_Crystal_Sparks.particlespawner";
@@ -80,6 +91,7 @@ public final class HytaleAssetResolver {
     private static final String MODEL_VOID_SPAWN = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
     private static final String MODEL_VOID_EYE = "Common/NPC/Void/Eye_Void/Models/Model.blockymodel";
     private static final String MODEL_FROG = "Common/NPC/Critter/Frog/Models/Model.blockymodel";
+    private static final String MODEL_FIREBALL_PROJECTILE = "Common/Items/Projectiles/Fireball.blockymodel";
     private static final String ROLE_EMPTY = "Empty_Role";
     private static final String ROLE_SLUG_MAGMA = "Slug_Magma";
     private static final String ROLE_SPARK_LIVING = "Spark_Living";
@@ -138,7 +150,7 @@ public final class HytaleAssetResolver {
         String style = lower(styleId);
 
         if ("terra".equals(lower(classId)) && "magma".equals(style) && "magma_sling".equals(abilityId)) {
-            return ROLE_SLUG_MAGMA;
+            return ROLE_EMPTY;
         }
 
         String modelId = resolveModelId(classId, styleId, ability);
@@ -237,7 +249,27 @@ public final class HytaleAssetResolver {
                 return FX_FIRE_CAST;
             }
             if (abilityId.contains("obsidian")) {
-                return FX_FIRE_SMOKE;
+                return FX_PROOF_OBSIDIAN_COAT;
+            }
+        }
+        if ("terra".equals(lower(classId))) {
+            if ("metal".equals(style) && abilityId.contains("alloy")) {
+                return FX_PROOF_ALLOY_ENHANCEMENT;
+            }
+            if ("metal".equals(style) && abilityId.contains("metal")) {
+                return FX_PROOF_METAL_COAT;
+            }
+            if ("self_petrification".equals(style) && (abilityId.contains("gargoyle") || abilityId.contains("glare") || abilityId.contains("tunnel"))) {
+                return FX_PROOF_STONE_COAT;
+            }
+            if ("soil".equals(style) && abilityId.contains("debris")) {
+                return FX_PROOF_DEBRIS_WAVE;
+            }
+            if ("sand".equals(style) && (abilityId.contains("sandstorm") || abilityId.contains("dust_devil"))) {
+                return FX_PROOF_SAND_CLOUD;
+            }
+            if ("gem".equals(style) || abilityId.contains("lapidary") || abilityId.contains("refraction") || abilityId.contains("fracture")) {
+                return FX_PROOF_GEM_GREEN;
             }
         }
 
@@ -290,6 +322,9 @@ public final class HytaleAssetResolver {
         String travelType = lower(ability.getTravelType());
         String abilityId = lower(ability.getId());
 
+        if ("terra".equals(lower(classId)) && "magma".equals(lower(styleId)) && "magma_sling".equals(abilityId)) {
+            return FX_PROOF_MAGMA_SLING_TRAVEL;
+        }
         if (travelType.contains("shadow") || travelType.contains("void")) {
             return FX_VOID_SMOKE;
         }
@@ -349,11 +384,31 @@ public final class HytaleAssetResolver {
                 return FX_FIRE_IMPACT;
             }
             if (abilityId.contains("obsidian")) {
-                return FX_FIRE_SMOKE;
+                return FX_PROOF_OBSIDIAN_COAT;
             }
         }
         if ("terra".equals(lower(classId)) && "gem".equals(style) && "fracture".equals(abilityId)) {
-            return FX_CRYSTAL_SPARKS;
+            return FX_PROOF_GEM_GREEN;
+        }
+        if ("terra".equals(lower(classId))) {
+            if ("metal".equals(style) && "alloy_enhancement".equals(abilityId)) {
+                return FX_PROOF_ALLOY_IMPACT;
+            }
+            if ("bloom".equals(style) && (abilityId.contains("nightshade") || abilityId.contains("cacti"))) {
+                return FX_PROOF_POISON_COAT;
+            }
+            if ("self_petrification".equals(style) && abilityId.contains("glare")) {
+                return FX_PROOF_STONE_COAT;
+            }
+            if ("soil".equals(style) && abilityId.contains("debris")) {
+                return FX_PROOF_DEBRIS_WAVE;
+            }
+            if ("sand".equals(style) && (abilityId.contains("sandstorm") || abilityId.contains("dust_devil"))) {
+                return FX_PROOF_SAND_CLOUD;
+            }
+            if ("gem".equals(style) || abilityId.contains("lapidary") || abilityId.contains("refraction") || abilityId.contains("fracture")) {
+                return FX_PROOF_GEM_GREEN;
+            }
         }
 
         return switch (lower(classId)) {
@@ -414,11 +469,25 @@ public final class HytaleAssetResolver {
             return FX_TERRA_QUAKE_LOOP;
         }
         if ("terra".equals(lower(classId)) && "magma".equals(style)) {
+            if ("lava_pool".equals(abilityId)) {
+                return FX_PROOF_LAVA_POOL_FIELD;
+            }
             if (abilityId.contains("lava") || abilityId.contains("magma")) {
                 return FX_FIRE_AOE;
             }
             if (abilityId.contains("obsidian")) {
-                return FX_FIRE_SMOKE;
+                return FX_PROOF_OBSIDIAN_COAT;
+            }
+        }
+        if ("terra".equals(lower(classId))) {
+            if ("soil".equals(style) && (abilityId.contains("mudpit") || abilityId.contains("debris"))) {
+                return FX_PROOF_DEBRIS_WAVE;
+            }
+            if ("sand".equals(style) && (abilityId.contains("sandstorm") || abilityId.contains("dust_devil"))) {
+                return FX_PROOF_SAND_CLOUD;
+            }
+            if ("gem".equals(style) || abilityId.contains("lapidary") || abilityId.contains("refraction")) {
+                return FX_PROOF_GEM_GREEN;
             }
         }
 
@@ -468,6 +537,10 @@ public final class HytaleAssetResolver {
     private static String resolveModel(String classId, String styleId, AbilityData ability) {
         String summonName = lower(ability.getSummonName());
         String abilityId = lower(ability.getId());
+
+        if ("terra".equals(lower(classId)) && "magma".equals(lower(styleId)) && "magma_sling".equals(abilityId)) {
+            return MODEL_FIREBALL_PROJECTILE;
+        }
 
         if (!summonName.isBlank()) {
             return switch (summonName) {

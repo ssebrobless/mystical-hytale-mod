@@ -1,9 +1,9 @@
 {
-  "Duration": 4.0,
+  "Duration": 6.25,
   "OverlapBehavior": "Overwrite",
   "ApplicationEffects": {
-    "EntityTopTint": "#20162a",
-    "EntityBottomTint": "#050408",
+    "EntityTopTint": "#5b00a8",
+    "EntityBottomTint": "#08000f",
     "ModelVFXId": "Stoneskin"
   }
 }

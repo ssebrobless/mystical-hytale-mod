@@ -78,6 +78,21 @@ function Click-HytaleCenter($Window) {
     Start-Sleep -Milliseconds 180
 }
 
+function Click-HytaleTitleBar($Window) {
+    $rect = New-Object MotmInputWin32+RECT
+    if (-not [MotmInputWin32]::GetWindowRect($Window.MainWindowHandle, [ref]$rect)) {
+        return
+    }
+    $x = [int]($rect.Left + 160)
+    $y = [int]($rect.Top + 14)
+    [MotmInputWin32]::SetCursorPos($x, $y) | Out-Null
+    Start-Sleep -Milliseconds 80
+    [MotmInputWin32]::mouse_event([MotmInputWin32]::MOUSEEVENTF_LEFTDOWN, 0, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 60
+    [MotmInputWin32]::mouse_event([MotmInputWin32]::MOUSEEVENTF_LEFTUP, 0, 0, 0, [UIntPtr]::Zero)
+    Start-Sleep -Milliseconds 180
+}
+
 function Send-KeyChord([string]$Chord) {
     if ([string]::IsNullOrWhiteSpace($Chord)) {
         throw "Keys cannot be empty for Action=Key."
@@ -141,9 +156,9 @@ function Send-GameCommand([string]$Value) {
     if ($Value.StartsWith("/")) {
         $Value = $Value.Substring(1)
     }
-    [System.Windows.Forms.Clipboard]::SetText($Value)
+    [System.Windows.Forms.Clipboard]::SetText("/" + $Value)
     Start-Sleep -Milliseconds 80
-    Press-Key ([byte]0xBF) 90
+    Press-Key ([byte]0x54) 90
     Start-Sleep -Milliseconds 180
     [MotmInputWin32]::keybd_event([byte]0x11, 0, 0, [UIntPtr]::Zero)
     [MotmInputWin32]::keybd_event([byte]0x56, 0, 0, [UIntPtr]::Zero)
@@ -185,7 +200,7 @@ switch ($Action) {
     }
     "Command" {
         if ([string]::IsNullOrWhiteSpace($Text)) { throw "Text is required for Action=Command." }
-        Click-HytaleCenter $hytaleWindow
+        Click-HytaleTitleBar $hytaleWindow
         Send-GameCommand $Text
     }
     "Jump" {
@@ -198,7 +213,8 @@ switch ($Action) {
         Start-Sleep -Milliseconds 1300
     }
     "ThirdPerson" {
-        Send-KeyChord "v"
+        Press-Key ([byte]0x56) 90
+        Start-Sleep -Milliseconds $DelayMilliseconds
     }
     "Forward" {
         Hold-Key ([byte]0x57) $HoldMilliseconds
