@@ -1020,12 +1020,20 @@ public class StyleManager {
     private static final class ToggleState {
         private final AbilityData ability;
         private final int totalTicks;
+        private final long durationMillis;
+        private final long expireAtMillis;
         private int remainingTicks;
 
         private ToggleState(AbilityData ability, int totalTicks) {
             this.ability = ability;
             this.totalTicks = totalTicks;
             this.remainingTicks = totalTicks;
+            this.durationMillis = totalTicks >= 0
+                    ? Math.max(1L, Math.round(totalTicks * (1000.0 / TICKS_PER_SECOND)))
+                    : -1L;
+            this.expireAtMillis = durationMillis >= 0
+                    ? System.currentTimeMillis() + durationMillis
+                    : Long.MAX_VALUE;
         }
 
         private AbilityData ability() {
@@ -1033,13 +1041,14 @@ public class StyleManager {
         }
 
         private void tick() {
-            if (remainingTicks > 0) {
-                remainingTicks = Math.max(0, remainingTicks - 1);
+            if (hasFiniteDuration()) {
+                long remainingMillis = Math.max(0L, expireAtMillis - System.currentTimeMillis());
+                remainingTicks = (int) Math.ceil(remainingMillis / (1000.0 / TICKS_PER_SECOND));
             }
         }
 
         private boolean isExpired() {
-            return totalTicks >= 0 && remainingTicks <= 0;
+            return hasFiniteDuration() && System.currentTimeMillis() >= expireAtMillis;
         }
 
         private boolean hasFiniteDuration() {
@@ -1047,15 +1056,17 @@ public class StyleManager {
         }
 
         private double getRemainingSeconds() {
-            return hasFiniteDuration() ? remainingTicks / (double) TICKS_PER_SECOND : 0.0;
+            return hasFiniteDuration()
+                    ? Math.max(0L, expireAtMillis - System.currentTimeMillis()) / 1000.0
+                    : 0.0;
         }
 
         private double getProgress() {
-            if (!hasFiniteDuration() || totalTicks <= 0) {
+            if (!hasFiniteDuration() || durationMillis <= 0) {
                 return 1.0;
             }
 
-            return Math.max(0.0, Math.min(remainingTicks / (double) totalTicks, 1.0));
+            return Math.max(0.0, Math.min(getRemainingSeconds() * 1000.0 / durationMillis, 1.0));
         }
     }
 }

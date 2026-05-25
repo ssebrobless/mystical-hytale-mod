@@ -330,6 +330,7 @@ public class GameplayPlaybackManager {
                 player,
                 style,
                 ability,
+                mod.currentObservabilityTraceId(),
                 now,
                 now + STOMP_ARM_TIMEOUT_MILLIS,
                 transform.getTransform().getPosition().y,
@@ -375,7 +376,7 @@ public class GameplayPlaybackManager {
                 belongsToCurrentStore(entry.getValue().ownerRef(), currentStore)
                         && processTransformationTick(entry.getValue(), now));
         activeWeaponFollowUpsByPlayer.entrySet().removeIf(entry ->
-                processWeaponFollowUpExpiry(entry.getKey(), entry.getValue(), now));
+                processWeaponFollowUpExpiry(entry.getKey(), entry.getValue(), currentStore, now));
         activeSummonsByOwner.values().removeIf(List::isEmpty);
         activeSummonsByOwner.values().forEach(summons ->
                 summons.removeIf(summon ->
@@ -431,6 +432,7 @@ public class GameplayPlaybackManager {
                     armed.player(),
                     armed.style(),
                     armed.ability(),
+                    armed.traceId(),
                     armed.armedAtMillis(),
                     armed.expireAtMillis(),
                     y,
@@ -463,6 +465,31 @@ public class GameplayPlaybackManager {
                 + " damage=" + AbilityPresentation.formatDecimal(combat.totalDamage())
                 + " effects=" + effects.effectsApplied()
                 + (playback.effectApplied() ? " visual=applied" : " visual=missing"));
+        logTerraAbilityEvent("cast.end", armed.player(), armed.style(), ability,
+                "summary=Stomp landing resolved"
+                        + " combatTargets=" + combat.targetsHit()
+                        + " projectiles=0"
+                        + " field=false"
+                        + " terrain=false"
+                        + " summons=0"
+                        + " form=false");
+        mod.recordCausality("ability_cast_end", armed.traceId(), MotmObservability.mapOf(
+                "playerId", armed.player().getPlayerId(),
+                "styleId", safe(armed.style() != null ? armed.style().getId() : currentStyleId(armed.player())),
+                "abilityId", safe(ability.getId()),
+                "summary", "Stomp landing resolved: targets=" + combat.targetsHit()
+                        + " damage=" + AbilityPresentation.formatDecimal(combat.totalDamage())
+                        + " effects=" + effects.effectsApplied()
+                        + (playback.effectApplied() ? " visual=applied" : " visual=missing"),
+                "combatTargets", combat.targetsHit(),
+                "totalDamage", combat.totalDamage(),
+                "projectiles", 0,
+                "fieldActivated", false,
+                "terrainActivated", false,
+                "summonsSpawned", 0,
+                "summonsBuffed", 0,
+                "formApplied", false
+        ));
     }
 
     private void spawnQuakeImpactRing(Player runtimePlayer, AbilityData ability, Vector3d center) {
@@ -806,6 +833,18 @@ public class GameplayPlaybackManager {
             return ownerRef.getStore() == currentStore;
         } catch (IllegalStateException ignored) {
             return true;
+        }
+    }
+
+    private boolean canMutateInCurrentStore(Ref<EntityStore> ownerRef, Store<EntityStore> currentStore) {
+        if (ownerRef == null || !ownerRef.isValid() || currentStore == null) {
+            return false;
+        }
+
+        try {
+            return ownerRef.getStore() == currentStore;
+        } catch (IllegalStateException e) {
+            return false;
         }
     }
 
@@ -6327,13 +6366,25 @@ public class GameplayPlaybackManager {
         }
     }
 
-    private boolean processWeaponFollowUpExpiry(String playerId, ActiveWeaponFollowUp followUp, long now) {
+    private boolean processWeaponFollowUpExpiry(String playerId,
+                                                ActiveWeaponFollowUp followUp,
+                                                Store<EntityStore> currentStore,
+                                                long now) {
         if (followUp == null) {
             return true;
         }
         boolean expired = now >= followUp.expireAtMillis() || followUp.remainingUses() <= 0;
         if (expired && isAlloyFollowUp(followUp)) {
-            clearAlloyHeldItemVisual(mod.getRuntimePlayer(playerId));
+            Player runtimePlayer = mod.getRuntimePlayer(playerId);
+            Ref<EntityStore> playerRef = runtimePlayer != null ? runtimePlayer.getReference() : null;
+            if (playerRef != null && playerRef.isValid()) {
+                if (!canMutateInCurrentStore(playerRef, currentStore)) {
+                    return false;
+                }
+                clearAlloyHeldItemVisual(playerRef, currentStore);
+            } else {
+                LOG.info("[MOTM] Alloy Enhancement visual clear skipped: player unavailable playerId=" + playerId);
+            }
             LOG.info("[MOTM] Alloy Enhancement ended: "
                     + (now >= followUp.expireAtMillis() ? "duration expired" : "uses exhausted")
                     + " playerId=" + playerId);
@@ -8434,6 +8485,7 @@ public class GameplayPlaybackManager {
                               PlayerData player,
                               StyleData style,
                               AbilityData ability,
+                              String traceId,
                               long armedAtMillis,
                               long expireAtMillis,
                               double previousY,
