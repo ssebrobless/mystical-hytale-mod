@@ -1035,9 +1035,7 @@ public class GameplayPlaybackManager {
             return FieldRuntimeResult.none();
         }
 
-        Vector3d origin = isMagmaSlingAbility(ability)
-                ? resolveProjectileOrigin(playerRef, store, ability)
-                : getPosition(playerRef, store);
+        Vector3d origin = getPosition(playerRef, store);
         Vector3d forward = getDirection(playerRef, store);
         if (origin == null || forward == null) {
             return FieldRuntimeResult.none();
@@ -3762,6 +3760,7 @@ public class GameplayPlaybackManager {
 
         if (terrainEffect.contains("falling_rocks")) {
             applyTargetToken("knockback", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
@@ -4852,7 +4851,9 @@ public class GameplayPlaybackManager {
             modelId = ability.getName();
         }
 
-        Vector3d origin = getPosition(playerRef, store);
+        Vector3d origin = isMagmaSlingAbility(ability)
+                ? resolveProjectileOrigin(playerRef, store, ability)
+                : getPosition(playerRef, store);
         ActiveTransformation form = createTransformationState(player.getPlayerId(), playerRef, ability, modelId, origin);
         activeTransformationsByPlayer.put(player.getPlayerId(), form);
         nextTransformationPulseAtByPlayer.put(player.getPlayerId(), System.currentTimeMillis() + FORM_PULSE_INTERVAL_MS);

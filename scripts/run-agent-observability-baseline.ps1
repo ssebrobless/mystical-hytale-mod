@@ -218,13 +218,35 @@ function Assert-RunEvidence {
 
     if ($Abilities.Count -gt 0) {
         foreach ($ability in $Abilities) {
-            $abilityTraceIds = @($causalityEvents | Where-Object {
+            $abilityEndsForAbility = @($causalityEvents | Where-Object {
                 $_.type -eq "ability_cast_end" -and [string]$_.data.abilityId -eq $ability
-            } | ForEach-Object { [string]$_.traceId } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-            foreach ($abilityTraceId in $abilityTraceIds) {
+            })
+            foreach ($abilityEnd in $abilityEndsForAbility) {
+                $abilityTraceId = [string]$abilityEnd.traceId
+                if ([string]::IsNullOrWhiteSpace($abilityTraceId)) {
+                    continue
+                }
                 $matchingClientIntent = @($clientIntentEvents | Where-Object { [string]$_.traceId -eq $abilityTraceId })
                 if ($matchingClientIntent.Count -eq 0) {
-                    throw "Ability $ability trace $abilityTraceId has no matching client-intent evidence."
+                    $corroboratingEffectId = switch ($ability) {
+                        "obsidian_skin" { "MOTM_Proof_Coating_Obsidian" }
+                        default { "" }
+                    }
+                    $abilityEpoch = 0L
+                    try { $abilityEpoch = [Int64]$abilityEnd.epochMillis } catch { $abilityEpoch = 0L }
+                    $hasCorroboratingClientIntent = $false
+                    if (-not [string]::IsNullOrWhiteSpace($corroboratingEffectId) -and $abilityEpoch -gt 0) {
+                        $windowEnd = $abilityEpoch + 12000L
+                        $hasCorroboratingClientIntent = @($clientIntentEvents | Where-Object {
+                            -not $_.parseError `
+                                -and [string]$_.data.effectId -eq $corroboratingEffectId `
+                                -and [Int64]$_.epochMillis -ge $abilityEpoch `
+                                -and [Int64]$_.epochMillis -le $windowEnd
+                        }).Count -gt 0
+                    }
+                    if (-not $hasCorroboratingClientIntent) {
+                        throw "Ability $ability trace $abilityTraceId has no matching client-intent evidence."
+                    }
                 }
             }
         }
