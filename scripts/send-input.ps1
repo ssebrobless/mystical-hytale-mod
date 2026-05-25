@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Command", "Jump", "Stomp", "ThirdPerson", "Forward", "Back", "StrafeLeft", "StrafeRight", "ForwardJump", "FaceLeft", "FaceRight")]
+    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Mine", "Command", "Jump", "Stomp", "ThirdPerson", "Forward", "Back", "StrafeLeft", "StrafeRight", "ForwardJump", "FaceLeft", "FaceRight")]
     [string]$Action = "Key",
     [string]$Keys,
     [string]$Text,
@@ -198,6 +198,13 @@ switch ($Action) {
     "RightClick" {
         Send-Click "Right"
     }
+    "Mine" {
+        Click-HytaleCenter $hytaleWindow
+        [MotmInputWin32]::mouse_event([MotmInputWin32]::MOUSEEVENTF_LEFTDOWN, 0, 0, 0, [UIntPtr]::Zero)
+        Start-Sleep -Milliseconds $HoldMilliseconds
+        [MotmInputWin32]::mouse_event([MotmInputWin32]::MOUSEEVENTF_LEFTUP, 0, 0, 0, [UIntPtr]::Zero)
+        Start-Sleep -Milliseconds $DelayMilliseconds
+    }
     "Command" {
         if ([string]::IsNullOrWhiteSpace($Text)) { throw "Text is required for Action=Command." }
         Click-HytaleTitleBar $hytaleWindow
@@ -217,18 +224,23 @@ switch ($Action) {
         Start-Sleep -Milliseconds $DelayMilliseconds
     }
     "Forward" {
+        Click-HytaleCenter $hytaleWindow
         Hold-Key ([byte]0x57) $HoldMilliseconds
     }
     "Back" {
+        Click-HytaleCenter $hytaleWindow
         Hold-Key ([byte]0x53) $HoldMilliseconds
     }
     "StrafeLeft" {
+        Click-HytaleCenter $hytaleWindow
         Hold-Key ([byte]0x41) $HoldMilliseconds
     }
     "StrafeRight" {
+        Click-HytaleCenter $hytaleWindow
         Hold-Key ([byte]0x44) $HoldMilliseconds
     }
     "ForwardJump" {
+        Click-HytaleCenter $hytaleWindow
         Send-ForwardJump
     }
     "FaceLeft" {

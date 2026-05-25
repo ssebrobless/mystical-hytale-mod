@@ -48,10 +48,16 @@ public const uint MOUSEEVENTF_LEFTUP = 0x0004;
 '@
 
 function Get-HytaleWindow {
-    Get-Process -Name "HytaleClient" -ErrorAction SilentlyContinue |
+    $windows = @(Get-Process -Name "HytaleClient" -ErrorAction SilentlyContinue |
         Where-Object { $_.MainWindowHandle -ne 0 } |
-        Sort-Object StartTime -Descending |
-        Select-Object -First 1
+        Sort-Object StartTime -Descending)
+    if ($windows.Count -gt 1) {
+        $details = ($windows | ForEach-Object {
+            "$($_.Id):$($_.MainWindowTitle)"
+        }) -join ", "
+        throw "Multiple Hytale client windows are open ($details). Run scripts/reset-hytale-clients.ps1 before load-world."
+    }
+    $windows | Select-Object -First 1
 }
 
 function Focus-Hytale($Process) {

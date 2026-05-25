@@ -3,8 +3,10 @@ param(
     [string]$ClassId = "terra",
     [string]$StyleId = "quake",
     [string]$WorldName = "MOTM Creative Test",
-    [ValidateSet("close", "stationary", "clear")]
+    [ValidateSet("close", "stationary", "cluster", "line", "surround", "clear")]
     [string]$MobMode = "close",
+    [ValidateSet("creative", "adventure", "unchanged")]
+    [string]$ReviewMode = "unchanged",
     [switch]$SkipRelocate,
     [switch]$SkipThirdPerson
 )
@@ -34,16 +36,20 @@ function Send-MotmCommand([string]$Text, [int]$DelayMilliseconds = 650) {
 }
 
 Write-Host "[setup-style-review] Preparing $ClassId/$StyleId for manual real-control review."
-Send-MotmCommand "motm dev freecast on"
 Send-MotmCommand "motm dev daylight" 450
 if (-not $SkipRelocate) {
     Send-MotmCommand "motm dev relocate lane" 1600
 }
 Send-MotmCommand "motm dev test reset" 1300
+Send-MotmCommand "motm dev freecast on" 700
 Send-MotmCommand "motm dev class set $ClassId"
 Send-MotmCommand "motm dev styles clear"
 Send-MotmCommand "motm style $StyleId" 1100
+if ($ReviewMode -ne "unchanged") {
+    Send-MotmCommand "motm dev mode $ReviewMode" 1000
+}
 Send-MotmCommand "motm dev test reset" 1300
+Send-MotmCommand "motm dev freecast on" 700
 if ($MobMode -ne "clear") {
     Send-MotmCommand "motm dev test mobs $MobMode" 1350
 }
