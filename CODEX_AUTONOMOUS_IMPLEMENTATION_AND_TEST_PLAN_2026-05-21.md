@@ -1,5 +1,11 @@
 # Codex Autonomous Implementation + Test Plan — 2026-05-21
 
+> **Superseded testing guidance:** This document is historical context for the
+> earlier log-tail/screenshot/cold-launch strategy. For new feature work, follow
+> `AGENTS.md` and `docs/agent-driven-verification-observability.md`; final
+> acceptance should come from `scripts/run-agent-observability-baseline.ps1` and
+> an `audits/agent-observability/<runId>/` evidence bundle.
+
 > **Audience:** Medium-effort Codex running unattended in the Mystical-Hytale-Mod repo at
 > `C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod`.
 >

@@ -1,6 +1,6 @@
 # Source Index
 
-Updated: 2026-05-24
+Updated: 2026-05-25
 
 ## Source Classes
 
@@ -15,6 +15,7 @@ Updated: 2026-05-24
 ║ community-experience  ║ Good warning signal, never sole source        ║
 ║ local-authoritative   ║ Actual installed assets/classes/signatures    ║
 ║ runtime-proven        ║ Final proof for MOTM gameplay acceptance      ║
+║ runtime-evidence      ║ Raw and indexed evidence from local runs       ║
 ╚══════════════════════╩══════════════════════════════════════════════╝
 ```
 
@@ -53,6 +54,27 @@ Updated: 2026-05-24
 | `src/main/java/com/motm/util/HytaleAssetResolver.java` | repo truth | MOTM's current allowed particle/model/role routing. |
 | `src/main/java/com/motm/manager/GameplayPlaybackManager.java` | repo truth | MOTM's actual ability runtime/playback implementation. |
 | `src/main/resources/Server/Entity/Effects/MOTM/*.json` | repo truth | Current custom EntityEffect assets. |
+| `~/Library/Application Support/Hytale/install/release/package/game/latest/Server/HytaleServer.jar` | local-authoritative | Mac installed server jar; actual API signatures beat public docs. |
+| `%APPDATA%/Hytale/install/release/package/game/latest/Server/HytaleServer.jar` | local-authoritative | Windows installed server jar; actual API signatures beat public docs. |
+| `~/Library/Application Support/Hytale/install/release/package/game/latest/Assets.zip` | local-authoritative | Mac installed assets; final source for local asset ids. |
+| `%APPDATA%/Hytale/install/release/package/game/latest/Assets.zip` | local-authoritative | Windows installed assets; final source for local asset ids. |
+| `~/Library/Application Support/Hytale/UserData/Logs/` | client-adjacent | Client log plus embedded local server output for launch, auth, lifecycle, warnings, and errors. |
+| `%APPDATA%/Hytale/UserData/Logs/` | client-adjacent | Windows client log plus embedded local server output for launch, auth, lifecycle, warnings, and errors. |
+| `~/Library/Application Support/Hytale/UserData/Telemetry/` | client-adjacent | Raw client telemetry JSONL/gzip stream for session and heartbeat context. |
+| `%APPDATA%/Hytale/UserData/Telemetry/` | client-adjacent | Windows raw client telemetry JSONL/gzip stream for session and heartbeat context. |
+| `~/Library/Application Support/Hytale/UserData/Saves/Main/motm-data/com.motm_Mentees of the Mystical/observability/runs/` | runtime-evidence | In-mod MOTM observability streams for control, causality, server truth, client intent, packets, and artifacts. |
+
+## Agent Verification References
+
+| Source | Class | Use |
+| --- | --- | --- |
+| `docs/agent-driven-verification-observability.md` | repo truth | Architecture contract, reference index, and completion checklist for the agent-driven verification platform. |
+| `src/main/java/com/motm/util/MotmObservability.java` | repo truth | Runtime JSONL evidence writer and packet ledger. |
+| `scripts/run-agent-observability-baseline.ps1` | runtime-evidence | Cross-platform PowerShell baseline orchestrator for build/install optional, dev commands, snapshots, optional screenshots, and evidence collection. |
+| `scripts/collect-observability-evidence.ps1` | runtime-evidence | Loss-preserving run bundler for logs, telemetry, MOTM streams, settings, manifest, indexes, and source/build metadata. |
+| `scripts/query-observability-evidence.ps1` | runtime-evidence | Agent query entrypoint for run summaries, sources, events, and raw windows. |
+| `~/codebases/HytaleCompleteAPI/` | local-authoritative lead | Local API/documentation index for discovery; verify signatures against the installed jar. |
+| `~/codebases/Hytale-Mod-Agent/.github/skills/` | community-reference lead | Adjacent packet, ECS, stats, effects, camera, and input implementation patterns; verify against this repo and installed Hytale. |
 
 ## Research Rule
 

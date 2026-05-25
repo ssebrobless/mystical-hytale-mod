@@ -1,5 +1,9 @@
 # Mentees of the Mystical - Project Rules
 
+`AGENTS.md` is the canonical guide for agent-driven feature work and testing.
+Use the observability harness there for final in-game verification; this file
+keeps the older Claude-oriented project rules in sync.
+
 ## Data Protection
 - `src/main/resources/data/styles/*.json` are PROTECTED. These contain carefully authored ability profiles. NEVER regenerate these files wholesale. Only make surgical, targeted edits to specific fields.
 - If you need to modify ability data, change only the specific field(s) requested. Do not reformat, reorder, or rewrite surrounding content.
@@ -21,6 +25,14 @@
 - Build: `powershell -ExecutionPolicy Bypass -File scripts/build-install.ps1`
 - JDK 25 + Gradle 9.1 (auto-downloaded to `.tools/`)
 - Internal build installs to `%APPDATA%/Hytale/UserData/Mods/`
+
+## Testing
+- Default in-game harness: `scripts/run-agent-observability-baseline.ps1`
+- Evidence bundle: `audits/agent-observability/<runId>/`
+- Query evidence with `scripts/query-observability-evidence.ps1`
+- Older screenshot/log-tail audit scripts are supplemental only. Do not use them
+  as the final acceptance path for new behavior unless the observability harness
+  has also produced a supporting run bundle.
 
 ## Known Issues
 - `MenteesMod.java` and `GameplayPlaybackManager.java` are god classes. Extraction direction is documented in `CODEX_CORRECTIONS_PLAN.md`.

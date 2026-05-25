@@ -776,6 +776,7 @@ public class MotmCommand {
         return switch (args[1].toLowerCase()) {
             case "help" -> getDevHelpMessage();
             case "book" -> handleDevBook(player, runtimePlayer);
+            case "observe", "observability" -> handleDevObserve(player, args, runtimePlayer);
             case "audit" -> handleDevAudit(player, args);
             case "test" -> handleDevTest(player, args, runtimePlayer);
             case "proof" -> handleDevProof(player, args, runtimePlayer);
@@ -804,6 +805,53 @@ public class MotmCommand {
             return "[MOTM] Join a world and run this in-game to receive the Dev Grimoire.";
         }
         return mod.queueDevBookGrant(player.getPlayerId());
+    }
+
+    private String handleDevObserve(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev observe <start|stop|status|scenario|marker|snapshot|spellbook> ...";
+        }
+
+        return switch (args[2].toLowerCase(java.util.Locale.ROOT)) {
+            case "start" -> {
+                String runId = args.length >= 4 ? args[3] : "";
+                String scenarioId = args.length >= 5 ? args[4] : "manual";
+                yield mod.startObservabilityRun(runId, scenarioId, player.getPlayerId());
+            }
+            case "stop" -> mod.stopObservabilityRun(args.length >= 4 ? args[3] : "manual");
+            case "status" -> mod.getObservabilityStatus();
+            case "scenario" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev observe scenario <scenarioId>";
+                }
+                yield mod.setObservabilityScenario(args[3]);
+            }
+            case "marker" -> mod.markObservabilityRun(
+                    player.getPlayerId(),
+                    args.length >= 4 ? args[3] : "marker"
+            );
+            case "snapshot", "state" -> mod.snapshotObservability(
+                    player.getPlayerId(),
+                    args.length >= 4 ? args[3] : "snapshot"
+            );
+            case "spellbook", "page", "ui" -> {
+                Player resolvedPlayer = runtimePlayer != null ? runtimePlayer : mod.getRuntimePlayer(player.getPlayerId());
+                if (resolvedPlayer == null) {
+                    yield "[MOTM] Runtime player context is unavailable.";
+                }
+                SpellbookManager.Section section = args.length >= 4
+                        ? mod.getSpellbookManager().parseSection(args[3])
+                        : SpellbookManager.Section.OVERVIEW;
+                if (section == null) {
+                    yield "[MOTM] Unknown spellbook section. Sections: " + mod.getSpellbookManager().getSectionList();
+                }
+                boolean opened = mod.openSpellbook(resolvedPlayer, section);
+                yield opened
+                        ? "[MOTM] Observability custom spellbook page opened: section=" + section
+                        : "[MOTM] Observability custom spellbook page was not opened.";
+            }
+            default -> "[MOTM] Usage: /motm dev observe <start|stop|status|scenario|marker|snapshot|spellbook> ...";
+        };
     }
 
     private String handleDevAudit(PlayerData player, String[] args) {
@@ -1330,6 +1378,10 @@ public class MotmCommand {
         }
         return "[MOTM] === Dev Commands ===\n"
                 + "  /motm dev book\n"
+                + "  /motm dev observe start <runId> [scenarioId]\n"
+                + "  /motm dev observe marker <label>\n"
+                + "  /motm dev observe snapshot <label>\n"
+                + "  /motm dev observe stop [reason]\n"
                 + "  /motm dev test style <styleId>\n"
                 + "  /motm dev test ability <abilityId>\n"
                 + "  /motm dev test mobs [close|stationary|cluster|line|surround|clear|count]\n"

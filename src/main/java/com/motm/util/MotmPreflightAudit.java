@@ -65,6 +65,7 @@ public final class MotmPreflightAudit {
             "ground_burst", "ground_strike", "ground_target", "ground_zone", "self_burst", "execute"
     );
     private static final Set<String> SUMMON_CAST_TYPES = Set.of("summon", "summon_buff");
+    private static final Set<String> SUMMON_NAME_REQUIRED_CAST_TYPES = Set.of("summon");
     private static final Set<String> TOGGLE_FAMILY_CAST_TYPES = Set.of("transformation", "channel", "self_buff");
     private static final Set<String> SELF_TARGETING_CAST_TYPES = Set.of(
             "self_buff", "self_burst", "transformation", "cleanse"
@@ -415,8 +416,8 @@ public final class MotmPreflightAudit {
             audit.warning(scope, "Barrier is missing width/height dimensions.");
         }
 
-        if (SUMMON_CAST_TYPES.contains(castType) && summonName.isBlank()) {
-            audit.error(scope, "Summon cast is missing summon_name.");
+        if (SUMMON_NAME_REQUIRED_CAST_TYPES.contains(castType) && summonName.isBlank()) {
+            audit.error(scope, "Summon spawn cast is missing summon_name.");
         }
         if (!summonName.isBlank() && !SUMMON_CAST_TYPES.contains(castType)) {
             audit.warning(scope, "Ability declares summon_name but cast_type is '" + ability.getCastType() + "'.");
