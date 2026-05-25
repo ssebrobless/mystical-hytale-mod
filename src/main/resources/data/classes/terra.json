@@ -34,15 +34,14 @@
     "mana_regen": 0.05
   },
   "passive_ability": {
-    "id": "terra_passive_earthen_resilience",
-    "name": "Earthen Resilience",
-    "description": "Standing still for 2 seconds grants a shield equal to 5% of max health. Regenerate 1% max health per second while below 30% health. Terra also mines 50% faster with pickaxes and gains cave vision underground.",
+    "id": "terra_passive_immovable",
+    "name": "Immovable",
+    "description": "Reduce knockback taken by 20% without increasing knockback dealt. Regenerate 1% max health per second while below 30% health, mine 50% faster with pickaxes, and gain cave vision underground.",
     "effects": [
       {
-        "type": "conditional_shield",
-        "condition": "stationary_duration >= 2",
-        "value": 0.05,
-        "value_type": "percent_max_health"
+        "type": "knockback_taken_reduction",
+        "value": 0.20,
+        "value_type": "percent_modifier"
       },
       {
         "type": "conditional_regen",

@@ -41,6 +41,17 @@ public final class PassivePresentation {
             case "oxygen_capacity_bonus" -> "Breathe underwater " + percent(effect.getValue()) + " longer";
             case "movement_speed_bonus" -> "Movement speed " + signedPercent(effect.getValue());
             case "signature_energy_bonus" -> "Native Hytale energy +" + percent(effect.getValue());
+            case "knockback_taken_reduction" -> "Knockback taken -" + percent(effect.getValue());
+            case "aqua_barrier_shield" -> "Aqua Barrier shield " + percent(effect.getValue()) + " max HP";
+            case "aqua_barrier_cooldown_seconds" -> "Aqua Barrier cooldown "
+                    + AbilityPresentation.formatDecimal(effect.getValue()) + "s";
+            case "aqua_barrier_duration_seconds" -> "Aqua Barrier duration "
+                    + AbilityPresentation.formatDecimal(effect.getValue()) + "s";
+            case "dark_resurrection_required_stacks" -> "Dark Resurrection requires "
+                    + AbilityPresentation.formatDecimal(effect.getValue()) + " stacks";
+            case "dark_resurrection_health" -> "Dark Resurrection restores to " + percent(effect.getValue()) + " max HP";
+            case "dark_resurrection_lockout_seconds" -> "Corruptus passive lockout "
+                    + AbilityPresentation.formatDecimal(effect.getValue()) + "s";
             case "conditional_cost_reduction" -> humanizeCondition(effect.getCondition())
                     + ": ability costs " + signedPercent(-effect.getValue());
             case "conditional_damage_modifier" -> humanizeCondition(effect.getCondition())

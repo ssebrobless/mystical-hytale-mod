@@ -126,34 +126,34 @@ public class MotmStatusHud extends CustomUIHud {
 
         switch (classId) {
             case "terra" -> {
-                int stationaryTicks = passiveManager.getTerraStationaryTicks(playerId);
-                int requiredTicks = Math.max(1, passiveManager.getTerraStationaryTicksRequired());
-                boolean primed = passiveManager.isTerraShieldPrimed(playerId);
                 boolean caveVision = passiveManager.isTerraCaveVisionActive(playerId);
                 buffs.add(new HudStatusEntry(
                         "Terra",
-                        primed ? "Shield Up" : caveVision ? "Cave Vision" : "Charging",
-                        primed ? StatusTone.BUFF : StatusTone.PASSIVE,
-                        StatusIcon.SHIELD,
-                        Math.max(0.0, Math.min(stationaryTicks / (double) requiredTicks, 1.0)),
+                        caveVision ? "Cave Vision" : "Immovable",
+                        StatusTone.PASSIVE,
+                        StatusIcon.DEFENSE,
+                        1.0,
                         caveVision ? "NV" : "",
-                        primed ? 100 : 90
+                        90
                 ));
             }
             case "hydro" -> {
                 boolean swimming = passiveManager.isHydroSwimming(playerId);
                 boolean underwater = passiveManager.isHydroUnderwater(playerId);
+                boolean barrier = passiveManager.getHydroAquaBarrierShieldHp(playerId) > 0.0;
                 buffs.add(new HudStatusEntry(
                         "Hydro",
-                        underwater
+                        barrier
+                                ? "Aqua Barrier"
+                                : underwater
                                 ? "Underwater"
                                 : swimming
                                 ? "Swimming"
                                 : "Tidal Flow",
-                        StatusTone.PASSIVE,
-                        StatusIcon.HEALTH,
+                        barrier ? StatusTone.BUFF : StatusTone.PASSIVE,
+                        barrier ? StatusIcon.SHIELD : StatusIcon.HEALTH,
                         1.0,
-                        underwater ? "O2+" : swimming ? "SW" : "",
+                        barrier ? "AB" : underwater ? "O2+" : swimming ? "SW" : "",
                         85
                 ));
             }
@@ -169,13 +169,15 @@ public class MotmStatusHud extends CustomUIHud {
                 ));
             }
             case "corruptus" -> {
+                int stacks = passiveManager.getCorruptusDarkResurrectionStacks(playerId);
+                double lockout = passiveManager.getCorruptusPassiveLockoutSecondsRemaining(playerId);
                 buffs.add(new HudStatusEntry(
                         "Corruptus",
-                        "Void Flame",
-                        StatusTone.PASSIVE,
+                        lockout > 0.0 ? "Resurrection Lockout" : "Dark Resurrection",
+                        lockout > 0.0 ? StatusTone.DEBUFF : StatusTone.PASSIVE,
                         StatusIcon.MAGIC,
-                        1.0,
-                        "",
+                        lockout > 0.0 ? 0.0 : Math.min(1.0, stacks / 3.0),
+                        lockout > 0.0 ? "CD" : stacks + "/3",
                         84
                 ));
             }

@@ -36,7 +36,7 @@
   "passive_ability": {
     "id": "hydro_passive_tidal_flow",
     "name": "Tidal Flow",
-    "description": "Abilities heal you for 3% of damage dealt. Hydro swims 40% faster and can breathe underwater 50% longer. Hydro abilities use cooldowns instead of waterskin costs.",
+    "description": "Abilities heal you for 3% of damage dealt. Hydro swims 40% faster and can breathe underwater 50% longer. Aqua Barrier forms a whole-body bubble shield that depletes before other Hydro defensive overlays. Hydro abilities use cooldowns instead of waterskin costs.",
     "effects": [
       {
         "type": "spell_vamp",
@@ -52,6 +52,21 @@
         "type": "oxygen_capacity_bonus",
         "value": 0.50,
         "value_type": "percent_modifier"
+      },
+      {
+        "type": "aqua_barrier_shield",
+        "value": 0.10,
+        "value_type": "percent_max_health"
+      },
+      {
+        "type": "aqua_barrier_cooldown_seconds",
+        "value": 8.0,
+        "value_type": "seconds"
+      },
+      {
+        "type": "aqua_barrier_duration_seconds",
+        "value": 20.0,
+        "value_type": "seconds"
       }
     ]
   },

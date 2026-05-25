@@ -52,15 +52,16 @@ public class MotmDamageEventSystem extends DamageEventSystem {
             return;
         }
 
+        Ref<EntityStore> targetRef = chunk.getReferenceTo(entityIndex);
+        Player targetPlayer = targetRef != null && targetRef.isValid()
+                ? store.getComponent(targetRef, Player.getComponentType())
+                : null;
+        UUIDComponent targetUuidComponent = targetRef != null && targetRef.isValid()
+                ? store.getComponent(targetRef, UUIDComponent.getComponentType())
+                : null;
+        UUID targetUuid = targetUuidComponent != null ? targetUuidComponent.getUuid() : null;
+
         if (!(damage.getSource() instanceof Damage.EntitySource)) {
-            Ref<EntityStore> targetRef = chunk.getReferenceTo(entityIndex);
-            Player targetPlayer = targetRef != null && targetRef.isValid()
-                    ? store.getComponent(targetRef, Player.getComponentType())
-                    : null;
-            UUIDComponent targetUuidComponent = targetRef != null && targetRef.isValid()
-                    ? store.getComponent(targetRef, UUIDComponent.getComponentType())
-                    : null;
-            UUID targetUuid = targetUuidComponent != null ? targetUuidComponent.getUuid() : null;
             if (targetPlayer != null
                     && targetUuid != null
                     && mod.getGameplayPlaybackManager().isMagmaHazardProtected(targetUuid.toString())) {
@@ -77,7 +78,27 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                             + " source=" + damage.getSource().getClass().getSimpleName());
                 }
             }
+            if (targetPlayer != null && targetUuid != null && damage.getAmount() > 0.0f) {
+                damage.setAmount(mod.getClassPassiveManager().handleIncomingPlayerDamage(
+                        targetUuid.toString(),
+                        targetRef,
+                        store,
+                        damage.getAmount()
+                ));
+            }
             return;
+        }
+
+        if (targetPlayer != null && targetUuid != null && damage.getAmount() > 0.0f) {
+            damage.setAmount(mod.getClassPassiveManager().handleIncomingPlayerDamage(
+                    targetUuid.toString(),
+                    targetRef,
+                    store,
+                    damage.getAmount()
+            ));
+            if (damage.getAmount() <= 0.0f) {
+                return;
+            }
         }
 
         Damage.EntitySource source = (Damage.EntitySource) damage.getSource();
@@ -105,7 +126,6 @@ public class MotmDamageEventSystem extends DamageEventSystem {
 
         ItemStack held = runtimePlayer.getInventory().getItemInHand();
         String itemId = held != null ? held.getItemId() : null;
-        Ref<EntityStore> targetRef = chunk.getReferenceTo(entityIndex);
         String response = mod.getGameplayPlaybackManager().handleNativeWeaponDamage(
                 runtimePlayer,
                 playerData,

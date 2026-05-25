@@ -35,8 +35,8 @@
   },
   "passive_ability": {
     "id": "aero_passive_tempo_surge",
-    "name": "Tempo Surge",
-    "description": "You move 25% faster at all times and your native Hytale energy bar is increased by 80%.",
+    "name": "Skybound Tempo Surge",
+    "description": "You move 25% faster at all times and your native Hytale energy bar is increased by 80%. Vertical movement from Aero style abilities is handled by the style ability itself so Skybound does not duplicate jumps, dives, hovers, or launch resets.",
     "effects": [
       {
         "type": "movement_speed_bonus",

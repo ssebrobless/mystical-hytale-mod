@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 public class StatusEffectManager {
 
     private static final Logger LOG = Logger.getLogger("MOTM");
+    private static final String PRIORITY_SHIELD_SOURCE_ID = "hydro_passive_aqua_barrier";
 
     // entityId -> list of active effects
     private final Map<String, List<StatusEffect>> activeEffects = new HashMap<>();
@@ -30,6 +31,11 @@ public class StatusEffectManager {
             return;
         }
 
+        if (effect.getType() == StatusEffect.Type.SHIELD) {
+            applyShieldEffect(effects, effect);
+            return;
+        }
+
         // For non-stacking effects, refresh if same type already present
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i).getType() == effect.getType()) {
@@ -39,6 +45,23 @@ public class StatusEffectManager {
         }
 
         effects.add(effect);
+    }
+
+    private void applyShieldEffect(List<StatusEffect> effects, StatusEffect effect) {
+        for (int i = 0; i < effects.size(); i++) {
+            StatusEffect existing = effects.get(i);
+            if (existing.getType() == StatusEffect.Type.SHIELD
+                    && sameSource(existing.getSourcePerkOrAbility(), effect.getSourcePerkOrAbility())) {
+                effects.set(i, effect);
+                return;
+            }
+        }
+
+        if (isPriorityShield(effect)) {
+            effects.add(0, effect);
+        } else {
+            effects.add(effect);
+        }
     }
 
     /**
@@ -197,6 +220,14 @@ public class StatusEffectManager {
                 .sum();
     }
 
+    public synchronized double getShieldHp(String entityId, String sourcePerkOrAbility) {
+        return getEffects(entityId).stream()
+                .filter(e -> e.getType() == StatusEffect.Type.SHIELD)
+                .filter(e -> sameSource(e.getSourcePerkOrAbility(), sourcePerkOrAbility))
+                .mapToDouble(StatusEffect::getValue)
+                .sum();
+    }
+
     /**
      * Absorb damage through shields. Returns remaining damage after shield absorption.
      */
@@ -204,11 +235,11 @@ public class StatusEffectManager {
         List<StatusEffect> effects = activeEffects.get(entityId);
         if (effects == null) return damage;
 
-        double remaining = damage;
+        double remaining = absorbDamageFromPriorityShields(effects, damage);
         Iterator<StatusEffect> it = effects.iterator();
         while (it.hasNext() && remaining > 0) {
             StatusEffect effect = it.next();
-            if (effect.getType() == StatusEffect.Type.SHIELD) {
+            if (effect.getType() == StatusEffect.Type.SHIELD && !isPriorityShield(effect)) {
                 double shieldHp = effect.getValue();
                 if (shieldHp <= remaining) {
                     remaining -= shieldHp;
@@ -220,6 +251,38 @@ public class StatusEffectManager {
             }
         }
         return remaining;
+    }
+
+    private double absorbDamageFromPriorityShields(List<StatusEffect> effects, double damage) {
+        double remaining = damage;
+        Iterator<StatusEffect> it = effects.iterator();
+        while (it.hasNext() && remaining > 0) {
+            StatusEffect effect = it.next();
+            if (effect.getType() != StatusEffect.Type.SHIELD || !isPriorityShield(effect)) {
+                continue;
+            }
+
+            double shieldHp = effect.getValue();
+            if (shieldHp <= remaining) {
+                remaining -= shieldHp;
+                it.remove();
+            } else {
+                effect.setValue(shieldHp - remaining);
+                remaining = 0;
+            }
+        }
+        return remaining;
+    }
+
+    private boolean isPriorityShield(StatusEffect effect) {
+        return effect != null && sameSource(effect.getSourcePerkOrAbility(), PRIORITY_SHIELD_SOURCE_ID);
+    }
+
+    private boolean sameSource(String left, String right) {
+        if (left == null || right == null) {
+            return left == right;
+        }
+        return left.equalsIgnoreCase(right);
     }
 
     /**

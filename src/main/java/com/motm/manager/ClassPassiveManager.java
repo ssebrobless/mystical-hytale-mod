@@ -7,6 +7,8 @@ import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.ColorLight;
 import com.hypixel.hytale.protocol.BlockMaterial;
+import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
+import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.PersistentDynamicLight;
@@ -32,6 +34,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,16 +46,21 @@ import java.util.regex.Pattern;
  */
 public class ClassPassiveManager {
 
+    private static final Logger LOG = Logger.getLogger("MOTM");
     private static final int TICKS_PER_SECOND = 20;
     private static final int TERRA_REGEN_INTERVAL_TICKS = TICKS_PER_SECOND;
     private static final double MOVEMENT_EPSILON = 0.08;
     private static final String TERRA_CAVE_VISION_LIGHT_ID = "motm_terra_cave_vision";
+    private static final String HYDRO_AQUA_BARRIER_SOURCE_ID = "hydro_passive_aqua_barrier";
+    private static final String HYDRO_AQUA_BARRIER_EFFECT_ID = "MOTM_Hydro_Aqua_Barrier";
     private static final String HYDRO_OXYGEN_MODIFIER_ID = "motm_hydro_passive_oxygen";
     private static final String AERO_SIGNATURE_ENERGY_MODIFIER_ID = "motm_aero_passive_signature_energy";
     private static final ColorLight TERRA_CAVE_LIGHT = new ColorLight((byte) 9, (byte) 120, (byte) 110, (byte) 90);
     private static final int TERRA_CAVE_MAX_Y = 80;
     private static final int TERRA_CAVE_SCAN_DISTANCE = 10;
     private static final int TERRA_CAVE_REQUIRED_SOLID_BLOCKS = 3;
+    private static final int CORRUPTUS_DARK_RESURRECTION_MAX_STACKS = 3;
+    private static final int CORRUPTUS_DARK_RESURRECTION_LOCKOUT_TICKS = 10 * 60 * TICKS_PER_SECOND;
     private static final Pattern DECIMAL_PATTERN = Pattern.compile("([0-9]+(?:\\.[0-9]+)?)");
 
     private final DataLoader dataLoader;
@@ -63,16 +71,21 @@ public class ClassPassiveManager {
     private final TerraPassive terraPassive;
     private final HydroPassive hydroPassive;
     private final AeroPassive aeroPassive;
+    private final CorruptusPassive corruptusPassive;
 
     private final Map<String, Vector3d> lastPositionsByPlayer = new HashMap<>();
     private final Map<String, Integer> stationaryTicksByPlayer = new HashMap<>();
     private final Set<String> terraShieldPrimedPlayers = new HashSet<>();
     private final Set<String> terraCaveVisionPlayers = new HashSet<>();
     private final Map<String, Vector3d> hydroSwimBoostByPlayer = new HashMap<>();
+    private final Map<String, Long> hydroBarrierReadyTickByPlayer = new HashMap<>();
     private final Set<String> hydroSwimmingPlayers = new HashSet<>();
     private final Set<String> hydroUnderwaterPlayers = new HashSet<>();
+    private final Set<String> hydroBarrierActivePlayers = new HashSet<>();
     private final Map<String, Integer> stormChargeByPlayer = new HashMap<>();
     private final Map<String, Vector3d> aeroMoveBoostByPlayer = new HashMap<>();
+    private final Map<String, Integer> corruptusDarkResurrectionStacksByPlayer = new HashMap<>();
+    private final Map<String, Long> corruptusPassiveLockoutUntilTickByPlayer = new HashMap<>();
 
     private long tickCounter = 0L;
 
@@ -87,6 +100,7 @@ public class ClassPassiveManager {
         this.terraPassive = loadTerraPassive();
         this.hydroPassive = loadHydroPassive();
         this.aeroPassive = loadAeroPassive();
+        this.corruptusPassive = loadCorruptusPassive();
     }
 
     public synchronized void onPlayerJoin(PlayerData player) {
@@ -111,10 +125,14 @@ public class ClassPassiveManager {
         terraShieldPrimedPlayers.remove(playerId);
         terraCaveVisionPlayers.remove(playerId);
         hydroSwimBoostByPlayer.remove(playerId);
+        hydroBarrierReadyTickByPlayer.remove(playerId);
         hydroSwimmingPlayers.remove(playerId);
         hydroUnderwaterPlayers.remove(playerId);
+        hydroBarrierActivePlayers.remove(playerId);
         stormChargeByPlayer.remove(playerId);
         aeroMoveBoostByPlayer.remove(playerId);
+        corruptusDarkResurrectionStacksByPlayer.remove(playerId);
+        corruptusPassiveLockoutUntilTickByPlayer.remove(playerId);
     }
 
     public synchronized void tick(Map<String, Player> runtimePlayers, Store<EntityStore> currentStore) {
@@ -148,22 +166,32 @@ public class ClassPassiveManager {
                 case "terra" -> {
                     clearHydroPassiveRuntime(playerId, runtimePlayer);
                     clearAeroPassiveRuntime(playerId, runtimePlayer);
+                    clearCorruptusPassiveRuntime(playerId);
                     tickTerraPassive(runtimePlayer, player);
                 }
                 case "hydro" -> {
                     clearTerraPassiveRuntime(playerId, runtimePlayer);
                     clearAeroPassiveRuntime(playerId, runtimePlayer);
+                    clearCorruptusPassiveRuntime(playerId);
                     tickHydroPassive(runtimePlayer, player);
                 }
                 case "aero" -> {
                     clearTerraPassiveRuntime(playerId, runtimePlayer);
                     clearHydroPassiveRuntime(playerId, runtimePlayer);
+                    clearCorruptusPassiveRuntime(playerId);
                     tickAeroPassive(runtimePlayer, player);
+                }
+                case "corruptus" -> {
+                    clearTerraPassiveRuntime(playerId, runtimePlayer);
+                    clearHydroPassiveRuntime(playerId, runtimePlayer);
+                    clearAeroPassiveRuntime(playerId, runtimePlayer);
+                    updateTrackedPosition(playerId, runtimePlayer);
                 }
                 default -> {
                     clearTerraPassiveRuntime(playerId, runtimePlayer);
                     clearHydroPassiveRuntime(playerId, runtimePlayer);
                     clearAeroPassiveRuntime(playerId, runtimePlayer);
+                    clearCorruptusPassiveRuntime(playerId);
                     updateTrackedPosition(playerId, runtimePlayer);
                 }
             }
@@ -207,6 +235,52 @@ public class ClassPassiveManager {
         return 0.0;
     }
 
+    public synchronized double getIncomingKnockbackMultiplier(String targetPlayerId) {
+        PlayerData player = playerDataManager.getOnlinePlayer(targetPlayerId);
+        if (player == null || player.getPlayerClass() == null) {
+            return 1.0;
+        }
+
+        if ("terra".equalsIgnoreCase(player.getPlayerClass())) {
+            return Math.max(0.0, 1.0 - terraPassive.knockbackTakenReduction());
+        }
+
+        return 1.0;
+    }
+
+    public synchronized float handleIncomingPlayerDamage(String playerId,
+                                                         Ref<EntityStore> playerRef,
+                                                         Store<EntityStore> store,
+                                                         float incomingDamage) {
+        if (incomingDamage <= 0.0f || playerId == null || playerRef == null || !playerRef.isValid() || store == null) {
+            return incomingDamage;
+        }
+
+        PlayerData player = playerDataManager.getOnlinePlayer(playerId);
+        if (player == null || player.getPlayerClass() == null) {
+            return incomingDamage;
+        }
+
+        double adjustedDamage = incomingDamage;
+        if ("hydro".equalsIgnoreCase(player.getPlayerClass())) {
+            maintainHydroAquaBarrier(playerId, playerRef, store);
+        }
+
+        adjustedDamage = statusEffectManager.absorbDamage(playerId, adjustedDamage);
+
+        if ("hydro".equalsIgnoreCase(player.getPlayerClass())) {
+            updateHydroAquaBarrierCooldown(playerId);
+        }
+
+        if ("corruptus".equalsIgnoreCase(player.getPlayerClass())
+                && shouldTriggerDarkResurrection(playerId, playerRef, store, adjustedDamage)) {
+            triggerDarkResurrection(playerId, playerRef, store);
+            return 0.0f;
+        }
+
+        return (float) Math.max(0.0, adjustedDamage);
+    }
+
     public synchronized boolean isTerraShieldPrimed(String playerId) {
         return playerId != null && terraShieldPrimedPlayers.contains(playerId);
     }
@@ -233,6 +307,18 @@ public class ClassPassiveManager {
 
     public synchronized boolean isHydroUnderwater(String playerId) {
         return playerId != null && hydroUnderwaterPlayers.contains(playerId);
+    }
+
+    public synchronized double getHydroAquaBarrierShieldHp(String playerId) {
+        return statusEffectManager.getShieldHp(playerId, HYDRO_AQUA_BARRIER_SOURCE_ID);
+    }
+
+    public synchronized int getCorruptusDarkResurrectionStacks(String playerId) {
+        return playerId == null ? 0 : corruptusDarkResurrectionStacksByPlayer.getOrDefault(playerId, 0);
+    }
+
+    public synchronized double getCorruptusPassiveLockoutSecondsRemaining(String playerId) {
+        return corruptusPassiveLockoutSecondsRemaining(playerId);
     }
 
     public synchronized void onDamageDealt(PlayerData player,
@@ -265,13 +351,56 @@ public class ClassPassiveManager {
     }
 
     public synchronized void onMobKilled(PlayerData player, Player runtimePlayer, String mobEntityId) {
-        // Corruptus soul income is handled by ResourceManager.onMobKilled(...).
-        // Class passive runtime no longer adds extra kill-restores or corruption-mark bonuses.
+        if (player == null || player.getPlayerClass() == null || player.getPlayerId() == null) {
+            return;
+        }
+        if (!"corruptus".equalsIgnoreCase(player.getPlayerClass())) {
+            return;
+        }
+
+        String playerId = player.getPlayerId();
+        if (isCorruptusPassiveLockedOut(playerId)) {
+            LOG.info("[MOTM] Dark Resurrection stack blocked by lockout: player=" + playerId);
+            return;
+        }
+
+        int stacks = Math.min(
+                corruptusPassive.maxStacks(),
+                corruptusDarkResurrectionStacksByPlayer.getOrDefault(playerId, 0) + 1
+        );
+        corruptusDarkResurrectionStacksByPlayer.put(playerId, stacks);
+        LOG.info("[MOTM] Dark Resurrection stack gained: player=" + playerId
+                + " stacks=" + stacks + "/" + corruptusPassive.maxStacks());
     }
 
     public synchronized String buildPassiveStateSummary(PlayerData player) {
         if (player == null || player.getPlayerClass() == null) {
             return "";
+        }
+
+        String classId = player.getPlayerClass().toLowerCase(Locale.ROOT);
+        if ("terra".equals(classId)) {
+            return "Immovable: -" + formatDecimal(terraPassive.knockbackTakenReduction() * 100.0)
+                    + "% knockback taken | Miner's Affinity +" + formatDecimal(terraPassive.miningSpeedBonus() * 100.0)
+                    + "% pickaxe speed";
+        }
+        if ("hydro".equals(classId)) {
+            double shieldHp = statusEffectManager.getShieldHp(player.getPlayerId(), HYDRO_AQUA_BARRIER_SOURCE_ID);
+            String barrier = shieldHp > 0.0
+                    ? "Aqua Barrier " + formatDecimal(shieldHp) + " HP"
+                    : "Aqua Barrier in " + formatDecimal(hydroBarrierSecondsUntilReady(player.getPlayerId())) + "s";
+            return "Tidal Flow: spell-vamp, swim speed, underwater sustain | " + barrier;
+        }
+        if ("aero".equals(classId)) {
+            return "Skybound/Tempo Surge: +" + formatDecimal(aeroPassive.movementSpeedBonus() * 100.0)
+                    + "% horizontal speed | +" + formatDecimal(aeroPassive.signatureEnergyBonus() * 100.0)
+                    + "% native Hytale energy";
+        }
+        if ("corruptus".equals(classId)) {
+            int stacks = corruptusDarkResurrectionStacksByPlayer.getOrDefault(player.getPlayerId(), 0);
+            double lockout = corruptusPassiveLockoutSecondsRemaining(player.getPlayerId());
+            return "Dark Resurrection: " + stacks + "/" + corruptusPassive.maxStacks()
+                    + " stacks | lockout " + formatDecimal(lockout) + "s";
         }
 
         if ("aero".equalsIgnoreCase(player.getPlayerClass())) {
@@ -340,6 +469,7 @@ public class ClassPassiveManager {
         }
 
         applyHydroSwimSpeedBonus(playerId, playerRef, store, swimming);
+        maintainHydroAquaBarrier(playerId, playerRef, store);
         updateTrackedPosition(playerId, runtimePlayer);
     }
 
@@ -365,11 +495,6 @@ public class ClassPassiveManager {
             terraShieldPrimedPlayers.remove(playerId);
         } else {
             stationaryTicksByPlayer.merge(playerId, 1, Integer::sum);
-        }
-
-        if (stationaryTicksByPlayer.getOrDefault(playerId, 0) >= terraPassive.stationaryTicksRequired()
-                && terraShieldPrimedPlayers.add(playerId)) {
-            applyShieldFraction(playerId, playerRef, store, terraPassive.shieldFraction(), "terra_passive_earthen_resilience");
         }
 
         if (tickCounter % TERRA_REGEN_INTERVAL_TICKS == 0
@@ -425,6 +550,8 @@ public class ClassPassiveManager {
     private void clearHydroPassiveRuntime(String playerId, Player runtimePlayer) {
         hydroSwimmingPlayers.remove(playerId);
         hydroUnderwaterPlayers.remove(playerId);
+        hydroBarrierActivePlayers.remove(playerId);
+        statusEffectManager.clearEffectsFromSource(playerId, HYDRO_AQUA_BARRIER_SOURCE_ID);
 
         if (playerId == null || runtimePlayer == null) {
             hydroSwimBoostByPlayer.remove(playerId);
@@ -469,6 +596,8 @@ public class ClassPassiveManager {
 
     private void clearTerraPassiveRuntime(String playerId, Player runtimePlayer) {
         terraCaveVisionPlayers.remove(playerId);
+        terraShieldPrimedPlayers.remove(playerId);
+        stationaryTicksByPlayer.remove(playerId);
 
         if (runtimePlayer == null) {
             return;
@@ -480,6 +609,136 @@ public class ClassPassiveManager {
         }
 
         playerRef.getStore().removeComponentIfExists(playerRef, PersistentDynamicLight.getComponentType());
+    }
+
+    private void clearCorruptusPassiveRuntime(String playerId) {
+        if (playerId == null) {
+            return;
+        }
+        corruptusDarkResurrectionStacksByPlayer.remove(playerId);
+        corruptusPassiveLockoutUntilTickByPlayer.remove(playerId);
+    }
+
+    private void maintainHydroAquaBarrier(String playerId, Ref<EntityStore> playerRef, Store<EntityStore> store) {
+        if (playerId == null || playerRef == null || !playerRef.isValid() || store == null) {
+            return;
+        }
+
+        double currentShield = statusEffectManager.getShieldHp(playerId, HYDRO_AQUA_BARRIER_SOURCE_ID);
+        if (currentShield > 0.0) {
+            hydroBarrierActivePlayers.add(playerId);
+            applyEffectById(playerRef, store, HYDRO_AQUA_BARRIER_EFFECT_ID);
+            return;
+        }
+
+        updateHydroAquaBarrierCooldown(playerId);
+        if (tickCounter < hydroBarrierReadyTickByPlayer.getOrDefault(playerId, 0L)) {
+            return;
+        }
+
+        double applied = applyShieldFraction(
+                playerId,
+                playerRef,
+                store,
+                hydroPassive.aquaBarrierShieldFraction(),
+                HYDRO_AQUA_BARRIER_SOURCE_ID,
+                hydroPassive.aquaBarrierDurationTicks()
+        );
+        if (applied > 0.0) {
+            hydroBarrierActivePlayers.add(playerId);
+            applyEffectById(playerRef, store, HYDRO_AQUA_BARRIER_EFFECT_ID);
+            LOG.info("[MOTM] Aqua Barrier applied: player=" + playerId
+                    + " shield=" + formatDecimal(applied));
+        }
+    }
+
+    private void updateHydroAquaBarrierCooldown(String playerId) {
+        if (playerId == null || !hydroBarrierActivePlayers.contains(playerId)) {
+            return;
+        }
+        if (statusEffectManager.getShieldHp(playerId, HYDRO_AQUA_BARRIER_SOURCE_ID) > 0.0) {
+            return;
+        }
+
+        hydroBarrierActivePlayers.remove(playerId);
+        hydroBarrierReadyTickByPlayer.put(playerId, tickCounter + hydroPassive.aquaBarrierCooldownTicks());
+        LOG.info("[MOTM] Aqua Barrier depleted: player=" + playerId
+                + " cooldownTicks=" + hydroPassive.aquaBarrierCooldownTicks());
+    }
+
+    private double hydroBarrierSecondsUntilReady(String playerId) {
+        long readyTick = hydroBarrierReadyTickByPlayer.getOrDefault(playerId, 0L);
+        return Math.max(0.0, (readyTick - tickCounter) / (double) TICKS_PER_SECOND);
+    }
+
+    private boolean shouldTriggerDarkResurrection(String playerId,
+                                                  Ref<EntityStore> playerRef,
+                                                  Store<EntityStore> store,
+                                                  double incomingDamage) {
+        if (playerId == null || incomingDamage <= 0.0 || isCorruptusPassiveLockedOut(playerId)) {
+            return false;
+        }
+        if (corruptusDarkResurrectionStacksByPlayer.getOrDefault(playerId, 0) < corruptusPassive.maxStacks()) {
+            return false;
+        }
+
+        EntityStatMap entityStatMap = store.getComponent(playerRef, EntityStatMap.getComponentType());
+        if (entityStatMap == null) {
+            return false;
+        }
+
+        EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+        return health != null && health.get() > 0.0f && incomingDamage >= health.get();
+    }
+
+    private void triggerDarkResurrection(String playerId, Ref<EntityStore> playerRef, Store<EntityStore> store) {
+        EntityStatMap entityStatMap = store.getComponent(playerRef, EntityStatMap.getComponentType());
+        if (entityStatMap == null) {
+            return;
+        }
+
+        EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+        if (health == null || health.getMax() <= 0.0f) {
+            return;
+        }
+
+        float targetHealth = (float) Math.max(1.0, health.getMax() * corruptusPassive.resurrectionHealthFraction());
+        entityStatMap.setStatValue(DefaultEntityStatTypes.getHealth(), targetHealth);
+        corruptusDarkResurrectionStacksByPlayer.put(playerId, 0);
+        corruptusPassiveLockoutUntilTickByPlayer.put(playerId, tickCounter + corruptusPassive.lockoutTicks());
+        statusEffectManager.removeEffect(playerId, StatusEffect.Type.BURN);
+        statusEffectManager.removeEffect(playerId, StatusEffect.Type.DOT);
+        LOG.info("[MOTM] Dark Resurrection triggered: player=" + playerId
+                + " restoredHealth=" + formatDecimal(targetHealth)
+                + " lockoutTicks=" + corruptusPassive.lockoutTicks());
+    }
+
+    private boolean isCorruptusPassiveLockedOut(String playerId) {
+        return playerId != null && tickCounter < corruptusPassiveLockoutUntilTickByPlayer.getOrDefault(playerId, 0L);
+    }
+
+    private double corruptusPassiveLockoutSecondsRemaining(String playerId) {
+        long until = corruptusPassiveLockoutUntilTickByPlayer.getOrDefault(playerId, 0L);
+        return Math.max(0.0, (until - tickCounter) / (double) TICKS_PER_SECOND);
+    }
+
+    private boolean applyEffectById(Ref<EntityStore> entityRef, Store<EntityStore> store, String effectId) {
+        if (entityRef == null || !entityRef.isValid() || store == null || effectId == null || effectId.isBlank()) {
+            return false;
+        }
+
+        EntityEffect effect = EntityEffect.getAssetMap().getAsset(effectId);
+        if (effect == null) {
+            LOG.warning("[MOTM] Missing class passive effect asset: " + effectId);
+            return false;
+        }
+
+        EffectControllerComponent controller = store.getComponent(entityRef, EffectControllerComponent.getComponentType());
+        if (controller == null) {
+            return false;
+        }
+
+        return controller.addEffect(entityRef, effect, store);
     }
 
     private void updateTerraCaveVision(Player runtimePlayer,
@@ -876,51 +1135,69 @@ public class ClassPassiveManager {
         return applied;
     }
 
-    private void applyShieldFraction(String entityId,
-                                     Ref<EntityStore> entityRef,
-                                     Store<EntityStore> store,
-                                     double fractionOfMaxHealth,
-                                     String sourceId) {
+    private double applyShieldFraction(String entityId,
+                                       Ref<EntityStore> entityRef,
+                                       Store<EntityStore> store,
+                                       double fractionOfMaxHealth,
+                                       String sourceId) {
+        return applyShieldFraction(
+                entityId,
+                entityRef,
+                store,
+                fractionOfMaxHealth,
+                sourceId,
+                Math.max(TICKS_PER_SECOND * 3, terraPassive.stationaryTicksRequired())
+        );
+    }
+
+    private double applyShieldFraction(String entityId,
+                                       Ref<EntityStore> entityRef,
+                                       Store<EntityStore> store,
+                                       double fractionOfMaxHealth,
+                                       String sourceId,
+                                       int durationTicks) {
         if (fractionOfMaxHealth <= 0.0) {
-            return;
+            return 0.0;
         }
 
         EntityStatMap entityStatMap = store.getComponent(entityRef, EntityStatMap.getComponentType());
         if (entityStatMap == null) {
-            return;
+            return 0.0;
         }
 
         EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
         if (health == null || health.getMax() <= 0.0f) {
-            return;
+            return 0.0;
         }
 
         double shieldAmount = health.getMax() * fractionOfMaxHealth;
         if (shieldAmount <= 0.0) {
-            return;
+            return 0.0;
         }
 
         statusEffectManager.applyEffect(
                 entityId,
                 new StatusEffect(
                         StatusEffect.Type.SHIELD,
-                        Math.max(TICKS_PER_SECOND * 3, terraPassive.stationaryTicksRequired()),
+                        Math.max(1, durationTicks),
                         shieldAmount,
                         entityId,
                         sourceId
                 )
         );
+        return shieldAmount;
     }
 
     private TerraPassive loadTerraPassive() {
         ClassData.PassiveAbility passive = getPassiveAbility("terra");
-        double shieldFraction = getPassiveValue(passive, "conditional_shield", 0.05);
+        double knockbackTakenReduction = getPassiveValue(passive, "knockback_taken_reduction", 0.20);
         double regenFraction = getPassiveValue(passive, "conditional_regen", 0.01);
         double lowHealthThreshold = getConditionValue(passive, "conditional_regen", 0.30);
+        double miningSpeedBonus = getPassiveValue(passive, "mining_speed_bonus", 0.50);
         int stationaryTicks = Math.max(TICKS_PER_SECOND, (int) Math.round(
                 getConditionValue(passive, "conditional_shield", 2.0) * TICKS_PER_SECOND
         ));
-        return new TerraPassive(shieldFraction, stationaryTicks, regenFraction, lowHealthThreshold);
+        return new TerraPassive(knockbackTakenReduction, stationaryTicks, regenFraction, lowHealthThreshold, miningSpeedBonus);
     }
 
     private HydroPassive loadHydroPassive() {
@@ -931,13 +1208,23 @@ public class ClassPassiveManager {
         double threshold = getConditionValue(passive, "conditional_cost_reduction", 0.50);
         double costReduction = getPassiveValue(passive, "conditional_cost_reduction", 0.15);
         double damageModifier = getPassiveValue(passive, "conditional_damage_modifier", -0.10);
+        double aquaBarrierShield = getPassiveValue(passive, "aqua_barrier_shield", 0.10);
+        int aquaBarrierCooldownTicks = Math.max(TICKS_PER_SECOND, (int) Math.round(
+                getPassiveValue(passive, "aqua_barrier_cooldown_seconds", 8.0) * TICKS_PER_SECOND
+        ));
+        int aquaBarrierDurationTicks = Math.max(TICKS_PER_SECOND, (int) Math.round(
+                getPassiveValue(passive, "aqua_barrier_duration_seconds", 20.0) * TICKS_PER_SECOND
+        ));
         return new HydroPassive(
                 spellVamp,
                 swimSpeedBonus,
                 oxygenCapacityBonus,
                 threshold,
                 costReduction,
-                damageModifier
+                damageModifier,
+                aquaBarrierShield,
+                aquaBarrierCooldownTicks,
+                aquaBarrierDurationTicks
         );
     }
 
@@ -946,6 +1233,24 @@ public class ClassPassiveManager {
         double movementSpeedBonus = getPassiveValue(passive, "movement_speed_bonus", 0.25);
         double signatureEnergyBonus = getPassiveValue(passive, "signature_energy_bonus", 0.80);
         return new AeroPassive(movementSpeedBonus, signatureEnergyBonus, 100);
+    }
+
+    private CorruptusPassive loadCorruptusPassive() {
+        ClassData.PassiveAbility passive = getPassiveAbility("corruptus");
+        double resurrectionHealthFraction = getPassiveValue(passive, "dark_resurrection_health", 0.50);
+        int maxStacks = Math.max(1, (int) Math.round(getPassiveValue(
+                passive,
+                "dark_resurrection_required_stacks",
+                CORRUPTUS_DARK_RESURRECTION_MAX_STACKS
+        )));
+        int lockoutTicks = Math.max(TICKS_PER_SECOND, (int) Math.round(
+                getPassiveValue(
+                        passive,
+                        "dark_resurrection_lockout_seconds",
+                        CORRUPTUS_DARK_RESURRECTION_LOCKOUT_TICKS / (double) TICKS_PER_SECOND
+                ) * TICKS_PER_SECOND
+        ));
+        return new CorruptusPassive(resurrectionHealthFraction, maxStacks, lockoutTicks);
     }
 
     private ClassData.PassiveAbility getPassiveAbility(String classId) {
@@ -995,10 +1300,11 @@ public class ClassPassiveManager {
     }
 
     private record TerraPassive(
-            double shieldFraction,
+            double knockbackTakenReduction,
             int stationaryTicksRequired,
             double regenPercentPerSecond,
-            double lowHealthThreshold
+            double lowHealthThreshold,
+            double miningSpeedBonus
     ) {}
 
     private record HydroPassive(
@@ -1007,13 +1313,22 @@ public class ClassPassiveManager {
             double oxygenCapacityBonus,
             double lowResourceThreshold,
             double costReduction,
-            double lowResourceDamageModifier
+            double lowResourceDamageModifier,
+            double aquaBarrierShieldFraction,
+            int aquaBarrierCooldownTicks,
+            int aquaBarrierDurationTicks
     ) {}
 
     private record AeroPassive(
             double movementSpeedBonus,
             double signatureEnergyBonus,
             int maxCharge
+    ) {}
+
+    private record CorruptusPassive(
+            double resurrectionHealthFraction,
+            int maxStacks,
+            int lockoutTicks
     ) {}
 
     public record WeaponAttackPassiveBonus(

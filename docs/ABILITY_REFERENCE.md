@@ -1,6 +1,6 @@
 ﻿# MOTM Ability Reference
 
-Updated: 2026-05-24
+Updated: 2026-05-25
 
 This is the GitHub-facing ability reference for all classes, styles, and active abilities currently shipped in the mod data. It is generated from the checked-in JSON under `src/main/resources/data/classes` and `src/main/resources/data/styles`.
 
@@ -42,7 +42,7 @@ Resource notes:
 ## Terra - The Earthen Guardian
 
 Theme: Earth  
-Passive: **Earthen Resilience** - Standing still for 2 seconds grants a shield equal to 5% of max health. Regenerate 1% max health per second while below 30% health. Terra also mines 50% faster with pickaxes and gains cave vision underground.
+Passive: **Immovable** - Reduces knockback taken by 20% without increasing knockback dealt. Regenerates 1% max health per second while below 30% health, mines 50% faster with pickaxes, and gains cave vision underground.
 
 ### Quake (`quake`)
 
@@ -158,7 +158,7 @@ Resource cost: none
 ## Hydro - The Tidal Sage
 
 Theme: Water  
-Passive: **Tidal Flow** - Abilities heal you for 3% of damage dealt. Hydro swims 40% faster and can breathe underwater 50% longer. Hydro abilities use cooldowns instead of waterskin costs.
+Passive: **Tidal Flow** - Abilities heal you for 3% of damage dealt. Hydro swims 40% faster and can breathe underwater 50% longer. Aqua Barrier forms a whole-body bubble shield that depletes before other Hydro defensive overlays. Hydro abilities use cooldowns instead of waterskin costs.
 
 ### Icicle (`icicle`)
 
@@ -274,7 +274,7 @@ Resource cost: none
 ## Aero - The Storm Dancer
 
 Theme: Air  
-Passive: **Tempo Surge** - You move 25% faster at all times and your native Hytale energy bar is increased by 80%.
+Passive: **Skybound Tempo Surge** - You move 25% faster at all times and your native Hytale energy bar is increased by 80%. Vertical movement from Aero style abilities is handled by the style ability itself so Skybound does not duplicate jumps, dives, hovers, or launch resets.
 
 ### Scream (`scream`)
 
@@ -390,7 +390,7 @@ Resource cost: none
 ## Corruptus - The Void Flame
 
 Theme: Dark Magic + Fire  
-Passive: **Soul Harvest** - Corruptus abilities now use cooldowns instead of Souls. Its passive identity focuses on risky void-flame pressure, damage over time, and future corruption-trigger interactions.
+Passive: **Dark Resurrection** - Hostile kills build up to 3 Dark Resurrection stacks. At 3 stacks, lethal damage heals you to half HP instead of killing you, clears the stacks, and starts a 10 minute lockout that prevents all Corruptus passive stack gain. Corruptus abilities use cooldowns instead of Souls.
 
 ### Flame (`flame`)
 
