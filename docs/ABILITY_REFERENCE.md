@@ -96,7 +96,7 @@ Resource cost: none
 | Slot | Ability | Description | Cast / Target | Timing | Shape | Effect |
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | **Rooted** (`rooted`) | Root yourself to heal 20% HP and regenerate | self_buff / self | cd 6s, dur 5s | - | heal |
-| 2 | **Vines** (`vines`) | Entangle the enemy with thorny vines | line_control / enemy | dur 2.5s | range 14, width 2 | stun |
+| 2 | **Vines** (`vines`) | Entangle one enemy with thorny vines, rooting them while damage ticks over the duration | line_control / enemy | dur 2.5s | range 14, width 2 | root+dot |
 | 3 | **Sapling** (`sapling`) | Fire a seed that lands on the ground, grows a sapling, and lures enemies nearby | projectile_line / ground_target | cd 8s, dur 18s | range 10 | lure |
 
 ### Bloom (`bloom`)

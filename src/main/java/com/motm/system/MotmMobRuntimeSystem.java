@@ -39,6 +39,21 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
 
     private static final Logger LOG = Logger.getLogger("MOTM");
     private static final String HEALTH_MODIFIER_ID = "motm_scaling_health";
+    private static final Set<String> MOTM_VISUAL_OR_SUMMON_PROXY_ROLES = Set.of(
+            "motm_summon",
+            "Empty_Role",
+            "Slug_Magma",
+            "Spark_Living",
+            "Spirit_Root",
+            "Spirit_Frost",
+            "Golem_Crystal_Frost",
+            "Frog_Green",
+            "Shadow_Knight",
+            "Golem_Firesteel",
+            "Spawn_Void",
+            "Scarak_Fighter",
+            "Scarak_Broodmother"
+    );
 
     private final MenteesMod mod;
     private final Map<UUID, TrackedMob> trackedMobs = new HashMap<>();
@@ -73,8 +88,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
                     continue;
                 }
                 String roleName = npc.getRoleName();
-                if ("motm_summon".equalsIgnoreCase(roleName)
-                        || "Empty_Role".equalsIgnoreCase(roleName)) {
+                if (isMotmVisualOrSummonProxy(roleName)) {
                     continue;
                 }
 
@@ -360,6 +374,18 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
             LOG.info("[MOTM] Unmapped NPC type encountered. npcTypeId="
                     + npc.getNPCTypeId() + ", modelAssetId=" + modelAssetId);
         }
+    }
+
+    private boolean isMotmVisualOrSummonProxy(String roleName) {
+        if (roleName == null || roleName.isBlank()) {
+            return false;
+        }
+        for (String proxyRole : MOTM_VISUAL_OR_SUMMON_PROXY_ROLES) {
+            if (proxyRole.equalsIgnoreCase(roleName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private UUID getEntityId(UUIDComponent uuidComponent) {

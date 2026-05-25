@@ -11,7 +11,7 @@
           "id": "stomp",
           "name": "Stomp",
           "description": "Shockwave that damages and knocks back",
-          "damage_percent": 5,
+          "damage_percent": 0,
           "cooldown_seconds": 2,
           "cast_time_seconds": 0.25,
           "recovery_seconds": 0.18,
@@ -61,7 +61,7 @@
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.6,
           "recovery_seconds": 0.28,
-          "effect": "stun",
+          "effect": "root+dot",
           "categories": [
             "damage",
             "crowd_control"

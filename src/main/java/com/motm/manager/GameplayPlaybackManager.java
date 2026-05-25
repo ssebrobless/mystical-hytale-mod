@@ -824,7 +824,10 @@ public class GameplayPlaybackManager {
             if (!playerId.equals(field.ownerPlayerId()) || !normalizedAbilityId.equals(lower(field.ability().getId()))) {
                 continue;
             }
-            releaseSinkholeField(field, field.ownerRef() != null && field.ownerRef().isValid() ? field.ownerRef().getStore() : null);
+            Store<EntityStore> fieldStore = field.ownerRef() != null && field.ownerRef().isValid() ? field.ownerRef().getStore() : null;
+            clearLavaPoolOwnerVelocityBoost(field.ownerPlayerId(), field.ownerRef(), fieldStore);
+            restoreFieldTemporaryTerrain(field, fieldStore);
+            releaseSinkholeField(field, fieldStore);
             despawnFieldVisual(field);
             activeFields.remove(index);
             removedFields++;
@@ -1032,7 +1035,9 @@ public class GameplayPlaybackManager {
             return FieldRuntimeResult.none();
         }
 
-        Vector3d origin = getPosition(playerRef, store);
+        Vector3d origin = isMagmaSlingAbility(ability)
+                ? resolveProjectileOrigin(playerRef, store, ability)
+                : getPosition(playerRef, store);
         Vector3d forward = getDirection(playerRef, store);
         if (origin == null || forward == null) {
             return FieldRuntimeResult.none();
@@ -1287,6 +1292,7 @@ public class GameplayPlaybackManager {
                     parts.add("lava wrap");
                     startActiveSelfEffect(playerRef, player.getPlayerId(), "MOTM_Proof_Obsidian_Lava_Wrap", lavaExpireAt);
                 }
+                startPlayerAnchor(player, playerRef, store, lavaExpireAt, "MOTM_Proof_Coating_Obsidian");
                 startActiveSelfEffect(
                         playerRef,
                         player.getPlayerId(),
@@ -1494,6 +1500,25 @@ public class GameplayPlaybackManager {
         }
     }
 
+    private void restoreFieldTemporaryTerrain(ActiveField field, Store<EntityStore> store) {
+        if (field == null || field.ability() == null || store == null || store.getExternalData() == null) {
+            return;
+        }
+        World world = store.getExternalData().getWorld();
+        if (world == null) {
+            return;
+        }
+        String abilityId = lower(field.ability().getId());
+        String terrainEffect = lower(field.ability().getTerrainEffect());
+        if ("lava_pool".equals(abilityId) || terrainEffect.contains("lava_pool")) {
+            restoreActiveTemporarySelections(world, "lava_pool");
+        } else if ("mudpit".equals(abilityId) || terrainEffect.contains("mudpit")) {
+            restoreActiveTemporarySelections(world, "mudpit");
+        } else if ("iron_wall".equals(abilityId) || terrainEffect.contains("iron_wall")) {
+            restoreActiveTemporarySelections(world, "iron_wall");
+        }
+    }
+
     private boolean processPlayerAnchor(ActivePlayerAnchor anchor,
                                         Store<EntityStore> currentStore,
                                         long now) {
@@ -1648,7 +1673,7 @@ public class GameplayPlaybackManager {
         for (int index = 1; index <= stamps; index++) {
             double factor = index / (double) (stamps + 1);
             Vector3d trailCenter = trail.lastPosition.clone().addScaled(delta, factor);
-            Vector3i anchor = surfaceDecorationAnchor(trailCenter);
+            Vector3i anchor = surfaceOverlayAnchor(trailCenter);
             if (sameBlock(trail.lastAnchor, anchor)) {
                 continue;
             }
@@ -1908,7 +1933,7 @@ public class GameplayPlaybackManager {
             return "";
         }
 
-        Vector3i anchor = surfaceDecorationAnchor(center);
+        Vector3i anchor = surfaceOverlayAnchor(center);
         Vector3i rightStep = horizontalStep(lineDirection != null ? lineDirection : new Vector3d(1.0, 0.0, 0.0));
         BlockSelection selection = baseSelection(anchor);
         int half = width / 2;
@@ -1941,7 +1966,7 @@ public class GameplayPlaybackManager {
             secondaryBlockTypeId = primaryBlockTypeId;
         }
 
-        Vector3i anchor = surfaceDecorationAnchor(center);
+        Vector3i anchor = surfaceOverlayAnchor(center);
         restoreActiveTemporarySelections(world, reason);
         Vector3i rightStep = horizontalStep(lineDirection != null ? lineDirection : new Vector3d(1.0, 0.0, 0.0));
         BlockSelection selection = baseSelection(anchor);
@@ -2078,7 +2103,7 @@ public class GameplayPlaybackManager {
             return "";
         }
 
-        Vector3i anchor = surfaceDecorationAnchor(center);
+        Vector3i anchor = surfaceOverlayAnchor(center);
         BlockSelection selection = baseSelection(anchor);
         int r = Math.max(0, radius);
         for (int x = -r; x <= r; x++) {
@@ -2238,7 +2263,7 @@ public class GameplayPlaybackManager {
             return "";
         }
 
-        Vector3i anchor = surfaceDecorationAnchor(center);
+        Vector3i anchor = surfaceOverlayAnchor(center);
         BlockSelection selection = baseSelection(anchor);
         int h = Math.max(1, height);
         for (int y = 0; y < h; y++) {
@@ -2298,7 +2323,7 @@ public class GameplayPlaybackManager {
             return "";
         }
 
-        Vector3i anchor = surfaceDecorationAnchor(center);
+        Vector3i anchor = surfaceOverlayAnchor(center);
         BlockSelection selection = baseSelection(anchor);
         int ring = Math.max(1, (int) Math.round(radius));
         for (int x = -ring; x <= ring; x++) {
@@ -2326,7 +2351,7 @@ public class GameplayPlaybackManager {
             return "";
         }
 
-        Vector3i anchor = surfaceDecorationAnchor(origin);
+        Vector3i anchor = surfaceOverlayAnchor(origin);
         BlockSelection selection = baseSelection(anchor);
         Vector3d back = new Vector3d(-forward.x, 0.0, -forward.z);
         if (!back.isFinite() || back.length() < 0.001) {
@@ -2336,7 +2361,7 @@ public class GameplayPlaybackManager {
         }
         for (int i = 1; i <= 4; i++) {
             Vector3d pos = origin.clone().addScaled(back, i);
-            Vector3i block = surfaceDecorationAnchor(pos);
+            Vector3i block = surfaceOverlayAnchor(pos);
             selection.addBlockAtWorldPos(block.getX(), block.getY(), block.getZ(), blockTypeId, 0, 0, 0);
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
@@ -2357,10 +2382,10 @@ public class GameplayPlaybackManager {
         restoreActiveTemporarySelections(world, reason);
         Vector3i anchor = blockAnchor(center);
         BlockSelection selection = baseSelection(anchor);
-        for (int x = -2; x <= 2; x++) {
-            for (int y = 0; y < 3; y++) {
-                for (int z = -2; z <= 2; z++) {
-                    boolean side = Math.abs(x) == 2 || Math.abs(z) == 2;
+        for (int x = -1; x <= 1; x++) {
+            for (int y = 0; y < 4; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    boolean side = Math.abs(x) == 1 || Math.abs(z) == 1;
                     if (!side) {
                         continue;
                     }
@@ -2478,6 +2503,11 @@ public class GameplayPlaybackManager {
 
     private Vector3i surfaceDecorationAnchor(Vector3d center) {
         return MotmPlaybackGeometry.surfaceDecorationAnchor(center);
+    }
+
+    private Vector3i surfaceOverlayAnchor(Vector3d center) {
+        Vector3i anchor = surfaceDecorationAnchor(center);
+        return new Vector3i(anchor.getX(), anchor.getY() + 1, anchor.getZ());
     }
 
     private boolean sameBlock(Vector3i first, Vector3i second) {
@@ -2785,6 +2815,10 @@ public class GameplayPlaybackManager {
         return ability != null && "magma_sling".equals(lower(ability.getId()));
     }
 
+    private boolean isVinesAbility(AbilityData ability) {
+        return ability != null && "vines".equals(lower(ability.getId()));
+    }
+
     private boolean processFieldTick(ActiveField field, long now) {
         String previousTraceId = mod.enterObservabilityTrace(field.traceId());
         try {
@@ -2805,6 +2839,7 @@ public class GameplayPlaybackManager {
 
         if (now >= field.expireAtMillis()) {
             clearLavaPoolOwnerVelocityBoost(field.ownerPlayerId(), field.ownerRef(), store);
+            restoreFieldTemporaryTerrain(field, store);
             releaseSinkholeField(field, store);
             despawnFieldVisual(field);
             return true;
@@ -4715,7 +4750,8 @@ public class GameplayPlaybackManager {
                                                              PlayerData player,
                                                              AbilityData ability,
                                                              CastContext context) {
-        if (!"line_control".equals(lower(ability.getCastType())) || ability.getPullForce() <= 0.0) {
+        boolean vines = isVinesAbility(ability);
+        if (!"line_control".equals(lower(ability.getCastType())) || (!vines && ability.getPullForce() <= 0.0)) {
             return LineControlRuntimeResult.none();
         }
 
@@ -4747,7 +4783,7 @@ public class GameplayPlaybackManager {
         ));
         return new LineControlRuntimeResult(
                 true,
-                "current pull "
+                (vines ? "vines root/dot " : "current pull ")
                         + AbilityPresentation.formatDecimal(durationSeconds)
                         + "s"
         );
@@ -4784,7 +4820,9 @@ public class GameplayPlaybackManager {
             return true;
         }
 
-        applyLineControlPull(lineControl.targetRef(), store, lineControl.ownerRef(), lineControl.ability());
+        if (lineControl.ability().getPullForce() > 0.0) {
+            applyLineControlPull(lineControl.targetRef(), store, lineControl.ownerRef(), lineControl.ability());
+        }
         applyRepeatingLineControlEffects(lineControl, player, store);
         lineControl.nextPulseAtMillis = now + LINE_CONTROL_PULSE_INTERVAL_MS;
         return false;
@@ -7069,19 +7107,22 @@ public class GameplayPlaybackManager {
             return null;
         }
 
+        if (context.explicitTargetRef() != null && context.explicitTargetRef().isValid()) {
+            Vector3d targetPosition = getPosition(context.explicitTargetRef(), store);
+            if (targetPosition != null) {
+                Vector3d aimPoint = isMagmaSlingAbility(ability)
+                        ? targetPosition.clone().add(0.0, 1.0, 0.0)
+                        : targetPosition;
+                return normalize(subtract(aimPoint, origin));
+            }
+        }
+
         if (isMagmaSlingAbility(ability)) {
             Vector3d direction = getDirection(playerRef, store);
             if (direction == null || !direction.isFinite() || direction.length() < 0.001) {
                 return null;
             }
             return normalize(direction);
-        }
-
-        if (context.explicitTargetRef() != null && context.explicitTargetRef().isValid()) {
-            Vector3d targetPosition = getPosition(context.explicitTargetRef(), store);
-            if (targetPosition != null) {
-                return normalize(subtract(targetPosition, origin));
-            }
         }
 
         if (context.targetBlock() != null) {
@@ -7399,9 +7440,6 @@ public class GameplayPlaybackManager {
     }
 
     private double resolveProjectileSpeedPerTick(AbilityData ability) {
-        if (isMagmaSlingAbility(ability)) {
-            return 5.0 / StyleManager.TICKS_PER_SECOND;
-        }
         double speedPerSecond = ability.getProjectileSpeed() > 0
                 ? ability.getProjectileSpeed()
                 : DEFAULT_PROJECTILE_SPEED;
