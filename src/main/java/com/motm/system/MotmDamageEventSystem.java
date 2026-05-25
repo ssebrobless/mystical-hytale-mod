@@ -80,7 +80,8 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                 }
             }
             if (targetPlayer != null && targetUuid != null && damage.getAmount() > 0.0f) {
-                applyIncomingKnockbackPassive(targetUuid, damage);
+                PlayerData targetData = mod.getPlayerDataManager().getOnlinePlayer(targetUuid.toString());
+                applyIncomingKnockbackPassive(targetUuid, targetData, damage);
                 damage.setAmount(mod.getClassPassiveManager().handleIncomingPlayerDamage(
                         targetUuid.toString(),
                         targetRef,
@@ -88,12 +89,22 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                         damage.getAmount()
                 ));
                 damage.setAmount(applyPlayerIncomingStatReduction(targetUuid.toString(), damage.getAmount()));
+                if (mod.getRuntimePerkManager() != null) {
+                    damage.setAmount(mod.getRuntimePerkManager().modifyIncomingDamage(
+                            targetData,
+                            targetRef,
+                            store,
+                            damage,
+                            damage.getAmount()
+                    ));
+                }
             }
             return;
         }
 
         if (targetPlayer != null && targetUuid != null && damage.getAmount() > 0.0f) {
-            applyIncomingKnockbackPassive(targetUuid, damage);
+            PlayerData targetData = mod.getPlayerDataManager().getOnlinePlayer(targetUuid.toString());
+            applyIncomingKnockbackPassive(targetUuid, targetData, damage);
             damage.setAmount(mod.getClassPassiveManager().handleIncomingPlayerDamage(
                     targetUuid.toString(),
                     targetRef,
@@ -101,6 +112,15 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                     damage.getAmount()
             ));
             damage.setAmount(applyPlayerIncomingStatReduction(targetUuid.toString(), damage.getAmount()));
+            if (mod.getRuntimePerkManager() != null) {
+                damage.setAmount(mod.getRuntimePerkManager().modifyIncomingDamage(
+                        targetData,
+                        targetRef,
+                        store,
+                        damage,
+                        damage.getAmount()
+                ));
+            }
             if (damage.getAmount() <= 0.0f) {
                 return;
             }
@@ -139,6 +159,23 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                 damage
         );
         applyPlayerOutgoingStatDamage(playerData, damage, itemId);
+        if (mod.getRuntimePerkManager() != null) {
+            damage.setAmount(mod.getRuntimePerkManager().modifyOutgoingDamage(
+                    playerData,
+                    sourceRef,
+                    store,
+                    targetRef,
+                    damage,
+                    damage.getAmount()
+            ));
+            mod.getRuntimePerkManager().afterSuccessfulHit(
+                    playerData,
+                    sourceRef,
+                    store,
+                    targetRef,
+                    damage.getAmount()
+            );
+        }
         if (response != null && !response.isBlank()) {
             runtimePlayer.sendMessage(Message.raw(response));
         }
@@ -188,12 +225,15 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                 + " amount=" + String.format(java.util.Locale.ROOT, "%.2f", adjusted));
     }
 
-    private void applyIncomingKnockbackPassive(UUID targetUuid, Damage damage) {
+    private void applyIncomingKnockbackPassive(UUID targetUuid, PlayerData targetData, Damage damage) {
         if (targetUuid == null || damage == null) {
             return;
         }
 
         double multiplier = mod.getClassPassiveManager().getIncomingKnockbackMultiplier(targetUuid.toString());
+        if (mod.getRuntimePerkManager() != null) {
+            multiplier *= mod.getRuntimePerkManager().getIncomingKnockbackMultiplier(targetData);
+        }
         if (multiplier >= 0.999) {
             return;
         }

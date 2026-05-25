@@ -55,17 +55,11 @@ Group #Root {
     TextButton #NavGrimoireButton { Anchor: (Left: 14, Top: 172, Width: 148, Height: 34); Text: "Abilities"; Style: @ButtonStyle; }
     Label #NavGrimoireSelected { Anchor: (Left: 14, Top: 172, Width: 148, Height: 34); Text: "> Abilities"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
-    TextButton #NavPerksButton { Anchor: (Left: 14, Top: 212, Width: 148, Height: 34); Text: "Perk Web"; Style: @ButtonStyle; }
-    Label #NavPerksSelected { Anchor: (Left: 14, Top: 212, Width: 148, Height: 34); Text: "> Perk Web"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+    TextButton #NavPerksButton { Anchor: (Left: 14, Top: 212, Width: 148, Height: 34); Text: "Perks"; Style: @ButtonStyle; }
+    Label #NavPerksSelected { Anchor: (Left: 14, Top: 212, Width: 148, Height: 34); Text: "> Perks"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
-    TextButton #NavResourcesButton { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "Progression"; Style: @ButtonStyle; }
-    Label #NavResourcesSelected { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "> Progression"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
-
-    TextButton #NavCodexButton { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: ""; Visible: false; Style: @ButtonStyle; }
-    Label #NavCodexSelected { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: "> Codex"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
-
-    TextButton #NavJournalButton { Anchor: (Left: 14, Top: 332, Width: 148, Height: 34); Text: ""; Visible: false; Style: @ButtonStyle; }
-    Label #NavJournalSelected { Anchor: (Left: 14, Top: 332, Width: 148, Height: 34); Text: "> Journal"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+    TextButton #NavResourcesButton { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "Stats"; Style: @ButtonStyle; }
+    Label #NavResourcesSelected { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "> Stats"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
     Label #ActionStatus {
       Anchor: (Left: 14, Top: 410, Width: 148, Height: 190);
@@ -200,7 +194,5 @@ Group #Root {
     }
 
     Group #ResourcesPanel { Anchor: (Left: 18, Top: 18, Width: 756, Height: 472); Visible: false; Label #ResourcesCurrentValue { Anchor: (Left: 0, Top: 0, Width: 742, Height: 40); Style: @ValueText; } Label #ResourcesRuleValue { Anchor: (Left: 0, Top: 54, Width: 742, Height: 68); Style: @BodyText; } Label #ResourcesPracticalValue { Anchor: (Left: 0, Top: 136, Width: 742, Height: 68); Style: @SmallText; } }
-    Group #CodexPanel { Anchor: (Left: 18, Top: 18, Width: 756, Height: 472); Visible: false; Label #CodexFlowValue { Anchor: (Left: 0, Top: 0, Width: 742, Height: 42); Style: @BodyText; } Label #CodexReactionsValue { Anchor: (Left: 0, Top: 58, Width: 742, Height: 52); Style: @SmallText; } Label #CodexScalingValue { Anchor: (Left: 0, Top: 126, Width: 742, Height: 52); Style: @SmallText; } Label #CodexFocusValue { Anchor: (Left: 0, Top: 194, Width: 742, Height: 72); Style: @SmallText; } }
-    Group #JournalPanel { Anchor: (Left: 18, Top: 18, Width: 756, Height: 472); Visible: false; Label #JournalStatusValue { Anchor: (Left: 0, Top: 0, Width: 742, Height: 52); Style: @BodyText; } Label #JournalPathValue { Anchor: (Left: 0, Top: 68, Width: 742, Height: 28); Style: @ValueText; } Label #JournalFutureValue { Anchor: (Left: 0, Top: 112, Width: 742, Height: 72); Style: @SmallText; } }
   }
 }

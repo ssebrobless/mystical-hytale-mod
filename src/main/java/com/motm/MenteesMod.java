@@ -249,6 +249,7 @@ public class MenteesMod extends JavaPlugin {
     private StatusEffectManager statusEffectManager;
     private ResourceManager resourceManager;
     private ClassPassiveManager classPassiveManager;
+    private RuntimePerkManager runtimePerkManager;
     private StyleManager styleManager;
     private ElementalReactionManager elementalReactionManager;
     private SpellbookManager spellbookManager;
@@ -377,6 +378,7 @@ public class MenteesMod extends JavaPlugin {
                 statusEffectManager,
                 resourceManager
         );
+        runtimePerkManager = new RuntimePerkManager(this);
         styleManager = new StyleManager(dataLoader, resourceManager, classPassiveManager, this::isFreeCastEnabled);
         elementalReactionManager = new ElementalReactionManager(dataLoader, statusEffectManager);
         spellbookManager = new SpellbookManager(
@@ -786,6 +788,9 @@ public class MenteesMod extends JavaPlugin {
         styleManager.onPlayerDisconnect(playerId);
         resourceManager.onPlayerDisconnect(playerId);
         classPassiveManager.clearPlayerState(playerId);
+        if (runtimePerkManager != null) {
+            runtimePerkManager.clearForPlayer(playerId);
+        }
         if (playerStatModifierManager != null) {
             playerStatModifierManager.clearForPlayer(playerId);
         } else {
@@ -822,6 +827,9 @@ public class MenteesMod extends JavaPlugin {
         Player runtimePlayer = onlineRuntimePlayers.get(playerId);
         if (runtimePlayer != null) {
             classPassiveManager.onMobKilled(player, runtimePlayer, mobEntityId);
+            if (runtimePerkManager != null) {
+                runtimePerkManager.afterMobKilled(player, runtimePlayer, mobEntityId);
+            }
         }
         for (PerkTriggerBinding trigger : getPerkTriggers(playerId, "on_kill")) {
             LOG.info("[MOTM] perk on_kill trigger: perk=" + trigger.perkId()
@@ -981,6 +989,7 @@ public class MenteesMod extends JavaPlugin {
         processPendingRuntimeRebuilds(currentStore);
         processFreeCastTestSafety(currentStore);
         classPassiveManager.tick(onlineRuntimePlayers, currentStore);
+        tickRuntimePerks(currentStore);
         processActiveStyleTests(currentStore);
         processPendingSingleAbilityTests(currentStore);
         processPendingDevRelocations(currentStore);
@@ -1012,6 +1021,19 @@ public class MenteesMod extends JavaPlugin {
         dotDamageByEntity.forEach((entityId, dotPercent) ->
                 LOG.fine("[MOTM] TODO: Apply " + (dotPercent * 100)
                         + "% max HP DoT to entity " + entityId + " via Hytale's damage API."));
+    }
+
+    private void tickRuntimePerks(Store<EntityStore> currentStore) {
+        if (runtimePerkManager == null) {
+            return;
+        }
+        for (Map.Entry<String, Player> entry : Map.copyOf(onlineRuntimePlayers).entrySet()) {
+            String playerId = entry.getKey();
+            Player runtimePlayer = entry.getValue();
+            PlayerData playerData = playerDataManager.getOnlinePlayer(playerId);
+            Ref<EntityStore> playerRef = runtimePlayer != null ? runtimePlayer.getReference() : null;
+            runtimePerkManager.onPlayerTick(playerData, runtimePlayer, playerRef, currentStore, 0L);
+        }
     }
 
     private void processDevCommandInbox(Store<EntityStore> currentStore) {
@@ -3710,8 +3732,8 @@ public class MenteesMod extends JavaPlugin {
 
     public String queueRuntimePlayerRelocationForTesting(String playerId, String target) {
         String normalizedTarget = target == null ? "up" : target.toLowerCase(Locale.ROOT);
-        if (!List.of("up", "flatlands", "lane").contains(normalizedTarget)) {
-            return "[MOTM] Dev relocate usage: /motm dev relocate <up|flatlands|lane>";
+        if (!List.of("up", "flatlands", "lane", "cave").contains(normalizedTarget)) {
+            return "[MOTM] Dev relocate usage: /motm dev relocate <up|flatlands|lane|cave>";
         }
         boolean added = runtimeTasks.devRelocations().put(playerId, normalizedTarget) == null;
         LOG.info("[MOTM] Dev relocate queued: playerId=" + playerId
@@ -3808,15 +3830,16 @@ public class MenteesMod extends JavaPlugin {
         Vector3d destination = switch (normalizedTarget) {
             case "flatlands" -> new Vector3d(start.x + 96.0, Math.max(start.y + 40.0, 160.0), start.z + 96.0);
             case "lane" -> new Vector3d(start.x + 96.0, resolveTestingLaneY(player, start), start.z + 96.0);
+            case "cave" -> new Vector3d(start.x + 96.0, Math.min(resolveTestingLaneY(player, start), 76.0), start.z + 96.0);
             case "up" -> new Vector3d(start.x, start.y + 12.0, start.z);
             default -> null;
         };
         if (destination == null) {
-            return "[MOTM] Dev relocate usage: /motm dev relocate <up|flatlands|lane>";
+            return "[MOTM] Dev relocate usage: /motm dev relocate <up|flatlands|lane|cave>";
         }
 
         try {
-            if ("flatlands".equals(normalizedTarget) || "lane".equals(normalizedTarget)) {
+            if ("flatlands".equals(normalizedTarget) || "lane".equals(normalizedTarget) || "cave".equals(normalizedTarget)) {
                 placeRelocationPlatform(player, destination, normalizedTarget);
             }
             transform.teleportPosition(destination);
@@ -3866,6 +3889,16 @@ public class MenteesMod extends JavaPlugin {
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
                 platform.addBlockAtWorldPos(centerX + x, floorY, centerZ + z, blockTypeId, 0, 0, 0);
+            }
+        }
+        if ("cave".equals(target)) {
+            int caveRadius = 8;
+            for (int x = -caveRadius; x <= caveRadius; x++) {
+                for (int z = -caveRadius; z <= caveRadius; z++) {
+                    platform.addBlockAtWorldPos(centerX + x, floorY + 4, centerZ + z, blockTypeId, 0, 0, 0);
+                    platform.addBlockAtWorldPos(centerX + x, floorY + 5, centerZ + z, blockTypeId, 0, 0, 0);
+                    platform.addBlockAtWorldPos(centerX + x, floorY + 6, centerZ + z, blockTypeId, 0, 0, 0);
+                }
             }
         }
         try {
@@ -4030,6 +4063,9 @@ public class MenteesMod extends JavaPlugin {
 
         styleManager.resetCooldowns(playerId);
         classPassiveManager.clearPlayerState(playerId);
+        if (runtimePerkManager != null) {
+            runtimePerkManager.clearForPlayer(playerId);
+        }
         statusEffectManager.clearEffects(playerId);
         elementalReactionManager.clearMarks(playerId);
         gameplayPlaybackManager.clearArmedStomp(playerId);
@@ -4925,6 +4961,9 @@ public class MenteesMod extends JavaPlugin {
         String playerId = getRuntimePlayerId(terraMiner);
         var playerData = playerId != null ? playerDataManager.getOnlinePlayer(playerId) : null;
         double multiplier = classPassiveManager.getMiningDamageMultiplier(playerData, itemId);
+        if (runtimePerkManager != null) {
+            multiplier = runtimePerkManager.modifyMiningMultiplier(playerData, multiplier);
+        }
         if (multiplier <= 1.0) {
             return;
         }
@@ -5468,6 +5507,7 @@ public class MenteesMod extends JavaPlugin {
     public StatusEffectManager getStatusEffectManager() { return statusEffectManager; }
     public ResourceManager getResourceManager() { return resourceManager; }
     public ClassPassiveManager getClassPassiveManager() { return classPassiveManager; }
+    public RuntimePerkManager getRuntimePerkManager() { return runtimePerkManager; }
     public StyleManager getStyleManager() { return styleManager; }
     public ElementalReactionManager getElementalReactionManager() { return elementalReactionManager; }
     public SpellbookManager getSpellbookManager() { return spellbookManager; }

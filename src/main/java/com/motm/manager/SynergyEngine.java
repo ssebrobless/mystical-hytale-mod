@@ -33,7 +33,7 @@ public class SynergyEngine {
 
         // Check each owned perk for synergy bonuses
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk == null || perk.getSynergyBonuses() == null) continue;
 
             for (Perk.SynergyBonus synergy : perk.getSynergyBonuses()) {
@@ -64,7 +64,7 @@ public class SynergyEngine {
     public Map<String, Integer> countAllTags(PlayerData player) {
         Map<String, Integer> tagCounts = new HashMap<>();
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk != null && perk.getSynergyTags() != null) {
                 for (String tag : perk.getSynergyTags()) {
                     tagCounts.merge(tag, 1, Integer::sum);
@@ -96,7 +96,7 @@ public class SynergyEngine {
         List<String> remaining = new ArrayList<>(requiredTags);
 
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk == null || perk.getSynergyTags() == null) continue;
 
             boolean contributed = false;
@@ -156,7 +156,7 @@ public class SynergyEngine {
 
     private void processEnhancementChains(PlayerData player) {
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk == null || perk.getEnhancedBy() == null) continue;
 
             for (String enhancerId : perk.getEnhancedBy()) {

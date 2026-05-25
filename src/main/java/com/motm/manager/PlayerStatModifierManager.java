@@ -148,6 +148,13 @@ public class PlayerStatModifierManager {
                         + " perk=" + perk.getId() + " value=" + effect.getValue());
                 yield false;
             }
+            case "stamina_and_breath" -> {
+                boolean stamina = applyStat(playerId, statMap, perk, effect, "stamina", 1.10,
+                        StaticModifier.CalculationType.MULTIPLICATIVE);
+                boolean oxygen = applyStat(playerId, statMap, perk, effect, "oxygen", 1.10,
+                        StaticModifier.CalculationType.MULTIPLICATIVE);
+                yield stamina || oxygen;
+            }
             case "on_hit", "on_kill" -> {
                 mod.registerPerkTrigger(playerId, perk, effect);
                 yield true;

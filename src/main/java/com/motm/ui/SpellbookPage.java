@@ -321,10 +321,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setNavState(commands, SpellbookManager.Section.ABILITIES, "#NavGrimoireButton", "#NavGrimoireSelected");
         setNavState(commands, SpellbookManager.Section.PERKS, "#NavPerksButton", "#NavPerksSelected");
         setNavState(commands, SpellbookManager.Section.PROGRESSION, "#NavResourcesButton", "#NavResourcesSelected");
-        commands.set("#NavCodexButton.Visible", false);
-        commands.set("#NavCodexSelected.Visible", false);
-        commands.set("#NavJournalButton.Visible", false);
-        commands.set("#NavJournalSelected.Visible", false);
     }
 
     private void setNavState(UICommandBuilder commands,
@@ -346,8 +342,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 || currentSection == SpellbookManager.Section.ABILITIES);
         commands.set("#PerksPanel.Visible", currentSection == SpellbookManager.Section.PERKS);
         commands.set("#ResourcesPanel.Visible", currentSection == SpellbookManager.Section.PROGRESSION);
-        commands.set("#CodexPanel.Visible", false);
-        commands.set("#JournalPanel.Visible", false);
     }
 
     private void applyHero(UICommandBuilder commands, PlayerData player) {
@@ -374,7 +368,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#OverviewPathSynergyValue.Text", player != null
                 ? String.valueOf(player.getActiveSynergyBonuses().size())
                 : "0");
-        setText(commands, "#OverviewPathResourceValue.Text", currentResourceLine(player));
+        setText(commands, "#OverviewPathResourceValue.Text", buildCastingAndStatsLine(player));
         setText(commands, "#OverviewPathTipValue.Text", "Choose a class, choose one style, use its three abilities, then shape the build with perks.");
     }
 
@@ -511,7 +505,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         boolean hasStyle = player != null && !player.getSelectedStyles().isEmpty();
         boolean pending = hasPendingPerks(player);
 
-        setText(commands, "#PerksDesignValue.Text", "Perks are passive modifiers, triggers, and synergies. They never grant active abilities.");
+        setText(commands, "#PerksDesignValue.Text", "Perks are passive modifiers, triggers, and synergies. Active abilities come only from your style.");
         setText(commands, "#PerksUnlockedValue.Text", player != null
                 ? perkManager().getCurrentTier(player.getLevel()) + " / " + PerkManager.TOTAL_TIERS
                 : "0 / " + PerkManager.TOTAL_TIERS);
@@ -564,11 +558,8 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void applyProgression(UICommandBuilder commands, PlayerData player) {
         setText(commands, "#ResourcesCurrentValue.Text", buildXpLine(player));
-        setText(commands, "#ResourcesRuleValue.Text", player != null && player.getPlayerClass() != null
-                ? "Leveling increases stat growth and controls perk-tier unlocks."
-                : "Choose a class to begin progression.");
-        setText(commands, "#ResourcesPracticalValue.Text",
-                "Perks eventually add passive modifiers, triggers, and synergies to class/style builds.");
+        setText(commands, "#ResourcesRuleValue.Text", buildStatTableLine(player));
+        setText(commands, "#ResourcesPracticalValue.Text", buildStatBonusLine(player));
     }
 
     private String displayClass(PlayerData player) {
@@ -684,7 +675,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         if (nextTier <= PerkManager.TOTAL_TIERS) {
             return "Reach level " + (nextTier * LevelingManager.MILESTONE_INTERVAL) + " for the next perk tier.";
         }
-        return "Refine your build and chase synergies.";
+        return "Spend stat points and refine your build.";
     }
 
     private String milestoneLine(PlayerData player) {
@@ -713,24 +704,32 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         return player != null && perkManager().hasPendingPerkSelection(player);
     }
 
-    private String currentResourceLine(PlayerData player) {
+    private String buildCastingAndStatsLine(PlayerData player) {
         if (player == null || player.getPlayerClass() == null) {
-            return "No casting model yet.";
+            return "Choose a class and style to unlock cooldown-based casting.";
         }
-        return mod.getResourceManager().getResourceDisplay(player.getPlayerId(), player.getPlayerClass());
+        return "Casting: no class resources. " + mod.getLevelingManager().describePlayerStatGrowth(player);
     }
 
-    private String resourceRule(String playerClass) {
-        if (playerClass == null) {
-            return "Choose a class to unlock a casting rule.";
+    private String buildStatTableLine(PlayerData player) {
+        if (player == null) {
+            return "No stat table loaded.";
         }
-        return switch (playerClass.toLowerCase(Locale.ROOT)) {
-            case "terra" -> "Terra abilities use cooldowns, durations, action timing, and physical test items for certain weapon/tool interactions.";
-            case "hydro" -> "Hydro abilities use cooldowns and environmental water interactions; waterskins no longer gate casting.";
-            case "aero" -> "Aero has no class resource and fights through cooldowns, movement, and momentum.";
-            case "corruptus" -> "Corruptus abilities use cooldowns, duration, risk, and status effects rather than soul spending.";
-            default -> "Unknown casting model.";
-        };
+        PlayerData.StatAllocation stats = player.getStatAllocation();
+        return "Unspent " + player.getUnspentStatPoints()
+                + " | Vigor " + stats.getVigor()
+                + " | Tenacity " + stats.getTenacity()
+                + " | Endurance " + stats.getEndurance()
+                + " | Agility " + stats.getAgility()
+                + " | Luck " + stats.getLuck();
+    }
+
+    private String buildStatBonusLine(PlayerData player) {
+        if (player == null) {
+            return "Each level grants 2 stat points through level 200. Perks unlock every 10 levels through level 100.";
+        }
+        return mod.getLevelingManager().describePlayerStatGrowth(player)
+                + " | Spend with /motm stats spend <stat> [points].";
     }
 
     private String buildAbilitySummary(AbilityData ability) {
@@ -747,13 +746,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             return classData.getPassiveAbility().getDescription();
         }
         return classData.getPassiveAbility().getDescription() + " | " + summary;
-    }
-
-    private String displayStyleResource(StyleData style) {
-        if (style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
-            return "None";
-        }
-        return mod.getResourceManager().getDisplayName(style.getResourceType());
     }
 
     private String buildAbilityMeta(PlayerData player, StyleData style, AbilityData ability) {
@@ -790,8 +782,8 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             case CLASS -> "Class";
             case STYLE -> "Style";
             case ABILITIES -> "Abilities";
-            case PERKS -> "Perk Web";
-            case PROGRESSION -> "Progression";
+            case PERKS -> "Perks";
+            case PROGRESSION -> "Stats";
         };
     }
 
@@ -802,7 +794,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             case STYLE -> "Choose the style that grants your three active abilities.";
             case ABILITIES -> "The three active abilities granted by your chosen style.";
             case PERKS -> "Passive modifiers, triggers, and synergies that shape your build.";
-            case PROGRESSION -> "Leveling, scaling, milestones, and future perk unlocks.";
+            case PROGRESSION -> "Spend stat points and review leveling bonuses.";
         };
     }
 
@@ -813,7 +805,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             case STYLE -> "style";
             case ABILITIES -> "abilities";
             case PERKS -> "perks";
-            case PROGRESSION -> "progression";
+            case PROGRESSION -> "stats";
         };
     }
 

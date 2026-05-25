@@ -15,6 +15,7 @@
 - `src/main/resources/data` - gameplay JSON data
 - `docs/FRIEND_REVIEW_GUIDE.md` - orientation guide for outside reviewers and review tools
 - `docs/ABILITY_REFERENCE.md` - GitHub-facing catalog of all 40 styles and 120 active abilities
+- `docs/PERK_RUNTIME_STATUS.md` - final 20-perk concept/runtime/proof status
 - `docs/hytale-capability-atlas/` - Hytale capability research, primitive choices, and implementation gates
 - `PLAN.md` - original implementation plan used to start the project
 - `scripts/build-install.ps1` - local build and install helper
@@ -34,6 +35,7 @@
 - `scripts/collect-observability-evidence.ps1` - copies raw client logs, server logs, telemetry, MOTM observability JSONL, settings, and build metadata into a run bundle with indexes
 - `scripts/query-observability-evidence.ps1` - lists runs, sources, events, and raw evidence windows for shell-based agents
 - `scripts/audit-no-resource.ps1` - verifies the no-resource casting model across all classes/styles/abilities
+- `scripts/run-perk-runtime-proofs.ps1` - in-world proof runner for the final shared perk runtime hooks
 - `docs/agent-driven-verification-observability.md` - architecture contract and completion checklist for the verification platform
 - `docs/runtime-architecture-refactor-checklist.md` - current runtime ownership map
   and refactor completion record
@@ -101,6 +103,7 @@ Implemented so far:
 - Phase 7 perk runtime layer for stat modifiers and on-kill healing
 - Phase 9 live validation for Terra/Metal, Hydro/Icicle, Aero/Wind Blade, Corruptus/Flame, Terra/Magma, and Hydro/Snow
 - no-resource active ability model: all 40 styles and 120 abilities cast through cooldowns, durations, charges, action timing, positioning, and item conditions instead of class resource spending
+- final shared 20-perk data layer and runtime hook manager for movement, damage, healing, projectile speed, ghost allies, and knockback
 
 ## Ability Reference
 
@@ -118,6 +121,7 @@ MOTM
 +-- 4 classes
 +-- 40 styles
 +-- 120 active abilities
++-- 20 shared passive perk choices
 +-- 0 active ability resource costs
 ```
 
@@ -125,6 +129,12 @@ Use this check before claiming ability data and docs are still aligned:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/audit-no-resource.ps1
+```
+
+The current final perk contract and proof matrix are documented in [`docs/PERK_RUNTIME_STATUS.md`](docs/PERK_RUNTIME_STATUS.md). In an already loaded world, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-perk-runtime-proofs.ps1 -WorldName "MOTM Creative Test"
 ```
 
 ## Agent Observability Harness

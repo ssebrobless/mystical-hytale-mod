@@ -68,13 +68,13 @@ public class SpellbookManager {
             case "style", "styles" -> Section.STYLE;
             case "abilities", "ability", "spells", "combat" -> Section.ABILITIES;
             case "perks", "perk", "web" -> Section.PERKS;
-            case "progression", "progress", "level", "scaling" -> Section.PROGRESSION;
+            case "stats", "stat", "progression", "progress", "level", "scaling" -> Section.PROGRESSION;
             default -> null;
         };
     }
 
     public String getSectionList() {
-        return "overview, class, style, abilities, perks, progression";
+        return "overview, class, style, abilities, perks, stats";
     }
 
     private String renderOverview(PlayerData player) {
@@ -235,18 +235,49 @@ public class SpellbookManager {
 
     private String renderProgression(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Progression ===\n");
+        sb.append("[MOTM Spellbook] === Stats ===\n");
         sb.append("Level: ").append(player.getLevel()).append(" / ").append(LevelingManager.MAX_LEVEL).append("\n");
         sb.append("XP: ").append(player.getCurrentXp()).append("/")
                 .append(levelingManager.calculateXpRequired(player.getLevel())).append("\n");
         sb.append("Total XP Earned: ").append(player.getTotalXpEarned()).append("\n");
-        sb.append("Stats: ").append(levelingManager.describePlayerStatGrowth(player)).append("\n");
+        appendStatTable(sb, player);
         sb.append("Perks Chosen: ").append(player.getSelectedPerks().size()).append(" / ")
                 .append(PerkManager.MAX_TOTAL_PERKS).append("\n");
         sb.append("Achievements: ").append(player.getAchievements().size()).append("\n");
         sb.append("Next Step: ").append(getNextStep(player)).append("\n");
-        sb.append("Mob Scaling: enemies use level title bands and internal stat presets; mobs never receive perks.");
+        sb.append("Mob Scaling: enemies use level title bands and internal stat presets; mobs never receive perks.\n");
+        sb.append("Spend: /motm stats spend <vigor|tenacity|endurance|agility|luck> [points]");
         return sb.toString();
+    }
+
+    private void appendStatTable(StringBuilder sb, PlayerData player) {
+        PlayerData.StatAllocation stats = player.getStatAllocation();
+        sb.append("Unspent Stat Points: ").append(player.getUnspentStatPoints()).append("\n");
+        sb.append("Vigor ").append(stats.getVigor()).append(" | HP +")
+                .append(AbilityPresentation.formatDecimal((levelingManager.getVigorHealthMultiplier(player) - 1.0) * 100.0))
+                .append("% | DR +")
+                .append(AbilityPresentation.formatDecimal(levelingManager.getVigorDamageReduction(player) * 100.0))
+                .append("%\n");
+        sb.append("Tenacity ").append(stats.getTenacity()).append(" | Damage +")
+                .append(AbilityPresentation.formatDecimal((levelingManager.getTenacityDamageMultiplier(player) - 1.0) * 100.0))
+                .append("% | Crit damage +")
+                .append(AbilityPresentation.formatDecimal(levelingManager.getTenacityCritDamageBonus(player) * 100.0))
+                .append("%\n");
+        sb.append("Endurance ").append(stats.getEndurance()).append(" | Stamina +")
+                .append(AbilityPresentation.formatDecimal((levelingManager.getEnduranceStaminaMultiplier(player) - 1.0) * 100.0))
+                .append("% | Regen +")
+                .append(AbilityPresentation.formatDecimal(levelingManager.getEnduranceStaminaRegenBonus(player) * 100.0))
+                .append("%\n");
+        sb.append("Agility ").append(stats.getAgility()).append(" | Speed +")
+                .append(AbilityPresentation.formatDecimal((levelingManager.getAgilitySpeedMultiplier(player) - 1.0) * 100.0))
+                .append("% | Melee attack speed +")
+                .append(AbilityPresentation.formatDecimal(levelingManager.getAgilityMeleeAttackSpeedBonus(player) * 100.0))
+                .append("%\n");
+        sb.append("Luck ").append(stats.getLuck()).append(" | Crit chance +")
+                .append(AbilityPresentation.formatDecimal(levelingManager.getLuckCritChanceBonus(player) * 100.0))
+                .append("% | XP +")
+                .append(AbilityPresentation.formatDecimal((levelingManager.getLuckXpMultiplier(player) - 1.0) * 100.0))
+                .append("%\n");
     }
 
     private String displayClass(PlayerData player) {
@@ -284,7 +315,7 @@ public class SpellbookManager {
         if (nextTier <= PerkManager.TOTAL_TIERS) {
             return "Reach level " + (nextTier * LevelingManager.MILESTONE_INTERVAL) + " for the next perk tier";
         }
-        return "Refine your build and chase synergies";
+        return "Spend stat points and refine your build";
     }
 
     private String compact(String text, int maxLength) {

@@ -504,6 +504,19 @@ Resource cost: none
 
 ## Verification
 
+## Shared Passive Perks
+
+Perks are a shared passive-only pool: players unlock one choice every 10 levels through level 100, for a maximum of 10 chosen perks. All 20 are visible to every class so players can mix class-themed passives.
+
+| Theme | Perks |
+| --- | --- |
+| Aero | Twinkletoes, Accelerate, Bunny Hop, Big Strides, Sharpshooter |
+| Hydro | Neptune's Grace, Semiaquatic, Big Lungs, Rainy Day, Freezing Winds |
+| Corruptus | Ignite, Desperation, Haunting, Vampirism, Terror |
+| Terra | Heavyweight, Eco-friendly, Mole Man, Blacksmith, Toolsmith |
+
+See `docs/PERK_RUNTIME_STATUS.md` for runtime hook status and proof commands.
+
 Run these before claiming the ability reference and runtime data are still aligned:
 
 ```powershell

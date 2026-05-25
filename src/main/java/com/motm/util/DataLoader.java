@@ -95,6 +95,7 @@ public class DataLoader {
             }
         }
         filterUnimplementedPerks();
+        validateSharedPerkPoolShape();
     }
 
     public List<Perk> getPerksForClass(String classId) {
@@ -112,6 +113,24 @@ public class DataLoader {
             shared.addAll(themed);
         }
         return Collections.unmodifiableList(shared);
+    }
+
+    public void validateSharedPerkPoolShape() {
+        List<Perk> shared = getSharedPerkPool();
+        if (shared.size() != 20) {
+            throw new IllegalStateException("Shared perk pool must contain exactly 20 perks, found " + shared.size());
+        }
+
+        String[] classIds = {"terra", "hydro", "aero", "corruptus"};
+        for (String classId : classIds) {
+            long count = shared.stream()
+                    .filter(perk -> perk != null && perk.getId() != null && perk.getId().startsWith(classId + "_"))
+                    .count();
+            if (count != 5) {
+                throw new IllegalStateException("Shared perk pool must contain 5 " + classId + " perks, found " + count);
+            }
+        }
+        LOG.info("[MOTM] Shared perk pool validated: 20 perks, 5 per class.");
     }
 
     public Perk getPerkById(String perkId, String classId) {

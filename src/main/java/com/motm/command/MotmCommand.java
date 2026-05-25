@@ -97,7 +97,7 @@ public class MotmCommand {
             case "cast" -> handleCast(player, args, runtimePlayer);
             case "spellbook", "book" -> handleSpellbook(player, args, runtimePlayer);
             case "controls" -> handleControls(player, args, runtimePlayer);
-            case "resources" -> handleResources(player);
+            case "casting", "resources" -> handleCastingModel(player);
             case "stats" -> handleStats(player, args);
             case "level" -> handleLevel(player, runtimePlayer);
             case "audit" -> handleAudit();
@@ -899,13 +899,13 @@ public class MotmCommand {
             }
             case "incoming-damage", "damage-in" -> {
                 if (args.length < 4) {
-                    yield "[MOTM] Usage: /motm dev passive incoming-damage <amount>";
+                    yield "[MOTM] Usage: /motm dev passive incoming-damage <amount> [physical|fall]";
                 }
                 Double value = parseDouble(args[3]);
                 if (value == null || value <= 0.0) {
                     yield "[MOTM] Incoming damage must be a positive number.";
                 }
-                yield applyDevIncomingDamage(player, resolvedPlayer, value.floatValue());
+                yield applyDevIncomingDamage(player, resolvedPlayer, value.floatValue(), args.length >= 5 ? args[4] : "physical");
             }
             case "outgoing-damage", "damage-out" -> {
                 if (args.length < 4) {
@@ -926,8 +926,21 @@ public class MotmCommand {
                 );
                 yield "[MOTM] Dev passive corruptus stack queued.\n" + buildDevPassiveStatus(player, resolvedPlayer);
             }
+            case "mob-kill", "kill" -> {
+                mod.onMobKilled(
+                        player.getPlayerId(),
+                        "dev-perk-proof-" + System.currentTimeMillis(),
+                        "dev-proof",
+                        Math.max(1, player.getLevel()),
+                        false
+                );
+                yield "[MOTM] Dev passive mob-kill queued.\n" + buildDevPassiveStatus(player, resolvedPlayer);
+            }
             case "knockback", "kb" -> {
                 double multiplier = mod.getClassPassiveManager().getIncomingKnockbackMultiplier(player.getPlayerId());
+                if (mod.getRuntimePerkManager() != null) {
+                    multiplier *= mod.getRuntimePerkManager().getIncomingKnockbackMultiplier(player);
+                }
                 String result = "[MOTM] Dev passive knockback multiplier="
                         + String.format(java.util.Locale.ROOT, "%.3f", multiplier);
                 LOG.info(result);
@@ -936,10 +949,32 @@ public class MotmCommand {
             case "mining", "mine" -> {
                 String itemId = args.length >= 4 ? args[3] : "Iron_Pickaxe";
                 double multiplier = mod.getClassPassiveManager().getMiningDamageMultiplier(player, itemId);
+                if (mod.getRuntimePerkManager() != null) {
+                    multiplier = mod.getRuntimePerkManager().modifyMiningMultiplier(player, multiplier);
+                }
                 String result = "[MOTM] Dev passive mining multiplier="
                         + String.format(java.util.Locale.ROOT, "%.3f", multiplier)
                         + " class=" + (player.getPlayerClass() == null ? "none" : player.getPlayerClass())
                         + " item=" + itemId;
+                LOG.info(result);
+                yield result;
+            }
+            case "projectile-speed" -> {
+                double baseSpeed = 1.0;
+                if (args.length >= 4) {
+                    Double parsed = parseDouble(args[3]);
+                    if (parsed == null || parsed <= 0.0) {
+                        yield "[MOTM] Projectile speed must be a positive number.";
+                    }
+                    baseSpeed = parsed;
+                }
+                double adjusted = mod.getRuntimePerkManager() != null
+                        ? mod.getRuntimePerkManager().modifyProjectileSpeed(player, baseSpeed)
+                        : baseSpeed;
+                String result = "[MOTM] Dev passive projectile-speed: base="
+                        + String.format(java.util.Locale.ROOT, "%.3f", baseSpeed)
+                        + " adjusted="
+                        + String.format(java.util.Locale.ROOT, "%.3f", adjusted);
                 LOG.info(result);
                 yield result;
             }
@@ -959,15 +994,17 @@ public class MotmCommand {
     }
 
     private String getDevPassiveUsage() {
-        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|knockback|mining|velocity>\n"
+        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|mob-kill|knockback|mining|projectile-speed|velocity>\n"
                 + "Examples:\n"
                 + "  /motm dev passive status\n"
                 + "  /motm dev passive health 50\n"
-                + "  /motm dev passive incoming-damage 20\n"
+                + "  /motm dev passive incoming-damage 20 physical\n"
                 + "  /motm dev passive outgoing-damage 100 ability\n"
                 + "  /motm dev passive corruptus-stack\n"
+                + "  /motm dev passive mob-kill\n"
                 + "  /motm dev passive knockback\n"
                 + "  /motm dev passive mining Iron_Pickaxe\n"
+                + "  /motm dev passive projectile-speed 1.0\n"
                 + "  /motm dev passive velocity 1.0 0.0";
     }
 
@@ -1024,7 +1061,7 @@ public class MotmCommand {
         return result;
     }
 
-    private String applyDevIncomingDamage(PlayerData player, Player runtimePlayer, float incomingDamage) {
+    private String applyDevIncomingDamage(PlayerData player, Player runtimePlayer, float incomingDamage, String rawCause) {
         Ref<EntityStore> playerRef = runtimePlayer.getReference();
         Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
         EntityStatMap statMap = resolveRuntimeStatMap(player, runtimePlayer);
@@ -1043,6 +1080,25 @@ public class MotmCommand {
                 store,
                 incomingDamage
         );
+        com.hypixel.hytale.server.core.modules.entity.damage.DamageCause cause =
+                "fall".equalsIgnoreCase(rawCause)
+                        ? com.hypixel.hytale.server.core.modules.entity.damage.DamageCause.FALL
+                        : com.hypixel.hytale.server.core.modules.entity.damage.DamageCause.PHYSICAL;
+        if (mod.getRuntimePerkManager() != null) {
+            com.hypixel.hytale.server.core.modules.entity.damage.Damage damage =
+                    new com.hypixel.hytale.server.core.modules.entity.damage.Damage(
+                            com.hypixel.hytale.server.core.modules.entity.damage.Damage.NULL_SOURCE,
+                            cause,
+                            afterPassives
+                    );
+            afterPassives = mod.getRuntimePerkManager().modifyIncomingDamage(
+                    player,
+                    playerRef,
+                    store,
+                    damage,
+                    afterPassives
+            );
+        }
         EntityStatValue postPassiveHealth = statMap.get(DefaultEntityStatTypes.getHealth());
         float healthAfterPassive = postPassiveHealth != null ? postPassiveHealth.get() : healthBefore;
         if (afterPassives > 0.0f && postPassiveHealth != null && healthAfterPassive > 0.0f) {
@@ -1051,6 +1107,7 @@ public class MotmCommand {
         EntityStatValue finalHealth = statMap.get(DefaultEntityStatTypes.getHealth());
         String result = "[MOTM] Dev passive incoming-damage: requested="
                 + String.format(java.util.Locale.ROOT, "%.1f", incomingDamage)
+                + " cause=" + cause.getId()
                 + " afterPassives="
                 + String.format(java.util.Locale.ROOT, "%.1f", afterPassives)
                 + " healthBefore="
@@ -1073,17 +1130,30 @@ public class MotmCommand {
         }
         EntityStatValue healthBefore = statMap.get(DefaultEntityStatTypes.getHealth());
         float before = healthBefore != null ? healthBefore.get() : -1.0f;
+        double adjustedDamage = outgoingDamage;
+        if (mod.getRuntimePerkManager() != null) {
+            adjustedDamage = mod.getRuntimePerkManager().modifyMotmAbilityDamage(player, outgoingDamage);
+            mod.getRuntimePerkManager().afterSuccessfulHit(
+                    player,
+                    runtimePlayer.getReference(),
+                    runtimePlayer.getReference() != null ? runtimePlayer.getReference().getStore() : null,
+                    null,
+                    adjustedDamage
+            );
+        }
         mod.getClassPassiveManager().onDamageDealt(
                 player,
                 runtimePlayer.getReference(),
                 "dev-passive-proof-target",
-                outgoingDamage,
+                adjustedDamage,
                 abilityBased
         );
         EntityStatValue healthAfter = statMap.get(DefaultEntityStatTypes.getHealth());
         float after = healthAfter != null ? healthAfter.get() : -1.0f;
         String result = "[MOTM] Dev passive outgoing-damage: amount="
                 + String.format(java.util.Locale.ROOT, "%.1f", outgoingDamage)
+                + " adjusted="
+                + String.format(java.util.Locale.ROOT, "%.1f", adjustedDamage)
                 + " abilityBased=" + abilityBased
                 + " healthBefore="
                 + String.format(java.util.Locale.ROOT, "%.1f", before)
@@ -1467,15 +1537,55 @@ public class MotmCommand {
     }
 
     String handleDevPerks(PlayerData player, String[] args) {
-        if (args.length < 3 || !"clear".equalsIgnoreCase(args[2])) {
-            return "[MOTM] Usage: /motm dev perks clear";
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev perks <clear|set|grant> [perkId|all]...";
         }
 
-        clearPerkProgression(player);
-        updateDebugProgressionState(player);
-        rebuildPlayerRuntime(player);
-        mod.getPlayerDataManager().savePlayerData(player);
-        return "[MOTM] Dev: perks and perk history cleared.";
+        String action = args[2].toLowerCase(java.util.Locale.ROOT);
+        switch (action) {
+            case "clear" -> {
+                clearPerkProgression(player);
+                updateDebugProgressionState(player);
+                rebuildPlayerRuntime(player);
+                mod.getPlayerDataManager().savePlayerData(player);
+                return "[MOTM] Dev: perks and perk history cleared.";
+            }
+            case "set", "grant" -> {
+                if (args.length < 4) {
+                    return "[MOTM] Usage: /motm dev perks " + action + " <perkId|all>...";
+                }
+                if ("set".equals(action)) {
+                    clearPerkProgression(player);
+                }
+                java.util.LinkedHashSet<String> selected = new java.util.LinkedHashSet<>(player.getSelectedPerks());
+                for (int i = 3; i < args.length; i++) {
+                    String requested = args[i];
+                    if ("all".equalsIgnoreCase(requested)) {
+                        mod.getDataLoader().getSharedPerkPool().stream()
+                                .map(Perk::getId)
+                                .forEach(selected::add);
+                        continue;
+                    }
+                    Perk perk = mod.getDataLoader().getPerkByIdAnyClass(requested);
+                    if (perk == null) {
+                        return "[MOTM] Invalid perk id for dev grant: " + requested;
+                    }
+                    selected.add(perk.getId());
+                }
+                player.setSelectedPerks(new java.util.ArrayList<>(selected));
+                player.setPendingPerkTier(null);
+                player.setPerkSelectionPoints(Math.max(0, player.getPerkSelectionPoints()));
+                updateDebugProgressionState(player);
+                rebuildPlayerRuntime(player);
+                mod.getPlayerDataManager().savePlayerData(player);
+                String result = "[MOTM] Dev: perks " + action + " -> " + String.join(", ", player.getSelectedPerks());
+                LOG.info(result);
+                return result;
+            }
+            default -> {
+                return "[MOTM] Usage: /motm dev perks <clear|set|grant> [perkId|all]...";
+            }
+        }
     }
 
     String handleDevStyles(PlayerData player, String[] args) {
@@ -1507,14 +1617,13 @@ public class MotmCommand {
         return performFullDevPlayerClear(player);
     }
 
-    // --- /motm resources ---
+    // --- /motm casting ---
 
-    private String handleResources(PlayerData player) {
+    private String handleCastingModel(PlayerData player) {
         if (player.getPlayerClass() == null) {
             return "[MOTM] Select a class first with /motm class <classId>";
         }
-        StringBuilder sb = new StringBuilder("[MOTM] Casting Model: ")
-                .append(mod.getResourceManager().getResourceDisplay(player.getPlayerId(), player.getPlayerClass()));
+        StringBuilder sb = new StringBuilder("[MOTM] Casting Model: active abilities use cooldowns, durations, charges, positioning, and action timing.");
         if (mod.isFreeCastEnabled(player.getPlayerId())) {
             sb.append("\nDev Free-Cast: ON");
         }
@@ -1547,8 +1656,8 @@ public class MotmCommand {
                 + "  /motm audit             - Run the preflight data/runtime audit\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
                 + "  /motm select <choice>   - Select 1 perk by number\n"
-                + "  /motm resources         - View casting model\n"
-                + "  /motm stats             - View your statistics\n"
+                + "  /motm casting           - View the no-resource casting model\n"
+                + "  /motm stats             - View/spend stat points\n"
                 + "  /motm level             - View XP progress\n"
                 + buildDevHelpSummary()
                 + "  /motm help              - Show this help";
@@ -1582,7 +1691,7 @@ public class MotmCommand {
                 + "  /motm dev proof <proofId> (" + String.join(", ", MotmProofCatalog.ids()) + ")\n"
                 + "  /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|knockback>\n"
                 + "  /motm dev position\n"
-                + "  /motm dev relocate <up|flatlands|lane>\n"
+                + "  /motm dev relocate <up|flatlands|lane|cave>\n"
                 + "  /motm dev mode <creative|adventure>\n"
                 + "  /motm dev kit terra\n"
                 + "  /motm dev inventory clean terra-kit\n"

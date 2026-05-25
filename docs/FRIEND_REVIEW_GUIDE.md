@@ -233,6 +233,23 @@ rows are in `CODEX_CLASS_STYLE_ABILITY_REVIEW_MOCKUP_2026-05-22.md`.
 | Corruptus | Scarak | Scarak Egg, Brood Surge, Locust Queen | Insect brood: egg hatch, commander buff, queen summon. |
 | Corruptus | Primordial | Pterodactyl Form, Triceratops Form, T-Rex Form | Beast forms: flight/evasion, armored charge, heavy predator damage. |
 
+## Final Shared Perks
+
+The perk system is now a shared 20-choice pool. Players unlock one perk choice every 10 levels through level 100, for 10 total chosen perks. Perks are passive only; active combat remains in class styles.
+
+| Theme | Perks |
+| --- | --- |
+| Aero | Twinkletoes, Accelerate, Bunny Hop, Big Strides, Sharpshooter |
+| Hydro | Neptune's Grace, Semiaquatic, Big Lungs, Rainy Day, Freezing Winds |
+| Corruptus | Ignite, Desperation, Haunting, Vampirism, Terror |
+| Terra | Heavyweight, Eco-friendly, Mole Man, Blacksmith, Toolsmith |
+
+Runtime/proof status is tracked in `docs/PERK_RUNTIME_STATUS.md`. The in-world proof runner is:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-perk-runtime-proofs.ps1 -WorldName "MOTM Creative Test"
+```
+
 ## Current Review Questions For Your Friend
 
 Useful review targets:

@@ -79,7 +79,14 @@ public final class MotmPreflightAudit {
             "stat_increase", "stat_multiplier",
             "ability", "summon", "passive", "on_hit", "on_kill", "aura", "transformation",
             "conditional_buff", "immunity",
-            "duration_increase", "chain_increase", "radius_increase"
+            "duration_increase", "chain_increase", "radius_increase",
+            "fall_damage_reduction", "sprint_speed_ramp", "bunny_hop", "sprint_stamina_free",
+            "projectile_speed_multiplier", "low_health_heal", "swim_speed_ramp",
+            "stamina_and_breath", "rain_regen_multiplier", "low_health_freezing_winds",
+            "ignite_aoe_dot", "low_health_damage_bonus", "ghost_on_kill",
+            "native_ultimate_terror", "knockback_taken_reduction", "knockback_dealt_bonus",
+            "eco_tree_punch", "underground_mining_affinity", "crafted_armor_effectiveness",
+            "crafted_tool_durability"
     );
 
     private static final Map<String, Set<String>> ALLOWED_RESOURCE_TYPES = Map.of(

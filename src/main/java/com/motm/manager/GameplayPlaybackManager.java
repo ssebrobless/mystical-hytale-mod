@@ -994,6 +994,9 @@ public class GameplayPlaybackManager {
 
         int projectileCount = resolveProjectileCount(castType, ability);
         double speedPerTick = resolveProjectileSpeedPerTick(ability);
+        if (mod.getRuntimePerkManager() != null) {
+            speedPerTick = mod.getRuntimePerkManager().modifyProjectileSpeed(player, speedPerTick);
+        }
         double maxDistance = Math.max(resolveRange(ability), 4.0);
         double impactRadius = resolveProjectileImpactRadius(ability, castType);
         double collisionRadius = resolveProjectileCollisionRadius(ability, castType);
@@ -7699,6 +7702,9 @@ public class GameplayPlaybackManager {
         if (activeForm != null) {
             modifier += activeForm.damageBonus();
         }
+        if (mod.getRuntimePerkManager() != null) {
+            modifier *= mod.getRuntimePerkManager().getOutgoingDamageMultiplier(player);
+        }
         if (mod.getStatusEffectManager().hasEffect(player.getPlayerId(), StatusEffect.Type.BLIND)) {
             modifier *= (1.0 - BLIND_DAMAGE_PENALTY);
         }
@@ -7818,6 +7824,17 @@ public class GameplayPlaybackManager {
     private double applyLifesteal(Ref<EntityStore> playerRef, String playerId, double damageDealt) {
         if (damageDealt <= 0 || playerRef == null || !playerRef.isValid() || playerId == null) {
             return 0.0;
+        }
+
+        PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(playerId);
+        if (player != null && mod.getRuntimePerkManager() != null) {
+            mod.getRuntimePerkManager().afterSuccessfulHit(
+                    player,
+                    playerRef,
+                    playerRef.getStore(),
+                    null,
+                    damageDealt
+            );
         }
 
         double lifestealRatio = mod.getStatusEffectManager().getEffects(playerId).stream()
