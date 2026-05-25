@@ -122,14 +122,21 @@ function Invoke-ObservedCommand {
     $traceId = "shell-" + ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
     $displayCommand = $Command -replace '^\s*motm\s+', ''
     Add-Line("- Command: `/motm $displayCommand` traceId=$traceId")
-    & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "send-dev-command.ps1") `
-        -Command $Command `
-        -WorldName $WorldName `
-        -DataDir $DataDir `
-        -TimeoutMilliseconds $TimeoutMilliseconds `
-        -RunDir $outDir `
-        -TraceId $traceId `
-        -ScenarioId $ScenarioId 2>&1 |
+    $sendArgs = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", (Join-Path $PSScriptRoot "send-dev-command.ps1"),
+        "-Command", $Command,
+        "-WorldName", $WorldName,
+        "-TimeoutMilliseconds", $TimeoutMilliseconds,
+        "-RunDir", $outDir,
+        "-TraceId", $traceId,
+        "-ScenarioId", $ScenarioId
+    )
+    if (-not [string]::IsNullOrWhiteSpace($DataDir)) {
+        $sendArgs += @("-DataDir", $DataDir)
+    }
+    & $script:PowerShellExe @sendArgs 2>&1 |
         Tee-Object -FilePath (Join-Path $outDir ("command-" + ($traceId -replace '[^A-Za-z0-9_.-]', '-') + ".log"))
     if ($LASTEXITCODE -ne 0) {
         throw "Command failed: /motm $Command"
@@ -352,11 +359,18 @@ try {
     Add-Line("")
     Add-Line("## Evidence Collection")
     Add-Line("")
-    & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "collect-observability-evidence.ps1") `
-        -WorldName $WorldName `
-        -RunId $RunId `
-        -OutDir $outDir `
-        -DataDir $DataDir 2>&1 |
+    $collectArgs = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", (Join-Path $PSScriptRoot "collect-observability-evidence.ps1"),
+        "-WorldName", $WorldName,
+        "-RunId", $RunId,
+        "-OutDir", $outDir
+    )
+    if (-not [string]::IsNullOrWhiteSpace($DataDir)) {
+        $collectArgs += @("-DataDir", $DataDir)
+    }
+    & $script:PowerShellExe @collectArgs 2>&1 |
         Tee-Object -FilePath (Join-Path $outDir "collect-observability-evidence.log")
     if ($LASTEXITCODE -ne 0) {
         throw "Evidence collection failed with exit code $LASTEXITCODE."

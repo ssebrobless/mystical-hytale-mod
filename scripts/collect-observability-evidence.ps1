@@ -427,7 +427,15 @@ $gitHead = (& git -C $repoRoot rev-parse HEAD 2>$null)
 $gitStatus = @(& git -C $repoRoot status --short 2>$null)
 $builtJar = Get-NewestBuiltJar
 $hashes = [ordered]@{}
-foreach ($path in @($serverJar, $assetsZip, ($installedJar ? $installedJar.FullName : ""), ($builtJar ? $builtJar.FullName : ""))) {
+$installedJarPath = ""
+if ($installedJar) {
+    $installedJarPath = $installedJar.FullName
+}
+$builtJarPath = ""
+if ($builtJar) {
+    $builtJarPath = $builtJar.FullName
+}
+foreach ($path in @($serverJar, $assetsZip, $installedJarPath, $builtJarPath)) {
     if (-not [string]::IsNullOrWhiteSpace($path) -and (Test-Path -LiteralPath $path)) {
         $hashes[$path] = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
     }
