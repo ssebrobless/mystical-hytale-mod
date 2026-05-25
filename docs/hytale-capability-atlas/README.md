@@ -89,3 +89,8 @@ Key counts from the installed game package:
 - `terra-30-ability-feasibility-risk-register.md` records per-ability feasibility,
   expected bugs, complications, proof gates, and plan adjustments before final
   Terra implementation.
+- `../agent-driven-verification-observability.md` defines the architecture-level
+  observability contract for building an agent-driven, lossless verification
+  platform.
+- `../../AGENTS.md` defines the canonical agent feature loop and makes the
+  observability harness the default acceptance path for new behavior.

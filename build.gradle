@@ -2,12 +2,36 @@ plugins {
     id 'java'
 }
 
+import java.util.Locale
+
 group = project.mod_group
 version = project.mod_version
 
 def motmBuildChannel = (project.findProperty('motm_build_channel') ?: 'public').toString().toLowerCase()
 def motmInternalTestBuild = motmBuildChannel == 'internal'
 def generatedBuildInfoDir = layout.buildDirectory.dir('generated/sources/motmBuildInfo/main/java')
+def motmModId = project.mod_id.toString()
+def resolveHytaleRootPath = {
+    def explicitRoot = (project.findProperty('hytale_root') ?: System.getenv('HYTALE_ROOT'))?.toString()
+    if (explicitRoot != null && !explicitRoot.isBlank()) {
+        return explicitRoot
+    }
+
+    def appData = System.getenv('APPDATA')
+    if (appData != null && !appData.isBlank()) {
+        return "${appData}/Hytale"
+    }
+
+    def osName = System.getProperty('os.name', '').toLowerCase(Locale.ROOT)
+    if (osName.contains('mac')) {
+        return "${System.getProperty('user.home')}/Library/Application Support/Hytale"
+    }
+
+    return null
+}
+def hytaleRootPath = resolveHytaleRootPath()
+def hytaleRoot = hytaleRootPath == null ? null : file(hytaleRootPath)
+def hytaleServerJar = hytaleRoot == null ? null : file("${hytaleRoot}/install/release/package/game/latest/Server/HytaleServer.jar")
 
 java {
     toolchain {
@@ -28,18 +52,34 @@ repositories {
 }
 
 dependencies {
-    def appData = System.getenv('APPDATA')
-    if (appData == null || appData.isBlank()) {
-        throw new GradleException('APPDATA is not set; cannot locate the installed Hytale server jar.')
+    if (hytaleServerJar != null) {
+        compileOnly files(hytaleServerJar)
     }
 
-    def hytaleServerJar = file("${appData}/Hytale/install/release/package/game/latest/Server/HytaleServer.jar")
-    if (!hytaleServerJar.exists()) {
-        throw new GradleException("Could not find HytaleServer.jar at ${hytaleServerJar}")
-    }
-
-    compileOnly files(hytaleServerJar)
     implementation 'com.google.code.gson:gson:2.11.0'
+}
+
+tasks.register('verifyHytaleInstall') {
+    doLast {
+        if (hytaleRoot == null) {
+            throw new GradleException('Could not resolve the Hytale root. Set APPDATA, HYTALE_ROOT, or -Phytale_root=/path/to/Hytale.')
+        }
+        if (!hytaleServerJar.exists()) {
+            throw new GradleException("Could not find HytaleServer.jar at ${hytaleServerJar}. Launch/update Hytale once through the official launcher, or pass -Phytale_root=/path/to/Hytale.")
+        }
+    }
+}
+
+tasks.register('diagnoseDevEnvironment') {
+    doLast {
+        println "MOTM development environment"
+        println "  OS: ${System.getProperty('os.name')} ${System.getProperty('os.arch')}"
+        println "  Java runtime: ${System.getProperty('java.version')} (${System.getProperty('java.home')})"
+        println "  Hytale root: ${hytaleRoot == null ? '<unresolved>' : hytaleRoot}"
+        println "  Hytale server jar: ${hytaleServerJar == null ? '<unresolved>' : hytaleServerJar}"
+        println "  Server jar exists: ${hytaleServerJar != null && hytaleServerJar.exists()}"
+        println "  Build channel: ${motmBuildChannel}"
+    }
 }
 
 tasks.register('generateMotmBuildInfo') {
@@ -62,6 +102,7 @@ public final class MotmBuildInfo {
 
 compileJava {
     dependsOn tasks.named('generateMotmBuildInfo')
+    dependsOn tasks.named('verifyHytaleInstall')
 }
 
 processResources {
@@ -86,12 +127,15 @@ jar {
 
 tasks.register('installMod', Copy) {
     dependsOn jar
-
-    def appData = System.getenv('APPDATA')
-    if (appData == null || appData.isBlank()) {
-        throw new GradleException('APPDATA is not set; cannot locate the Hytale Mods directory.')
-    }
+    dependsOn tasks.named('verifyHytaleInstall')
 
     from(tasks.named('jar'))
-    into(file("${appData}/Hytale/UserData/Mods"))
+    into(hytaleRoot == null ? layout.buildDirectory.dir('missing-hytale-root') : file("${hytaleRoot}/UserData/Mods"))
+    outputs.upToDateWhen { false }
+    doFirst {
+        def modsDir = file("${hytaleRoot}/UserData/Mods")
+        if (modsDir.exists()) {
+            fileTree(dir: modsDir, include: "${motmModId}-*.jar").files.each { delete it }
+        }
+    }
 }

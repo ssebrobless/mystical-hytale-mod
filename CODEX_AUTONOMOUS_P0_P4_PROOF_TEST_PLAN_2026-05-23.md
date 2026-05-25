@@ -1,5 +1,10 @@
 # Autonomous P0-P4 Proof Test Plan - 2026-05-23
 
+> **Superseded testing guidance:** The primitive proof ideas remain useful, but
+> the execution path is now the agent observability harness. Use `/motm dev
+> proof ...` through `scripts/run-agent-observability-baseline.ps1` and inspect
+> the resulting raw JSONL/log/telemetry bundle.
+
 ## Purpose
 
 This plan turns the P0-P4 research into an autonomous test loop that can run in

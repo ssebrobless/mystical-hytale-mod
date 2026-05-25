@@ -7,6 +7,8 @@ import com.motm.manager.*;
 import com.motm.model.AbilityData;
 import com.motm.model.Perk;
 import com.motm.model.PerkTriggerBinding;
+import com.motm.model.PlayerData;
+import com.motm.model.StatusEffect;
 import com.motm.model.StyleData;
 import com.motm.system.MotmDamageEventSystem;
 import com.motm.system.MotmMobRuntimeSystem;
@@ -14,6 +16,7 @@ import com.motm.system.MotmServerTickSystem;
 import com.motm.ui.MotmStatusHud;
 import com.motm.ui.SpellbookPage;
 import com.motm.util.DataLoader;
+import com.motm.util.MotmObservability;
 import com.motm.util.MotmPreflightAudit;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -22,6 +25,8 @@ import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffec
 import com.hypixel.hytale.server.core.asset.type.fluid.Fluid;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.UUIDComponent;
+import com.hypixel.hytale.server.core.entity.effect.ActiveEntityEffect;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
@@ -36,6 +41,9 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
+import com.hypixel.hytale.server.core.io.adapter.PacketFilter;
+import com.hypixel.hytale.server.core.io.adapter.PlayerPacketWatcher;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
@@ -67,6 +75,7 @@ import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.MouseButtonState;
 import com.hypixel.hytale.protocol.MouseButtonType;
+import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.protocol.packets.interface_.HudComponent;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -81,6 +90,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -238,6 +249,10 @@ public class MenteesMod extends JavaPlugin {
     private SpellbookManager spellbookManager;
     private BookInteractionManager bookInteractionManager;
     private GameplayPlaybackManager gameplayPlaybackManager;
+    private MotmObservability observability;
+    private final ThreadLocal<String> observabilityTraceContext = new ThreadLocal<>();
+    private PacketFilter observabilityInboundPacketFilter;
+    private PacketFilter observabilityOutboundPacketFilter;
     private boolean devToolsEnabled = false;
     private final Map<String, MotmStatusHud> statusHuds = new ConcurrentHashMap<>();
     private final Map<String, Player> onlineRuntimePlayers = new ConcurrentHashMap<>();
@@ -272,6 +287,7 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, Float> lastObservedFreeCastHealthByPlayer = new ConcurrentHashMap<>();
     private final Set<String> initializedRuntimePlayers = ConcurrentHashMap.newKeySet();
     private long lastDevCommandInboxPollAtMs = 0L;
+    private long lastObservabilityHeartbeatAtMs = 0L;
     private int hudRefreshTickCounter = 0;
     private volatile MotmPreflightAudit.AuditReport lastPreflightAudit;
 
@@ -291,6 +307,7 @@ public class MenteesMod extends JavaPlugin {
     protected void start() {
         LOG.info("[MOTM] >>> start() called");
         registerHytaleHooks();
+        registerObservabilityPacketWatchers();
         for (InteractionType value : InteractionType.values()) {
             LOG.info("[MOTM] InteractionType enum: "
                     + value.name()
@@ -318,6 +335,7 @@ public class MenteesMod extends JavaPlugin {
     public void onEnable(Path dataDir) {
         Path operationalDataDir = resolveOperationalDataDirectory(dataDir);
         this.pluginDirectory = operationalDataDir;
+        this.observability = new MotmObservability(operationalDataDir);
         loadServerConfig();
 
         LOG.info("========================================");
@@ -490,8 +508,19 @@ public class MenteesMod extends JavaPlugin {
                 try (var reader = Files.newBufferedReader(configPath)) {
                     properties.load(reader);
                 }
+                boolean changed = false;
+                if (!properties.containsKey("observability_packet_scope")) {
+                    properties.setProperty("observability_packet_scope", "key");
+                    changed = true;
+                }
+                if (changed) {
+                    try (var writer = Files.newBufferedWriter(configPath)) {
+                        properties.store(writer, "Mentees of the Mystical server settings");
+                    }
+                }
             } else {
                 properties.setProperty("dev_tools_enabled", "false");
+                properties.setProperty("observability_packet_scope", "key");
                 properties.setProperty("notes", "Set dev_tools_enabled=true to enable /motm dev and the Dev Grimoire.");
                 try (var writer = Files.newBufferedWriter(configPath)) {
                     properties.store(writer, "Mentees of the Mystical server settings");
@@ -499,8 +528,13 @@ public class MenteesMod extends JavaPlugin {
             }
 
             devToolsEnabled = Boolean.parseBoolean(properties.getProperty("dev_tools_enabled", "false"));
+            if (observability != null) {
+                observability.setPacketScope(properties.getProperty("observability_packet_scope", "key"));
+            }
             LOG.info("[MOTM] Dev tools " + (isDevToolsEnabled() ? "enabled" : "disabled")
                     + " via " + configPath.getFileName());
+            LOG.info("[MOTM] Observability packet scope="
+                    + (observability != null ? observability.getPacketScope() : "unavailable"));
         } catch (IOException e) {
             devToolsEnabled = false;
             LOG.warning("[MOTM] Failed to load server config. Dev tools disabled. " + e.getMessage());
@@ -521,6 +555,40 @@ public class MenteesMod extends JavaPlugin {
         getEntityStoreRegistry().registerSystem(new MotmServerTickSystem(this));
         getEntityStoreRegistry().registerSystem(new MotmMobRuntimeSystem(this));
         getEntityStoreRegistry().registerSystem(new MotmDamageEventSystem(this));
+    }
+
+    private void registerObservabilityPacketWatchers() {
+        if (!MotmBuildInfo.INTERNAL_TEST_BUILD || observability == null || observabilityInboundPacketFilter != null) {
+            return;
+        }
+
+        try {
+            observabilityInboundPacketFilter = PacketAdapters.registerInbound((PlayerPacketWatcher) (playerRef, packet) ->
+                    observability.recordPacket("inbound", currentObservabilityTraceId(), playerRef, packet));
+            observabilityOutboundPacketFilter = PacketAdapters.registerOutbound((PlayerPacketWatcher) (playerRef, packet) ->
+                    observability.recordPacket("outbound", currentObservabilityTraceId(), playerRef, packet));
+            LOG.info("[MOTM] Observability packet watchers registered: scope="
+                    + observability.getPacketScope());
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] Observability packet watcher registration failed: " + e.getMessage());
+            observabilityInboundPacketFilter = null;
+            observabilityOutboundPacketFilter = null;
+        }
+    }
+
+    private void deregisterObservabilityPacketWatchers() {
+        try {
+            if (observabilityInboundPacketFilter != null) {
+                PacketAdapters.deregisterInbound(observabilityInboundPacketFilter);
+                observabilityInboundPacketFilter = null;
+            }
+            if (observabilityOutboundPacketFilter != null) {
+                PacketAdapters.deregisterOutbound(observabilityOutboundPacketFilter);
+                observabilityOutboundPacketFilter = null;
+            }
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] Observability packet watcher deregistration failed: " + e.getMessage());
+        }
     }
 
     private void registerSpellbookInteractionCodecs() {
@@ -546,9 +614,13 @@ public class MenteesMod extends JavaPlugin {
      * Called when the plugin is disabled (server shutdown).
      */
     public void onDisable() {
+        deregisterObservabilityPacketWatchers();
         if (playerDataManager != null) {
             playerDataManager.saveAll();
             playerDataManager.stopAutoSave();
+        }
+        if (observability != null && observability.isActive()) {
+            observability.stopRun("plugin-disable");
         }
         LOG.info("[MOTM] Plugin disabled. All data saved.");
     }
@@ -606,6 +678,11 @@ public class MenteesMod extends JavaPlugin {
         long t0 = System.currentTimeMillis();
 
         onlineRuntimePlayers.put(playerId, runtimePlayer);
+        recordCausality("player_connect", null, MotmObservability.mapOf(
+                "playerId", playerId,
+                "username", playerRef.getUsername(),
+                "runtime", String.valueOf(runtimePlayer)
+        ));
         if (initializedRuntimePlayers.add(playerId) || playerDataManager.getOnlinePlayer(playerId) == null) {
             onPlayerJoin(playerId, playerRef.getUsername());
         }
@@ -640,6 +717,11 @@ public class MenteesMod extends JavaPlugin {
         }
         String playerId = playerRef.getUuid().toString();
         onlineRuntimePlayers.put(playerId, runtimePlayer);
+        recordCausality("player_ready", null, MotmObservability.mapOf(
+                "playerId", playerId,
+                "username", playerRef.getUsername(),
+                "world", runtimePlayer.getWorld() != null ? runtimePlayer.getWorld().getName() : "unknown"
+        ));
 
         if (isDevToolsEnabled()) {
             statusEffectManager.clearEffects(playerId);
@@ -658,6 +740,10 @@ public class MenteesMod extends JavaPlugin {
      * Called when a player disconnects.
      */
     public void onPlayerDisconnect(String playerId) {
+        recordCausality("player_disconnect", null, MotmObservability.mapOf(
+                "playerId", playerId,
+                "hadRuntimePlayer", onlineRuntimePlayers.containsKey(playerId)
+        ));
         var player = playerDataManager.getOnlinePlayer(playerId);
         if (player != null) {
             levelingManager.updateRestedOnLogout(player);
@@ -902,6 +988,7 @@ public class MenteesMod extends JavaPlugin {
             hudRefreshTickCounter = 0;
             refreshAllStatusHuds(currentStore);
         }
+        recordObservabilityHeartbeat(currentStore);
 
         dotDamageByEntity.forEach((entityId, dotPercent) ->
                 LOG.fine("[MOTM] TODO: Apply " + (dotPercent * 100)
@@ -944,20 +1031,72 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
+            String traceId = observability != null
+                    ? observability.nextTraceId("cmd")
+                    : "cmd-" + Long.toUnsignedString(System.currentTimeMillis(), 36);
+            recordControl("dev_command_received", traceId, MotmObservability.mapOf(
+                    "command", "/motm " + command,
+                    "rawLine", rawLine
+            ));
+            String previousTraceId = enterObservabilityTrace(traceId);
             try {
                 String result = motmCommand.execute(runtimePlayer, command.split("\\s+"));
                 String safeResult = result == null ? "" : result.replace('\n', ' ');
                 String out = "[MOTM] Dev command inbox executed: command=/motm " + command
+                        + " traceId=" + traceId
                         + " result=" + safeResult;
                 LOG.info(out);
+                recordControl("dev_command_executed", traceId, MotmObservability.mapOf(
+                        "command", "/motm " + command,
+                        "result", safeResult
+                ));
                 appendDevCommandOutbox(out);
             } catch (Throwable t) {
                 String out = "[MOTM] Dev command inbox failed: command=/motm " + command
+                        + " traceId=" + traceId
                         + " error=" + t.getClass().getSimpleName() + ": " + t.getMessage();
                 LOG.severe(out);
+                recordControl("dev_command_failed", traceId, MotmObservability.mapOf(
+                        "command", "/motm " + command,
+                        "errorType", t.getClass().getSimpleName(),
+                    "error", t.getMessage()
+                ));
                 appendDevCommandOutbox(out);
+            } finally {
+                restoreObservabilityTrace(previousTraceId);
             }
         }
+    }
+
+    private void recordObservabilityHeartbeat(Store<EntityStore> currentStore) {
+        if (observability == null || !observability.isActive()) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (now - lastObservabilityHeartbeatAtMs < 1000L) {
+            return;
+        }
+        lastObservabilityHeartbeatAtMs = now;
+
+        String worldName = "unknown";
+        if (currentStore != null && currentStore.getExternalData() != null
+                && currentStore.getExternalData().getWorld() != null) {
+            worldName = currentStore.getExternalData().getWorld().getName();
+        }
+
+        recordCausality("server_tick_heartbeat", null, MotmObservability.mapOf(
+                "world", worldName,
+                "onlinePlayers", onlineRuntimePlayers.size(),
+                "pendingAbilityCasts", pendingAbilityCasts.size(),
+                "pendingProofRequests", pendingProofRequests.size(),
+                "pendingStyleTestMobSpawns", pendingStyleTestMobSpawns.size(),
+                "pendingStyleTestMobClears", pendingStyleTestMobClears.size(),
+                "activeProofSelections", activeProofSelections.size(),
+                "activeProofProxies", activeProofProxies.size(),
+                "activeStyleTests", activeStyleTests.size(),
+                "trackedStyleTargetOwners", styleTestTargetsByPlayer.size()
+        ));
     }
 
     private Player findFirstOnlineRuntimePlayer(Store<EntityStore> currentStore) {
@@ -1013,6 +1152,12 @@ public class MenteesMod extends JavaPlugin {
             return false;
         }
 
+        recordClientIntent("custom_page_open", null, MotmObservability.mapOf(
+                "playerId", playerRef.getUuid() != null ? playerRef.getUuid().toString() : null,
+                "username", playerRef.getUsername(),
+                "page", "MOTM_Spellbook",
+                "section", String.valueOf(section)
+        ));
         sender.getPageManager().openCustomPage(
                 entityRef,
                 entityRef.getStore(),
@@ -1880,17 +2025,37 @@ public class MenteesMod extends JavaPlugin {
 
         MotmStatusHud hud = new MotmStatusHud(playerRef, this);
         statusHuds.put(playerId, hud);
-        player.getHudManager().setCustomHud(playerRef, hud);
+        String traceId = currentOrNewClientIntentTraceId();
+        String previousTraceId = enterObservabilityTrace(traceId);
         try {
-            // Keep the native hotbar, but let the MOTM HUD own the right-side spell lane.
-            player.getHudManager().hideHudComponents(
-                    playerRef,
-                    HudComponent.StatusIcons,
-                    HudComponent.InputBindings,
-                    HudComponent.AmmoIndicator,
-                    HudComponent.UtilitySlotSelector);
-        } catch (Exception e) {
-            LOG.warning("[MOTM] Failed to hide native HUD components: " + e.getMessage());
+            player.getHudManager().setCustomHud(playerRef, hud);
+            recordClientIntent("custom_hud_set", traceId, MotmObservability.mapOf(
+                    "playerId", playerId,
+                    "username", playerRef.getUsername(),
+                    "hud", "MOTM_StatusHud"
+            ));
+            try {
+                // Keep the native hotbar, but let the MOTM HUD own the right-side spell lane.
+                player.getHudManager().hideHudComponents(
+                        playerRef,
+                        HudComponent.StatusIcons,
+                        HudComponent.InputBindings,
+                        HudComponent.AmmoIndicator,
+                        HudComponent.UtilitySlotSelector);
+                recordClientIntent("native_hud_components_hidden", traceId, MotmObservability.mapOf(
+                        "playerId", playerId,
+                        "components", List.of(
+                                String.valueOf(HudComponent.StatusIcons),
+                                String.valueOf(HudComponent.InputBindings),
+                                String.valueOf(HudComponent.AmmoIndicator),
+                                String.valueOf(HudComponent.UtilitySlotSelector)
+                        )
+                ));
+            } catch (Exception e) {
+                LOG.warning("[MOTM] Failed to hide native HUD components: " + e.getMessage());
+            }
+        } finally {
+            restoreObservabilityTrace(previousTraceId);
         }
     }
 
@@ -2226,6 +2391,12 @@ public class MenteesMod extends JavaPlugin {
 
             String mode = pendingStyleTestMobSpawns.get(playerId);
             String result = spawnStyleTestMobsNow(playerId, player, mode);
+            recordServerTruth("style_test_mobs_spawned", null, MotmObservability.mapOf(
+                    "playerId", playerId,
+                    "mode", mode,
+                    "result", result,
+                    "trackedCount", countTrackedStyleTestTargets(playerId)
+            ));
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobSpawns.remove(playerId);
         }
@@ -2243,6 +2414,11 @@ public class MenteesMod extends JavaPlugin {
             }
 
             String result = clearStyleTestMobsNow(playerId, currentStore, player);
+            recordServerTruth("style_test_mobs_cleared", null, MotmObservability.mapOf(
+                    "playerId", playerId,
+                    "result", result,
+                    "trackedCount", countTrackedStyleTestTargets(playerId)
+            ));
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobClears.remove(playerId);
         }
@@ -2291,6 +2467,11 @@ public class MenteesMod extends JavaPlugin {
             }
 
             String result = countStyleTestMobsNow(playerId, currentStore, player);
+            recordServerTruth("style_test_mobs_counted", null, MotmObservability.mapOf(
+                    "playerId", playerId,
+                    "result", result,
+                    "trackedCount", countTrackedStyleTestTargets(playerId)
+            ));
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobCounts.remove(playerId);
         }
@@ -2347,15 +2528,27 @@ public class MenteesMod extends JavaPlugin {
             }
 
             String result = null;
+            String traceId = observability != null ? observability.nextTraceId("proof") : null;
+            recordCausality("proof_begin", traceId, MotmObservability.mapOf(
+                    "playerId", playerId,
+                    "proofId", proofId
+            ));
+            String previousTraceId = enterObservabilityTrace(traceId);
             try {
                 result = runProofNow(playerId, player, currentStore, proofId);
             } catch (Throwable e) {
                 result = "[MOTM] Proof " + proofId + " failed safely: " + e.getMessage();
                 LOG.log(java.util.logging.Level.SEVERE, result, e);
             } finally {
+                restoreObservabilityTrace(previousTraceId);
                 pendingProofRequests.remove(playerId);
             }
             LOG.info(result);
+            recordCausality("proof_end", traceId, MotmObservability.mapOf(
+                    "playerId", playerId,
+                    "proofId", proofId,
+                    "result", result
+            ));
             player.sendMessage(Message.raw(result));
         }
     }
@@ -2563,7 +2756,14 @@ public class MenteesMod extends JavaPlugin {
             LOG.warning("[MOTM] Proof target missing EffectControllerComponent: " + effectId);
             return false;
         }
-        return controller.addEffect(ref, effect, store);
+        boolean applied = controller.addEffect(ref, effect, store);
+        recordClientIntent("proof_entity_effect_add", null, MotmObservability.mapOf(
+                "effectId", effectId,
+                "applied", applied,
+                "entityIndex", ref.getIndex(),
+                "nativeEffectsAfter", buildNativeEntityEffectsSnapshot(store, ref)
+        ));
+        return applied;
     }
 
     private String runTempBlockProof(Player player, String proofId, String blockId, int width, int height, int depth) {
@@ -2718,6 +2918,14 @@ public class MenteesMod extends JavaPlugin {
                     original,
                     System.currentTimeMillis() + lifetimeMillis
             ));
+            recordServerTruth("proof_temporary_selection_placed", null, MotmObservability.mapOf(
+                    "proofId", proofId,
+                    "anchor", anchor.toString(),
+                    "blockCount", selection.getBlockCount(),
+                    "fluidCount", selection.getFluidCount(),
+                    "lifetimeMillis", lifetimeMillis,
+                    "summary", summary
+            ));
             return "[MOTM] Proof " + proofId + " PASS: placed temporary selection "
                     + summary
                     + " anchor=" + anchor
@@ -2746,6 +2954,14 @@ public class MenteesMod extends JavaPlugin {
         if (ref != null && ref.isValid()) {
             activeProofProxies.add(new TemporaryProofProxy(proofId, world, ref, System.currentTimeMillis() + 4500L));
         }
+        recordClientIntent("proof_proxy_spawned", null, MotmObservability.mapOf(
+                "proofId", proofId,
+                "roleId", roleId,
+                "effectId", effectId,
+                "effectApplied", effectApplied,
+                "position", formatVector(position),
+                "entityIndex", ref != null && ref.isValid() ? ref.getIndex() : -1
+        ));
         return "[MOTM] Proof " + proofId + " PASS: proxy role=" + roleId
                 + " effect=" + effectId
                 + " effectApplied=" + effectApplied
@@ -2771,15 +2987,28 @@ public class MenteesMod extends JavaPlugin {
         if (surfaceRecovery) {
             destination.y = Math.max(start.y, destination.y);
         }
-        Velocity velocity = currentStore.getComponent(ref, Velocity.getComponentType());
-        if (velocity != null && !surfaceRecovery) {
-            velocity.addForce(forward.x * 1.8, 0.15, forward.z * 1.8);
-        } else {
-            transform.teleportPosition(destination);
-        }
-        return "[MOTM] Proof " + proofId + " PASS: movement start=" + formatVector(start)
+        transform.teleportPosition(destination);
+        Vector3d observed = transform.getPosition() != null ? transform.getPosition().clone() : null;
+        double observedDisplacement = observed != null ? distance(start, observed) : 0.0;
+        double destinationError = observed != null ? distance(observed, destination) : Double.POSITIVE_INFINITY;
+        boolean moved = observedDisplacement >= Math.min(0.75, Math.max(0.1, distance * 0.25));
+        recordServerTruth("proof_movement", null, MotmObservability.mapOf(
+                "proofId", proofId,
+                "start", formatVector(start),
+                "destination", formatVector(destination),
+                "observed", observed != null ? formatVector(observed) : null,
+                "observedDisplacement", observedDisplacement,
+                "destinationError", destinationError,
+                "moved", moved,
+                "movementMethod", "teleportPosition",
+                "surfaceRecovery", surfaceRecovery
+        ));
+        return "[MOTM] Proof " + proofId + " " + (moved ? "PASS" : "FAIL")
+                + ": movement start=" + formatVector(start)
                 + " destination=" + formatVector(destination)
-                + " usedVelocity=" + (velocity != null && !surfaceRecovery)
+                + " observed=" + (observed != null ? formatVector(observed) : "null")
+                + " displacement=" + String.format(Locale.ROOT, "%.2f", observedDisplacement)
+                + " movementMethod=teleportPosition"
                 + " surfaceRecovery=" + surfaceRecovery;
     }
 
@@ -3394,7 +3623,17 @@ public class MenteesMod extends JavaPlugin {
     private void refreshStatusHudNow(String playerId) {
         MotmStatusHud hud = statusHuds.get(playerId);
         if (hud != null) {
-            hud.refresh();
+            String traceId = currentOrNewClientIntentTraceId();
+            String previousTraceId = enterObservabilityTrace(traceId);
+            try {
+                recordClientIntent("custom_hud_refresh", traceId, MotmObservability.mapOf(
+                        "playerId", playerId,
+                        "hud", "MOTM_StatusHud"
+                ));
+                hud.refresh();
+            } finally {
+                restoreObservabilityTrace(previousTraceId);
+            }
         }
     }
 
@@ -4712,6 +4951,454 @@ public class MenteesMod extends JavaPlugin {
         return normalized.contains("pickaxe") || normalized.contains("_pick");
     }
 
+    // --- Agent observability surface ---
+
+    public String startObservabilityRun(String runId, String scenarioId, String playerId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (observability == null) {
+            return "[MOTM] Observability unavailable.";
+        }
+        var playerData = playerId == null ? null : playerDataManager.getOnlinePlayer(playerId);
+        Map<String, Object> metadata = MotmObservability.mapOf(
+                "buildChannel", getBuildChannel(),
+                "internalTestBuild", isInternalTestBuild(),
+                "devToolsEnabled", isDevToolsEnabled(),
+                "pluginDirectory", pluginDirectory != null ? pluginDirectory.toString() : null,
+                "playerId", playerId,
+                "playerName", playerData != null ? playerData.getPlayerName() : null
+        );
+        return observability.startRun(runId, scenarioId, "motm-dev-command", metadata);
+    }
+
+    public String stopObservabilityRun(String reason) {
+        if (observability == null) {
+            return "[MOTM] Observability unavailable.";
+        }
+        return observability.stopRun(reason);
+    }
+
+    public String getObservabilityStatus() {
+        if (observability == null) {
+            return "[MOTM] Observability unavailable.";
+        }
+        return observability.status();
+    }
+
+    public String setObservabilityScenario(String scenarioId) {
+        if (observability == null || !observability.isActive()) {
+            return "[MOTM] Observability is not active.";
+        }
+        observability.setScenario(scenarioId);
+        return "[MOTM] Observability scenario set: " + observability.getActiveScenarioId();
+    }
+
+    public String markObservabilityRun(String playerId, String label) {
+        if (observability == null || !observability.isActive()) {
+            return "[MOTM] Observability is not active.";
+        }
+        String traceId = observability.nextTraceId("marker");
+        recordCausality("marker", traceId, MotmObservability.mapOf(
+                "playerId", playerId,
+                "label", label == null || label.isBlank() ? "marker" : label
+        ));
+        return "[MOTM] Observability marker: label="
+                + (label == null || label.isBlank() ? "marker" : label)
+                + " traceId=" + traceId;
+    }
+
+    public String snapshotObservability(String playerId, String label) {
+        if (observability == null || !observability.isActive()) {
+            return "[MOTM] Observability is not active.";
+        }
+        String traceId = observability.nextTraceId("snapshot");
+        Map<String, Object> snapshot = buildObservabilitySnapshot(playerId, label);
+        observability.recordServerTruth("snapshot", traceId, snapshot);
+        return "[MOTM] Observability snapshot captured: label="
+                + snapshot.getOrDefault("label", "snapshot")
+                + " traceId=" + traceId
+                + " runId=" + observability.getActiveRunId();
+    }
+
+    public void recordControl(String type, String traceId, Map<String, Object> data) {
+        if (observability != null) {
+            observability.recordControl(type, effectiveObservabilityTraceId(traceId), data);
+        }
+    }
+
+    public void recordCausality(String type, String traceId, Map<String, Object> data) {
+        if (observability != null) {
+            observability.recordCausality(type, effectiveObservabilityTraceId(traceId), data);
+        }
+    }
+
+    public void recordServerTruth(String type, String traceId, Map<String, Object> data) {
+        if (observability != null) {
+            observability.recordServerTruth(type, effectiveObservabilityTraceId(traceId), data);
+        }
+    }
+
+    public void recordClientIntent(String type, String traceId, Map<String, Object> data) {
+        if (observability != null) {
+            String effectiveTraceId = effectiveObservabilityTraceId(traceId);
+            if ((effectiveTraceId == null || effectiveTraceId.isBlank()) && observability.isActive()) {
+                effectiveTraceId = observability.nextTraceId("client");
+            }
+            observability.recordClientIntent(type, effectiveTraceId, data);
+        }
+    }
+
+    public String enterObservabilityTrace(String traceId) {
+        String previous = observabilityTraceContext.get();
+        if (traceId == null || traceId.isBlank()) {
+            observabilityTraceContext.remove();
+        } else {
+            observabilityTraceContext.set(traceId);
+        }
+        return previous;
+    }
+
+    public void restoreObservabilityTrace(String previousTraceId) {
+        if (previousTraceId == null || previousTraceId.isBlank()) {
+            observabilityTraceContext.remove();
+        } else {
+            observabilityTraceContext.set(previousTraceId);
+        }
+    }
+
+    public String currentObservabilityTraceId() {
+        return effectiveObservabilityTraceId(null);
+    }
+
+    private String currentOrNewClientIntentTraceId() {
+        String traceId = currentObservabilityTraceId();
+        if ((traceId == null || traceId.isBlank()) && observability != null && observability.isActive()) {
+            return observability.nextTraceId("client");
+        }
+        return traceId;
+    }
+
+    private String effectiveObservabilityTraceId(String traceId) {
+        if (traceId != null && !traceId.isBlank()) {
+            return traceId;
+        }
+        return observabilityTraceContext.get();
+    }
+
+    private Map<String, Object> buildObservabilitySnapshot(String playerId, String label) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("label", label == null || label.isBlank() ? "snapshot" : label);
+        snapshot.put("build", MotmObservability.mapOf(
+                "buildChannel", getBuildChannel(),
+                "internalTestBuild", isInternalTestBuild(),
+                "devToolsEnabled", isDevToolsEnabled(),
+                "packetScope", observability != null ? observability.getPacketScope() : null
+        ));
+        snapshot.put("pluginDirectory", pluginDirectory != null ? pluginDirectory.toString() : null);
+        snapshot.put("pending", buildPendingSnapshot());
+        snapshot.put("activeRuntime", gameplayPlaybackManager != null
+                ? gameplayPlaybackManager.buildObservabilitySnapshot(playerId)
+                : Map.of());
+
+        Player runtimePlayer = getRuntimePlayer(playerId);
+        PlayerData playerData = playerId == null ? null : playerDataManager.getOnlinePlayer(playerId);
+        snapshot.put("playerData", buildPlayerDataSnapshot(playerData));
+        snapshot.put("runtimePlayer", buildRuntimePlayerSnapshot(runtimePlayer));
+        snapshot.put("statusEffects", buildStatusEffectsSnapshot(playerId));
+        snapshot.put("inventory", buildInventorySnapshot(runtimePlayer));
+        snapshot.put("trackedTargets", buildTrackedTargetsSnapshot(playerId));
+        return snapshot;
+    }
+
+    private Map<String, Object> buildPendingSnapshot() {
+        return MotmObservability.mapOf(
+                "onlineRuntimePlayers", onlineRuntimePlayers.size(),
+                "pendingSpellbookGrants", pendingSpellbookGrants.size(),
+                "pendingDevBookGrants", pendingDevBookGrants.size(),
+                "pendingStyleTestMobSpawns", pendingStyleTestMobSpawns.size(),
+                "pendingStyleTestMobClears", pendingStyleTestMobClears.size(),
+                "pendingStyleTestMobCounts", pendingStyleTestMobCounts.size(),
+                "pendingStyleReviewResets", pendingStyleReviewResets.size(),
+                "pendingProofRequests", pendingProofRequests.size(),
+                "pendingDevRelocations", pendingDevRelocations.size(),
+                "pendingAbilityCasts", pendingAbilityCasts.size(),
+                "activeProofSelections", activeProofSelections.size(),
+                "activeProofProxies", activeProofProxies.size(),
+                "activeStyleTests", activeStyleTests.size(),
+                "freeCastPlayers", freeCastPlayers.size()
+        );
+    }
+
+    private Map<String, Object> buildPlayerDataSnapshot(PlayerData player) {
+        if (player == null) {
+            return Map.of("present", false);
+        }
+        return MotmObservability.mapOf(
+                "present", true,
+                "playerId", player.getPlayerId(),
+                "playerName", player.getPlayerName(),
+                "classId", player.getPlayerClass(),
+                "raceId", player.getRace(),
+                "selectedStyles", new ArrayList<>(player.getSelectedStyles()),
+                "level", player.getLevel(),
+                "currentXp", player.getCurrentXp(),
+                "totalXpEarned", player.getTotalXpEarned(),
+                "selectedPerkCount", player.getSelectedPerks().size(),
+                "activeSynergyCount", player.getActiveSynergyBonuses().size(),
+                "freeCast", isFreeCastEnabled(player.getPlayerId())
+        );
+    }
+
+    private Map<String, Object> buildRuntimePlayerSnapshot(Player player) {
+        if (player == null) {
+            return Map.of("present", false);
+        }
+
+        Map<String, Object> runtime = new LinkedHashMap<>();
+        runtime.put("present", true);
+        runtime.put("playerId", getRuntimePlayerId(player));
+        PlayerRef playerRef = getUniversePlayerRef(player);
+        runtime.put("username", playerRef != null ? playerRef.getUsername() : null);
+        runtime.put("uuid", playerRef != null && playerRef.getUuid() != null ? playerRef.getUuid().toString() : null);
+        runtime.put("world", player.getWorld() != null ? player.getWorld().getName() : "unknown");
+        runtime.put("gameMode", String.valueOf(player.getGameMode()));
+
+        Ref<EntityStore> ref = player.getReference();
+        runtime.put("ref", buildRefSnapshot(ref));
+        Store<EntityStore> store = ref != null && ref.isValid() ? ref.getStore() : null;
+        runtime.put("position", vectorSnapshot(getPlayerPosition(player)));
+        runtime.put("forward", vectorSnapshot(normalizeHorizontal(getPlayerForward(player))));
+        runtime.put("velocity", buildVelocitySnapshot(store, ref));
+        runtime.put("movement", buildMovementSnapshot(store, ref));
+        runtime.put("stats", buildStatsSnapshot(store, ref));
+        runtime.put("nativeEntityEffects", buildNativeEntityEffectsSnapshot(store, ref));
+        return runtime;
+    }
+
+    private Map<String, Object> buildRefSnapshot(Ref<EntityStore> ref) {
+        if (ref == null) {
+            return Map.of("present", false);
+        }
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("present", true);
+        snapshot.put("valid", ref.isValid());
+        snapshot.put("index", ref.isValid() ? ref.getIndex() : -1);
+        try {
+            Store<EntityStore> store = ref.isValid() ? ref.getStore() : null;
+            UUIDComponent uuid = store != null ? store.getComponent(ref, UUIDComponent.getComponentType()) : null;
+            snapshot.put("uuid", uuid != null && uuid.getUuid() != null ? uuid.getUuid().toString() : null);
+        } catch (Throwable e) {
+            snapshot.put("uuidError", e.getMessage());
+        }
+        return snapshot;
+    }
+
+    private Map<String, Object> buildVelocitySnapshot(Store<EntityStore> store, Ref<EntityStore> ref) {
+        if (store == null || ref == null || !ref.isValid()) {
+            return Map.of("present", false);
+        }
+        Velocity velocity = store.getComponent(ref, Velocity.getComponentType());
+        if (velocity == null || velocity.getVelocity() == null) {
+            return Map.of("present", false);
+        }
+        Map<String, Object> snapshot = vectorSnapshot(velocity.getVelocity());
+        snapshot.put("present", true);
+        return snapshot;
+    }
+
+    private Map<String, Object> buildMovementSnapshot(Store<EntityStore> store, Ref<EntityStore> ref) {
+        if (store == null || ref == null || !ref.isValid()) {
+            return Map.of("present", false);
+        }
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("present", true);
+
+        MovementStatesComponent statesComponent = store.getComponent(ref, MovementStatesComponent.getComponentType());
+        List<String> activeStates = new ArrayList<>();
+        if (statesComponent != null && statesComponent.getMovementStates() != null) {
+            var states = statesComponent.getMovementStates();
+            if (states.idle) activeStates.add("idle");
+            if (states.horizontalIdle) activeStates.add("horizontalIdle");
+            if (states.jumping) activeStates.add("jumping");
+            if (states.flying) activeStates.add("flying");
+            if (states.walking) activeStates.add("walking");
+            if (states.running) activeStates.add("running");
+            if (states.sprinting) activeStates.add("sprinting");
+            if (states.crouching) activeStates.add("crouching");
+            if (states.falling) activeStates.add("falling");
+            if (states.onGround) activeStates.add("onGround");
+            if (states.swimming) activeStates.add("swimming");
+            if (states.gliding) activeStates.add("gliding");
+        }
+        snapshot.put("states", activeStates);
+
+        MovementManager movementManager = store.getComponent(ref, MovementManager.getComponentType());
+        if (movementManager != null && movementManager.getSettings() != null) {
+            var settings = movementManager.getSettings();
+            snapshot.put("settings", MotmObservability.mapOf(
+                    "baseSpeed", settings.baseSpeed,
+                    "forwardWalkSpeedMultiplier", settings.forwardWalkSpeedMultiplier,
+                    "strafeWalkSpeedMultiplier", settings.strafeWalkSpeedMultiplier,
+                    "forwardRunSpeedMultiplier", settings.forwardRunSpeedMultiplier,
+                    "strafeRunSpeedMultiplier", settings.strafeRunSpeedMultiplier,
+                    "forwardSprintSpeedMultiplier", settings.forwardSprintSpeedMultiplier,
+                    "minSpeedMultiplier", settings.minSpeedMultiplier,
+                    "maxSpeedMultiplier", settings.maxSpeedMultiplier,
+                    "acceleration", settings.acceleration,
+                    "canFly", settings.canFly
+            ));
+        }
+        return snapshot;
+    }
+
+    private Map<String, Object> buildStatsSnapshot(Store<EntityStore> store, Ref<EntityStore> ref) {
+        if (store == null || ref == null || !ref.isValid()) {
+            return Map.of("present", false);
+        }
+        EntityStatMap statMap = store.getComponent(ref, EntityStatMap.getComponentType());
+        if (statMap == null) {
+            return Map.of("present", false);
+        }
+        return MotmObservability.mapOf(
+                "present", true,
+                "health", statSnapshot(statMap, DefaultEntityStatTypes.getHealth()),
+                "stamina", statSnapshot(statMap, DefaultEntityStatTypes.getStamina()),
+                "mana", statSnapshot(statMap, DefaultEntityStatTypes.getMana()),
+                "signatureEnergy", statSnapshot(statMap, DefaultEntityStatTypes.getSignatureEnergy())
+        );
+    }
+
+    private Map<String, Object> statSnapshot(EntityStatMap statMap, int statType) {
+        EntityStatValue value = statMap != null ? statMap.get(statType) : null;
+        if (value == null) {
+            return Map.of("present", false);
+        }
+        return MotmObservability.mapOf(
+                "present", true,
+                "id", value.getId(),
+                "index", value.getIndex(),
+                "current", value.get(),
+                "min", value.getMin(),
+                "max", value.getMax(),
+                "modifierCount", value.getModifiers() != null ? value.getModifiers().size() : 0
+        );
+    }
+
+    private List<Map<String, Object>> buildStatusEffectsSnapshot(String playerId) {
+        if (playerId == null || statusEffectManager == null) {
+            return List.of();
+        }
+        List<Map<String, Object>> effects = new ArrayList<>();
+        for (StatusEffect effect : statusEffectManager.getEffects(playerId)) {
+            if (effect == null) {
+                continue;
+            }
+            effects.add(MotmObservability.mapOf(
+                    "type", String.valueOf(effect.getType()),
+                    "remainingTicks", effect.getRemainingTicks(),
+                    "initialDurationTicks", effect.getInitialDurationTicks(),
+                    "value", effect.getValue(),
+                    "source", effect.getSourcePerkOrAbility(),
+                    "expired", effect.isExpired()
+            ));
+        }
+        return effects;
+    }
+
+    private List<Map<String, Object>> buildNativeEntityEffectsSnapshot(Store<EntityStore> store, Ref<EntityStore> ref) {
+        if (store == null || ref == null || !ref.isValid()) {
+            return List.of();
+        }
+        EffectControllerComponent controller = store.getComponent(ref, EffectControllerComponent.getComponentType());
+        if (controller == null) {
+            return List.of();
+        }
+        List<Map<String, Object>> effects = new ArrayList<>();
+        ActiveEntityEffect[] activeEffects = controller.getAllActiveEntityEffects();
+        if (activeEffects == null) {
+            return effects;
+        }
+        for (ActiveEntityEffect effect : activeEffects) {
+            if (effect == null) {
+                continue;
+            }
+            EntityEffect asset = EntityEffect.getAssetMap().getAsset(effect.getEntityEffectIndex());
+            effects.add(MotmObservability.mapOf(
+                    "entityEffectIndex", effect.getEntityEffectIndex(),
+                    "entityEffectId", asset != null ? asset.getId() : null,
+                    "name", asset != null ? asset.getName() : null,
+                    "initialDuration", effect.getInitialDuration(),
+                    "remainingDuration", effect.getRemainingDuration(),
+                    "infinite", effect.isInfinite(),
+                    "debuff", effect.isDebuff(),
+                    "invulnerable", effect.isInvulnerable()
+            ));
+        }
+        return effects;
+    }
+
+    private Map<String, Object> buildInventorySnapshot(Player player) {
+        CombinedItemContainer inventory = getCombinedPlayerInventory(player);
+        if (inventory == null) {
+            return Map.of("present", false);
+        }
+        Map<String, Integer> itemCounts = new LinkedHashMap<>();
+        inventory.forEach((slot, stack) -> {
+            if (stack == null || stack.getItemId() == null || stack.getItemId().isBlank()) {
+                return;
+            }
+            itemCounts.merge(stack.getItemId(), Math.max(0, stack.getQuantity()), Integer::sum);
+        });
+        return MotmObservability.mapOf(
+                "present", true,
+                "uniqueItemIds", itemCounts.size(),
+                "itemCounts", itemCounts
+        );
+    }
+
+    private List<Map<String, Object>> buildTrackedTargetsSnapshot(String playerId) {
+        if (playerId == null) {
+            return List.of();
+        }
+        List<Ref<EntityStore>> targets = styleTestTargetsByPlayer.get(playerId);
+        if (targets == null || targets.isEmpty()) {
+            return List.of();
+        }
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (Ref<EntityStore> target : targets) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("ref", buildRefSnapshot(target));
+            Store<EntityStore> store = target != null && target.isValid() ? target.getStore() : null;
+            NPCEntity npc = store != null ? store.getComponent(target, NPCEntity.getComponentType()) : null;
+            row.put("npc", npc == null
+                    ? Map.of("present", false)
+                    : MotmObservability.mapOf(
+                    "present", true,
+                    "roleName", npc.getRoleName(),
+                    "npcTypeId", npc.getNPCTypeId(),
+                    "despawning", npc.isDespawning(),
+                    "despawnTime", npc.getDespawnTime()
+            ));
+            row.put("position", vectorSnapshot(getEntityPosition(store, target)));
+            row.put("stats", buildStatsSnapshot(store, target));
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private Map<String, Object> vectorSnapshot(Vector3d vector) {
+        if (vector == null) {
+            return Map.of("present", false);
+        }
+        return MotmObservability.mapOf(
+                "present", true,
+                "x", vector.x,
+                "y", vector.y,
+                "z", vector.z
+        );
+    }
+
     // --- Getters for inter-manager access ---
 
     public DataLoader getDataLoader() { return dataLoader; }
@@ -4731,6 +5418,7 @@ public class MenteesMod extends JavaPlugin {
     public SpellbookManager getSpellbookManager() { return spellbookManager; }
     public BookInteractionManager getBookInteractionManager() { return bookInteractionManager; }
     public GameplayPlaybackManager getGameplayPlaybackManager() { return gameplayPlaybackManager; }
+    public MotmObservability getObservability() { return observability; }
     public Path getPluginDirectory() { return pluginDirectory; }
     public String getDefaultSpellbookItemId() { return DEFAULT_SPELLBOOK_ITEM_ID; }
     public Set<String> getRecognizedSpellbookItemIds() { return SPELLBOOK_ITEM_IDS; }

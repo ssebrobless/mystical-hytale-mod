@@ -1,5 +1,10 @@
 # Concept-Aware Ability Testing Plan - 2026-05-22
 
+> **Superseded testing guidance:** Keep the concept-aware acceptance ideas, but
+> do not use this as the operational harness. New feature verification should be
+> driven through `AGENTS.md`, `docs/agent-driven-verification-observability.md`,
+> and `scripts/run-agent-observability-baseline.ps1`.
+
 ## Goal
 
 Future ability audits must prove that an ability performs its actual concept, not

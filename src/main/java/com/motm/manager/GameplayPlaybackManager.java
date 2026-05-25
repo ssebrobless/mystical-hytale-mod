@@ -46,9 +46,11 @@ import com.motm.model.StatusEffect;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.HytaleAssetResolver;
+import com.motm.util.MotmObservability;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -204,7 +206,21 @@ public class GameplayPlaybackManager {
         logTerraAbilityEvent("cast.begin", player, style, ability,
                 "castType=" + lower(ability.getCastType())
                         + " targetType=" + lower(ability.getTargetType()));
+        String traceId = mod.getObservability() != null
+                ? mod.getObservability().nextTraceId("ability")
+                : null;
+        mod.recordCausality("ability_cast_begin", traceId, MotmObservability.mapOf(
+                "playerId", player.getPlayerId(),
+                "classId", safe(player.getPlayerClass()),
+                "styleId", safe(style.getId()),
+                "abilityId", safe(ability.getId()),
+                "abilityName", safe(ability.getName()),
+                "castType", safe(ability.getCastType()),
+                "targetType", safe(ability.getTargetType())
+        ));
 
+        String previousTraceId = mod.enterObservabilityTrace(traceId);
+        try {
         if ("jump_land".equalsIgnoreCase(ability.getTrigger())) {
             return armJumpLandAbility(runtimePlayer, player, style, ability);
         }
@@ -269,10 +285,27 @@ public class GameplayPlaybackManager {
                         + " terrain=" + supplementalTerrain.activated()
                         + " summons=" + summons.spawned()
                         + " form=" + form.applied());
+        mod.recordCausality("ability_cast_end", traceId, MotmObservability.mapOf(
+                "playerId", player.getPlayerId(),
+                "styleId", safe(style.getId()),
+                "abilityId", safe(ability.getId()),
+                "summary", summary,
+                "combatTargets", combat.targetsHit(),
+                "totalDamage", combat.totalDamage(),
+                "projectiles", projectileLaunch.launched(),
+                "fieldActivated", fieldRuntime.activated(),
+                "terrainActivated", supplementalTerrain.activated(),
+                "summonsSpawned", summons.spawned(),
+                "summonsBuffed", summons.buffed(),
+                "formApplied", form.applied()
+        ));
 
         return new ExecutionResult(
                 playback, combat.targetsHit(), combat.totalDamage(),
                 summons.spawned(), summons.buffed(), form.applied(), summary);
+        } finally {
+            mod.restoreObservabilityTrace(previousTraceId);
+        }
     }
 
     private ExecutionResult armJumpLandAbility(Player runtimePlayer,
@@ -530,6 +563,36 @@ public class GameplayPlaybackManager {
                 + " proxies=" + proxies;
         LOG.info("[MOTM] Style review runtime reset: playerId=" + playerId + " " + summary);
         return summary;
+    }
+
+    public synchronized Map<String, Object> buildObservabilitySnapshot(String playerId) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("activeProjectiles", activeProjectiles.size());
+        snapshot.put("activeFields", activeFields.size());
+        snapshot.put("activeTerrainSelections", activeTerrainSelections.size());
+        snapshot.put("activeMovingTerrainTrails", activeMovingTerrainTrails.size());
+        snapshot.put("activeStackingColumns", activeStackingColumns.size());
+        snapshot.put("activeLapidaryGems", activeLapidaryGems.size());
+        snapshot.put("activeChannels", activeChannels.size());
+        snapshot.put("activeLineControls", activeLineControls.size());
+        snapshot.put("activePlayerAnchors", activePlayerAnchors.size());
+        snapshot.put("activeSelfEffects", activeSelfEffects.size());
+        snapshot.put("visualProxyRefs", visualProxyRefs.size());
+        snapshot.put("activeTransformations", activeTransformationsByPlayer.size());
+        snapshot.put("activeWeaponFollowUps", activeWeaponFollowUpsByPlayer.size());
+        snapshot.put("activeSummonOwners", activeSummonsByOwner.size());
+        snapshot.put("activeSummons", activeSummonsByOwner.values().stream().mapToInt(List::size).sum());
+        if (playerId != null && !playerId.isBlank()) {
+            snapshot.put("player", MotmObservability.mapOf(
+                    "armedStomp", armedStompByPlayer.containsKey(playerId),
+                    "activeTransformation", activeTransformationsByPlayer.containsKey(playerId),
+                    "activeWeaponFollowUp", activeWeaponFollowUpsByPlayer.containsKey(playerId),
+                    "activeSummons", activeSummonsByOwner.getOrDefault(playerId, List.of()).size(),
+                    "lavaPoolMovementBoosted", lavaPoolMovementBoostedPlayers.contains(playerId),
+                    "magmaHazardProtectionUntil", magmaHazardProtectionUntilByPlayer.get(playerId)
+            ));
+        }
+        return snapshot;
     }
 
     private int removeProjectilesForPlayer(String playerId) {
@@ -895,6 +958,7 @@ public class GameplayPlaybackManager {
         long lifetimeMillis = resolveProjectileLifetimeMillis(ability, speedPerTick, maxDistance);
         double baseDamage = resolveDamageAmount(player, ability);
         long launchBaseTime = System.currentTimeMillis();
+        String traceId = mod.currentObservabilityTraceId();
 
         for (int index = 0; index < projectileCount; index++) {
             double angleOffset = projectileCount == 1
@@ -929,7 +993,8 @@ public class GameplayPlaybackManager {
                     new LinkedHashSet<>(),
                     visual.visualRef(),
                     visual.travelEffectId(),
-                    visual.nextRefreshAtMillis()
+                    visual.nextRefreshAtMillis(),
+                    traceId
             ));
         }
 
@@ -2378,6 +2443,14 @@ public class GameplayPlaybackManager {
             LOG.info("[MOTM] Temporary Terra terrain placed: reason=" + reason
                     + " anchor=" + anchor
                     + " summary=" + summary);
+            mod.recordServerTruth("temporary_selection_placed", null, MotmObservability.mapOf(
+                    "reason", reason,
+                    "anchor", "(" + anchor.getX() + "," + anchor.getY() + "," + anchor.getZ() + ")",
+                    "blockCount", selection.getBlockCount(),
+                    "fluidCount", selection.getFluidCount(),
+                    "expireAtMillis", expireAtMillis,
+                    "summary", summary
+            ));
             return "terrain " + summary;
         } catch (Throwable e) {
             LOG.warning("[MOTM] Temporary Terra terrain placement failed: reason=" + reason
@@ -2521,7 +2594,8 @@ public class GameplayPlaybackManager {
                 followOwner,
                 visual.visualRefs(),
                 visual.loopEffectId(),
-                visual.nextRefreshAtMillis()
+                visual.nextRefreshAtMillis(),
+                mod.currentObservabilityTraceId()
         ));
     }
 
@@ -2665,6 +2739,8 @@ public class GameplayPlaybackManager {
     }
 
     private boolean processProjectileTick(ActiveProjectile projectile, long now) {
+        String previousTraceId = mod.enterObservabilityTrace(projectile.traceId());
+        try {
         if (projectile.ownerRef() == null || !projectile.ownerRef().isValid()) {
             return true;
         }
@@ -2724,6 +2800,9 @@ public class GameplayPlaybackManager {
             despawnProjectileVisual(projectile);
         }
         return true;
+        } finally {
+            mod.restoreObservabilityTrace(previousTraceId);
+        }
     }
 
     private boolean shouldLeaveProjectileVisualOnImpact(AbilityData ability) {
@@ -2741,6 +2820,8 @@ public class GameplayPlaybackManager {
     }
 
     private boolean processFieldTick(ActiveField field, long now) {
+        String previousTraceId = mod.enterObservabilityTrace(field.traceId());
+        try {
         if (field.ownerRef() == null || !field.ownerRef().isValid()) {
             releaseSinkholeField(field, null);
             despawnFieldVisual(field);
@@ -2794,6 +2875,9 @@ public class GameplayPlaybackManager {
         applySinkholeSuffocationPulse(field, store);
         field.nextPulseAtMillis = now + FIELD_PULSE_INTERVAL_MS;
         return false;
+        } finally {
+            mod.restoreObservabilityTrace(previousTraceId);
+        }
     }
 
     private void syncFollowOwnerFieldAnchor(ActiveField field,
@@ -3970,7 +4054,13 @@ public class GameplayPlaybackManager {
             return false;
         }
 
-        return controller.addEffect(entityRef, effect, store);
+        boolean applied = controller.addEffect(entityRef, effect, store);
+        mod.recordClientIntent("entity_effect_add", null, MotmObservability.mapOf(
+                "effectId", effectId,
+                "applied", applied,
+                "entityIndex", entityRef.getIndex()
+        ));
+        return applied;
     }
 
     private boolean removeEffectById(Ref<EntityStore> entityRef,
@@ -4040,6 +4130,18 @@ public class GameplayPlaybackManager {
         }
         configureProjectileVisualProxy(proxyRef, proxyRef.getStore(), ability);
         applyEffectById(proxyRef, proxyRef.getStore(), effectId);
+        mod.recordClientIntent("projectile_visual_proxy_spawned", null, MotmObservability.mapOf(
+                "classId", classId,
+                "styleId", styleId,
+                "abilityId", ability != null ? ability.getId() : null,
+                "roleId", roleId,
+                "modelId", modelId,
+                "effectId", effectId,
+                "position", formatVector(position),
+                "entityIndex", proxyRef.getIndex(),
+                "activateAtMillis", activateAtMillis,
+                "expireAtMillis", expireAtMillis
+        ));
         return new ProjectileVisualRuntime(proxyRef, effectId, activateAtMillis + 80L);
     }
 
@@ -8880,6 +8982,7 @@ public class GameplayPlaybackManager {
         private final Set<String> hitEntityIds;
         private final Ref<EntityStore> visualRef;
         private final String travelEffectId;
+        private final String traceId;
         private long nextVisualRefreshAtMillis;
         private double travelledDistance;
 
@@ -8900,7 +9003,8 @@ public class GameplayPlaybackManager {
                                  Set<String> hitEntityIds,
                                  Ref<EntityStore> visualRef,
                                  String travelEffectId,
-                                 long nextVisualRefreshAtMillis) {
+                                 long nextVisualRefreshAtMillis,
+                                 String traceId) {
             this.ownerPlayerId = ownerPlayerId;
             this.ownerRef = ownerRef;
             this.classId = classId;
@@ -8918,6 +9022,7 @@ public class GameplayPlaybackManager {
             this.hitEntityIds = hitEntityIds;
             this.visualRef = visualRef;
             this.travelEffectId = travelEffectId;
+            this.traceId = traceId;
             this.nextVisualRefreshAtMillis = nextVisualRefreshAtMillis;
             this.travelledDistance = 0.0;
         }
@@ -8939,6 +9044,7 @@ public class GameplayPlaybackManager {
         public Set<String> hitEntityIds() { return hitEntityIds; }
         public Ref<EntityStore> visualRef() { return visualRef; }
         public String travelEffectId() { return travelEffectId; }
+        public String traceId() { return traceId; }
         public long nextVisualRefreshAtMillis() { return nextVisualRefreshAtMillis; }
         public double travelledDistance() { return travelledDistance; }
     }
@@ -8960,6 +9066,7 @@ public class GameplayPlaybackManager {
         private final boolean followOwner;
         private final List<Ref<EntityStore>> visualRefs;
         private final String loopEffectId;
+        private final String traceId;
         private long nextPulseAtMillis;
         private long nextVisualRefreshAtMillis;
 
@@ -8980,7 +9087,8 @@ public class GameplayPlaybackManager {
                             boolean followOwner,
                             List<Ref<EntityStore>> visualRefs,
                             String loopEffectId,
-                            long nextVisualRefreshAtMillis) {
+                            long nextVisualRefreshAtMillis,
+                            String traceId) {
             this.ownerPlayerId = ownerPlayerId;
             this.ownerRef = ownerRef;
             this.classId = classId;
@@ -8998,6 +9106,7 @@ public class GameplayPlaybackManager {
             this.followOwner = followOwner;
             this.visualRefs = visualRefs;
             this.loopEffectId = loopEffectId;
+            this.traceId = traceId;
             this.nextVisualRefreshAtMillis = nextVisualRefreshAtMillis;
         }
 
@@ -9018,6 +9127,7 @@ public class GameplayPlaybackManager {
         public boolean followOwner() { return followOwner; }
         public List<Ref<EntityStore>> visualRefs() { return visualRefs; }
         public String loopEffectId() { return loopEffectId; }
+        public String traceId() { return traceId; }
         public long nextVisualRefreshAtMillis() { return nextVisualRefreshAtMillis; }
     }
 }

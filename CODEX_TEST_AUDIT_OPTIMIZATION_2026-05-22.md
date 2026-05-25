@@ -1,5 +1,10 @@
 # Codex Test/Audit Optimization Notes - 2026-05-22
 
+> **Superseded testing guidance:** This document is useful historical context for
+> why earlier screenshot-heavy audits were weak. For new feature work, use
+> `AGENTS.md`, `docs/agent-driven-verification-observability.md`, and the
+> `scripts/run-agent-observability-baseline.ps1` evidence loop.
+
 ## Why This Exists
 
 Recent Phase 9 audits proved that commands and log capture work, but several

@@ -1,5 +1,10 @@
 # Codex Harness Expansion Plan — 2026-05-21
 
+> **Superseded testing guidance:** This launcher/UI/screenshot harness plan is
+> historical. The current canonical path is the in-mod observability harness in
+> `AGENTS.md` and `docs/agent-driven-verification-observability.md`, driven by
+> `scripts/run-agent-observability-baseline.ps1`.
+
 > **Audience:** Medium-effort Codex running unattended in
 > `C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod`.
 >

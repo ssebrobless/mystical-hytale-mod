@@ -19,22 +19,68 @@
 - `docs/hytale-capability-atlas/` - Hytale capability research, primitive choices, and implementation gates
 - `PLAN.md` - original implementation plan used to start the project
 - `scripts/build-install.ps1` - local build and install helper
+- `scripts/ensure-dev-environment.ps1` - cross-platform setup helper that finds
+  or downloads Java 25, resolves the Hytale install, and invokes the Gradle
+  wrapper when requested
+- `scripts/diagnose-dev-environment.ps1` - agent-friendly setup diagnostic and
+  next-step walkthrough
+- `scripts/setup-agent-workstation.ps1` - one-command setup entrypoint for an
+  agent on a fresh machine; creates a setup diagnostic transcript on success or
+  failure
+- `AGENTS.md` - canonical agent rules, feature loop, and testing path
+- `docs/hytale-complete-api-alignment-audit.md` - comparison against the local
+  HytaleCompleteAPI reference repo, including quality smells and refactor
+  priorities
+- `scripts/run-agent-observability-baseline.ps1` - cross-platform agent verification slice that starts an in-mod observability run, drives MOTM dev commands, snapshots runtime state, and collects evidence
+- `scripts/collect-observability-evidence.ps1` - copies raw client logs, server logs, telemetry, MOTM observability JSONL, settings, and build metadata into a run bundle with indexes
+- `scripts/query-observability-evidence.ps1` - lists runs, sources, events, and raw evidence windows for shell-based agents
 - `scripts/audit-no-resource.ps1` - verifies the no-resource casting model across all classes/styles/abilities
+- `docs/agent-driven-verification-observability.md` - architecture contract and completion checklist for the verification platform
 
 ## Build And Install
 
-The project is set up to work with an installed Hytale client on Windows.
+The project uses the Gradle Wrapper (`gradlew` / `gradlew.bat`) so agents and
+humans do not need to install a matching Gradle version globally. The build still
+requires a Hytale install because the mod compiles against the installed
+`HytaleServer.jar`.
+
+Windows:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/build-install.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-install.ps1
 ```
 
-That script will:
+macOS:
 
-- download a portable Gradle distribution into `.tools/`
-- download a portable JDK 25 into `.tools/`
-- build the mod jar
-- install the jar into `%APPDATA%/Hytale/UserData/Mods`
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/build-install.ps1
+```
+
+That helper will:
+
+- find or download a portable Temurin/OpenJDK 25 into `.tools/jdk-25`
+- use the checked-in Gradle Wrapper to download/run Gradle 9.5.1
+- resolve the Hytale root from `APPDATA`, `HYTALE_ROOT`, `-HytaleRoot`, or the
+  standard macOS user-data path
+- build the mod jar and install it into `Hytale/UserData/Mods`
+
+Use this when a machine is not building cleanly:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-dev-environment.ps1
+```
+
+For a remote Windows agent, the intended first instruction can be this simple:
+
+```text
+Pull the latest code, run powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-agent-workstation.ps1, inspect any printed diagnostics if it fails, and only then proceed to the observability harness.
+```
+
+Direct wrapper usage is also supported after Java and Hytale are resolved:
+
+```powershell
+./gradlew -Dorg.gradle.java.installations.paths=".tools/jdk-25" -Pmotm_build_channel=internal build installMod
+```
 
 ## Current Status
 
@@ -79,6 +125,56 @@ Use this check before claiming ability data and docs are still aligned:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/audit-no-resource.ps1
 ```
+
+## Agent Observability Harness
+
+This is the canonical in-game verification path for new feature work. Launch
+Hytale through the official launcher, enter the target world, then run the
+scenario harness. On a fresh machine, run `scripts/setup-agent-workstation.ps1`
+first.
+
+Windows:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 -WorldName Main
+```
+
+macOS:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 -WorldName Main
+```
+
+To collect/index evidence from an existing session without driving commands:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/collect-observability-evidence.ps1 -WorldName Main
+pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/query-observability-evidence.ps1 -Action summary -RunId latest
+```
+
+For feature implementation, agents should choose or add a scenario that directly
+exercises the changed behavior, run it with a stable `-RunId`, inspect the raw
+and indexed evidence, and report `PASS`, `FAIL`, or `UNKNOWN` from that evidence.
+If the current harness does not expose enough signal, extend the harness first:
+new `/motm dev` commands, proof ids, JSONL events, collector sources, and query
+modes are expected additions as long as raw evidence, manifests, provenance, and
+rerunnable commands remain intact.
+
+Example targeted run:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 `
+  -WorldName Main `
+  -RunId feature-check-20260525 `
+  -StyleId terra `
+  -Abilities terra_quake `
+  -Proofs terra_quake
+```
+
+Older screenshot/log-tail testing plans remain as historical context or narrow
+supplemental checks. Final acceptance for new behavior should be supported by an
+`audits/agent-observability/<runId>/` bundle with raw MOTM JSONL streams,
+client/server logs, telemetry, indexes, and a manifest.
 
 Still in progress:
 
