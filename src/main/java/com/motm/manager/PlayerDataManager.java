@@ -52,10 +52,13 @@ public class PlayerDataManager {
         data.setPlayerId(playerId);
         data.setPlayerName(playerName);
         data.setPlayerClass(null);
-        data.setLevel(1);
+        data.setLevel(0);
         data.setCurrentXp(0);
         data.setTotalXpEarned(0);
         data.setFirstJoin(true);
+        data.setStartupSelectionComplete(false);
+        data.setUnspentStatPoints(0);
+        data.setTotalStatPointsEarned(0);
         data.getMetadata().setCreatedAt(Instant.now().toString());
         data.getMetadata().setLastPlayed(Instant.now().toString());
         data.getMetadata().setModVersion("1.0.0");
@@ -125,7 +128,7 @@ public class PlayerDataManager {
         if (data.getPlayerId() == null || data.getPlayerId().isEmpty()) {
             errors.add("Missing player_id");
         }
-        if (data.getLevel() < 1 || data.getLevel() > 200) {
+        if (data.getLevel() < 0 || data.getLevel() > 200) {
             errors.add("Invalid level: " + data.getLevel());
         }
         if (data.getCurrentXp() < 0) {
@@ -149,10 +152,20 @@ public class PlayerDataManager {
     // --- Migration ---
 
     private PlayerData migratePlayerData(PlayerData data) {
-        if (data.getMetadata() == null) {
-            data.getMetadata().setSchemaVersion(1);
+        if (data == null) {
+            return null;
         }
-        // Future migrations go here
+        data.initRuntimeFields();
+        if (data.getMetadata().getSchemaVersion() < 2) {
+            data.setTotalStatPointsEarned(Math.max(
+                    data.getTotalStatPointsEarned(),
+                    Math.max(0, Math.min(200, data.getLevel())) * LevelingManager.STAT_POINTS_PER_LEVEL
+            ));
+            int expectedUnspent = data.getTotalStatPointsEarned() - data.getStatAllocation().totalAllocated();
+            data.setUnspentStatPoints(Math.max(data.getUnspentStatPoints(), expectedUnspent));
+            data.setStartupSelectionComplete(data.getPlayerClass() != null && !data.getSelectedStyles().isEmpty());
+            data.getMetadata().setSchemaVersion(2);
+        }
         return data;
     }
 
@@ -300,7 +313,6 @@ public class PlayerDataManager {
         }
 
         player.setPlayerClass(classId);
-        player.setFirstJoin(false);
         savePlayerData(player);
 
         LOG.info("[MOTM] " + player.getPlayerName() + " selected class: " + classId);

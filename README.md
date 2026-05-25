@@ -4,9 +4,9 @@
 
 - 4 elemental classes
 - 40 combat styles
-- 800 perks
-- level progression to 200
-- dynamic mob scaling
+- 20 shared class-themed perk choices
+- level 0-200 progression with spendable stat points
+- title-band mob scaling with internal stat presets
 - elemental reactions and runtime combat systems
 
 ## Project Layout
@@ -90,9 +90,9 @@ Implemented so far:
 - Hytale Java plugin bootstrap and manifest wiring
 - local build/install flow against the installed Hytale server jar
 - command bridge for `/motm`
-- data loading for classes, perks, styles, leveling, mobs, and elite titles
+- data loading for classes, shared perks, styles, leveling, and mobs
 - class/style ability identity with no race layer
-- mob stat loading and elite title support
+- mob stat loading with Intern/Apprentice/Journeyman/Master title bands
 - plugin lifecycle alignment with Hytale's `setup/start/shutdown`
 - real server tick registration
 - real mob spawn/death event hooks

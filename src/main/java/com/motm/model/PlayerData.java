@@ -11,11 +11,17 @@ public class PlayerData {
     private String playerName;
     @SerializedName("class")
     private String playerClass;
-    private int level = 1;
+    private int level = 0;
     @SerializedName("current_xp")
     private int currentXp = 0;
     @SerializedName("total_xp_earned")
     private int totalXpEarned = 0;
+    @SerializedName("stat_allocation")
+    private StatAllocation statAllocation = new StatAllocation();
+    @SerializedName("unspent_stat_points")
+    private int unspentStatPoints = 0;
+    @SerializedName("total_stat_points_earned")
+    private int totalStatPointsEarned = 0;
     @SerializedName("selected_perks")
     private List<String> selectedPerks = new ArrayList<>();
     @SerializedName("perk_selection_history")
@@ -26,6 +32,10 @@ public class PlayerData {
     private Integer pendingPerkTier = null;
     @SerializedName("first_join")
     private boolean firstJoin = true;
+    @SerializedName("startup_selection_complete")
+    private boolean startupSelectionComplete = false;
+    @SerializedName("pending_startup_class")
+    private String pendingStartupClass = null;
     private Statistics statistics = new Statistics();
     private List<String> achievements = new ArrayList<>();
     private Settings settings = new Settings();
@@ -74,6 +84,21 @@ public class PlayerData {
     public void setCurrentXp(int currentXp) { this.currentXp = currentXp; }
     public int getTotalXpEarned() { return totalXpEarned; }
     public void setTotalXpEarned(int totalXpEarned) { this.totalXpEarned = totalXpEarned; }
+    public StatAllocation getStatAllocation() {
+        if (statAllocation == null) {
+            statAllocation = new StatAllocation();
+        }
+        return statAllocation;
+    }
+    public void setStatAllocation(StatAllocation statAllocation) {
+        this.statAllocation = statAllocation != null ? statAllocation : new StatAllocation();
+    }
+    public int getUnspentStatPoints() { return unspentStatPoints; }
+    public void setUnspentStatPoints(int unspentStatPoints) { this.unspentStatPoints = Math.max(0, unspentStatPoints); }
+    public int getTotalStatPointsEarned() { return totalStatPointsEarned; }
+    public void setTotalStatPointsEarned(int totalStatPointsEarned) {
+        this.totalStatPointsEarned = Math.max(0, totalStatPointsEarned);
+    }
     public List<String> getSelectedPerks() { return selectedPerks; }
     public void setSelectedPerks(List<String> selectedPerks) { this.selectedPerks = selectedPerks; }
     public List<PerkSelectionRecord> getPerkSelectionHistory() { return perkSelectionHistory; }
@@ -83,6 +108,12 @@ public class PlayerData {
     public void setPendingPerkTier(Integer pendingPerkTier) { this.pendingPerkTier = pendingPerkTier; }
     public boolean isFirstJoin() { return firstJoin; }
     public void setFirstJoin(boolean firstJoin) { this.firstJoin = firstJoin; }
+    public boolean isStartupSelectionComplete() { return startupSelectionComplete; }
+    public void setStartupSelectionComplete(boolean startupSelectionComplete) {
+        this.startupSelectionComplete = startupSelectionComplete;
+    }
+    public String getPendingStartupClass() { return pendingStartupClass; }
+    public void setPendingStartupClass(String pendingStartupClass) { this.pendingStartupClass = pendingStartupClass; }
     public Statistics getStatistics() { return statistics; }
     public List<String> getAchievements() { return achievements; }
     public Settings getSettings() { return settings; }
@@ -144,6 +175,15 @@ public class PlayerData {
     }
 
     public void initRuntimeFields() {
+        if (statAllocation == null) statAllocation = new StatAllocation();
+        if (selectedPerks == null) selectedPerks = new ArrayList<>();
+        if (perkSelectionHistory == null) perkSelectionHistory = new ArrayList<>();
+        if (selectedStyles == null) selectedStyles = new ArrayList<>();
+        if (classResources == null) classResources = new HashMap<>();
+        if (statistics == null) statistics = new Statistics();
+        if (achievements == null) achievements = new ArrayList<>();
+        if (settings == null) settings = new Settings();
+        if (metadata == null) metadata = new Metadata();
         if (recentKills == null) recentKills = new ArrayList<>();
         if (synergyDamageReduction == null) synergyDamageReduction = new HashMap<>();
         if (synergyDamageIncrease == null) synergyDamageIncrease = new HashMap<>();
@@ -154,6 +194,58 @@ public class PlayerData {
     }
 
     // --- Nested types ---
+
+    public static class StatAllocation {
+        private int vigor = 0;
+        private int tenacity = 0;
+        private int endurance = 0;
+        private int agility = 0;
+        private int luck = 0;
+
+        public int getVigor() { return Math.max(0, vigor); }
+        public void setVigor(int vigor) { this.vigor = Math.max(0, vigor); }
+        public int getTenacity() { return Math.max(0, tenacity); }
+        public void setTenacity(int tenacity) { this.tenacity = Math.max(0, tenacity); }
+        public int getEndurance() { return Math.max(0, endurance); }
+        public void setEndurance(int endurance) { this.endurance = Math.max(0, endurance); }
+        public int getAgility() { return Math.max(0, agility); }
+        public void setAgility(int agility) { this.agility = Math.max(0, agility); }
+        public int getLuck() { return Math.max(0, luck); }
+        public void setLuck(int luck) { this.luck = Math.max(0, luck); }
+
+        public int get(String statId) {
+            if (statId == null) {
+                return 0;
+            }
+            return switch (statId.trim().toLowerCase(Locale.ROOT)) {
+                case "vigor" -> getVigor();
+                case "tenacity" -> getTenacity();
+                case "endurance" -> getEndurance();
+                case "agility" -> getAgility();
+                case "luck" -> getLuck();
+                default -> 0;
+            };
+        }
+
+        public boolean add(String statId, int points) {
+            if (points <= 0 || statId == null) {
+                return false;
+            }
+            switch (statId.trim().toLowerCase(Locale.ROOT)) {
+                case "vigor" -> setVigor(getVigor() + points);
+                case "tenacity" -> setTenacity(getTenacity() + points);
+                case "endurance" -> setEndurance(getEndurance() + points);
+                case "agility" -> setAgility(getAgility() + points);
+                case "luck" -> setLuck(getLuck() + points);
+                default -> { return false; }
+            }
+            return true;
+        }
+
+        public int totalAllocated() {
+            return getVigor() + getTenacity() + getEndurance() + getAgility() + getLuck();
+        }
+    }
 
     public static class PerkSelectionRecord {
         private int tier;

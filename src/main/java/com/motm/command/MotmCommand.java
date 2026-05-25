@@ -98,7 +98,7 @@ public class MotmCommand {
             case "spellbook", "book" -> handleSpellbook(player, args, runtimePlayer);
             case "controls" -> handleControls(player, args, runtimePlayer);
             case "resources" -> handleResources(player);
-            case "stats" -> handleStats(player);
+            case "stats" -> handleStats(player, args);
             case "level" -> handleLevel(player, runtimePlayer);
             case "audit" -> handleAudit();
             case "dev" -> handleDev(player, args, runtimePlayer);
@@ -172,22 +172,23 @@ public class MotmCommand {
 
         if (pm.hasPendingPerkSelection(player)) {
             int pendingTier = pm.getPendingSelectionTier(player);
-            sb.append("Tier ").append(pendingTier).append(" choices: pick 3 of 10\n\n");
+            sb.append("Perk choice ").append(pendingTier).append(": pick 1 from the shared class-themed pool\n\n");
             List<Perk> available = pm.getAvailablePerks(player);
             for (int i = 0; i < available.size(); i++) {
                 Perk perk = available.get(i);
                 sb.append("[").append(i + 1).append("] ").append(perk.getName()).append("\n");
                 sb.append("  ").append(compactText(perk.getDescription(), 60)).append("\n");
             }
-            sb.append("\nUse: /motm select <choice1> <choice2> <choice3>");
-            sb.append("\nExample: /motm select 1 4 7");
+            sb.append("\nUse: /motm select <choice>");
+            sb.append("\nExample: /motm select 4");
         } else {
-            sb.append("Selected: ").append(player.getSelectedPerks().size()).append(" perks\n");
+            sb.append("Selected: ").append(player.getSelectedPerks().size()).append("/")
+                    .append(PerkManager.MAX_TOTAL_PERKS).append(" perks\n");
             int nextMilestone = ((player.getLevel() / 10) + 1) * 10;
-            if (nextMilestone <= LevelingManager.MAX_LEVEL) {
-                sb.append("Next perk tier unlocks at Lv. ").append(nextMilestone).append("\n\n");
+            if (nextMilestone <= LevelingManager.PERK_CAP_LEVEL) {
+                sb.append("Next perk choice unlocks at Lv. ").append(nextMilestone).append("\n\n");
             } else {
-                sb.append("All perk tiers unlocked.\n\n");
+                sb.append("Perk unlock cap reached.\n\n");
             }
 
             for (int tier = 1; tier <= pm.getCurrentTier(player.getLevel()); tier++) {
@@ -212,7 +213,7 @@ public class MotmCommand {
         return sb.toString();
     }
 
-    // --- /motm select <id1> <id2> <id3> ---
+    // --- /motm select <choice> ---
 
     private String handleSelect(PlayerData player, String[] args) {
         if (player.getPlayerClass() == null) {
@@ -228,12 +229,12 @@ public class MotmCommand {
             return "[MOTM] No perk selection available right now.";
         }
 
-        if (args.length < 4) {
-            return "[MOTM] Usage: /motm select <choice1> <choice2> <choice3>";
+        if (args.length < 2) {
+            return "[MOTM] Usage: /motm select <choice>";
         }
 
         List<Perk> available = pm.getAvailablePerks(player);
-        SelectionResolution selectionResolution = resolvePerkSelections(available, List.of(args[1], args[2], args[3]));
+        SelectionResolution selectionResolution = resolvePerkSelections(available, List.of(args[1]));
         if (!selectionResolution.invalidSelections().isEmpty()) {
             return "[MOTM] Invalid perk choice(s): " + String.join(", ", selectionResolution.invalidSelections())
                     + "\nUse /motm perks to see the numbered options.";
@@ -256,7 +257,7 @@ public class MotmCommand {
 
         StringBuilder sb = new StringBuilder("[MOTM] Perks selected!\n");
         for (String id : selectedIds) {
-            Perk perk = mod.getDataLoader().getPerkById(id, player.getPlayerClass());
+            Perk perk = mod.getDataLoader().getPerkByIdAnyClass(id);
             if (perk != null) {
                 sb.append("  + ").append(perk.getName()).append("\n");
             }
@@ -272,15 +273,50 @@ public class MotmCommand {
 
     // --- /motm stats ---
 
-    private String handleStats(PlayerData player) {
+    private String handleStats(PlayerData player, String[] args) {
+        if (args.length >= 3 && "spend".equalsIgnoreCase(args[1])) {
+            int points = args.length >= 4 ? Math.max(1, parseInteger(args[3]) != null ? parseInteger(args[3]) : 1) : 1;
+            boolean spent = mod.getLevelingManager().spendStatPoint(player, args[2], points);
+            if (!spent) {
+                return "[MOTM] Could not spend stat points. Check the stat name and unspent point total.";
+            }
+            mod.getPlayerDataManager().savePlayerData(player);
+            mod.refreshPlayerProgressionBonuses(player.getPlayerId());
+            mod.refreshStatusHud(player.getPlayerId());
+            return "[MOTM] Spent " + points + " point(s) in " + args[2].toLowerCase(java.util.Locale.ROOT)
+                    + ". Unspent: " + player.getUnspentStatPoints();
+        }
+
         StringBuilder sb = new StringBuilder("[MOTM] === Player Summary ===\n");
         sb.append("Name: ").append(player.getPlayerName()).append("\n");
         sb.append("Class: ").append(player.getPlayerClass() != null ? player.getPlayerClass() : "None").append("\n");
         sb.append("Style: ").append(formatSelectedStyleSummary(player)).append("\n");
-        sb.append("Level: ").append(player.getLevel()).append("\n");
-        sb.append("Perks: ").append(player.getSelectedPerks().size()).append("/60\n");
+        sb.append("Level: ").append(player.getLevel()).append(" / ").append(LevelingManager.MAX_LEVEL).append("\n");
+        sb.append("Unspent Stat Points: ").append(player.getUnspentStatPoints()).append("\n");
+        sb.append("Perks: ").append(player.getSelectedPerks().size()).append("/")
+                .append(PerkManager.MAX_TOTAL_PERKS).append("\n");
         sb.append("Synergies: ").append(player.getActiveSynergyBonuses().size()).append(" active\n");
         sb.append("Achievements: ").append(player.getAchievements().size()).append("\n\n");
+
+        PlayerData.StatAllocation allocation = player.getStatAllocation();
+        LevelingManager lm = mod.getLevelingManager();
+        sb.append("--- Stat Table ---\n");
+        sb.append("Vigor: ").append(allocation.getVigor())
+                .append(" | HP +").append(formatPercent(lm.getVigorHealthMultiplier(player) - 1.0))
+                .append(" | DR +").append(formatPercent(lm.getVigorDamageReduction(player))).append("\n");
+        sb.append("Tenacity: ").append(allocation.getTenacity())
+                .append(" | Damage +").append(formatPercent(lm.getTenacityDamageMultiplier(player) - 1.0))
+                .append(" | Crit damage +").append(formatPercent(lm.getTenacityCritDamageBonus(player))).append("\n");
+        sb.append("Endurance: ").append(allocation.getEndurance())
+                .append(" | Stamina +").append(formatPercent(lm.getEnduranceStaminaMultiplier(player) - 1.0))
+                .append(" | Regen +").append(formatPercent(lm.getEnduranceStaminaRegenBonus(player))).append("\n");
+        sb.append("Agility: ").append(allocation.getAgility())
+                .append(" | Speed +").append(formatPercent(lm.getAgilitySpeedMultiplier(player) - 1.0))
+                .append(" | Melee attack speed +").append(formatPercent(lm.getAgilityMeleeAttackSpeedBonus(player))).append("\n");
+        sb.append("Luck: ").append(allocation.getLuck())
+                .append(" | Crit chance +").append(formatPercent(lm.getLuckCritChanceBonus(player)))
+                .append(" | XP +").append(formatPercent(lm.getLuckXpMultiplier(player) - 1.0)).append("\n");
+        sb.append("Spend: /motm stats spend <vigor|tenacity|endurance|agility|luck> [points]\n\n");
 
         sb.append("--- Combat Stats ---\n");
         var stats = player.getStatistics();
@@ -325,7 +361,7 @@ public class MotmCommand {
         sb.append("XP: ").append(player.getCurrentXp()).append(" / ").append(required)
                 .append(" (").append(String.format("%.1f", percent)).append("%)\n");
         sb.append("Total XP Earned: ").append(player.getTotalXpEarned()).append("\n");
-        sb.append("Level Growth: ").append(lm.describePlayerStatGrowth(player.getLevel())).append("\n");
+        sb.append("Stat Growth: ").append(lm.describePlayerStatGrowth(player)).append("\n");
         sb.append("Hostile Mob Anchor: Lv ").append(hostileAnchorLevel)
                 .append(" average level in this world").append("\n");
         sb.append("Hostile Scaling: ").append(difficulty).append("\n");
@@ -336,9 +372,9 @@ public class MotmCommand {
         }
 
         int nextMilestone = ((player.getLevel() / 10) + 1) * 10;
-        if (nextMilestone <= 200) {
+        if (nextMilestone <= LevelingManager.PERK_CAP_LEVEL) {
             int xpToMilestone = lm.getXpToLevel(player, nextMilestone);
-            sb.append("XP to next perk tier (Lv. ").append(nextMilestone).append("): ")
+            sb.append("XP to next perk choice (Lv. ").append(nextMilestone).append("): ")
                     .append(xpToMilestone).append("\n");
         }
 
@@ -421,6 +457,7 @@ public class MotmCommand {
         }
         mod.getPlayerDataManager().savePlayerData(player);
         rebuildPlayerRuntime(player);
+        mod.completeStartupSelection(player.getPlayerId());
         return sb.toString();
     }
 
@@ -1318,6 +1355,10 @@ public class MotmCommand {
         return String.format(java.util.Locale.ROOT, "%.2f", value);
     }
 
+    private String formatPercent(double value) {
+        return String.format(java.util.Locale.ROOT, "%.2f%%", Math.max(0.0, value) * 100.0);
+    }
+
 
     String handleDevLevel(PlayerData player, String[] args) {
         if (args.length < 4) {
@@ -1336,7 +1377,7 @@ public class MotmCommand {
             default -> -1;
         };
 
-        if (newLevel < 1) {
+        if (newLevel < 0) {
             return "[MOTM] Usage: /motm dev level <set|add> <value>";
         }
 
@@ -1485,8 +1526,8 @@ public class MotmCommand {
     private String handleInfo() {
         return "[MOTM] === Mentees of the Mystical ===\n"
                 + "Version: 1.0.1\n"
-                + "4 Classes | 40 Styles | 800 Perks | Level 1-200\n"
-                + "Elemental Reactions | Dynamic Mob Scaling | Synergy System\n\n"
+                + "4 Classes | 40 Styles | 20 shared perk choices | Level 0-200\n"
+                + "Elemental Reactions | Stat Scaling | Synergy System\n\n"
                 + "Flow:\n"
                 + "  1. /motm class <id>\n"
                 + "  2. /motm style <id>\n"
@@ -1505,7 +1546,7 @@ public class MotmCommand {
                 + "  /motm cast <abilityId>  - Test-cast a style ability\n"
                 + "  /motm audit             - Run the preflight data/runtime audit\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
-                + "  /motm select ...        - Select 3 perks by number\n"
+                + "  /motm select <choice>   - Select 1 perk by number\n"
                 + "  /motm resources         - View casting model\n"
                 + "  /motm stats             - View your statistics\n"
                 + "  /motm level             - View XP progress\n"
@@ -1762,20 +1803,20 @@ public class MotmCommand {
     }
 
     private void updateDebugProgressionState(PlayerData player) {
-        int availableSelections = Math.max(0,
-                mod.getPerkManager().getCurrentTier(player.getLevel()) - player.getPerkSelectionHistory().size());
-        player.setPerkSelectionPoints(availableSelections);
-        player.setPendingPerkTier(availableSelections > 0
-                ? player.getPerkSelectionHistory().size() + 1
-                : null);
+        mod.getLevelingManager().reconcileProgressionState(player);
     }
 
     private void resetPlayerForDev(PlayerData player) {
         player.setPlayerClass(null);
-        player.setLevel(1);
+        player.setLevel(0);
         player.setCurrentXp(0);
         player.setTotalXpEarned(0);
         player.setFirstJoin(true);
+        player.setStartupSelectionComplete(false);
+        player.setPendingStartupClass(null);
+        player.setStatAllocation(new PlayerData.StatAllocation());
+        player.setUnspentStatPoints(0);
+        player.setTotalStatPointsEarned(0);
         player.getSelectedPerks().clear();
         player.getPerkSelectionHistory().clear();
         player.setPerkSelectionPoints(0);
@@ -1840,7 +1881,7 @@ public class MotmCommand {
     }
 
     private int clampLevel(int level) {
-        return Math.max(1, Math.min(LevelingManager.MAX_LEVEL, level));
+        return Math.max(0, Math.min(LevelingManager.MAX_LEVEL, level));
     }
 
     private record SelectionResolution(List<String> resolvedIds, List<String> invalidSelections) {}

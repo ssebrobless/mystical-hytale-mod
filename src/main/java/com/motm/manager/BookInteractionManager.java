@@ -42,9 +42,9 @@ public class BookInteractionManager {
             DevPage.RESET
     );
 
-    private static final List<Integer> LEVEL_PRESETS = List.of(1, 10, 25, 50, 75, 100, 150, 200);
+    private static final List<Integer> LEVEL_PRESETS = List.of(0, 10, 25, 50, 75, 100, 150, 200);
     private static final List<Integer> XP_PERCENT_PRESETS = List.of(0, 25, 50, 75, 95);
-    private static final List<Integer> PERK_TIER_LEVELS = List.of(10, 20, 30, 40, 50);
+    private static final List<Integer> PERK_TIER_LEVELS = List.of(10, 20, 30, 40, 50, 60, 70, 80, 90, 100);
     private static final List<String> CLASS_IDS = List.of("terra", "hydro", "aero", "corruptus", "clear");
     private static final List<ResetAction> RESET_ACTIONS = List.of(
             new ResetAction("Reset Player", new String[]{"dev", "reset", "player"}),
@@ -415,7 +415,7 @@ public class BookInteractionManager {
         }
 
         if (state.queuedPerkChoices.size() >= PerkManager.PERKS_TO_SELECT) {
-            state.lastMessage = "Queue only 3 perks, then press Use to confirm them.";
+            state.lastMessage = "Queue only 1 perk, then press Use to confirm it.";
             return;
         }
 
@@ -426,16 +426,14 @@ public class BookInteractionManager {
 
     private String confirmQueuedPerks(PlayerData player, DevBookState state) {
         if (!hasPendingPerks(player) || state.queuedPerkChoices.size() != PerkManager.PERKS_TO_SELECT) {
-            state.lastMessage = "Queue exactly 3 perks before confirming.";
+            state.lastMessage = "Queue exactly 1 perk before confirming.";
             return renderDevBook(player, state);
         }
 
         state.lastMessage = summarize(run(
                 player,
                 "select",
-                String.valueOf(state.queuedPerkChoices.get(0)),
-                String.valueOf(state.queuedPerkChoices.get(1)),
-                String.valueOf(state.queuedPerkChoices.get(2))
+                String.valueOf(state.queuedPerkChoices.get(0))
         ));
         state.queuedPerkChoices.clear();
         normalizeDevState(player, state);
@@ -775,7 +773,7 @@ public class BookInteractionManager {
 
         List<Perk> available = mod.getPerkManager().getAvailablePerks(player);
         sb.append("Queued: ").append(queuedChoicesLine(state)).append("\n");
-        sb.append("Use -> confirm once 3 perks are queued\n");
+        sb.append("Use -> confirm once 1 perk is queued\n");
         for (int i = 0; i < available.size(); i++) {
             Perk perk = available.get(i);
             boolean queued = state.queuedPerkChoices.contains(i + 1);

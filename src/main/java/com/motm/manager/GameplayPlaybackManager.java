@@ -3713,7 +3713,7 @@ public class GameplayPlaybackManager {
         }
 
         applyFieldOwnerEffects(field, player);
-        double sustainMultiplier = mod.getLevelingManager().getPlayerSustainMultiplier(player.getLevel());
+        double sustainMultiplier = mod.getLevelingManager().getPlayerSustainMultiplier(player);
 
         double pulseHealPercent = field.ability().getHealPercent() * DEFAULT_SUPPORT_HEAL_RATIO * sustainMultiplier;
         if (pulseHealPercent > 0.0) {
@@ -4624,7 +4624,7 @@ public class GameplayPlaybackManager {
         double healed = 0.0;
         double shielded = 0.0;
         int effectsApplied = 0;
-        double sustainMultiplier = mod.getLevelingManager().getPlayerSustainMultiplier(player.getLevel());
+        double sustainMultiplier = mod.getLevelingManager().getPlayerSustainMultiplier(player);
 
         if (ability.getHealPercent() > 0) {
             healed = healEntity(playerRef, store, ability.getHealPercent() * sustainMultiplier);
@@ -5138,8 +5138,16 @@ public class GameplayPlaybackManager {
             case "artillery", "caster" -> 1400L;
             default -> 1250L;
         };
+        double summonAttackSpeedBonus = mod.getLevelingManager().getAgilityMeleeAttackSpeedBonus(player);
+        if (summonAttackSpeedBonus > 0.0) {
+            attackIntervalMillis = Math.max(
+                    450L,
+                    Math.round(attackIntervalMillis / (1.0 + summonAttackSpeedBonus))
+            );
+        }
         long hatchAtMillis = "hatchling".equals(role) ? now + 2000L : now;
         double baseDamage = resolveSummonBaseDamage(player, ability, role);
+        String statSnapshot = formatSummonStatSnapshot(player);
 
         return new ActiveSummon(
                 player.getPlayerId(),
@@ -5159,10 +5167,24 @@ public class GameplayPlaybackManager {
                 now,
                 0L,
                 baseDamage,
+                player.getLevel(),
+                statSnapshot,
                 null,
                 0L,
                 !"hatchling".equals(role)
         );
+    }
+
+    private String formatSummonStatSnapshot(PlayerData player) {
+        PlayerData.StatAllocation stats = player != null ? player.getStatAllocation() : null;
+        if (stats == null) {
+            return "vigor=0,tenacity=0,endurance=0,agility=0,luck=0";
+        }
+        return "vigor=" + stats.getVigor()
+                + ",tenacity=" + stats.getTenacity()
+                + ",endurance=" + stats.getEndurance()
+                + ",agility=" + stats.getAgility()
+                + ",luck=" + stats.getLuck();
     }
 
     private String resolveSummonRole(String summonName) {
@@ -5182,7 +5204,7 @@ public class GameplayPlaybackManager {
         double damage = ability.getDamagePercent() > 0
                 ? ability.getDamagePercent() * (0.55 + (player.getLevel() * 0.035))
                 : 5.0 + (player.getLevel() * 0.75);
-        damage *= mod.getLevelingManager().getPlayerAbilityPowerMultiplier(player.getLevel());
+        damage *= mod.getLevelingManager().getPlayerAbilityDamageMultiplier(player);
         return switch (role) {
             case "tank" -> damage * 0.75;
             case "clone" -> damage * 1.25;
@@ -5374,6 +5396,8 @@ public class GameplayPlaybackManager {
 
         LOG.info("[MOTM] Summon attack resolved: abilityId=" + summon.ability.getId()
                 + " summonRole=" + summon.role
+                + " casterLevel=" + summon.casterLevel
+                + " casterStats={" + summon.casterStatSnapshot + "}"
                 + " target=" + (targetEntityId == null ? "<unknown>" : targetEntityId)
                 + " damage=" + AbilityPresentation.formatDecimal(resolvedDamage));
 
@@ -6191,7 +6215,7 @@ public class GameplayPlaybackManager {
         }
 
         double baseDamage = ((4.0 + (player.getLevel() * 0.9))
-                * mod.getLevelingManager().getPlayerAbilityPowerMultiplier(player.getLevel()))
+                * mod.getLevelingManager().getPlayerAbilityDamageMultiplier(player))
                 + (followUp != null ? followUp.flatDamageBonus : 0.0);
         double resolvedDamage = baseDamage * modifier;
         ClassPassiveManager.WeaponAttackPassiveBonus passiveBonus =
@@ -7655,7 +7679,7 @@ public class GameplayPlaybackManager {
         }
 
         double damage = ability.getDamagePercent() * (0.9 + (player.getLevel() * 0.06));
-        damage *= mod.getLevelingManager().getPlayerAbilityPowerMultiplier(player.getLevel());
+        damage *= mod.getLevelingManager().getPlayerAbilityDamageMultiplier(player);
         return switch (lower(ability.getCastType())) {
             case "execute" -> damage * 1.3;
             case "projectile_volley" -> damage * 0.75;
@@ -8687,6 +8711,8 @@ public class GameplayPlaybackManager {
         private Ref<EntityStore> currentTargetRef;
         private long targetLockExpireAtMillis;
         private boolean awakened;
+        private final int casterLevel;
+        private final String casterStatSnapshot;
 
         private ActiveSummon(String ownerPlayerId,
                              Ref<EntityStore> ref,
@@ -8705,6 +8731,8 @@ public class GameplayPlaybackManager {
                              long nextAttackAtMillis,
                              long buffExpireAtMillis,
                              double baseDamage,
+                             int casterLevel,
+                             String casterStatSnapshot,
                              Ref<EntityStore> currentTargetRef,
                              long targetLockExpireAtMillis,
                              boolean awakened) {
@@ -8725,6 +8753,8 @@ public class GameplayPlaybackManager {
             this.nextAttackAtMillis = nextAttackAtMillis;
             this.buffExpireAtMillis = buffExpireAtMillis;
             this.baseDamage = baseDamage;
+            this.casterLevel = casterLevel;
+            this.casterStatSnapshot = casterStatSnapshot;
             this.currentTargetRef = currentTargetRef;
             this.targetLockExpireAtMillis = targetLockExpireAtMillis;
             this.awakened = awakened;

@@ -21,10 +21,10 @@
     },
     "level": {
       "type": "integer",
-      "minimum": 1,
+      "minimum": 0,
       "maximum": 200,
-      "default": 1,
-      "description": "Current player level"
+      "default": 0,
+      "description": "Current player level. Level 0 is the native Hytale baseline with no stat-table bonuses."
     },
     "current_xp": {
       "type": "integer",
@@ -45,7 +45,38 @@
       },
       "default": [],
       "description": "Array of perk IDs the player has selected",
-      "maxItems": 60
+      "maxItems": 10
+    },
+    "stat_allocation": {
+      "type": "object",
+      "description": "Player-spent stat table points. Each level through 200 grants 2 upgrade points.",
+      "properties": {
+        "vigor": { "type": "integer", "minimum": 0, "default": 0 },
+        "tenacity": { "type": "integer", "minimum": 0, "default": 0 },
+        "endurance": { "type": "integer", "minimum": 0, "default": 0 },
+        "agility": { "type": "integer", "minimum": 0, "default": 0 },
+        "luck": { "type": "integer", "minimum": 0, "default": 0 }
+      },
+      "default": {
+        "vigor": 0,
+        "tenacity": 0,
+        "endurance": 0,
+        "agility": 0,
+        "luck": 0
+      }
+    },
+    "unspent_stat_points": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Unspent stat upgrade points available to the player."
+    },
+    "total_stat_points_earned": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 400,
+      "default": 0,
+      "description": "Total stat points earned from levels, capped at 400 by level 200."
     },
     "perk_selection_history": {
       "type": "array",
@@ -60,8 +91,8 @@
           "perks_chosen": {
             "type": "array",
             "items": { "type": "string" },
-            "minItems": 3,
-            "maxItems": 3
+            "minItems": 1,
+            "maxItems": 1
           },
           "timestamp": {
             "type": "string",
@@ -75,18 +106,29 @@
       "type": "integer",
       "minimum": 0,
       "default": 0,
-      "description": "Unused perk selection opportunities (3 perks per point)"
+      "description": "Unused perk selection opportunities (1 shared perk per point)"
     },
     "pending_perk_tier": {
       "type": ["integer", "null"],
       "minimum": 1,
-      "maximum": 20,
-      "description": "The tier from which player must select perks (null if no selection pending)"
+      "maximum": 10,
+      "description": "The perk-choice milestone the player must resolve (null if no selection pending)"
     },
     "first_join": {
       "type": "boolean",
       "default": true,
       "description": "Whether the player needs to complete first-time setup"
+    },
+    "startup_selection_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the player confirmed both class and style in the startup selection UI."
+    },
+    "pending_startup_class": {
+      "type": ["string", "null"],
+      "enum": ["terra", "hydro", "aero", "corruptus", null],
+      "default": null,
+      "description": "Class preview chosen in the startup UI before style confirmation."
     },
     "stats": {
       "type": "object",
@@ -176,7 +218,7 @@
         },
         "schema_version": {
           "type": "integer",
-          "default": 1
+          "default": 2
         }
       }
     }
@@ -188,45 +230,48 @@
     "level": 45,
     "current_xp": 12500,
     "total_xp_earned": 425000,
+    "stat_allocation": {
+      "vigor": 18,
+      "tenacity": 18,
+      "endurance": 18,
+      "agility": 18,
+      "luck": 18
+    },
+    "unspent_stat_points": 0,
+    "total_stat_points_earned": 90,
     "selected_perks": [
       "terra_t01_stone_skin",
-      "terra_t01_earthen_grip",
-      "terra_t01_root_stance",
-      "terra_t02_earthen_fortitude",
-      "terra_t02_mountain_resilience",
-      "terra_t02_natures_embrace",
-      "terra_t03_boulder_fist",
-      "terra_t03_tectonic_shift",
-      "terra_t03_living_stone",
-      "terra_t04_earthquake_stomp",
-      "terra_t04_crystal_armor",
-      "terra_t04_deep_roots"
+      "hydro_t01_tidal_recovery",
+      "aero_t01_tailwind",
+      "corruptus_t01_blood_pact"
     ],
     "perk_selection_history": [
       {
         "tier": 1,
-        "perks_chosen": ["terra_t01_stone_skin", "terra_t01_earthen_grip", "terra_t01_root_stance"],
+        "perks_chosen": ["terra_t01_stone_skin"],
         "timestamp": "2024-01-15T10:30:00Z"
       },
       {
         "tier": 2,
-        "perks_chosen": ["terra_t02_earthen_fortitude", "terra_t02_mountain_resilience", "terra_t02_natures_embrace"],
+        "perks_chosen": ["hydro_t01_tidal_recovery"],
         "timestamp": "2024-01-16T14:45:00Z"
       },
       {
         "tier": 3,
-        "perks_chosen": ["terra_t03_boulder_fist", "terra_t03_tectonic_shift", "terra_t03_living_stone"],
+        "perks_chosen": ["aero_t01_tailwind"],
         "timestamp": "2024-01-17T09:20:00Z"
       },
       {
         "tier": 4,
-        "perks_chosen": ["terra_t04_earthquake_stomp", "terra_t04_crystal_armor", "terra_t04_deep_roots"],
+        "perks_chosen": ["corruptus_t01_blood_pact"],
         "timestamp": "2024-01-18T16:10:00Z"
       }
     ],
     "perk_selection_points": 0,
     "pending_perk_tier": null,
     "first_join": false,
+    "startup_selection_complete": true,
+    "pending_startup_class": null,
     "stats": {
       "health": 480,
       "max_health": 480,

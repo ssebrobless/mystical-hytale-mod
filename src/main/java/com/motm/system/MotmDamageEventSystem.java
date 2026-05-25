@@ -87,6 +87,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                         store,
                         damage.getAmount()
                 ));
+                damage.setAmount(applyPlayerIncomingStatReduction(targetUuid.toString(), damage.getAmount()));
             }
             return;
         }
@@ -99,6 +100,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                     store,
                     damage.getAmount()
             ));
+            damage.setAmount(applyPlayerIncomingStatReduction(targetUuid.toString(), damage.getAmount()));
             if (damage.getAmount() <= 0.0f) {
                 return;
             }
@@ -136,9 +138,54 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                 itemId,
                 damage
         );
+        applyPlayerOutgoingStatDamage(playerData, damage, itemId);
         if (response != null && !response.isBlank()) {
             runtimePlayer.sendMessage(Message.raw(response));
         }
+    }
+
+    private float applyPlayerIncomingStatReduction(String playerId, float amount) {
+        if (amount <= 0.0f || playerId == null) {
+            return amount;
+        }
+        if (mod.isStartupSelectionProtected(playerId)) {
+            LOG.info("[MOTM] Startup protection suppressed incoming damage: playerId=" + playerId
+                    + " amount=" + amount);
+            return 0.0f;
+        }
+        PlayerData target = mod.getPlayerDataManager().getOnlinePlayer(playerId);
+        double reduction = mod.getPlayerStatModifierManager().getDamageReduction(target);
+        if (!Double.isFinite(reduction) || reduction <= 0.0) {
+            return amount;
+        }
+        double clamped = Math.max(0.0, Math.min(0.95, reduction));
+        float adjusted = (float) (amount * (1.0 - clamped));
+        LOG.info("[MOTM] Player stat damage reduction applied: playerId=" + playerId
+                + " reduction=" + String.format(java.util.Locale.ROOT, "%.4f", clamped)
+                + " before=" + amount
+                + " after=" + adjusted);
+        return adjusted;
+    }
+
+    private void applyPlayerOutgoingStatDamage(PlayerData playerData, Damage damage, String itemId) {
+        if (playerData == null || damage == null || damage.getAmount() <= 0.0f) {
+            return;
+        }
+        double multiplier = mod.getPlayerStatModifierManager().getDamageMultiplier(playerData);
+        double critChance = mod.getLevelingManager().getLuckCritChanceBonus(playerData);
+        boolean crit = critChance > 0.0
+                && java.util.concurrent.ThreadLocalRandom.current().nextDouble() < Math.min(1.0, critChance);
+        double critMultiplier = crit ? 1.5 + mod.getLevelingManager().getTenacityCritDamageBonus(playerData) : 1.0;
+        double adjusted = damage.getAmount() * multiplier * critMultiplier;
+        if (!Double.isFinite(adjusted) || adjusted <= 0.0) {
+            return;
+        }
+        damage.setAmount((float) adjusted);
+        LOG.info("[MOTM] Player stat outgoing damage applied: playerId=" + playerData.getPlayerId()
+                + " item=" + itemId
+                + " multiplier=" + String.format(java.util.Locale.ROOT, "%.4f", multiplier)
+                + " crit=" + crit
+                + " amount=" + String.format(java.util.Locale.ROOT, "%.2f", adjusted));
     }
 
     private void applyIncomingKnockbackPassive(UUID targetUuid, Damage damage) {

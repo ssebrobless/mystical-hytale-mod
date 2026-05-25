@@ -119,6 +119,7 @@ Group #Root {
       TextButton #ClassHydroButton { Anchor: (Left: 190, Top: 256, Width: 170, Height: 32); Text: "Hydro"; Style: @ButtonStyle; }
       TextButton #ClassAeroButton { Anchor: (Left: 0, Top: 296, Width: 170, Height: 32); Text: "Aero"; Style: @ButtonStyle; }
       TextButton #ClassCorruptusButton { Anchor: (Left: 190, Top: 296, Width: 170, Height: 32); Text: "Corruptus"; Style: @ButtonStyle; }
+      TextButton #ClassChooseButton { Anchor: (Left: 0, Top: 340, Width: 360, Height: 34); Text: "Choose"; Style: @ButtonStyle; }
 
       Label #JourneyStyleIntroValue { Anchor: (Left: 392, Top: 0, Width: 340, Height: 22); Style: @ValueText; }
       Label #JourneyStyleRuleValue { Anchor: (Left: 392, Top: 28, Width: 340, Height: 45); Style: @SmallText; }
@@ -167,9 +168,10 @@ Group #Root {
         TextButton #StyleButton9 { Anchor: (Left: 0, Top: 136, Width: 160, Height: 28); Text: "Style 9"; Style: @ButtonStyle; }
         TextButton #StyleButton10 { Anchor: (Left: 176, Top: 136, Width: 160, Height: 28); Text: "Style 10"; Style: @ButtonStyle; }
       }
-      Group #AbilityCard1 { Anchor: (Left: 0, Top: 210, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability1Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability1Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability1Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability1Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
-      Group #AbilityCard2 { Anchor: (Left: 256, Top: 210, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability2Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability2Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability2Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability2Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
-      Group #AbilityCard3 { Anchor: (Left: 512, Top: 210, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability3Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability3Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability3Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability3Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
+      TextButton #StyleChooseButton { Anchor: (Left: 392, Top: 196, Width: 340, Height: 30); Text: "Choose"; Style: @ButtonStyle; }
+      Group #AbilityCard1 { Anchor: (Left: 0, Top: 244, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability1Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability1Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability1Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability1Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
+      Group #AbilityCard2 { Anchor: (Left: 256, Top: 244, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability2Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability2Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability2Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability2Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
+      Group #AbilityCard3 { Anchor: (Left: 512, Top: 244, Width: 230, Height: 170); Background: PatchStyle(Color: @PanelSoft); Label #Ability3Name { Anchor: (Left: 12, Top: 10, Width: 204, Height: 22); Style: @ValueText; } Label #Ability3Id { Anchor: (Left: 12, Top: 36, Width: 204, Height: 18); Style: @SmallText; } Label #Ability3Summary { Anchor: (Left: 12, Top: 60, Width: 204, Height: 54); Style: @SmallText; } Label #Ability3Meta { Anchor: (Left: 12, Top: 116, Width: 204, Height: 42); Style: @SmallText; } }
     }
 
     Group #PerksPanel {

@@ -15,12 +15,12 @@ public class LevelingManager {
     private static final Logger LOG = Logger.getLogger("MOTM");
 
     public static final int MAX_LEVEL = 200;
+    public static final int PERK_CAP_LEVEL = 100;
+    public static final int STAT_CAP_LEVEL = 200;
+    public static final int STAT_POINTS_PER_LEVEL = 2;
     public static final int BASE_XP = 100;
     public static final double SCALING_FACTOR = 1.5;
     public static final int MILESTONE_INTERVAL = 10;
-    private static final double PLAYER_HEALTH_BONUS_PER_LEVEL = 0.0025;
-    private static final double PLAYER_ABILITY_POWER_BONUS_PER_LEVEL = 0.0015;
-    private static final double PLAYER_SUSTAIN_BONUS_PER_LEVEL = 0.0015;
 
     // XP Modifier Constants
     private static final double PARTY_BONUS_2P = 0.10;
@@ -51,13 +51,13 @@ public class LevelingManager {
     // --- XP Formula ---
 
     public int calculateXpRequired(int level) {
-        if (level < 1 || level >= MAX_LEVEL) return 0;
-        return (int) Math.round(BASE_XP * Math.pow(level, SCALING_FACTOR));
+        if (level < 0 || level >= MAX_LEVEL) return 0;
+        return (int) Math.round(BASE_XP * Math.pow(level + 1, SCALING_FACTOR));
     }
 
     public int calculateTotalXpToLevel(int targetLevel) {
         int total = 0;
-        for (int lvl = 1; lvl < targetLevel; lvl++) {
+        for (int lvl = 0; lvl < targetLevel; lvl++) {
             total += calculateXpRequired(lvl);
         }
         return total;
@@ -89,20 +89,120 @@ public class LevelingManager {
     }
 
     public double getPlayerMaxHealthMultiplier(int level) {
-        return 1.0 + (Math.max(0, level - 1) * PLAYER_HEALTH_BONUS_PER_LEVEL);
+        return 1.0;
     }
 
     public double getPlayerAbilityPowerMultiplier(int level) {
-        return 1.0 + (Math.max(0, level - 1) * PLAYER_ABILITY_POWER_BONUS_PER_LEVEL);
+        return 1.0;
     }
 
     public double getPlayerSustainMultiplier(int level) {
-        return 1.0 + (Math.max(0, level - 1) * PLAYER_SUSTAIN_BONUS_PER_LEVEL);
+        return 1.0;
+    }
+
+    public double getVigorHealthMultiplier(PlayerData player) {
+        return 1.0 + (points(player, "vigor") * 0.02);
+    }
+
+    public double getVigorDamageReduction(PlayerData player) {
+        return points(player, "vigor") * 0.0025;
+    }
+
+    public double getTenacityDamageMultiplier(PlayerData player) {
+        return 1.0 + (points(player, "tenacity") * 0.0075);
+    }
+
+    public double getTenacityCritDamageBonus(PlayerData player) {
+        return points(player, "tenacity") * 0.005;
+    }
+
+    public double getEnduranceStaminaMultiplier(PlayerData player) {
+        return 1.0 + (points(player, "endurance") * 0.02);
+    }
+
+    public double getEnduranceStaminaRegenBonus(PlayerData player) {
+        return points(player, "endurance") * 0.01;
+    }
+
+    public double getAgilitySpeedMultiplier(PlayerData player) {
+        return 1.0 + (points(player, "agility") * 0.0025);
+    }
+
+    public double getAgilityMeleeAttackSpeedBonus(PlayerData player) {
+        return points(player, "agility") * 0.0005;
+    }
+
+    public double getLuckCritChanceBonus(PlayerData player) {
+        return points(player, "luck") * 0.001;
+    }
+
+    public double getLuckXpMultiplier(PlayerData player) {
+        return 1.0 + (points(player, "luck") * 0.005);
+    }
+
+    public double getPlayerAbilityDamageMultiplier(PlayerData player) {
+        return getTenacityDamageMultiplier(player);
+    }
+
+    public double getPlayerSustainMultiplier(PlayerData player) {
+        return 1.0;
+    }
+
+    public String describePlayerStatGrowth(PlayerData player) {
+        if (player == null) {
+            return "No stat table loaded";
+        }
+        return "Points " + player.getUnspentStatPoints()
+                + " | Vigor HP +" + formatPercent(getVigorHealthMultiplier(player) - 1.0)
+                + " DR +" + formatPercent(getVigorDamageReduction(player))
+                + " | Tenacity DMG +" + formatPercent(getTenacityDamageMultiplier(player) - 1.0)
+                + " | Endurance STA +" + formatPercent(getEnduranceStaminaMultiplier(player) - 1.0)
+                + " | Agility SPD +" + formatPercent(getAgilitySpeedMultiplier(player) - 1.0)
+                + " | Luck XP +" + formatPercent(getLuckXpMultiplier(player) - 1.0);
+    }
+
+    public boolean spendStatPoint(PlayerData player, String statId, int points) {
+        if (player == null || points <= 0 || player.getUnspentStatPoints() < points) {
+            return false;
+        }
+        if (!player.getStatAllocation().add(statId, points)) {
+            return false;
+        }
+        player.setUnspentStatPoints(player.getUnspentStatPoints() - points);
+        return true;
+    }
+
+    public void reconcileProgressionState(PlayerData player) {
+        if (player == null) {
+            return;
+        }
+        int expectedEarned = Math.max(0, Math.min(STAT_CAP_LEVEL, player.getLevel())) * STAT_POINTS_PER_LEVEL;
+        if (player.getTotalStatPointsEarned() < expectedEarned) {
+            int delta = expectedEarned - player.getTotalStatPointsEarned();
+            player.setTotalStatPointsEarned(expectedEarned);
+            player.setUnspentStatPoints(player.getUnspentStatPoints() + delta);
+        }
+        int maxPerkChoices = getPerkChoicesEarned(player.getLevel());
+        if (player.getPerkSelectionPoints() < 0) {
+            player.setPerkSelectionPoints(0);
+        }
+        int spentOrRecorded = Math.max(player.getSelectedPerks().size(), player.getPerkSelectionHistory().size());
+        int pending = Math.max(0, maxPerkChoices - spentOrRecorded);
+        player.setPerkSelectionPoints(Math.max(player.getPerkSelectionPoints(), pending));
+        player.setPendingPerkTier(pending > 0 ? Math.min(maxPerkChoices, PerkManager.TOTAL_TIERS) : null);
+    }
+
+    public int getPerkChoicesEarned(int level) {
+        return Math.max(0, Math.min(level, PERK_CAP_LEVEL) / MILESTONE_INTERVAL);
+    }
+
+    private int points(PlayerData player, String statId) {
+        return player == null ? 0 : player.getStatAllocation().get(statId);
     }
 
     public int calculateAverageOnlineLevel(Collection<PlayerData> players) {
         if (players == null || players.isEmpty()) {
-            return 1;
+            return 0;
         }
 
         int totalLevels = 0;
@@ -111,21 +211,19 @@ public class LevelingManager {
             if (player == null) {
                 continue;
             }
-            totalLevels += Math.max(1, player.getLevel());
+            totalLevels += Math.max(0, player.getLevel());
             count++;
         }
 
         if (count == 0) {
-            return 1;
+            return 0;
         }
 
-        return Math.max(1, (int) Math.round(totalLevels / (double) count));
+        return Math.max(0, (int) Math.round(totalLevels / (double) count));
     }
 
     public String describePlayerStatGrowth(int level) {
-        return "HP +" + formatPercent(getPlayerMaxHealthMultiplier(level) - 1.0)
-                + " | Ability +" + formatPercent(getPlayerAbilityPowerMultiplier(level) - 1.0)
-                + " | Sustain +" + formatPercent(getPlayerSustainMultiplier(level) - 1.0);
+        return "Stat table based; use /motm stats for allocated bonuses.";
     }
 
     // --- XP Modifiers ---
@@ -217,8 +315,12 @@ public class LevelingManager {
     // --- Level Up Processing ---
 
     public void grantXp(PlayerData player, int xpAmount, String source) {
-        player.setCurrentXp(player.getCurrentXp() + xpAmount);
-        player.setTotalXpEarned(player.getTotalXpEarned() + xpAmount);
+        if (player == null || xpAmount <= 0 || player.getLevel() >= MAX_LEVEL) {
+            return;
+        }
+        int modifiedXp = Math.max(1, (int) Math.round(xpAmount * getLuckXpMultiplier(player)));
+        player.setCurrentXp(player.getCurrentXp() + modifiedXp);
+        player.setTotalXpEarned(player.getTotalXpEarned() + modifiedXp);
 
         while (player.getCurrentXp() >= calculateXpRequired(player.getLevel())
                 && player.getLevel() < MAX_LEVEL) {
@@ -227,7 +329,7 @@ public class LevelingManager {
 
         // TODO: Trigger XP_GAINED event via Hytale event bus
         // TODO: Show XP notification if player.getSettings().isShowXpNotifications()
-        LOG.fine("[MOTM] " + player.getPlayerName() + " gained " + xpAmount + " XP from: " + source);
+        LOG.fine("[MOTM] " + player.getPlayerName() + " gained " + modifiedXp + " XP from: " + source);
     }
 
     private void processLevelUp(PlayerData player) {
@@ -238,11 +340,16 @@ public class LevelingManager {
         player.setLevel(oldLevel + 1);
         int newLevel = player.getLevel();
 
+        if (newLevel <= STAT_CAP_LEVEL) {
+            player.setTotalStatPointsEarned(player.getTotalStatPointsEarned() + STAT_POINTS_PER_LEVEL);
+            player.setUnspentStatPoints(player.getUnspentStatPoints() + STAT_POINTS_PER_LEVEL);
+        }
+
         // Full health/mana restore handled by Hytale API hook
         // TODO: RecalculateStats(player) via ClassManager
 
         // Check for milestone (perk selection)
-        if (newLevel % MILESTONE_INTERVAL == 0) {
+        if (newLevel <= PERK_CAP_LEVEL && newLevel % MILESTONE_INTERVAL == 0) {
             onMilestoneReached(player, newLevel);
         }
 

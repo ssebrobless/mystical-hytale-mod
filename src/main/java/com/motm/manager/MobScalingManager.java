@@ -4,6 +4,7 @@ import com.motm.model.MobStats;
 import com.motm.util.DataLoader;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
@@ -125,6 +126,70 @@ public class MobScalingManager {
         return scaled;
     }
 
+    public MobStats scaleMobStatsWithStatPreset(MobStats baseStats, int mobLevel, String mobCategory, String preset) {
+        MobStats scaled = scaleMobStats(baseStats, Math.max(0, mobLevel), mobCategory);
+        return applyStatTablePreset(scaled, mobLevel, preset);
+    }
+
+    public MobStats scaleBossStatsWithStatPreset(MobStats baseStats, int mobLevel, String mobCategory, String preset) {
+        MobStats scaled = scaleBossStats(baseStats, Math.max(0, mobLevel), mobCategory);
+        return applyStatTablePreset(scaled, mobLevel, preset);
+    }
+
+    private MobStats applyStatTablePreset(MobStats stats, int mobLevel, String preset) {
+        if (stats == null) {
+            return null;
+        }
+
+        int points = Math.max(0, Math.min(LevelingManager.STAT_CAP_LEVEL, mobLevel))
+                * LevelingManager.STAT_POINTS_PER_LEVEL;
+        if (points <= 0) {
+            return stats;
+        }
+
+        StatDistribution distribution = distribute(points, preset);
+        MobStats adjusted = new MobStats(stats);
+        adjusted.setHealth(stats.getHealth() * (1.0 + distribution.vigor() * 0.02));
+        adjusted.setDamage(stats.getDamage() * (1.0 + distribution.tenacity() * 0.0075));
+        adjusted.setArmor(stats.getArmor() * (1.0 + distribution.vigor() * 0.0025));
+        adjusted.setMagicResist(stats.getMagicResist() * (1.0 + distribution.vigor() * 0.0025));
+        adjusted.setSpeed(stats.getSpeed() * (1.0 + distribution.agility() * 0.0025));
+        adjusted.setAttackSpeed(stats.getAttackSpeed() * (1.0 + distribution.agility() * 0.0005));
+        adjusted.setXpReward(stats.getXpReward() * (1.0 + distribution.luck() * 0.005));
+        return adjusted;
+    }
+
+    private StatDistribution distribute(int points, String preset) {
+        String priority = preset == null || preset.isBlank() ? "vigor" : preset.toLowerCase(java.util.Locale.ROOT);
+        int priorityPoints = (int) Math.round(points * 0.60);
+        int remaining = Math.max(0, points - priorityPoints);
+        int each = remaining / 4;
+        int extra = remaining % 4;
+        int vigor = each;
+        int tenacity = each;
+        int endurance = each;
+        int agility = each;
+        int luck = each;
+        switch (priority) {
+            case "tenacity" -> tenacity = priorityPoints;
+            case "endurance" -> endurance = priorityPoints;
+            case "agility" -> agility = priorityPoints;
+            case "luck" -> luck = priorityPoints;
+            default -> vigor = priorityPoints;
+        }
+        String[] order = {"vigor", "tenacity", "endurance", "agility", "luck"};
+        for (int i = 0; i < extra; i++) {
+            switch (order[i]) {
+                case "vigor" -> vigor++;
+                case "tenacity" -> tenacity++;
+                case "endurance" -> endurance++;
+                case "agility" -> agility++;
+                case "luck" -> luck++;
+            }
+        }
+        return new StatDistribution(vigor, tenacity, endurance, agility, luck);
+    }
+
     public MobStats scaleBossStats(MobStats baseStats, int playerLevel, String mobCategory) {
         if (!BOSS_SCALING_CATEGORIES.contains(mobCategory)) {
             return baseStats;
@@ -159,12 +224,23 @@ public class MobScalingManager {
     public int assignMobLevel(int playerLevel) {
         int baseLevel = (int) (playerLevel * 0.9);
         int variation = ThreadLocalRandom.current().nextInt(-2, 3); // -2 to +2
-        return Math.max(1, Math.min(200, baseLevel + variation));
+        return Math.max(0, Math.min(200, baseLevel + variation));
     }
 
     public int assignMobLevelForArea(int playerLevel, int areaLevelModifier) {
         int base = assignMobLevel(playerLevel);
-        return Math.max(1, Math.min(200, base + areaLevelModifier));
+        return Math.max(0, Math.min(200, base + areaLevelModifier));
+    }
+
+    public String chooseStatPreset(String mobType, int mobLevel) {
+        int seed = Math.abs(Objects.hash(mobType == null ? "" : mobType.toLowerCase(java.util.Locale.ROOT), mobLevel));
+        return switch (seed % 5) {
+            case 1 -> "tenacity";
+            case 2 -> "endurance";
+            case 3 -> "agility";
+            case 4 -> "luck";
+            default -> "vigor";
+        };
     }
 
     // --- Party Scaling ---
@@ -209,7 +285,7 @@ public class MobScalingManager {
     }
 
     public boolean canBecomeElite(String mobCategory) {
-        return "hostile".equals(mobCategory) || "neutral".equals(mobCategory);
+        return false;
     }
 
     public MobStats tryMakeElite(MobStats stats, String zone, String mobType) {
@@ -246,17 +322,25 @@ public class MobScalingManager {
     // --- Display Helpers ---
 
     public String formatMobName(String mobType, int level, String category) {
-        String displayName = formatDisplayName(mobType);
-        return switch (category) {
-            case "boss" -> "\u2605 [Lv. " + level + "] " + displayName + " \u2605";
-            case "mini_boss" -> "\u2B25 [Lv. " + level + "] " + displayName;
-            case "elite" -> "\u25C6 [Lv. " + level + "] " + displayName;
-            default -> "[Lv. " + level + "] " + displayName;
-        };
+        return getLevelTitle(level) + "\nLevel " + Math.max(0, Math.min(200, level));
     }
 
     public String formatEliteMobName(String mobType, int level, String eliteTitle) {
-        return "\u25C6 [Lv. " + level + "] " + eliteTitle + " " + formatDisplayName(mobType);
+        return formatMobName(mobType, level, "hostile");
+    }
+
+    public String getLevelTitle(int level) {
+        int clamped = Math.max(0, Math.min(200, level));
+        if (clamped <= 50) {
+            return "Intern";
+        }
+        if (clamped <= 100) {
+            return "Apprentice";
+        }
+        if (clamped <= 150) {
+            return "Journeyman";
+        }
+        return "Master";
     }
 
     /**
@@ -286,4 +370,6 @@ public class MobScalingManager {
         }
         return sb.toString();
     }
+
+    private record StatDistribution(int vigor, int tenacity, int endurance, int agility, int luck) {}
 }

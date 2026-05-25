@@ -271,6 +271,7 @@ public class MenteesMod extends JavaPlugin {
     private final Queue<TemporaryProofProxy> activeProofProxies = new ConcurrentLinkedQueue<>();
     private final Map<String, ActiveStyleTest> activeStyleTests = new ConcurrentHashMap<>();
     private final Set<String> freeCastPlayers = ConcurrentHashMap.newKeySet();
+    private final Set<String> startupSelectionProtectedPlayers = ConcurrentHashMap.newKeySet();
     private final Map<String, Long> recentSpellbookSlotInputs = new ConcurrentHashMap<>();
     private final Map<String, Double> lastAppliedTargetHealthByPlayer = new ConcurrentHashMap<>();
     private final Map<String, Float> lastObservedFreeCastHealthByPlayer = new ConcurrentHashMap<>();
@@ -329,7 +330,7 @@ public class MenteesMod extends JavaPlugin {
 
         LOG.info("========================================");
         LOG.info("  Mentees of the Mystical v1.0.0");
-        LOG.info("  4 Classes | 40 Styles | 800 Perks | Level 1-200");
+        LOG.info("  4 Classes | 40 Styles | 20 shared perk choices | Level 0-200");
         LOG.info("  Build Channel: " + MotmBuildInfo.BUILD_CHANNEL);
         LOG.info("========================================");
 
@@ -677,6 +678,10 @@ public class MenteesMod extends JavaPlugin {
             // TODO: Open class selection UI via Hytale's UI system
             LOG.info("[MOTM] " + playerName + " is a new player — showing class selection");
         }
+        if (!player.isStartupSelectionComplete()) {
+            startupSelectionProtectedPlayers.add(playerId);
+            LOG.info("[MOTM] " + playerName + " needs startup class/style selection");
+        }
     }
 
     public void onPlayerConnect(Player runtimePlayer) {
@@ -714,6 +719,14 @@ public class MenteesMod extends JavaPlugin {
                 queueSpellbookGrant(playerId);
             }
             refreshPlayerProgressionBonuses(playerId);
+            if (playerData.isStartupSelectionComplete()) {
+                startupSelectionProtectedPlayers.remove(playerId);
+            }
+        } else if (playerData != null && !playerData.isStartupSelectionComplete()) {
+            startupSelectionProtectedPlayers.add(playerId);
+            ensureSpellbookItem(runtimePlayer);
+            setRuntimeInvulnerability(runtimePlayer, true);
+            openSpellbook(runtimePlayer, SpellbookManager.Section.CLASS);
         }
 
         LOG.info("[MOTM] onPlayerConnect done dt=" + (System.currentTimeMillis() - t0)
@@ -741,6 +754,16 @@ public class MenteesMod extends JavaPlugin {
             if (!ensureSpellbookItem(runtimePlayer)) {
                 queueSpellbookGrant(playerId);
             }
+        }
+
+        PlayerData playerData = playerDataManager.getOnlinePlayer(playerId);
+        if (playerData != null && !playerData.isStartupSelectionComplete()) {
+            startupSelectionProtectedPlayers.add(playerId);
+            ensureSpellbookItem(runtimePlayer);
+            setRuntimeInvulnerability(runtimePlayer, true);
+            openSpellbook(runtimePlayer, playerData.getPlayerClass() == null
+                    ? SpellbookManager.Section.CLASS
+                    : SpellbookManager.Section.STYLE);
         }
 
         queueStatusHudInstall(playerId);
@@ -922,9 +945,10 @@ public class MenteesMod extends JavaPlugin {
         }
 
         // Scale stats
+        String statPreset = mobScalingManager.chooseStatPreset(mobType, mobLevel);
         var scaled = mobScalingManager.isBossCategory(category)
-                ? mobScalingManager.scaleBossStats(baseStats, progressionAnchorLevel, category)
-                : mobScalingManager.scaleMobStats(baseStats, progressionAnchorLevel, category);
+                ? mobScalingManager.scaleBossStatsWithStatPreset(baseStats, mobLevel, category, statPreset)
+                : mobScalingManager.scaleMobStatsWithStatPreset(baseStats, mobLevel, category, statPreset);
 
         // Apply party scaling
         if (player.getPartySize() > 1) {
@@ -936,13 +960,7 @@ public class MenteesMod extends JavaPlugin {
         if (isBloodMoon) scaled = mobScalingManager.applyBloodMoonBonus(scaled);
         if (isDungeon) scaled = mobScalingManager.applyDungeonBonus(scaled);
 
-        if (mobScalingManager.canBecomeElite(category)) {
-            scaled = mobScalingManager.tryMakeElite(scaled, zoneId, mobType);
-        }
-
-        String displayName = scaled.isElite() && scaled.getEliteTitle() != null
-                ? mobScalingManager.formatEliteMobName(mobType, mobLevel, scaled.getEliteTitle())
-                : mobScalingManager.formatMobName(mobType, mobLevel, category);
+        String displayName = mobScalingManager.formatMobName(mobType, mobLevel, category);
         String levelColor = mobScalingManager.getLevelColor(mobLevel, player.getLevel());
 
         return new ScaledMobResult(scaled, mobLevel, displayName, levelColor);
@@ -4090,10 +4108,18 @@ public class MenteesMod extends JavaPlugin {
         }
         if (playerData == null || playerData.getPlayerClass() == null) {
             clearPlayerLevelHealthBonus(runtimePlayer, playerId);
+            if (playerStatModifierManager != null) {
+                playerStatModifierManager.clearForPlayer(playerId);
+            }
             return;
         }
 
-        applyPlayerLevelHealthBonus(runtimePlayer, playerData);
+        levelingManager.reconcileProgressionState(playerData);
+        clearPlayerLevelHealthBonus(runtimePlayer, playerId);
+        if (playerStatModifierManager != null) {
+            playerStatModifierManager.rebuildFromProgression(playerData);
+            perkManager.applyAllOwnedPerks(playerData);
+        }
     }
 
     private void clearPlayerLevelHealthBonus(Player runtimePlayer, String playerId) {
@@ -4220,7 +4246,7 @@ public class MenteesMod extends JavaPlugin {
 
     private int calculateAverageOnlinePlayerLevelForWorld(World world) {
         if (world == null) {
-            return 1;
+            return 0;
         }
 
         int totalLevels = 0;
@@ -4236,7 +4262,7 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
-            totalLevels += Math.max(1, playerData.getLevel());
+            totalLevels += Math.max(0, playerData.getLevel());
             count++;
         }
 
@@ -4244,7 +4270,7 @@ public class MenteesMod extends JavaPlugin {
             return getAverageOnlinePlayerLevel();
         }
 
-        return Math.max(1, (int) Math.round(totalLevels / (double) count));
+        return Math.max(0, (int) Math.round(totalLevels / (double) count));
     }
 
     private long resolveStyleTestDelayMs(AbilityData ability) {
@@ -4414,14 +4440,14 @@ public class MenteesMod extends JavaPlugin {
 
     private int resolveMobScalingAnchorLevel(String category, String playerId, com.motm.model.PlayerData player) {
         if (player == null) {
-            return 1;
+            return 0;
         }
 
         if (!mobScalingManager.isScalingCategory(category) && !mobScalingManager.isBossCategory(category)) {
             return player.getLevel();
         }
 
-        return Math.max(1, getAverageOnlinePlayerLevelForPlayer(playerId));
+        return Math.max(0, getAverageOnlinePlayerLevelForPlayer(playerId));
     }
 
     private boolean isPlayerCrouching(Player player) {
@@ -5465,6 +5491,29 @@ public class MenteesMod extends JavaPlugin {
     public String getBuildChannel() { return MotmBuildInfo.BUILD_CHANNEL; }
     public boolean isFreeCastEnabled(String playerId) {
         return playerId != null && freeCastPlayers.contains(playerId);
+    }
+    public boolean isStartupSelectionProtected(String playerId) {
+        return playerId != null && startupSelectionProtectedPlayers.contains(playerId);
+    }
+    public void completeStartupSelection(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return;
+        }
+        PlayerData player = playerDataManager.getOnlinePlayer(playerId);
+        if (player != null
+                && player.getPlayerClass() != null
+                && player.getSelectedStyles() != null
+                && !player.getSelectedStyles().isEmpty()) {
+            player.setFirstJoin(false);
+            player.setStartupSelectionComplete(true);
+            player.setPendingStartupClass(null);
+            playerDataManager.savePlayerData(player);
+        }
+        startupSelectionProtectedPlayers.remove(playerId);
+        Player runtimePlayer = onlineRuntimePlayers.get(playerId);
+        if (runtimePlayer != null && !isFreeCastEnabled(playerId)) {
+            setRuntimeInvulnerability(runtimePlayer, false);
+        }
     }
     public void setFreeCastEnabled(String playerId, boolean enabled) {
         if (playerId == null || playerId.isBlank()) {

@@ -17,11 +17,11 @@ public class PerkManager {
 
     private static final Logger LOG = Logger.getLogger("MOTM");
 
-    public static final int PERKS_PER_TIER = 10;
-    public static final int PERKS_TO_SELECT = 3;
-    public static final int TOTAL_TIERS = 20;
+    public static final int PERKS_PER_TIER = 20;
+    public static final int PERKS_TO_SELECT = 1;
+    public static final int TOTAL_TIERS = 10;
     public static final int MILESTONE_INTERVAL = 10;
-    public static final int MAX_TOTAL_PERKS = 60;
+    public static final int MAX_TOTAL_PERKS = 10;
 
     private final DataLoader dataLoader;
     private final PlayerStatModifierManager statModifiers;
@@ -35,7 +35,7 @@ public class PerkManager {
 
     public int getCurrentTier(int playerLevel) {
         if (playerLevel < 10) return 0;
-        return Math.min(playerLevel / MILESTONE_INTERVAL, TOTAL_TIERS);
+        return Math.min(Math.min(playerLevel, LevelingManager.PERK_CAP_LEVEL) / MILESTONE_INTERVAL, TOTAL_TIERS);
     }
 
     public int getMilestoneLevel(int tier) {
@@ -43,13 +43,13 @@ public class PerkManager {
     }
 
     public boolean hasPendingPerkSelection(PlayerData player) {
-        int currentTier = getCurrentTier(player.getLevel());
-        int completedSelections = player.getPerkSelectionHistory().size();
-        return currentTier > completedSelections;
+        return player != null
+                && player.getSelectedPerks().size() < MAX_TOTAL_PERKS
+                && getCurrentTier(player.getLevel()) > player.getSelectedPerks().size();
     }
 
     public int getPendingSelectionTier(PlayerData player) {
-        int completedSelections = player.getPerkSelectionHistory().size();
+        int completedSelections = player.getSelectedPerks().size();
         int nextTier = completedSelections + 1;
         if (nextTier <= getCurrentTier(player.getLevel())) {
             return nextTier;
@@ -63,9 +63,8 @@ public class PerkManager {
         int pendingTier = getPendingSelectionTier(player);
         if (pendingTier == 0) return Collections.emptyList();
 
-        List<Perk> classPerks = dataLoader.getPerksForClass(player.getPlayerClass());
-        return classPerks.stream()
-                .filter(p -> p.getTier() == pendingTier)
+        return dataLoader.getSharedPerkPool().stream()
+                .filter(p -> !player.getSelectedPerks().contains(p.getId()))
                 .collect(Collectors.toList());
     }
 
@@ -74,9 +73,9 @@ public class PerkManager {
     public ValidationResult validatePerkSelection(PlayerData player, List<String> selectedPerkIds) {
         ValidationResult result = new ValidationResult();
 
-        // Check 1: Exactly 3 perks
+        // Check 1: Exactly one perk per milestone choice.
         if (selectedPerkIds.size() != PERKS_TO_SELECT) {
-            result.addError("Must select exactly " + PERKS_TO_SELECT + " perks");
+            result.addError("Must select exactly " + PERKS_TO_SELECT + " perk");
             return result;
         }
 
@@ -87,7 +86,12 @@ public class PerkManager {
             return result;
         }
 
-        // Check 3: All perks from correct tier
+        if (player.getSelectedPerks().size() >= MAX_TOTAL_PERKS) {
+            result.addError("Maximum selected perks reached");
+            return result;
+        }
+
+        // Check 3: All perks from the shared 20-perk pool
         List<Perk> available = getAvailablePerks(player);
         Set<String> availableIds = available.stream()
                 .map(Perk::getId)
@@ -136,7 +140,7 @@ public class PerkManager {
 
         // Apply perk effects
         for (String perkId : selectedPerkIds) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk != null) {
                 applyPerkEffects(player, perk);
             }
@@ -146,8 +150,11 @@ public class PerkManager {
         // the queued world-thread rebuild after command selection completes.
         synergyEngine.recalculateSynergies(player);
 
-        LOG.info("[MOTM] " + player.getPlayerName() + " selected Tier " + pendingTier
-                + " perks: " + selectedPerkIds);
+        player.setPerkSelectionPoints(Math.max(0, player.getPerkSelectionPoints() - 1));
+        player.setPendingPerkTier(hasPendingPerkSelection(player) ? getPendingSelectionTier(player) : null);
+
+        LOG.info("[MOTM] " + player.getPlayerName() + " selected perk choice " + pendingTier
+                + ": " + selectedPerkIds);
         return true;
     }
 
@@ -175,7 +182,7 @@ public class PerkManager {
 
         List<Perk> ownedPerks = new ArrayList<>();
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk != null) {
                 ownedPerks.add(perk);
             }
@@ -187,7 +194,7 @@ public class PerkManager {
 
     public void reapplyAllPerks(PlayerData player, SynergyEngine synergyEngine) {
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk != null) {
                 applyPerkEffects(player, perk);
             }
@@ -201,7 +208,7 @@ public class PerkManager {
     public List<Perk> getPlayerPerksForTier(PlayerData player, int tier) {
         List<Perk> result = new ArrayList<>();
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk != null && perk.getTier() == tier) {
                 result.add(perk);
             }
@@ -212,7 +219,7 @@ public class PerkManager {
     public List<Perk> getPerksByTag(PlayerData player, String tag) {
         List<Perk> result = new ArrayList<>();
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk != null && perk.getSynergyTags() != null && perk.getSynergyTags().contains(tag)) {
                 result.add(perk);
             }
@@ -223,7 +230,7 @@ public class PerkManager {
     public Map<String, Integer> countPerkTags(PlayerData player) {
         Map<String, Integer> tagCounts = new HashMap<>();
         for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkById(perkId, player.getPlayerClass());
+            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
             if (perk != null && perk.getSynergyTags() != null) {
                 for (String tag : perk.getSynergyTags()) {
                     tagCounts.merge(tag, 1, Integer::sum);
@@ -234,7 +241,7 @@ public class PerkManager {
     }
 
     public int getRemainingPerkSlots(PlayerData player) {
-        int maxPerks = getCurrentTier(player.getLevel()) * PERKS_TO_SELECT;
+        int maxPerks = Math.min(MAX_TOTAL_PERKS, getCurrentTier(player.getLevel()) * PERKS_TO_SELECT);
         return maxPerks - player.getSelectedPerks().size();
     }
 

@@ -88,7 +88,7 @@ public class SpellbookManager {
         sb.append("Level: ").append(player.getLevel()).append(" | XP: ")
                 .append(player.getCurrentXp()).append("/")
                 .append(levelingManager.calculateXpRequired(player.getLevel())).append("\n");
-        sb.append("Growth: ").append(levelingManager.describePlayerStatGrowth(player.getLevel())).append("\n");
+        sb.append("Stats: ").append(levelingManager.describePlayerStatGrowth(player)).append("\n");
         sb.append("+--------------------------------------+\n");
         sb.append("| Next                                 |\n");
         sb.append("+--------------------------------------+\n");
@@ -212,13 +212,13 @@ public class SpellbookManager {
         if (perkManager.hasPendingPerkSelection(player)) {
             int pendingTier = perkManager.getPendingSelectionTier(player);
             List<Perk> available = perkManager.getAvailablePerks(player);
-            sb.append("Pending Tier: ").append(pendingTier).append(" (pick 3 of 10)\n");
+            sb.append("Pending Choice: ").append(pendingTier).append(" (pick 1 from shared pool)\n");
             sb.append("Available:\n");
             for (int i = 0; i < available.size(); i++) {
                 Perk perk = available.get(i);
                 sb.append("  [").append(i + 1).append("] ").append(perk.getName()).append("\n");
             }
-            sb.append("Use: /motm perks | /motm select 1 4 7\n");
+            sb.append("Use: /motm perks | /motm select 4\n");
         } else {
             int nextTier = currentTier + 1;
             if (nextTier <= PerkManager.TOTAL_TIERS) {
@@ -240,11 +240,12 @@ public class SpellbookManager {
         sb.append("XP: ").append(player.getCurrentXp()).append("/")
                 .append(levelingManager.calculateXpRequired(player.getLevel())).append("\n");
         sb.append("Total XP Earned: ").append(player.getTotalXpEarned()).append("\n");
-        sb.append("Growth: ").append(levelingManager.describePlayerStatGrowth(player.getLevel())).append("\n");
-        sb.append("Perks Chosen: ").append(player.getSelectedPerks().size()).append(" / 60\n");
+        sb.append("Stats: ").append(levelingManager.describePlayerStatGrowth(player)).append("\n");
+        sb.append("Perks Chosen: ").append(player.getSelectedPerks().size()).append(" / ")
+                .append(PerkManager.MAX_TOTAL_PERKS).append("\n");
         sb.append("Achievements: ").append(player.getAchievements().size()).append("\n");
         sb.append("Next Step: ").append(getNextStep(player)).append("\n");
-        sb.append("Mob Scaling: enemies scale from player progression and elite-title rules.");
+        sb.append("Mob Scaling: enemies use level title bands and internal stat presets; mobs never receive perks.");
         return sb.toString();
     }
 

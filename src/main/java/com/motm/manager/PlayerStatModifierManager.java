@@ -2,10 +2,12 @@ package com.motm.manager;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.Modifier;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.StaticModifier;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.MenteesMod;
 import com.motm.model.Perk;
@@ -21,9 +23,12 @@ public class PlayerStatModifierManager {
 
     private static final Logger LOG = Logger.getLogger("MOTM");
     private static final String MODIFIER_PREFIX = "motm_perk_";
+    private static final String STAT_MODIFIER_PREFIX = "motm_stat_";
 
     private final MenteesMod mod;
     private final Map<String, Map<String, Integer>> ownedModifiers = new HashMap<>();
+    private final Map<String, Map<String, Integer>> ownedProgressionModifiers = new HashMap<>();
+    private final Map<String, MovementSettingsSnapshot> progressionMovementSnapshots = new HashMap<>();
 
     public PlayerStatModifierManager(MenteesMod mod) {
         this.mod = mod;
@@ -75,7 +80,54 @@ public class PlayerStatModifierManager {
             return;
         }
         clearOwnedModifiers(playerId);
+        clearProgressionModifiers(playerId);
         mod.clearPerkTriggers(playerId);
+    }
+
+    public synchronized void rebuildFromProgression(PlayerData player) {
+        if (player == null || player.getPlayerId() == null) {
+            return;
+        }
+
+        String playerId = player.getPlayerId();
+        clearProgressionModifiers(playerId);
+
+        Player runtimePlayer = mod.getRuntimePlayer(playerId);
+        if (runtimePlayer == null) {
+            LOG.info("[MOTM] Rebuilt progression stat modifiers: player=" + playerId
+                    + " runtimePlayer=false");
+            return;
+        }
+
+        EntityStatMap statMap = getStatMap(runtimePlayer);
+        int applied = 0;
+        if (statMap != null) {
+            applied += applyProgressionStat(playerId, statMap, "vigor_health",
+                    DefaultEntityStatTypes.getHealth(),
+                    mod.getLevelingManager().getVigorHealthMultiplier(player));
+            applied += applyProgressionStat(playerId, statMap, "endurance_stamina",
+                    DefaultEntityStatTypes.getStamina(),
+                    mod.getLevelingManager().getEnduranceStaminaMultiplier(player));
+        }
+
+        boolean speedApplied = applyProgressionMovement(playerId, runtimePlayer, player);
+        LOG.info("[MOTM] Rebuilt progression stat modifiers: player=" + playerId
+                + " allocated=" + player.getStatAllocation().totalAllocated()
+                + " nativeModifiers=" + applied
+                + " movementApplied=" + speedApplied
+                + " unspent=" + player.getUnspentStatPoints());
+    }
+
+    public double getDamageReduction(PlayerData player) {
+        return mod.getLevelingManager().getVigorDamageReduction(player);
+    }
+
+    public double getDamageMultiplier(PlayerData player) {
+        return mod.getLevelingManager().getTenacityDamageMultiplier(player);
+    }
+
+    public double getXpMultiplier(PlayerData player) {
+        return mod.getLevelingManager().getLuckXpMultiplier(player);
     }
 
     private boolean applyOneEffect(String playerId, EntityStatMap statMap, Perk perk, Perk.Effect effect) {
@@ -158,6 +210,116 @@ public class PlayerStatModifierManager {
         }
     }
 
+    private void clearProgressionModifiers(String playerId) {
+        restoreProgressionMovement(playerId);
+        Map<String, Integer> modifiers = ownedProgressionModifiers.remove(playerId);
+        if (modifiers == null || modifiers.isEmpty()) {
+            return;
+        }
+
+        Player runtimePlayer = mod.getRuntimePlayer(playerId);
+        EntityStatMap statMap = getStatMap(runtimePlayer);
+        if (statMap == null) {
+            return;
+        }
+
+        for (Map.Entry<String, Integer> entry : modifiers.entrySet()) {
+            statMap.removeModifier(entry.getValue(), entry.getKey());
+        }
+    }
+
+    private int applyProgressionStat(String playerId,
+                                     EntityStatMap statMap,
+                                     String id,
+                                     int statType,
+                                     double multiplier) {
+        String modifierId = STAT_MODIFIER_PREFIX + id;
+        statMap.removeModifier(statType, modifierId);
+        if (!Double.isFinite(multiplier) || Math.abs(multiplier - 1.0) < 0.0001) {
+            return 0;
+        }
+        statMap.putModifier(statType, modifierId,
+                new StaticModifier(Modifier.ModifierTarget.MAX,
+                        StaticModifier.CalculationType.MULTIPLICATIVE,
+                        (float) multiplier));
+        ownedProgressionModifiers.computeIfAbsent(playerId, ignored -> new HashMap<>()).put(modifierId, statType);
+        return 1;
+    }
+
+    private boolean applyProgressionMovement(String playerId, Player runtimePlayer, PlayerData player) {
+        if (runtimePlayer == null || player == null) {
+            return false;
+        }
+        double multiplier = mod.getLevelingManager().getAgilitySpeedMultiplier(player);
+        if (!Double.isFinite(multiplier) || Math.abs(multiplier - 1.0) < 0.0001) {
+            return false;
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return false;
+        }
+        MovementManager movementManager = playerRef.getStore().getComponent(playerRef, MovementManager.getComponentType());
+        if (movementManager == null || movementManager.getSettings() == null) {
+            return false;
+        }
+        var settings = movementManager.getSettings();
+        MovementSettingsSnapshot snapshot = progressionMovementSnapshots.computeIfAbsent(
+                playerId,
+                ignored -> MovementSettingsSnapshot.from(settings)
+        );
+        float value = (float) multiplier;
+        settings.baseSpeed = snapshot.baseSpeed() * value;
+        settings.forwardWalkSpeedMultiplier = snapshot.forwardWalkSpeedMultiplier() * value;
+        settings.backwardWalkSpeedMultiplier = snapshot.backwardWalkSpeedMultiplier() * value;
+        settings.strafeWalkSpeedMultiplier = snapshot.strafeWalkSpeedMultiplier() * value;
+        settings.forwardRunSpeedMultiplier = snapshot.forwardRunSpeedMultiplier() * value;
+        settings.backwardRunSpeedMultiplier = snapshot.backwardRunSpeedMultiplier() * value;
+        settings.strafeRunSpeedMultiplier = snapshot.strafeRunSpeedMultiplier() * value;
+        settings.forwardSprintSpeedMultiplier = snapshot.forwardSprintSpeedMultiplier() * value;
+        settings.acceleration = snapshot.acceleration() * value;
+        updateMovementManager(playerRef, playerRef.getStore(), movementManager);
+        return true;
+    }
+
+    private void restoreProgressionMovement(String playerId) {
+        MovementSettingsSnapshot snapshot = progressionMovementSnapshots.remove(playerId);
+        if (snapshot == null) {
+            return;
+        }
+        Player runtimePlayer = mod.getRuntimePlayer(playerId);
+        if (runtimePlayer == null) {
+            return;
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return;
+        }
+        MovementManager movementManager = playerRef.getStore().getComponent(playerRef, MovementManager.getComponentType());
+        if (movementManager == null || movementManager.getSettings() == null) {
+            return;
+        }
+        var settings = movementManager.getSettings();
+        settings.baseSpeed = snapshot.baseSpeed();
+        settings.forwardWalkSpeedMultiplier = snapshot.forwardWalkSpeedMultiplier();
+        settings.backwardWalkSpeedMultiplier = snapshot.backwardWalkSpeedMultiplier();
+        settings.strafeWalkSpeedMultiplier = snapshot.strafeWalkSpeedMultiplier();
+        settings.forwardRunSpeedMultiplier = snapshot.forwardRunSpeedMultiplier();
+        settings.backwardRunSpeedMultiplier = snapshot.backwardRunSpeedMultiplier();
+        settings.strafeRunSpeedMultiplier = snapshot.strafeRunSpeedMultiplier();
+        settings.forwardSprintSpeedMultiplier = snapshot.forwardSprintSpeedMultiplier();
+        settings.acceleration = snapshot.acceleration();
+        updateMovementManager(playerRef, playerRef.getStore(), movementManager);
+    }
+
+    private void updateMovementManager(Ref<EntityStore> entityRef,
+                                       com.hypixel.hytale.component.Store<EntityStore> store,
+                                       MovementManager movementManager) {
+        PlayerRef universePlayerRef = store.getComponent(entityRef, PlayerRef.getComponentType());
+        if (universePlayerRef != null && universePlayerRef.getPacketHandler() != null) {
+            movementManager.update(universePlayerRef.getPacketHandler());
+        }
+    }
+
     private EntityStatMap getStatMap(Player runtimePlayer) {
         if (runtimePlayer == null) {
             return null;
@@ -200,5 +362,31 @@ public class PlayerStatModifierManager {
     }
 
     private record StatTarget(String name, int statType, boolean healthLike) {
+    }
+
+    private record MovementSettingsSnapshot(
+            float baseSpeed,
+            float forwardWalkSpeedMultiplier,
+            float backwardWalkSpeedMultiplier,
+            float strafeWalkSpeedMultiplier,
+            float forwardRunSpeedMultiplier,
+            float backwardRunSpeedMultiplier,
+            float strafeRunSpeedMultiplier,
+            float forwardSprintSpeedMultiplier,
+            float acceleration
+    ) {
+        static MovementSettingsSnapshot from(com.hypixel.hytale.protocol.MovementSettings settings) {
+            return new MovementSettingsSnapshot(
+                    settings.baseSpeed,
+                    settings.forwardWalkSpeedMultiplier,
+                    settings.backwardWalkSpeedMultiplier,
+                    settings.strafeWalkSpeedMultiplier,
+                    settings.forwardRunSpeedMultiplier,
+                    settings.backwardRunSpeedMultiplier,
+                    settings.strafeRunSpeedMultiplier,
+                    settings.forwardSprintSpeedMultiplier,
+                    settings.acceleration
+            );
+        }
     }
 }

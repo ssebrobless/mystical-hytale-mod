@@ -101,11 +101,43 @@ public class DataLoader {
         return perkCache.getOrDefault(classId, Collections.emptyList());
     }
 
+    public List<Perk> getSharedPerkPool() {
+        List<Perk> shared = new ArrayList<>();
+        String[] classIds = {"terra", "hydro", "aero", "corruptus"};
+        for (String classId : classIds) {
+            List<Perk> themed = getPerksForClass(classId).stream()
+                    .filter(perk -> perk != null && perk.getTier() == 1)
+                    .limit(5)
+                    .toList();
+            shared.addAll(themed);
+        }
+        return Collections.unmodifiableList(shared);
+    }
+
     public Perk getPerkById(String perkId, String classId) {
         List<Perk> perks = getPerksForClass(classId);
         for (Perk perk : perks) {
             if (perk.getId().equals(perkId)) {
                 return perk;
+            }
+        }
+        return null;
+    }
+
+    public Perk getPerkByIdAnyClass(String perkId) {
+        if (perkId == null || perkId.isBlank()) {
+            return null;
+        }
+        for (Perk perk : getSharedPerkPool()) {
+            if (perk != null && perkId.equalsIgnoreCase(perk.getId())) {
+                return perk;
+            }
+        }
+        for (List<Perk> perks : perkCache.values()) {
+            for (Perk perk : perks) {
+                if (perk != null && perkId.equalsIgnoreCase(perk.getId())) {
+                    return perk;
+                }
             }
         }
         return null;
