@@ -1,0 +1,18 @@
+﻿[2026/05/22 03:40:09   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=gust hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 03:40:09   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=gust notifyFailures=true
+[2026/05/22 03:40:09   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=gust
+[2026/05/22 03:40:09   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=gust result=[MOTM] Cast Gust! Runtime: aero cast visuals | launched 1 projectile at 26.0m/s.
+[2026/05/22 03:40:15   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=cyclone_shield hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4976}
+[2026/05/22 03:40:15   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=cyclone_shield notifyFailures=true
+[2026/05/22 03:40:15   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=cyclone_shield
+[2026/05/22 03:40:15   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=cyclone_shield result=[MOTM] Cast Cyclone Shield! Runtime: aero cast visuals | cyclone shield aura | radius 3.8m | 6s | shield 24.8 | self defense buff | weapon follow-up ready x2 via Cyclone Shield.
+[2026/05/22 03:40:21   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=tempest hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4976}
+[2026/05/22 03:40:21   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=tempest notifyFailures=true
+[2026/05/22 03:40:21   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=tempest
+[2026/05/22 03:40:21   INFO]                  [MOTM] [MOTM] Tempest impact effects applied: target=e07ad339-015b-3c1f-a9b5-5c52eaf34f41 stun=true slow=true
+[2026/05/22 03:40:21   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=e07ad339-015b-3c1f-a9b5-5c52eaf34f41 mobType=Goblin_Scrapper
+[2026/05/22 03:40:21   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 03:40:21   INFO]                  [MOTM] [MOTM] Tempest impact effects applied: target=3330aa42-aaed-318e-9967-9c82d1633071 stun=true slow=true
+[2026/05/22 03:40:21   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=3330aa42-aaed-318e-9967-9c82d1633071 mobType=Bat
+[2026/05/22 03:40:21   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Bat, using default 50
+[2026/05/22 03:40:21   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=tempest result=[MOTM] Cast Tempest! Runtime: aero cast visuals | field active for 4s | radius 6.0m | pull 1.7m pulse | 2 hits for 68.0 damage.

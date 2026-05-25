@@ -5,7 +5,7 @@
       "name": "Icicle",
       "class_id": "hydro",
       "theme": "Rapid attacks, stacking slow",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "frozen_needles",
@@ -20,7 +20,7 @@
             "damage",
             "debuff"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "projectile_volley",
           "target_type": "enemy",
           "range": 18,
@@ -41,7 +41,7 @@
             "damage",
             "debuff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "ground_strike",
           "target_type": "ground_target",
           "range": 14,
@@ -62,7 +62,7 @@
           "categories": [
             "evasion"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "dash_buff",
           "target_type": "self",
           "dash_distance": 8,
@@ -77,7 +77,7 @@
       "name": "Snow",
       "class_id": "hydro",
       "theme": "Minions, AoE slow",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "snow_imp",
@@ -92,7 +92,7 @@
             "summon",
             "damage"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
@@ -113,7 +113,7 @@
             "damage",
             "debuff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 12,
@@ -133,7 +133,7 @@
           "categories": [
             "summon"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
@@ -148,7 +148,7 @@
       "name": "Surf",
       "class_id": "hydro",
       "theme": "Waves, knockback, mobility",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "high_tide",
@@ -158,12 +158,12 @@
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.35,
           "recovery_seconds": 0.24,
-          "effect": "knockback",
+          "effect": "knockback+speed",
           "categories": [
             "damage",
             "crowd_control"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "wave_line",
           "target_type": "line",
           "range": 14,
@@ -185,7 +185,7 @@
             "buff"
           ],
           "shield_percent": 20,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 5,
@@ -205,7 +205,7 @@
             "damage",
             "debuff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "line_control",
           "target_type": "enemy",
           "range": 15,
@@ -219,7 +219,7 @@
       "name": "Rain",
       "class_id": "hydro",
       "theme": "Sustain, auto-healing, splash damage",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "piercing_rain",
@@ -235,7 +235,7 @@
             "buff",
             "aoe"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 14,
@@ -256,7 +256,7 @@
             "healing"
           ],
           "heal_percent": 10,
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "support_zone",
           "target_type": "ground_target",
           "range": 12,
@@ -278,7 +278,7 @@
             "shielding"
           ],
           "shield_percent": 20,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "projectile_burst",
           "target_type": "enemy",
           "range": 12,
@@ -293,7 +293,7 @@
       "name": "Boiling",
       "class_id": "hydro",
       "theme": "Steam, burns, explosive damage",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "scald",
@@ -308,7 +308,7 @@
             "dot",
             "crowd_control"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "projectile",
           "target_type": "enemy",
           "range": 14,
@@ -328,7 +328,7 @@
           "categories": [
             "dot"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "ground_strike",
           "target_type": "ground_target",
           "range": 12,
@@ -352,7 +352,7 @@
             "buff",
             "self_damage"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 8,
@@ -365,7 +365,7 @@
       "name": "Vapor",
       "class_id": "hydro",
       "theme": "Evasion, mist, intangibility",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "vapor_vanish",
@@ -379,7 +379,7 @@
           "categories": [
             "evasion"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 5,
@@ -399,7 +399,7 @@
           ],
           "charges": 3,
           "charge_recharge_seconds": 3.0,
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "dash",
           "target_type": "enemy",
           "range": 11,
@@ -418,7 +418,7 @@
           "categories": [
             "evasion"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 7,
@@ -431,7 +431,7 @@
       "name": "Iceberg",
       "class_id": "hydro",
       "theme": "Heavy ice, freezing, defense",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "ice_cap",
@@ -447,7 +447,7 @@
             "crowd_control"
           ],
           "shield_percent": 25,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 6,
@@ -465,7 +465,7 @@
           "categories": [
             "buff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "barrier",
           "target_type": "line",
           "range": 8,
@@ -488,7 +488,7 @@
             "crowd_control",
             "debuff"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "ground_strike",
           "target_type": "ground_target",
           "range": 14,
@@ -504,7 +504,7 @@
       "name": "Saltwater",
       "class_id": "hydro",
       "theme": "Ocean, tides, debuffs",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "tide_pool",
@@ -519,7 +519,7 @@
             "buff",
             "debuff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 10,
@@ -541,7 +541,7 @@
             "crowd_control",
             "debuff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "ground_burst",
           "target_type": "enemy",
           "range": 14,
@@ -562,7 +562,7 @@
             "damage",
             "debuff"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "line_control",
           "target_type": "enemy",
           "range": 16,
@@ -577,7 +577,7 @@
       "name": "Freshwater",
       "class_id": "hydro",
       "theme": "Rivers, mobility, summons",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "leap_frog",
@@ -595,7 +595,7 @@
           ],
           "charges": 2,
           "charge_recharge_seconds": 4.0,
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "dash",
           "target_type": "enemy",
           "range": 9,
@@ -611,11 +611,11 @@
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "attack_buff",
+          "effect": "attack_buff+speed",
           "categories": [
             "buff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 8,
@@ -634,7 +634,7 @@
           "categories": [
             "summon"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
@@ -649,7 +649,7 @@
       "name": "Bilgewater",
       "class_id": "hydro",
       "theme": "Filth, corrosion, naval warfare",
-      "resource_type": "water",
+      "resource_type": "",
       "abilities": [
         {
           "id": "bilge_dump",
@@ -664,7 +664,7 @@
             "dot",
             "debuff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "cone",
           "target_type": "cone",
           "range": 10,
@@ -685,7 +685,7 @@
             "damage",
             "crowd_control"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "projectile_line",
           "target_type": "enemy",
           "range": 14,
@@ -706,7 +706,7 @@
           "categories": [
             "buff"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 8,

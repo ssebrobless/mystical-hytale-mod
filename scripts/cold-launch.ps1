@@ -4,7 +4,10 @@ param(
     [switch]$SkipLogRotate,
     [switch]$SkipClassAudit,
     [switch]$LaunchAndLoad,
-    [switch]$Setup
+    [switch]$Setup,
+    [switch]$EnsureFlatlands,
+    [ValidateSet("Direct", "Launcher", "Auto")]
+    [string]$LaunchStrategy = "Direct"
 )
 
 $ErrorActionPreference = "Stop"
@@ -101,13 +104,19 @@ if (-not $SkipLogRotate) {
 Write-Host "[cold-launch] PASS: Hytale stopped, classes audited, logs prepared."
 
 if ($LaunchAndLoad) {
-    & (Join-Path $PSScriptRoot "start-hytale.ps1") -WorldName $WorldName -Strategy Launcher
+    & (Join-Path $PSScriptRoot "start-hytale.ps1") -WorldName $WorldName -Strategy $LaunchStrategy
     if ($LASTEXITCODE -ne 0) {
         throw "start-hytale failed."
     }
     & (Join-Path $PSScriptRoot "load-world.ps1") -WorldName $WorldName
     if ($LASTEXITCODE -ne 0) {
         throw "load-world failed."
+    }
+    if ($EnsureFlatlands) {
+        & (Join-Path $PSScriptRoot "ensure-flatlands.ps1")
+        if ($LASTEXITCODE -ne 0) {
+            throw "ensure-flatlands failed."
+        }
     }
     if ($Setup) {
         & (Join-Path $PSScriptRoot "setup-test-world.ps1") -WorldName $WorldName

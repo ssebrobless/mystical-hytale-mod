@@ -7,7 +7,7 @@ Current Truth
 ╠═══════════════════════════════ Live Now ════════════════════════════╣
 ║ selectable by class/style                                          ║
 ║ MOTM cooldown + recovery timing                                    ║
-║ resource spending                                                  ║
+║ no-resource casting via cooldowns, durations, charges, and timing ║
 ║ generic damage / heal / shield / buff / debuff resolution          ║
 ║ generic cone / line / area / chain hit checks                      ║
 ║ movement casts                                                     ║
@@ -119,7 +119,7 @@ Finish Order
 ### 8. Final Style-by-Style Validation
 
 - [ ] For every style, verify:
-  cast timing, cooldown, resource drain, HUD slot state, hit resolution, VFX, summary text, and edge-case behavior.
+  cast timing, cooldown, no-resource state, HUD slot state, hit resolution, VFX, summary text, and edge-case behavior.
 
 ## Style Queue
 

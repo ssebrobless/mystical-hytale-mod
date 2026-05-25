@@ -15,7 +15,7 @@ public class StyleData {
     private String classId;
     private String theme;
     @SerializedName("resource_type")
-    private String resourceType; // rocks, water, tp, souls, etc.
+    private String resourceType; // Legacy casting resource id; blank while resource costs are disabled.
     private List<AbilityData> abilities;
 
     public String getId() { return id; }

@@ -1,0 +1,48 @@
+﻿[2026/05/22 01:47:01   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 01:47:02   INFO]        [CommandManager] imseb executed command: motm dev class set terra
+[2026/05/22 01:47:02   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:47:02   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:47:02   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:47:02   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:47:02   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:47:04   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 01:47:04   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:47:04   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:47:04   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:47:04   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:47:04   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:47:06   INFO]        [CommandManager] imseb executed command: motm style gem
+[2026/05/22 01:47:06   INFO]                  [MOTM] [MOTM] imseb selected styles: [gem]
+[2026/05/22 01:47:06   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:47:06   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[gem]
+[2026/05/22 01:47:06   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:47:06   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:47:06   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[gem]
+[2026/05/22 01:47:06   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 01:47:07   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:47:07   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:47:07   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:47:07   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Goblin_Scrapper, modelAssetId=Goblin_Scrapper
+[2026/05/22 01:47:07   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Bat, modelAssetId=Bat
+[2026/05/22 01:47:11   INFO]        [CommandManager] imseb executed command: motm dev test ability lapidary
+[2026/05/22 01:47:11   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=lapidary hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:47:11   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=lapidary notifyFailures=true
+[2026/05/22 01:47:11   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=lapidary
+[2026/05/22 01:47:11   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=lapidary result=[MOTM] Cast Lapidary! Runtime: terra gem cast visuals | shield 83.9 | weapon follow-up ready x2 via Lapidary.
+[2026/05/22 01:47:17   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:47:17   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:47:17   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:47:21   INFO]        [CommandManager] imseb executed command: motm dev test ability fracture
+[2026/05/22 01:47:21   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=fracture hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:47:21   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=fracture notifyFailures=true
+[2026/05/22 01:47:21   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=fracture
+[2026/05/22 01:47:21   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=fracture result=[MOTM] Cast Fracture! Runtime: terra gem cast visuals | launched 1 projectile at 26.0m/s.
+[2026/05/22 01:47:21   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living
+[2026/05/22 01:47:28   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:47:28   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:47:28   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:47:32   INFO]        [CommandManager] imseb executed command: motm dev test ability refraction
+[2026/05/22 01:47:32   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=refraction hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:47:32   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=refraction notifyFailures=true
+[2026/05/22 01:47:32   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=refraction
+[2026/05/22 01:47:32   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=refraction result=[MOTM] Cast Refraction! Runtime: terra gem cast visuals | self attack buff | self speed | weapon follow-up ready x3 via Refraction.

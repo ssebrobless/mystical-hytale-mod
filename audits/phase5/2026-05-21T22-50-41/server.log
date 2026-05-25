@@ -1,0 +1,220 @@
+﻿[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Cobalt_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Tool_Sickle_Steel_Rusty_InteractionVars_Swing_Left_Effect_Interactions_0': WorldSoundEventId
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Tool_Sickle_Crude_InteractionVars_Swing_Right_Effect_Interactions_0': WorldSoundEventId
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Tool_Sickle_Steel_Rusty_InteractionVars_Swing_Right_Effect_Interactions_0': WorldSoundEventId
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Mithril_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Bo_Bamboo_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Wood_Rotten_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Frost_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Template_Weapon_Shortbow_InteractionVars_Guard_Bash_Interactions_1': Effects, StatModifiers
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Crystal_Red_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Wizard_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Tool_Sickle_Copper_InteractionVars_Swing_Right_Effect_Interactions_0': WorldSoundEventId
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Crystal_Flame_InteractionVars_Fireball_Impact_2_Interactions_0': EntityStatsOnHit
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Shield_Copper_InteractionVars_Guard_Bash_Interactions_0': Effects, StatModifiers
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Crystal_Flame_InteractionVars_Fireball_Impact_3_Interactions_0': EntityStatsOnHit
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Tool_Sickle_Iron_InteractionVars_Swing_Right_Effect_Interactions_0': WorldSoundEventId
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Tool_Sickle_Iron_InteractionVars_Swing_Left_Effect_Interactions_0': WorldSoundEventId
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Cane_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Copper_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Onion_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Halloween_Broomstick_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Doomed_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Adamantite_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Wood_Kweebec_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Crystal_Purple_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Tool_Sickle_Crude_InteractionVars_Swing_Left_Effect_Interactions_0': WorldSoundEventId
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Crystal_Fire_Trork_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Bronze_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Onyxium_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Weapon_Staff_Bo_Wood_InteractionVars_Staff_Cast_Summon_Charged_Interactions_0': Costs
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '**Soil_Quartzite_Gravel_Half_Interactions_Secondary_Interactions_0': Categories, Set
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '***Plant_Crop_Mushroom_Glowing_Orange_Interactions_Secondary_Interactions_0_Next': Effects
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '***Plant_Crop_Mushroom_Glowing_Green_Interactions_Secondary_Interactions_0_Next': Effects
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '***Plant_Crop_Mushroom_Glowing_Violet_Interactions_Secondary_Interactions_0_Next': Effects
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '***Plant_Crop_Mushroom_Glowing_Red_Interactions_Secondary_Interactions_0_Next': Effects
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '***Plant_Crop_Mushroom_Glowing_Purple_Interactions_Secondary_Interactions_0_Next': Effects
+[2026/05/22 02:51:15   WARN]         [AssetStore|Interaction] Unused key(s) in '***Plant_Crop_Mushroom_Glowing_Blue_Interactions_Secondary_Interactions_0_Next': Effects
+[2026/05/22 02:51:16   WARN]      [AssetStore|GameplayConfig] Unused key(s) in 'Default' file /Server/GameplayConfigs/Default.json: Ping
+[2026/05/22 02:51:16   WARN]      [AssetStore|GameplayConfig] Unused key(s) in 'Default_Instance' file /Server/GameplayConfigs/Default_Instance.json: Death.LoseItems
+[2026/05/22 02:51:16   WARN]        [AssetStore|EntityEffect] Unused key(s) in 'MOTM_Terra_Quake_Cast' file /Server/Entity/Effects/MOTM/MOTM_Terra_Quake_Cast.json: WorldSoundEventId
+[2026/05/22 02:51:16   WARN]        [AssetStore|EntityEffect] Unused key(s) in 'MOTM_Aero_Scream_Impact' file /Server/Entity/Effects/MOTM/MOTM_Aero_Scream_Impact.json: WorldSoundEventId
+[2026/05/22 02:51:16   WARN]        [AssetStore|EntityEffect] Unused key(s) in 'MOTM_Terra_Quake_Impact' file /Server/Entity/Effects/MOTM/MOTM_Terra_Quake_Impact.json: WorldSoundEventId
+[2026/05/22 02:51:16   WARN]        [AssetStore|EntityEffect] Unused key(s) in 'MOTM_Terra_Quake_Loop' file /Server/Entity/Effects/MOTM/MOTM_Terra_Quake_Loop.json: WorldSoundEventId
+[2026/05/22 02:51:16   WARN]        [AssetStore|EntityEffect] Unused key(s) in 'MOTM_Terra_Sinkhole_Buried' file /Server/Entity/Effects/MOTM/MOTM_Terra_Sinkhole_Buried.json: WorldSoundEventId
+[2026/05/22 02:51:16   WARN]        [AssetStore|EntityEffect] Unused key(s) in 'MOTM_Aero_Scream_Cast' file /Server/Entity/Effects/MOTM/MOTM_Aero_Scream_Cast.json: WorldSoundEventId
+[2026/05/22 02:51:16   WARN]                          [NPC|P] Replacing asset 'Test_Patrol_Path' of file '/Server/NPC/Roles/_Core/Tests_Development/Test_Patrol_Path.json' with other file '/Server/NPC/Roles/_Core/Tests/Paths/Test_Patrol_Path.json'
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Eat does not exist for model Trillodon!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Eat does not exist for model Hatworm!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Sleep does not exist for model Slug_Magma!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Slug_Magma!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Laydown does not exist for model Slug_Magma!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Wake does not exist for model Slug_Magma!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Sleep does not exist for model Wraith_Lantern!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Wraith_Lantern!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Laydown does not exist for model Wraith_Lantern!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Wake does not exist for model Wraith_Lantern!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Eat does not exist for model Lizard_Sand!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Scarak_Broodmother!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Swipe does not exist for model Goblin_Ogre!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Throw does not exist for model Goblin_Ogre!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Scarak_Broodmother!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Moo does not exist for model Bison_Calf!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Kweebec_Rootling!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Scarak_Broodmother!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Eat does not exist for model Spark_Living!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Idle does not exist for model Tuluk_Fisherman!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Swipe does not exist for model Goblin!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Eat does not exist for model Trillodon!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Eat does not exist for model Hatworm!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Sleep does not exist for model Slug_Magma!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Slug_Magma!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Laydown does not exist for model Slug_Magma!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Wake does not exist for model Slug_Magma!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Sleep does not exist for model Wraith_Lantern!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Wraith_Lantern!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Laydown does not exist for model Wraith_Lantern!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Wake does not exist for model Wraith_Lantern!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Eat does not exist for model Lizard_Sand!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Scarak_Broodmother!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Swipe does not exist for model Goblin_Ogre!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Throw does not exist for model Goblin_Ogre!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Scarak_Broodmother!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Moo does not exist for model Bison_Calf!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Kweebec_Rootling!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Alerted does not exist for model Scarak_Broodmother!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Eat does not exist for model Spark_Living!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Idle does not exist for model Tuluk_Fisherman!
+[2026/05/22 02:51:18   WARN]                          [NPC|P] Animation Swipe does not exist for model Goblin!
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] >>> start() called
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Primary / toString=Primary / valueOf=Primary
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Secondary / toString=Secondary / valueOf=Secondary
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Ability1 / toString=Ability1 / valueOf=Ability1
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Ability2 / toString=Ability2 / valueOf=Ability2
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Ability3 / toString=Ability3 / valueOf=Ability3
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Use / toString=Use / valueOf=Use
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Pick / toString=Pick / valueOf=Pick
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Pickup / toString=Pickup / valueOf=Pickup
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: CollisionEnter / toString=CollisionEnter / valueOf=CollisionEnter
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: CollisionLeave / toString=CollisionLeave / valueOf=CollisionLeave
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Collision / toString=Collision / valueOf=Collision
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: EntityStatEffect / toString=EntityStatEffect / valueOf=EntityStatEffect
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: SwapTo / toString=SwapTo / valueOf=SwapTo
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: SwapFrom / toString=SwapFrom / valueOf=SwapFrom
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Death / toString=Death / valueOf=Death
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Wielding / toString=Wielding / valueOf=Wielding
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: ProjectileSpawn / toString=ProjectileSpawn / valueOf=ProjectileSpawn
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: ProjectileHit / toString=ProjectileHit / valueOf=ProjectileHit
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: ProjectileMiss / toString=ProjectileMiss / valueOf=ProjectileMiss
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: ProjectileBounce / toString=ProjectileBounce / valueOf=ProjectileBounce
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Held / toString=Held / valueOf=Held
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: HeldOffhand / toString=HeldOffhand / valueOf=HeldOffhand
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Equipped / toString=Equipped / valueOf=Equipped
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: Dodge / toString=Dodge / valueOf=Dodge
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] InteractionType enum: GameModeSwap / toString=GameModeSwap / valueOf=GameModeSwap
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] Spellbook item asset resolved=true itemId=MOTM_Spellbook_Focus
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] Registered native Hydro waterskin fieldcraft recipe.
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] Auto-save started (interval: 300s)
+[2026/05/22 02:51:18   INFO]                           [MOTM] [MOTM] Plugin enabled successfully!
+[2026/05/22 02:51:21   WARN] [World|instance-CreativeHub-444cf4bc-1322-4e32-a46c-9c968af16d9d] Task took 52ms 988us 400ns ns: com.hypixel.hytale.server.spawning.world.manager.WorldSpawnManager$$Lambda/0x0000000037bcd800@2bc2b7d5
+[2026/05/22 02:51:21   WARN] [World|instance-CreativeHub-471293ca-c08a-4913-a5cb-15557ebc4705] Task took 41ms 956us 500ns ns: com.hypixel.hytale.server.spawning.world.manager.WorldSpawnManager$$Lambda/0x0000000037bcd800@22f5d14a
+java.lang.IllegalStateException: Store is shutdown!
+java.lang.IllegalStateException: Store is shutdown!
+java.lang.IllegalStateException: Store is shutdown!
+java.lang.IllegalStateException: Store is shutdown!
+java.lang.IllegalStateException: Store is shutdown!
+java.lang.IllegalStateException: Store is shutdown!
+java.lang.IllegalStateException: Store is shutdown!
+java.lang.IllegalStateException: Store is shutdown!
+java.lang.IllegalStateException: Store is shutdown!
+[2026/05/22 02:51:23   WARN]                         [Hytale] Missing interaction Effect
+[2026/05/22 02:51:23   WARN]                         [Hytale] Missing interaction Toad_Rhino_Magma_Damage
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] >>> onPlayerConnect: Player{uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, clientViewRadius='9', LivingEntity{, Entity{id=-1, uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, reference='null', world=null, displayName='null', wasRemoved='false', removedBy='null'}}}
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] >>> onPlayerJoin: imseb id=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:25   WARN]           [MOTM] [MOTM] Could not rebuild perk stat modifiers: missing EntityStatMap for player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] imseb has pending Tier 1 perk selection
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] onPlayerConnect hasSavedLoadout=true playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[bilgewater]
+[2026/05/22 02:51:25   WARN]           [MOTM] [MOTM] Could not rebuild perk stat modifiers: missing EntityStatMap for player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=hydro styles=[bilgewater]
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] onPlayerConnect ensureSpellbookItem=false hasSpellbook=false
+[2026/05/22 02:51:25   INFO]           [MOTM] [MOTM] onPlayerConnect done dt=14ms playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:25   WARN]         [Hytale] {Playing(QuicConnectionAddress{connId=6eaaa5fe06b14373c15aa498f537ec96eb2abb03} (/127.0.0.1:55041, streamId=0)), 6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, imseb} Added future for ClientReady packet?
+[2026/05/22 02:51:25   WARN]         [Hytale] {Playing(QuicConnectionAddress{connId=6eaaa5fe06b14373c15aa498f537ec96eb2abb03} (/127.0.0.1:55041, streamId=0)), 6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, imseb}: Received com.hypixel.hytale.protocol.packets.player.ClientReady@9da7
+[2026/05/22 02:51:25   WARN] [World|instance-CreativeHub-1508a2aa-e9e9-4af5-bbe9-889abb52a007] Task took 33ms 559us 100ns ns: java.util.concurrent.CompletableFuture$UniApply@6ff6bea2
+[2026/05/22 02:51:25   WARN]          [Entity] getPositionComponent called async [CONTEXT ratelimit_period="5 MINUTES" ]
+[2026/05/22 02:51:25   INFO]            [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:51:26   WARN]          [Hytale] {Playing(QuicConnectionAddress{connId=6eaaa5fe06b14373c15aa498f537ec96eb2abb03} (/127.0.0.1:55041, streamId=0)), 6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, imseb}: Received com.hypixel.hytale.protocol.packets.player.ClientReady@9da1
+[2026/05/22 02:51:26   INFO]            [MOTM] [MOTM] >>> onPlayerReady: Player{uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, clientViewRadius='9', LivingEntity{, Entity{id=1, uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, reference='Ref{store=class com.hypixel.hytale.component.Store@940333659, index=0}', world=instance-CreativeHub-1508a2aa-e9e9-4af5-bbe9-889abb52a007, displayName='null', wasRemoved='false', removedBy='null'}}}
+[2026/05/22 02:51:26   INFO]            [MOTM] [MOTM] Queue HUD install: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d delayTicks=4
+[2026/05/22 02:51:26   INFO]            [MOTM] [MOTM] onPlayerReady done playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:26   INFO]            [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:51:26   INFO]            [MOTM] [MOTM] Installing HUD: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:30   INFO]            [MOTM] [MOTM] Free-cast health drop detected: player=imseb class=hydro styles=[bilgewater] from=190.0 to=0.0 burn=false dot=false
+[2026/05/22 02:51:34   WARN] [UpdateLocationSystems] Entity has moved into a chunk that isn't currently loaded! 159, 155, com.hypixel.hytale.server.core.modules.entity.component.TransformComponent@595916a5
+[2026/05/22 02:51:34   WARN] [UpdateLocationSystems] Entity has moved into a chunk that isn't currently loaded! 159, 155, com.hypixel.hytale.server.core.modules.entity.component.TransformComponent@595916a5
+[2026/05/22 02:51:36   INFO]                  [MOTM] [MOTM] Custom spellbook interaction fired: type=Primary slot=1 player=Player{uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, clientViewRadius='9', LivingEntity{, Entity{id=1, uuid=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d, reference='Ref{store=class com.hypixel.hytale.component.Store@940333659, index=0}', world=instance-CreativeHub-1508a2aa-e9e9-4af5-bbe9-889abb52a007, displayName='null', wasRemoved='false', removedBy='null'}}}
+[2026/05/22 02:51:36   INFO]                  [MOTM] [MOTM] Spellbook cast attempt: player=imseb slot=1 source=interaction:custom
+[2026/05/22 02:51:36   INFO]                  [MOTM] [MOTM] Slot cast resolved: player=imseb style=bilgewater slot=1 ability=bilge_dump
+[2026/05/22 02:51:36   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bilge_dump notifyFailures=false
+[2026/05/22 02:51:36   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bilge_dump
+[2026/05/22 02:51:36   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bilge_dump result=[MOTM] Cast Bilge Dump! Runtime: hydro wave cast visuals | No valid target in range.
+[2026/05/22 02:51:45   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 02:51:47   INFO]        [CommandManager] imseb executed command: motm dev class set terra
+[2026/05/22 02:51:47   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:47   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 02:51:47   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:51:47   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:51:47   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 02:51:49   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 02:51:49   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:49   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 02:51:49   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:51:49   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:51:49   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 02:51:50   INFO]        [CommandManager] imseb executed command: motm style quake
+[2026/05/22 02:51:50   INFO]                  [MOTM] [MOTM] imseb selected styles: [quake]
+[2026/05/22 02:51:50   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 02:51:50   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[quake]
+[2026/05/22 02:51:50   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 02:51:50   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 02:51:50   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[quake]
+[2026/05/22 02:51:50   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 02:51:52   INFO]        [CommandManager] imseb executed command: motm dev test mobs
+[2026/05/22 02:51:52   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:51:52   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=standard grounded=(5095.50, 168.00, 4977.50) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 02:51:52   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Goblin_Scrapper, modelAssetId=Goblin_Scrapper
+[2026/05/22 02:51:52   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Bat, modelAssetId=Bat
+[2026/05/22 02:51:53   INFO]        [CommandManager] imseb executed command: motm spellbook overview
+[2026/05/22 02:51:56   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:51:56   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:51:56   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 02:51:59   INFO]        [CommandManager] imseb executed command: motm dev test ability stomp
+[2026/05/22 02:51:59   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=stomp hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 02:51:59   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=stomp notifyFailures=true
+[2026/05/22 02:51:59   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=stomp
+[2026/05/22 02:51:59   INFO]                  [MOTM] [MOTM] Stomp armed: player=imseb - next jump's landing will trigger the shockwave
+[2026/05/22 02:51:59   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=stomp result=[MOTM] Cast Stomp! Charges 3/4. Runtime: Stomp armed (jump -> land to release the shockwave).
+[2026/05/22 02:52:01   INFO]                  [MOTM] [MOTM] Stomp fired at landing: player=imseb pos=Vector3d{x=5103.5, y=169.08912658691406, z=4982.5}
+[2026/05/22 02:52:01   WARN]                  [MOTM] [MOTM] Ground-target filtering is using the fractional-Y fallback because no active ground collision was available.
+[2026/05/22 02:52:01   INFO]                  [MOTM] [MOTM] Quake impact ring spawned at Vector3d{x=5103.5, y=169.08912658691406, z=4982.5} positions=5 applied=0
+[2026/05/22 02:52:01   INFO]                  [MOTM] [MOTM] Stomp landing resolved: targets=1 damage=11.3 effects=1 visual=applied
+[2026/05/22 02:52:04   INFO]        [CommandManager] imseb executed command: motm dev test ability aftershock
+[2026/05/22 02:52:04   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=aftershock hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4975}
+[2026/05/22 02:52:04   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=aftershock notifyFailures=true
+[2026/05/22 02:52:04   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=aftershock
+[2026/05/22 02:52:04   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=aftershock result=[MOTM] Cast Aftershock! Runtime: terra cast visuals | field active for 4s | radius 5.0m | applied slow, disoriented to 1 target.
+[2026/05/22 02:52:10   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 02:52:10   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 02:52:10   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 02:52:13   INFO]        [CommandManager] imseb executed command: motm dev test ability sinkhole
+[2026/05/22 02:52:13   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sinkhole hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 02:52:13   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sinkhole notifyFailures=true
+[2026/05/22 02:52:13   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sinkhole
+[2026/05/22 02:52:13   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=sinkhole result=[MOTM] Cast Sinkhole! Runtime: terra cast visuals | hazard arms in 0.6s | lasts 2.5s | radius 3.0m | 1 hit for 34.0 damage | applied stun to 1 target.
+[2026/05/22 02:52:14   INFO]                  [MOTM] [MOTM] Sinkhole engaged: buried 1 target(s) at center=Vector3d{x=5103.5, y=169.0, z=4980.5}
+[2026/05/22 02:52:14   INFO]                  [MOTM] [MOTM] Sinkhole suffocation tick: target=15111938-37de-333b-8450-cfc9c91abc6e damage=2.1
+[2026/05/22 02:52:15   INFO]                  [MOTM] [MOTM] Sinkhole suffocation tick: target=15111938-37de-333b-8450-cfc9c91abc6e damage=2.1
+[2026/05/22 02:52:16   INFO]                  [MOTM] [MOTM] Sinkhole released: 1 target(s)

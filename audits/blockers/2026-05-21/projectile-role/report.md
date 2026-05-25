@@ -1,0 +1,15 @@
+﻿# Projectile Role Retest
+
+PASS
+
+- Server log: C:\Users\fishe\AppData\Roaming\Hytale\UserData\Saves\MOTM Creative Test\logs\2026-05-21_21-09-13_server.log
+- Checked lines after offset: 171051
+- motm_projectile reload lines: 0
+
+## Matching Lines
+[2026/05/22 01:10:37   INFO]        [CommandManager] imseb executed command: motm dev test ability magma_sling
+[2026/05/22 01:10:37   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=magma_sling hasTarget=true targetBlock=Vector3i{x=5095, y=168, z=4977}
+[2026/05/22 01:10:37   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=magma_sling notifyFailures=true
+[2026/05/22 01:10:37   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=magma_sling
+[2026/05/22 01:10:37   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=magma_sling result=[MOTM] Cast Magma Sling! Runtime: terra cast visuals | launched 1 projectile at 22.0m/s.
+[2026/05/22 01:10:37   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Slug_Magma, modelAssetId=Slug_Magma

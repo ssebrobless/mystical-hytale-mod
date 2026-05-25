@@ -8,6 +8,7 @@ import com.motm.model.AbilityData;
 import com.motm.model.Perk;
 import com.motm.model.PerkTriggerBinding;
 import com.motm.model.StyleData;
+import com.motm.system.MotmDamageEventSystem;
 import com.motm.system.MotmMobRuntimeSystem;
 import com.motm.system.MotmServerTickSystem;
 import com.motm.ui.MotmStatusHud;
@@ -16,9 +17,14 @@ import com.motm.util.DataLoader;
 import com.motm.util.MotmPreflightAudit;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
+import com.hypixel.hytale.server.core.asset.type.fluid.Fluid;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
@@ -30,16 +36,22 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
+import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
+import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
+import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.Modifier;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.StaticModifier;
+import com.hypixel.hytale.server.core.modules.time.WorldTimeResource;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
@@ -51,6 +63,7 @@ import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.protocol.BenchType;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.MouseButtonState;
 import com.hypixel.hytale.protocol.MouseButtonType;
@@ -62,6 +75,8 @@ import org.bson.BsonValue;
 
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.StandardOpenOption;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -143,10 +158,29 @@ public class MenteesMod extends JavaPlugin {
     private static final int TERRA_SEED_UNITS_PER_ITEM = 2;
     private static final int TERRA_METAL_UNITS_PER_ITEM = 4;
     private static final int TERRA_GEM_UNITS_PER_ITEM = 6;
+    private static final List<TerraReviewKitItem> TERRA_REVIEW_KIT_ITEMS = List.of(
+            new TerraReviewKitItem("Tool_Pickaxe_Iron", 1, "pickaxe mining affinity"),
+            new TerraReviewKitItem("Tool_Pickaxe_Wood", 1, "baseline pickaxe mining comparison"),
+            new TerraReviewKitItem("Tool_Shovel_Iron", 1, "non-pickaxe negative mining control"),
+            new TerraReviewKitItem("Weapon_Sword_Iron", 1, "physical melee weapon tests"),
+            new TerraReviewKitItem("Weapon_Shield_Iron", 1, "durability shield / blocking tests"),
+            new TerraReviewKitItem("Rock_Stone", 64, "stone/terrain test material"),
+            new TerraReviewKitItem("Soil_Dirt", 64, "dirt/terrain test material"),
+            new TerraReviewKitItem("Soil_Sand", 64, "sand/terrain test material"),
+            new TerraReviewKitItem("Ingredient_Bar_Iron", 32, "metal visual test material"),
+            new TerraReviewKitItem("Rock_Gem_Emerald", 16, "gem visual test material"),
+            new TerraReviewKitItem("Plant_Seeds_Wheat", 32, "plant visual test material"),
+            new TerraReviewKitItem("Rock_Crystal_Green_Block", 16, "green crystal/gem visual blocks"),
+            new TerraReviewKitItem("Build_GreyDark_Cube", 32, "dark stone/metal visual block"),
+            new TerraReviewKitItem("Build_Grey_Cube", 32, "neutral review marker block")
+    );
     private static final String PLAYER_LEVEL_HEALTH_MODIFIER_ID = "motm_player_level_health";
     private static final boolean CUSTOM_PAGE_UI_ENABLED = true;
     private static final boolean CUSTOM_HUD_ENABLED = true;
     private static final String SERVER_CONFIG_FILE_NAME = "motm-server.properties";
+    private static final String DEV_COMMAND_INBOX_FILE_NAME = "dev-command-inbox.txt";
+    private static final String DEV_COMMAND_OUTBOX_FILE_NAME = "dev-command-outbox.log";
+    private static final long DEV_COMMAND_INBOX_POLL_INTERVAL_MS = 250L;
     private static final int HUD_REFRESH_INTERVAL_TICKS = 4;
     private static final int HUD_INSTALL_DELAY_TICKS = 4;
     private static final long SPELLBOOK_INPUT_DEBOUNCE_MS = 150L;
@@ -169,7 +203,20 @@ public class MenteesMod extends JavaPlugin {
     private static final Set<String> DEV_GRIMOIRE_ITEM_IDS = Set.of(
             DEFAULT_DEV_GRIMOIRE_ITEM_ID
     );
+    private static final Set<String> TERRA_REVIEW_ESSENTIAL_ITEM_IDS = Set.of(
+            DEFAULT_SPELLBOOK_ITEM_ID,
+            "Tool_Pickaxe_Iron",
+            "Weapon_Sword_Iron"
+    );
     private static final Set<String> HYDRO_CONTAINER_ID_SET = Set.of(HYDRO_CONTAINER_ITEM_IDS);
+    private static final Set<String> STYLE_TEST_CLEANUP_ROLES = Set.of(
+            "Goblin_Scrapper",
+            "Test_Dummy_Stationary",
+            "Bat",
+            "Empty_Role",
+            "Slug_Magma",
+            "Spark_Living"
+    );
 
     // Core systems
     private DataLoader dataLoader;
@@ -197,9 +244,20 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, List<PerkTriggerBinding>> perkTriggersByPlayer = new ConcurrentHashMap<>();
     private final Set<String> pendingSpellbookGrants = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingDevBookGrants = ConcurrentHashMap.newKeySet();
-    private final Set<String> pendingStyleTestMobSpawns = ConcurrentHashMap.newKeySet();
+    private final Map<String, String> pendingStyleTestMobSpawns = new ConcurrentHashMap<>();
+    private final Set<String> pendingStyleTestMobClears = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingStyleTestMobCounts = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingStyleReviewResets = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingDaylightRequests = ConcurrentHashMap.newKeySet();
+    private final Map<String, GameMode> pendingDevGameModeChanges = new ConcurrentHashMap<>();
+    private final Set<String> pendingTerraReviewKitGrants = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingTerraReviewInventoryCleans = ConcurrentHashMap.newKeySet();
     private final Map<String, List<Ref<EntityStore>>> styleTestTargetsByPlayer = new ConcurrentHashMap<>();
     private final Map<String, String> pendingSingleAbilityTests = new ConcurrentHashMap<>();
+    private final Map<String, String> pendingProofRequests = new ConcurrentHashMap<>();
+    private final Map<String, String> pendingDevRelocations = new ConcurrentHashMap<>();
+    private final Queue<TemporaryProofSelection> activeProofSelections = new ConcurrentLinkedQueue<>();
+    private final Queue<TemporaryProofProxy> activeProofProxies = new ConcurrentLinkedQueue<>();
     private final Set<String> pendingHydroContainerSyncs = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingRuntimeRebuilds = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingStatusHudRefreshs = ConcurrentHashMap.newKeySet();
@@ -213,6 +271,7 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, Double> lastAppliedTargetHealthByPlayer = new ConcurrentHashMap<>();
     private final Map<String, Float> lastObservedFreeCastHealthByPlayer = new ConcurrentHashMap<>();
     private final Set<String> initializedRuntimePlayers = ConcurrentHashMap.newKeySet();
+    private long lastDevCommandInboxPollAtMs = 0L;
     private int hudRefreshTickCounter = 0;
     private volatile MotmPreflightAudit.AuditReport lastPreflightAudit;
 
@@ -461,6 +520,7 @@ public class MenteesMod extends JavaPlugin {
         getCommandRegistry().registerCommand(new MotmCommandBase(this));
         getEntityStoreRegistry().registerSystem(new MotmServerTickSystem(this));
         getEntityStoreRegistry().registerSystem(new MotmMobRuntimeSystem(this));
+        getEntityStoreRegistry().registerSystem(new MotmDamageEventSystem(this));
     }
 
     private void registerSpellbookInteractionCodecs() {
@@ -510,7 +570,7 @@ public class MenteesMod extends JavaPlugin {
         // Reapply perks and synergies if class is set
         if (player.getPlayerClass() != null) {
             perkManager.reapplyAllPerks(player, synergyEngine);
-            // Initialize class resources
+            // Initialize legacy resource state for save compatibility; ability casting no longer spends it.
             resourceManager.synchronizePersistentState(player);
             resourceManager.initializeForPlayer(player);
             queueHydroContainerSync(playerId);
@@ -818,10 +878,21 @@ public class MenteesMod extends JavaPlugin {
         classPassiveManager.tick(onlineRuntimePlayers, currentStore);
         processActiveStyleTests(currentStore);
         processPendingSingleAbilityTests(currentStore);
+        processPendingDevRelocations(currentStore);
+        processPendingDaylightRequests(currentStore);
+        processPendingDevGameModeChanges(currentStore);
+        processDevCommandInbox(currentStore);
+        processPendingStyleReviewResets(currentStore);
+        processPendingProofRequests(currentStore);
+        processActiveProofCleanups(currentStore);
+        processPendingStyleTestMobClears(currentStore);
         processPendingStyleTestMobSpawns(currentStore);
+        processPendingStyleTestMobCounts(currentStore);
         processPendingAbilityCasts(currentStore);
         gameplayPlaybackManager.tickArmedStomps(currentStore);
         gameplayPlaybackManager.tick(currentStore);
+        processPendingTerraReviewKitGrants(currentStore);
+        processPendingTerraReviewInventoryCleans(currentStore);
         processPendingInventoryGrants(currentStore);
         processPendingProgressionBonusRefreshs(currentStore);
         processPendingStatusHudInstalls(currentStore);
@@ -835,6 +906,96 @@ public class MenteesMod extends JavaPlugin {
         dotDamageByEntity.forEach((entityId, dotPercent) ->
                 LOG.fine("[MOTM] TODO: Apply " + (dotPercent * 100)
                         + "% max HP DoT to entity " + entityId + " via Hytale's damage API."));
+    }
+
+    private void processDevCommandInbox(Store<EntityStore> currentStore) {
+        if (!devToolsEnabled || pluginDirectory == null || motmCommand == null) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (now - lastDevCommandInboxPollAtMs < DEV_COMMAND_INBOX_POLL_INTERVAL_MS) {
+            return;
+        }
+        lastDevCommandInboxPollAtMs = now;
+
+        Path inbox = pluginDirectory.resolve(DEV_COMMAND_INBOX_FILE_NAME);
+        if (!Files.exists(inbox)) {
+            return;
+        }
+
+        Player runtimePlayer = findFirstOnlineRuntimePlayer(currentStore);
+        if (runtimePlayer == null) {
+            return;
+        }
+
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(inbox, StandardCharsets.UTF_8);
+            Files.deleteIfExists(inbox);
+        } catch (IOException e) {
+            LOG.warning("[MOTM] Dev command inbox read failed: " + e.getMessage());
+            return;
+        }
+
+        for (String rawLine : lines) {
+            String command = normalizeDevInboxCommand(rawLine);
+            if (command.isBlank()) {
+                continue;
+            }
+
+            try {
+                String result = motmCommand.execute(runtimePlayer, command.split("\\s+"));
+                String safeResult = result == null ? "" : result.replace('\n', ' ');
+                String out = "[MOTM] Dev command inbox executed: command=/motm " + command
+                        + " result=" + safeResult;
+                LOG.info(out);
+                appendDevCommandOutbox(out);
+            } catch (Throwable t) {
+                String out = "[MOTM] Dev command inbox failed: command=/motm " + command
+                        + " error=" + t.getClass().getSimpleName() + ": " + t.getMessage();
+                LOG.severe(out);
+                appendDevCommandOutbox(out);
+            }
+        }
+    }
+
+    private Player findFirstOnlineRuntimePlayer(Store<EntityStore> currentStore) {
+        for (Player player : onlineRuntimePlayers.values()) {
+            if (isPlayerInStore(player, currentStore)) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    private String normalizeDevInboxCommand(String rawLine) {
+        if (rawLine == null) {
+            return "";
+        }
+        String command = rawLine.replace("\uFEFF", "").trim();
+        if (command.startsWith("/")) {
+            command = command.substring(1).trim();
+        }
+        if (command.regionMatches(true, 0, "motm", 0, 4)) {
+            command = command.substring(4).trim();
+        }
+        return command;
+    }
+
+    private void appendDevCommandOutbox(String line) {
+        try {
+            Files.createDirectories(pluginDirectory);
+            Files.writeString(
+                    pluginDirectory.resolve(DEV_COMMAND_OUTBOX_FILE_NAME),
+                    line + System.lineSeparator(),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+        } catch (IOException e) {
+            LOG.warning("[MOTM] Dev command outbox write failed: " + e.getMessage());
+        }
     }
 
     public boolean openSpellbook(Player sender, SpellbookManager.Section section) {
@@ -1264,6 +1425,54 @@ public class MenteesMod extends JavaPlugin {
     }
 
     public String spawnStyleTestMobs(String playerId) {
+        return spawnStyleTestMobs(playerId, "standard");
+    }
+
+    public String clearStyleTestMobs(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+        boolean added = pendingStyleTestMobClears.add(playerId);
+        LOG.info("[MOTM] Style test mob clear queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Style test mob clear queued."
+                : "[MOTM] Style test mob clear is already queued.";
+    }
+
+    public String resetStyleReviewArena(String playerId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+        Player runtimePlayer = onlineRuntimePlayers.get(playerId);
+        if (runtimePlayer == null) {
+            return "[MOTM] Join a world and run this in-game to reset the style review arena.";
+        }
+        boolean added = pendingStyleReviewResets.add(playerId);
+        LOG.info("[MOTM] Style review arena reset queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Style review arena reset queued."
+                : "[MOTM] Style review arena reset is already queued.";
+    }
+
+    public String countStyleTestMobs(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+        boolean added = pendingStyleTestMobCounts.add(playerId);
+        LOG.info("[MOTM] Style test mob count queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Style test mob count queued."
+                : "[MOTM] Style test mob count is already queued.";
+    }
+
+    public String spawnStyleTestMobs(String playerId, boolean closeGroundedTarget) {
+        return spawnStyleTestMobs(playerId, closeGroundedTarget ? "close" : "standard");
+    }
+
+    public String spawnStyleTestMobs(String playerId, String mode) {
         if (!devToolsEnabled) {
             return devToolsDisabledMessage();
         }
@@ -1276,14 +1485,47 @@ public class MenteesMod extends JavaPlugin {
             return "[MOTM] Join a world and run this in-game to spawn style-test mobs.";
         }
 
-        boolean added = pendingStyleTestMobSpawns.add(playerId);
+        String normalizedMode = normalizeStyleTestMobMode(mode);
+        boolean added = pendingStyleTestMobSpawns.put(playerId, normalizedMode) == null;
         LOG.info("[MOTM] Style test mob spawn queued: playerId=" + playerId + " added=" + added);
         return added
-                ? "[MOTM] Style test mob spawn queued."
+                ? "[MOTM] Style test mob spawn queued mode=" + normalizedMode + "."
                 : "[MOTM] Style test mob spawn is already queued.";
     }
 
-    private String spawnStyleTestMobsNow(String playerId, Player runtimePlayer) {
+    public String queueDevProof(String playerId, String proofId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (playerId == null || playerId.isBlank()) {
+            return "[MOTM] Runtime player context is unavailable.";
+        }
+        Player runtimePlayer = onlineRuntimePlayers.get(playerId);
+        if (runtimePlayer == null) {
+            return "[MOTM] Join a world and run this in-game to run a proof.";
+        }
+        String normalizedProofId = proofId == null ? "" : proofId.trim().toLowerCase(Locale.ROOT);
+        if (normalizedProofId.isBlank()) {
+            return "[MOTM] Usage: /motm dev proof <coating-metal|tempblock-metal-wall|tempblock-gem-cluster|tempfluid-lava-ring|proxy-magma-blob|movement-burrow|...>";
+        }
+        boolean added = pendingProofRequests.put(playerId, normalizedProofId) == null;
+        LOG.info("[MOTM] Proof request queued: playerId=" + playerId
+                + " proofId=" + normalizedProofId
+                + " added=" + added);
+        return added
+                ? "[MOTM] Proof queued: " + normalizedProofId + "."
+                : "[MOTM] A proof request is already queued.";
+    }
+
+    private String normalizeStyleTestMobMode(String mode) {
+        String normalized = mode == null ? "" : mode.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "close", "stationary", "standard", "cluster", "line", "surround" -> normalized;
+            default -> "standard";
+        };
+    }
+
+    private String spawnStyleTestMobsNow(String playerId, Player runtimePlayer, String mode) {
         if (runtimePlayer == null) {
             return "[MOTM] Runtime player context is unavailable.";
         }
@@ -1303,9 +1545,13 @@ public class MenteesMod extends JavaPlugin {
 
         Vector3d horizontalForward = normalizeHorizontal(forward);
         Vector3d right = new Vector3d(-horizontalForward.z, 0.0, horizontalForward.x);
-        Vector3d groundPosition = basePosition.clone()
-                .addScaled(horizontalForward, 5.0)
-                .addScaled(right, -8.0);
+        String normalizedMode = normalizeStyleTestMobMode(mode);
+        boolean closeGroundedTarget = "close".equals(normalizedMode) || "stationary".equals(normalizedMode);
+        Vector3d groundPosition = closeGroundedTarget
+                ? basePosition.clone().addScaled(horizontalForward, 1.6)
+                : basePosition.clone()
+                        .addScaled(horizontalForward, 5.0)
+                        .addScaled(right, -8.0);
         Vector3d floatingPosition = basePosition.clone()
                 .addScaled(horizontalForward, 5.0)
                 .addScaled(right, -5.0);
@@ -1316,23 +1562,285 @@ public class MenteesMod extends JavaPlugin {
             return "[MOTM] Runtime world is unavailable for style-test mobs.";
         }
 
+        int cleared = clearTrackedStyleTestTargets(playerId);
         List<Ref<EntityStore>> targets = new ArrayList<>();
-        Ref<EntityStore> grounded = spawnStyleTestNpc(world, groundPosition, "Goblin_Scrapper");
-        if (grounded != null) {
-            targets.add(grounded);
-        }
-        Ref<EntityStore> floating = spawnStyleTestNpc(world, floatingPosition, "Bat");
-        if (floating != null) {
-            targets.add(floating);
+        if ("cluster".equals(normalizedMode)) {
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 4.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 4.0).addScaled(right, 3.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 4.0).addScaled(right, -3.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 7.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 2.0), "Test_Dummy_Stationary");
+        } else if ("line".equals(normalizedMode)) {
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 4.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 8.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 12.0), "Test_Dummy_Stationary");
+        } else if ("surround".equals(normalizedMode)) {
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 3.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, -3.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(right, 3.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, basePosition.clone().addScaled(right, -3.0), "Test_Dummy_Stationary");
+        } else {
+            addStyleTestNpc(targets, world, groundPosition, "Test_Dummy_Stationary");
+            if (!"stationary".equals(normalizedMode)) {
+                addStyleTestNpc(targets, world, floatingPosition, "Bat");
+            }
         }
         styleTestTargetsByPlayer.put(playerId, targets);
         int spawned = targets.size();
 
         String summary = "[MOTM] Style test mobs spawned: count=" + spawned
+                + " mode=" + normalizedMode
+                + " clearedPrevious=" + cleared
+                + " tracked=" + countValidRefs(targets)
                 + " grounded=" + formatVector(groundPosition)
                 + " floating=" + formatVector(floatingPosition);
         LOG.info(summary);
         return summary;
+    }
+
+    private void addStyleTestNpc(List<Ref<EntityStore>> targets, World world, Vector3d position, String roleName) {
+        Ref<EntityStore> ref = spawnStyleTestNpc(world, position, roleName);
+        if (ref != null) {
+            targets.add(ref);
+        }
+    }
+
+    private String clearStyleTestMobsNow(String playerId, Store<EntityStore> currentStore, Player player) {
+        int cleared = clearTrackedStyleTestTargets(playerId);
+        int staleCleared = clearNearbyStyleTestTargets(currentStore, player);
+        String summary = "[MOTM] Style test mobs cleared: count=" + (cleared + staleCleared)
+                + " tracked=" + cleared
+                + " staleNearby=" + staleCleared;
+        LOG.info(summary + " playerId=" + playerId);
+        return summary;
+    }
+
+    private String countStyleTestMobsNow(String playerId, Store<EntityStore> currentStore, Player player) {
+        int count = countTrackedStyleTestTargets(playerId);
+        int nearby = countNearbyStyleTestTargets(currentStore, player);
+        String summary = "[MOTM] Style test mobs tracked: count=" + count
+                + " nearbyCleanupRoles=" + nearby;
+        LOG.info(summary + " playerId=" + playerId);
+        return summary;
+    }
+
+    private String scrubStyleReviewArena(Player player) {
+        World world = player != null ? player.getWorld() : null;
+        Vector3d center = player != null ? getPlayerPosition(player) : null;
+        if (world == null || center == null) {
+            return "skipped missing world/player";
+        }
+
+        int grassBlockTypeId = BlockType.getBlockIdOrUnknown("Soil_Grass", "MOTM style review arena scrub");
+        if (grassBlockTypeId == BlockType.UNKNOWN_ID || grassBlockTypeId == BlockType.EMPTY_ID) {
+            grassBlockTypeId = BlockType.getBlockIdOrUnknown("Rock_Stone_Brick_Pillar_Middle", "MOTM style review arena scrub");
+        }
+        if (grassBlockTypeId == BlockType.UNKNOWN_ID || grassBlockTypeId == BlockType.EMPTY_ID) {
+            return "skipped no floor block";
+        }
+
+        int floorY = (int) Math.floor(center.y) - 1;
+        int centerX = (int) Math.floor(center.x);
+        int centerZ = (int) Math.floor(center.z);
+        int radius = 28;
+        BlockSelection scrub = new BlockSelection();
+        scrub.setPosition(centerX, floorY, centerZ);
+        scrub.setAnchorAtWorldPos(centerX, floorY, centerZ);
+        int floorBlocks = 0;
+        int clearedBlocks = 0;
+        int clearedFluids = 0;
+
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                int wx = centerX + x;
+                int wz = centerZ + z;
+                scrub.addBlockAtWorldPos(wx, floorY, wz, grassBlockTypeId, 0, 0, 0);
+                floorBlocks++;
+                for (int y = floorY + 1; y <= floorY + 5; y++) {
+                    scrub.addBlockAtWorldPos(wx, y, wz, BlockType.EMPTY_ID, 0, 0, 0);
+                    scrub.addFluidAtWorldPos(wx, y, wz, Fluid.EMPTY_ID, (byte) 0);
+                    clearedBlocks++;
+                    clearedFluids++;
+                }
+            }
+        }
+
+        try {
+            scrub.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            String summary = "scrubbed center=(" + centerX + "," + floorY + "," + centerZ + ")"
+                    + " radius=" + radius
+                    + " floorBlocks=" + floorBlocks
+                    + " clearedBlocks=" + clearedBlocks
+                    + " clearedFluids=" + clearedFluids;
+            LOG.info("[MOTM] Style review arena scrub: " + summary);
+            return summary;
+        } catch (Throwable e) {
+            LOG.log(java.util.logging.Level.WARNING, "[MOTM] Style review arena scrub failed safely.", e);
+            return "failed " + e.getClass().getSimpleName() + ": " + e.getMessage();
+        }
+    }
+
+    public String runStyleTestWeaponHit(String playerId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        Player runtimePlayer = getRuntimePlayer(playerId);
+        var playerData = playerDataManager.getOnlinePlayer(playerId);
+        if (runtimePlayer == null || playerData == null) {
+            return "[MOTM] Join a world and run this in-game to test a weapon follow-up.";
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return "[MOTM] Style test weapon hit failed: player store missing.";
+        }
+
+        Ref<EntityStore> target = findNearestStyleTestNpc(playerRef.getStore(), runtimePlayer, 8.0);
+        if (target == null) {
+            String summary = "[MOTM] Style test weapon hit failed: no style-test target within 8m.";
+            LOG.warning(summary + " playerId=" + playerId);
+            return summary;
+        }
+
+        String response = gameplayPlaybackManager.handleWeaponFollowUpHit(
+                runtimePlayer,
+                playerData,
+                target,
+                "Weapon_Sword_Iron"
+        );
+        if (response == null || response.isBlank()) {
+            Damage simulatedNativeHit = new Damage(
+                    new Damage.EntitySource(playerRef),
+                    DamageCause.PHYSICAL,
+                    10.0f
+            );
+            response = gameplayPlaybackManager.handleNativeWeaponDamage(
+                    runtimePlayer,
+                    playerData,
+                    target,
+                    "Weapon_Sword_Iron",
+                    simulatedNativeHit
+            );
+        }
+        if (response == null || response.isBlank()) {
+            String summary = "[MOTM] Style test weapon hit: no follow-up/passive applied.";
+            LOG.info(summary + " playerId=" + playerId);
+            return summary;
+        }
+
+        LOG.info(response + " playerId=" + playerId);
+        return response;
+    }
+
+    public String forceStyleTestStompLanding(String playerId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        Player runtimePlayer = getRuntimePlayer(playerId);
+        if (runtimePlayer == null) {
+            return "[MOTM] Join a world and run this in-game to force a Stomp landing.";
+        }
+
+        String response = gameplayPlaybackManager.forceArmedStompLanding(playerId, runtimePlayer);
+        LOG.info(response + " playerId=" + playerId);
+        return response;
+    }
+
+    private int clearNearbyStyleTestTargets(Store<EntityStore> currentStore, Player player) {
+        return visitNearbyStyleTestTargets(currentStore, player, true);
+    }
+
+    private int countNearbyStyleTestTargets(Store<EntityStore> currentStore, Player player) {
+        return visitNearbyStyleTestTargets(currentStore, player, false);
+    }
+
+    private int visitNearbyStyleTestTargets(Store<EntityStore> currentStore, Player player, boolean despawn) {
+        if (currentStore == null || player == null) {
+            return 0;
+        }
+
+        Vector3d playerPosition = getPlayerPosition(player);
+        if (playerPosition == null) {
+            return 0;
+        }
+
+        int[] visited = {0};
+        currentStore.forEachChunk((chunk, commandBuffer) -> {
+            for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
+                NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
+                if (npc == null || npc.isDespawning() || !isStyleTestCleanupRole(npc)) {
+                    continue;
+                }
+
+                Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
+                Vector3d position = getEntityPosition(currentStore, ref);
+                if (position == null || distance(playerPosition, position) > 28.0) {
+                    continue;
+                }
+
+                if (despawn) {
+                    npc.setToDespawn();
+                }
+                visited[0]++;
+            }
+        });
+        return visited[0];
+    }
+
+    private boolean isStyleTestCleanupRole(NPCEntity npc) {
+        if (npc == null) {
+            return false;
+        }
+        return STYLE_TEST_CLEANUP_ROLES.contains(npc.getRoleName())
+                || STYLE_TEST_CLEANUP_ROLES.contains(npc.getNPCTypeId());
+    }
+
+    private int clearTrackedStyleTestTargets(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return 0;
+        }
+        List<Ref<EntityStore>> targets = styleTestTargetsByPlayer.remove(playerId);
+        if (targets == null || targets.isEmpty()) {
+            return 0;
+        }
+
+        int cleared = 0;
+        for (Ref<EntityStore> target : targets) {
+            if (target == null || !target.isValid()) {
+                continue;
+            }
+            Store<EntityStore> store = target.getStore();
+            NPCEntity npc = store != null ? store.getComponent(target, NPCEntity.getComponentType()) : null;
+            if (npc != null && !npc.isDespawning()) {
+                npc.setToDespawn();
+                cleared++;
+            }
+        }
+        return cleared;
+    }
+
+    private int countTrackedStyleTestTargets(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return 0;
+        }
+        return countValidRefs(styleTestTargetsByPlayer.get(playerId));
+    }
+
+    private int countValidRefs(List<Ref<EntityStore>> refs) {
+        if (refs == null || refs.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        for (Ref<EntityStore> ref : refs) {
+            if (ref == null || !ref.isValid()) {
+                continue;
+            }
+            Store<EntityStore> store = ref.getStore();
+            NPCEntity npc = store != null ? store.getComponent(ref, NPCEntity.getComponentType()) : null;
+            if (npc != null && !npc.isDespawning() && store.getComponent(ref, DeathComponent.getComponentType()) == null) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private Ref<EntityStore> spawnStyleTestNpc(World world, Vector3d position, String roleName) {
@@ -1465,13 +1973,62 @@ public class MenteesMod extends JavaPlugin {
                 }
 
                 entityStatMap.maximizeStatValue(DefaultEntityStatTypes.getHealth());
+                maximizeStatIfPresent(entityStatMap, DefaultEntityStatTypes.getStamina());
+                maximizeStatIfPresent(entityStatMap, DefaultEntityStatTypes.getMana());
+                maximizeStatIfPresent(entityStatMap, DefaultEntityStatTypes.getSignatureEnergy());
                 statusEffectManager.removeEffect(playerId, com.motm.model.StatusEffect.Type.BURN);
                 statusEffectManager.removeEffect(playerId, com.motm.model.StatusEffect.Type.DOT);
+                applyFreeCastMovementNormalization(player);
                 ensureFreeCastInvulnerability(player);
             } catch (IllegalStateException e) {
                 LOG.fine("[MOTM] Skipped free-cast safety tick on the wrong store for " + playerId + ": " + e.getMessage());
             }
         }
+    }
+
+    private void applyFreeCastMovementNormalization(Player player) {
+        if (player == null) {
+            return;
+        }
+        try {
+            var playerRef = player.getReference();
+            if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+                return;
+            }
+            MovementManager movementManager = playerRef.getStore().getComponent(playerRef, MovementManager.getComponentType());
+            if (movementManager == null || movementManager.getSettings() == null) {
+                return;
+            }
+            var settings = movementManager.getSettings();
+            settings.baseSpeed = Math.max(settings.baseSpeed, 6.25f);
+            settings.forwardWalkSpeedMultiplier = Math.max(settings.forwardWalkSpeedMultiplier, 1.10f);
+            settings.backwardWalkSpeedMultiplier = Math.max(settings.backwardWalkSpeedMultiplier, 1.05f);
+            settings.strafeWalkSpeedMultiplier = Math.max(settings.strafeWalkSpeedMultiplier, 1.10f);
+            settings.forwardRunSpeedMultiplier = Math.max(settings.forwardRunSpeedMultiplier, 1.25f);
+            settings.backwardRunSpeedMultiplier = Math.max(settings.backwardRunSpeedMultiplier, 1.10f);
+            settings.strafeRunSpeedMultiplier = Math.max(settings.strafeRunSpeedMultiplier, 1.25f);
+            settings.forwardSprintSpeedMultiplier = Math.max(settings.forwardSprintSpeedMultiplier, 1.45f);
+            settings.acceleration = Math.max(settings.acceleration, 0.16f);
+            PlayerRef universePlayerRef = playerRef.getStore().getComponent(playerRef, PlayerRef.getComponentType());
+            if (universePlayerRef != null && universePlayerRef.getPacketHandler() != null) {
+                movementManager.update(universePlayerRef.getPacketHandler());
+            }
+        } catch (IllegalStateException e) {
+            LOG.fine("[MOTM] Skipped free-cast movement normalization on the wrong store: " + e.getMessage());
+        } catch (Exception e) {
+            LOG.warning("[MOTM] Failed to normalize free-cast movement: " + e.getMessage());
+        }
+    }
+
+    private void maximizeStatIfPresent(EntityStatMap entityStatMap, int statType) {
+        if (entityStatMap == null) {
+            return;
+        }
+        EntityStatValue stat = entityStatMap.get(statType);
+        if (stat == null || stat.getMax() <= 0.0f) {
+            return;
+        }
+        entityStatMap.maximizeStatValue(statType);
     }
 
     private void processPendingFreeCastInvulnerabilityClears(Store<EntityStore> currentStore) {
@@ -1504,6 +2061,31 @@ public class MenteesMod extends JavaPlugin {
         Player player = onlineRuntimePlayers.get(playerId);
         if (player != null) {
             setRuntimeInvulnerability(player, false);
+            resetFreeCastMovementNormalization(player);
+        }
+    }
+
+    private void resetFreeCastMovementNormalization(Player player) {
+        if (player == null) {
+            return;
+        }
+        try {
+            var playerRef = player.getReference();
+            if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+                return;
+            }
+            MovementManager movementManager = playerRef.getStore().getComponent(playerRef, MovementManager.getComponentType());
+            if (movementManager != null) {
+                movementManager.applyDefaultSettings();
+                PlayerRef universePlayerRef = playerRef.getStore().getComponent(playerRef, PlayerRef.getComponentType());
+                if (universePlayerRef != null && universePlayerRef.getPacketHandler() != null) {
+                    movementManager.update(universePlayerRef.getPacketHandler());
+                }
+            }
+        } catch (IllegalStateException e) {
+            LOG.fine("[MOTM] Skipped free-cast movement reset on the wrong store: " + e.getMessage());
+        } catch (Exception e) {
+            LOG.warning("[MOTM] Failed to reset free-cast movement normalization: " + e.getMessage());
         }
     }
 
@@ -1562,26 +2144,34 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
-            LOG.info("[MOTM] Processing queued ability cast: playerId="
-                    + request.playerId()
-                    + " abilityId=" + request.abilityId());
-            String failureMessage = motmCommand.executeQueuedAbilityCast(
-                    request.playerId(),
-                    request.abilityId(),
-                    player,
-                    request.targetRef(),
-                    request.targetBlock()
-            );
-            LOG.info("[MOTM] Queued ability cast result: playerId="
-                    + request.playerId()
-                    + " abilityId=" + request.abilityId()
-                    + " result=" + (failureMessage == null || failureMessage.isBlank() ? "<success>" : failureMessage));
+            String failureMessage = null;
+            try {
+                LOG.info("[MOTM] Processing queued ability cast: playerId="
+                        + request.playerId()
+                        + " abilityId=" + request.abilityId());
+                failureMessage = motmCommand.executeQueuedAbilityCast(
+                        request.playerId(),
+                        request.abilityId(),
+                        player,
+                        request.targetRef(),
+                        request.targetBlock()
+                );
+                LOG.info("[MOTM] Queued ability cast result: playerId="
+                        + request.playerId()
+                        + " abilityId=" + request.abilityId()
+                        + " result=" + (failureMessage == null || failureMessage.isBlank() ? "<success>" : failureMessage));
+            } catch (Throwable e) {
+                failureMessage = "[MOTM] Queued ability cast failed safely for "
+                        + request.abilityId() + ": " + e.getMessage();
+                LOG.log(java.util.logging.Level.SEVERE, failureMessage, e);
+            } finally {
+                pendingAbilityCasts.remove(request);
+            }
             if ((request.notifyFailures() || isDevToolsEnabled())
                     && failureMessage != null
                     && !failureMessage.isBlank()) {
                 player.sendMessage(Message.raw(failureMessage));
             }
-            pendingAbilityCasts.remove(request);
         }
     }
 
@@ -1624,7 +2214,7 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private void processPendingStyleTestMobSpawns(Store<EntityStore> currentStore) {
-        for (String playerId : Set.copyOf(pendingStyleTestMobSpawns)) {
+        for (String playerId : Set.copyOf(pendingStyleTestMobSpawns.keySet())) {
             Player player = onlineRuntimePlayers.get(playerId);
             if (player == null) {
                 pendingStyleTestMobSpawns.remove(playerId);
@@ -1634,10 +2224,572 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
 
-            String result = spawnStyleTestMobsNow(playerId, player);
+            String mode = pendingStyleTestMobSpawns.get(playerId);
+            String result = spawnStyleTestMobsNow(playerId, player, mode);
             player.sendMessage(Message.raw(result));
             pendingStyleTestMobSpawns.remove(playerId);
         }
+    }
+
+    private void processPendingStyleTestMobClears(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingStyleTestMobClears)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingStyleTestMobClears.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = clearStyleTestMobsNow(playerId, currentStore, player);
+            player.sendMessage(Message.raw(result));
+            pendingStyleTestMobClears.remove(playerId);
+        }
+    }
+
+    private void processPendingStyleReviewResets(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingStyleReviewResets)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingStyleReviewResets.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String mobResult = clearStyleTestMobsNow(playerId, currentStore, player);
+            String runtimeResult = gameplayPlaybackManager.resetReviewRuntime(playerId, currentStore, player);
+            String arenaResult = scrubStyleReviewArena(player);
+            statusEffectManager.clearEffects(playerId);
+            elementalReactionManager.clearMarks(playerId);
+            styleManager.resetCooldowns(playerId);
+            setFreeCastEnabled(playerId, false);
+            activeStyleTests.remove(playerId);
+            pendingSingleAbilityTests.remove(playerId);
+            pendingAbilityCasts.removeIf(request -> playerId.equals(request.playerId()));
+            pendingStyleReviewResets.remove(playerId);
+
+            String summary = "[MOTM] Style review arena reset: " + mobResult
+                    + " | runtime=" + runtimeResult
+                    + " | arena=" + arenaResult;
+            LOG.info(summary + " playerId=" + playerId);
+            player.sendMessage(Message.raw(summary));
+        }
+    }
+
+    private void processPendingStyleTestMobCounts(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingStyleTestMobCounts)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingStyleTestMobCounts.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = countStyleTestMobsNow(playerId, currentStore, player);
+            player.sendMessage(Message.raw(result));
+            pendingStyleTestMobCounts.remove(playerId);
+        }
+    }
+
+    private void processPendingDevGameModeChanges(Store<EntityStore> currentStore) {
+        for (Map.Entry<String, GameMode> entry : Map.copyOf(pendingDevGameModeChanges).entrySet()) {
+            String playerId = entry.getKey();
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingDevGameModeChanges.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = applyDevGameModeChange(player, entry.getValue());
+            player.sendMessage(Message.raw(result));
+            pendingDevGameModeChanges.remove(playerId);
+        }
+    }
+
+    private String applyDevGameModeChange(Player player, GameMode gameMode) {
+        if (player == null || gameMode == null || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null) {
+            return "[MOTM] Dev game mode failed: player runtime/store missing.";
+        }
+
+        try {
+            GameMode before = player.getGameMode();
+            Player.setGameMode(player.getReference(), gameMode, player.getReference().getStore());
+            String summary = "[MOTM] Dev game mode changed: before=" + before + " after=" + gameMode;
+            LOG.info(summary + " playerId=" + getRuntimePlayerId(player));
+            return summary;
+        } catch (Throwable e) {
+            String summary = "[MOTM] Dev game mode failed safely: " + e.getMessage();
+            LOG.log(java.util.logging.Level.WARNING, summary, e);
+            return summary;
+        }
+    }
+
+    private void processPendingProofRequests(Store<EntityStore> currentStore) {
+        for (Map.Entry<String, String> entry : Map.copyOf(pendingProofRequests).entrySet()) {
+            String playerId = entry.getKey();
+            String proofId = entry.getValue();
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingProofRequests.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = null;
+            try {
+                result = runProofNow(playerId, player, currentStore, proofId);
+            } catch (Throwable e) {
+                result = "[MOTM] Proof " + proofId + " failed safely: " + e.getMessage();
+                LOG.log(java.util.logging.Level.SEVERE, result, e);
+            } finally {
+                pendingProofRequests.remove(playerId);
+            }
+            LOG.info(result);
+            player.sendMessage(Message.raw(result));
+        }
+    }
+
+    private void processPendingDevRelocations(Store<EntityStore> currentStore) {
+        for (Map.Entry<String, String> entry : Map.copyOf(pendingDevRelocations).entrySet()) {
+            String playerId = entry.getKey();
+            String target = entry.getValue();
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingDevRelocations.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result;
+            try {
+                result = relocateRuntimePlayerForTesting(playerId, target);
+            } catch (Throwable e) {
+                result = "[MOTM] Dev relocate failed safely: " + e.getMessage();
+                LOG.log(java.util.logging.Level.SEVERE, result, e);
+            } finally {
+                pendingDevRelocations.remove(playerId);
+            }
+            LOG.info(result);
+            player.sendMessage(Message.raw(result));
+        }
+    }
+
+    private void processPendingDaylightRequests(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingDaylightRequests)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingDaylightRequests.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result;
+            try {
+                World world = currentStore != null && currentStore.getExternalData() != null
+                        ? currentStore.getExternalData().getWorld()
+                        : player.getWorld();
+                WorldTimeResource time = currentStore == null
+                        ? null
+                        : currentStore.getResource(WorldTimeResource.getResourceType());
+                if (world == null || time == null) {
+                    result = "[MOTM] Dev daylight failed: world time resource unavailable.";
+                } else {
+                    time.setDayTime(0.5d, world, currentStore);
+                    result = "[MOTM] Dev daylight applied: dayTime=0.5 sunlight="
+                            + String.format(Locale.ROOT, "%.2f", time.getSunlightFactor());
+                }
+            } catch (Throwable e) {
+                result = "[MOTM] Dev daylight failed safely: " + e.getMessage();
+                LOG.log(java.util.logging.Level.SEVERE, result, e);
+            } finally {
+                pendingDaylightRequests.remove(playerId);
+            }
+            LOG.info(result);
+            player.sendMessage(Message.raw(result));
+        }
+    }
+
+    private void processActiveProofCleanups(Store<EntityStore> currentStore) {
+        long now = System.currentTimeMillis();
+        World currentWorld = currentStore != null && currentStore.getExternalData() != null
+                ? currentStore.getExternalData().getWorld()
+                : null;
+        for (TemporaryProofSelection proof : List.copyOf(activeProofSelections)) {
+            if (now < proof.cleanupAtMillis()) {
+                continue;
+            }
+            if (currentWorld == null || (currentWorld != proof.world() && !currentWorld.equals(proof.world()))) {
+                continue;
+            }
+            try {
+                proof.originalSelection().place(null, proof.world(), Vector3i.ZERO, BlockMask.EMPTY);
+                LOG.info("[MOTM] Proof cleanup restored selection: proofId=" + proof.proofId()
+                        + " anchor=" + proof.anchor());
+            } catch (Throwable e) {
+                LOG.warning("[MOTM] Proof cleanup failed for " + proof.proofId()
+                        + " anchor=" + proof.anchor()
+                        + ": " + e.getMessage());
+            }
+            activeProofSelections.remove(proof);
+        }
+
+        for (TemporaryProofProxy proof : List.copyOf(activeProofProxies)) {
+            if (now < proof.cleanupAtMillis()) {
+                continue;
+            }
+            if (currentWorld == null || (currentWorld != proof.world() && !currentWorld.equals(proof.world()))) {
+                continue;
+            }
+            try {
+                if (proof.ref() != null && proof.ref().isValid() && proof.ref().getStore() != null) {
+                    NPCEntity npc = proof.ref().getStore().getComponent(proof.ref(), NPCEntity.getComponentType());
+                    if (npc != null) {
+                        npc.setToDespawn();
+                    }
+                }
+                LOG.info("[MOTM] Proof cleanup despawned proxy: proofId=" + proof.proofId());
+            } catch (Exception e) {
+                LOG.warning("[MOTM] Proof proxy cleanup failed for " + proof.proofId()
+                        + ": " + e.getMessage());
+            }
+            activeProofProxies.remove(proof);
+        }
+    }
+
+    private String runProofNow(String playerId, Player player, Store<EntityStore> currentStore, String proofId) {
+        Vector3d basePosition = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        if (basePosition == null || forward == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: could not resolve player position/facing.";
+        }
+        if (basePosition.y < -16.0) {
+            return "[MOTM] Proof " + proofId + " FAIL: player appears below world at " + formatVector(basePosition);
+        }
+
+        return switch (proofId) {
+            case "coating-metal" -> applyProofEffect(player, "MOTM_Proof_Coating_Metal", proofId);
+            case "coating-obsidian" -> applyProofEffect(player, "MOTM_Proof_Coating_Obsidian", proofId);
+            case "coating-stone" -> applyProofEffect(player, "MOTM_Proof_Coating_Stone", proofId);
+            case "coating-poison-target" -> applyProofTargetEffect(playerId, currentStore, "MOTM_Proof_Coating_Poison", proofId);
+            case "tempblock-metal-wall" -> runTempBlockProof(player, proofId, "Metal_Iron", 2, 2, 0);
+            case "tempblock-stone-pillar" -> runTempBlockProof(player, proofId, "Rock_Stone_Brick_Pillar_Middle", 1, 3, 0);
+            case "tempblock-flower" -> runTempBlockProof(player, proofId, "Plant_Flower_Common_Purple", 1, 1, 0);
+            case "tempblock-sapling" -> runTempBlockProof(player, proofId, "Plant_Sapling_Oak", 1, 1, 0);
+            case "tempblock-gem-cluster" -> runTempBlockProof(player, proofId, 2, 2, 1,
+                    "Rock_Crystal_Green_Block",
+                    "Rock_Crystal_Green_Large",
+                    "Plant_Bush_Crystal",
+                    "Plant_Leaves_Crystal",
+                    "Plant_Sapling_Crystal");
+            case "tempblock-cactus" -> runTempBlockProof(player, proofId, 1, 2, 0,
+                    "Plant_Cactus_1",
+                    "Prototype_Cactus_Kit_Tall_Base",
+                    "Prototype_Cactus_One",
+                    "Plant_Cactus_Ball_1");
+            case "tempblock-roots" -> runTempBlockProof(player, proofId, 2, 1, 0,
+                    "Plant_Roots_Leafy",
+                    "Plant_Roots_Cave",
+                    "Plant_Roots_Cave_Small",
+                    "Plant_Vine_Thick_Roots");
+            case "tempfluid-lava-ring" -> runTempFluidProof(player, proofId, 2, "Fluid_Lava", "Lava", "lava");
+            case "tempfluid-water-field" -> runTempFluidProof(player, proofId, 2, "Fluid_Water", "Water", "water");
+            case "tempfluid-mud-field" -> runTempFluidProof(player, proofId, 3, "Fluid_Water", "Water", "water");
+            case "proxy-magma-blob" -> runProxyProof(player, proofId, "Slug_Magma", "MOTM_Terra_Impact", 2.5);
+            case "proxy-cactus-projectile" -> runProxyProof(player, proofId, "Test_Dummy_Stationary", "MOTM_Terra_Cast", 2.5);
+            case "proxy-gem" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Terra_Gem_Field", 3.0);
+            case "proxy-gem-aura" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Proof_Gem_Green", 3.0);
+            case "proxy-glass-shards" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Terra_Gem_Cast", 2.5);
+            case "proxy-sand-cloud" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Proof_Sand_Cloud", 3.0);
+            case "proxy-debris-wave" -> runProxyProof(player, proofId, "Spark_Living", "MOTM_Proof_Debris_Wave", 3.0);
+            case "movement-burrow" -> runMovementProof(player, currentStore, proofId, forward, 4.0, false);
+            case "movement-tunnel" -> runMovementProof(player, currentStore, proofId, forward, 2.0, true);
+            case "movement-dust-devil" -> runMovementProof(player, currentStore, proofId, forward, 5.0, false);
+            default -> "[MOTM] Proof " + proofId + " FAIL: unknown proof id.";
+        };
+    }
+
+    private String applyProofEffect(Player player, String effectId, String proofId) {
+        Ref<EntityStore> ref = player.getReference();
+        boolean applied = applyProofEffectToRef(ref, effectId);
+        return "[MOTM] Proof " + proofId + " " + (applied ? "PASS" : "FAIL")
+                + ": effect=" + effectId
+                + " target=player";
+    }
+
+    private String applyProofTargetEffect(String playerId, Store<EntityStore> store, String effectId, String proofId) {
+        Ref<EntityStore> target = null;
+        for (Ref<EntityStore> candidate : styleTestTargetsByPlayer.getOrDefault(playerId, List.of())) {
+            if (candidate != null && candidate.isValid()) {
+                target = candidate;
+                break;
+            }
+        }
+        if (target == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: no tracked stationary target. Run /motm dev test mobs stationary first.";
+        }
+        boolean applied = applyProofEffectToRef(target, effectId);
+        return "[MOTM] Proof " + proofId + " " + (applied ? "PASS" : "FAIL")
+                + ": effect=" + effectId
+                + " target=trackedNpc";
+    }
+
+    private boolean applyProofEffectToRef(Ref<EntityStore> ref, String effectId) {
+        if (ref == null || !ref.isValid() || ref.getStore() == null || effectId == null || effectId.isBlank()) {
+            return false;
+        }
+        EntityEffect effect = EntityEffect.getAssetMap().getAsset(effectId);
+        if (effect == null) {
+            LOG.warning("[MOTM] Proof effect missing: " + effectId);
+            return false;
+        }
+        Store<EntityStore> store = ref.getStore();
+        EffectControllerComponent controller = store.getComponent(ref, EffectControllerComponent.getComponentType());
+        if (controller == null) {
+            LOG.warning("[MOTM] Proof target missing EffectControllerComponent: " + effectId);
+            return false;
+        }
+        return controller.addEffect(ref, effect, store);
+    }
+
+    private String runTempBlockProof(Player player, String proofId, String blockId, int width, int height, int depth) {
+        return runTempBlockProof(player, proofId, width, height, 0, blockId);
+    }
+
+    private String runTempBlockProof(Player player, String proofId, int width, int height, int yOffset, String... blockIds) {
+        BlockResolution blockResolution = resolveProofBlockId(blockIds);
+        String blockId = blockResolution.blockId();
+        int blockTypeId = blockResolution.blockTypeId();
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            return "[MOTM] Proof " + proofId + " FAIL: block id did not resolve: candidates="
+                    + String.join(",", blockIds);
+        }
+        return runTempBlockProof(player, proofId, blockId, blockTypeId, width, height, yOffset);
+    }
+
+    private String runTempBlockProof(Player player, String proofId, String blockId, int blockTypeId, int width, int height, int yOffset) {
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            return "[MOTM] Proof " + proofId + " FAIL: block id did not resolve: " + blockId;
+        }
+        World world = player.getWorld();
+        Vector3d base = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        if (world == null || base == null || forward == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
+        }
+
+        Vector3i baseAnchor = proofAnchor(base, forward, 4.0);
+        Vector3i anchor = new Vector3i(baseAnchor.getX(), baseAnchor.getY() + yOffset, baseAnchor.getZ());
+        BlockSelection selection = new BlockSelection();
+        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        Vector3i rightStep = proofHorizontalRightStep(forward);
+        int half = width / 2;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int offset = x - half;
+                int wx = anchor.getX() + (rightStep.getX() * offset);
+                int wy = anchor.getY() + y;
+                int wz = anchor.getZ() + (rightStep.getZ() * offset);
+                selection.addBlockAtWorldPos(wx, wy, wz, blockTypeId, 0, 0, 0);
+            }
+        }
+        return placeTemporarySelection(proofId, world, anchor, selection, 4000L,
+                "block=" + blockId + " blockTypeId=" + blockTypeId + " blocks=" + selection.getBlockCount());
+    }
+
+    private BlockResolution resolveProofBlockId(String... blockIds) {
+        for (String candidate : blockIds) {
+            int blockTypeId = BlockType.getBlockIdOrUnknown(candidate, "MOTM proof block resolution");
+            if (blockTypeId != BlockType.UNKNOWN_ID && blockTypeId != BlockType.EMPTY_ID) {
+                return new BlockResolution(candidate, blockTypeId);
+            }
+        }
+        return new BlockResolution("", BlockType.UNKNOWN_ID);
+    }
+
+    private Vector3i proofHorizontalRightStep(Vector3d forward) {
+        Vector3d right = new Vector3d(-forward.z, 0.0, forward.x);
+        if (Math.abs(right.x) >= Math.abs(right.z)) {
+            return new Vector3i(right.x >= 0.0 ? 1 : -1, 0, 0);
+        }
+        return new Vector3i(0, 0, right.z >= 0.0 ? 1 : -1);
+    }
+
+    private String runTempFluidProof(Player player, String proofId, int radius, String... fluidIds) {
+        FluidResolution fluidResolution = resolveProofFluidId(fluidIds);
+        int fluidTypeId = fluidResolution.fluidTypeId();
+        Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
+        if (fluidTypeId == Fluid.UNKNOWN_ID || fluidTypeId == Fluid.EMPTY_ID || fluid == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: fluid id did not resolve: candidates="
+                    + String.join(",", fluidIds)
+                    + " available=" + listProofFluidIds();
+        }
+        World world = player.getWorld();
+        Vector3d base = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        if (world == null || base == null || forward == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
+        }
+
+        Vector3i anchor = proofAnchor(base, forward, 5.0);
+        BlockSelection selection = new BlockSelection();
+        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        byte fluidLevel = (byte) Math.max(1, fluid.getMaxFluidLevel());
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                double dist = Math.sqrt((x * x) + (z * z));
+                if (dist > radius + 0.2) {
+                    continue;
+                }
+                selection.addFluidAtWorldPos(anchor.getX() + x, anchor.getY(), anchor.getZ() + z, fluidTypeId, fluidLevel);
+            }
+        }
+        return placeTemporarySelection(proofId, world, anchor, selection, 4000L,
+                "fluid=" + fluidResolution.fluidId()
+                        + " fluidTypeId=" + fluidTypeId
+                        + " fluids=" + selection.getFluidCount());
+    }
+
+    private FluidResolution resolveProofFluidId(String... fluidIds) {
+        for (String candidate : fluidIds) {
+            int directId = Fluid.getAssetMap().getIndexOrDefault(candidate, Fluid.UNKNOWN_ID);
+            if (isUsableProofFluidId(directId)) {
+                return new FluidResolution(candidate, directId);
+            }
+        }
+        for (String candidate : fluidIds) {
+            int convertedId = Fluid.getFluidIdOrUnknown(candidate, "MOTM proof fluid resolution");
+            if (isUsableProofFluidId(convertedId)) {
+                Fluid fluid = Fluid.getAssetMap().getAsset(convertedId);
+                return new FluidResolution(fluid != null ? fluid.getId() : candidate, convertedId);
+            }
+        }
+        return new FluidResolution("", Fluid.UNKNOWN_ID);
+    }
+
+    private boolean isUsableProofFluidId(int fluidTypeId) {
+        if (fluidTypeId == Fluid.UNKNOWN_ID || fluidTypeId == Fluid.EMPTY_ID) {
+            return false;
+        }
+        Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
+        return fluid != null && !fluid.isUnknown();
+    }
+
+    private String listProofFluidIds() {
+        List<String> ids = new ArrayList<>();
+        int max = Math.min(Fluid.getAssetMap().getNextIndex(), 64);
+        for (int index = 0; index < max; index++) {
+            Fluid fluid = Fluid.getAssetMap().getAsset(index);
+            if (fluid != null && !fluid.isUnknown()) {
+                ids.add(index + ":" + fluid.getId());
+            }
+        }
+        return ids.isEmpty() ? "<none>" : String.join("|", ids);
+    }
+
+    private String placeTemporarySelection(String proofId,
+                                           World world,
+                                           Vector3i anchor,
+                                           BlockSelection selection,
+                                           long lifetimeMillis,
+                                           String summary) {
+        try {
+            BlockSelection original = selection.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            activeProofSelections.add(new TemporaryProofSelection(
+                    proofId,
+                    world,
+                    anchor,
+                    original,
+                    System.currentTimeMillis() + lifetimeMillis
+            ));
+            return "[MOTM] Proof " + proofId + " PASS: placed temporary selection "
+                    + summary
+                    + " anchor=" + anchor
+                    + " cleanupMs=" + lifetimeMillis;
+        } catch (Exception e) {
+            LOG.log(java.util.logging.Level.SEVERE, "[MOTM] Proof temporary selection failed: " + proofId, e);
+            return "[MOTM] Proof " + proofId + " FAIL: temporary selection placement failed: " + e.getMessage();
+        }
+    }
+
+    private String runProxyProof(Player player, String proofId, String roleId, String effectId, double distanceAhead) {
+        World world = player.getWorld();
+        Vector3d base = getPlayerPosition(player);
+        Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+        if (world == null || base == null || forward == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
+        }
+        Vector3d position = base.clone().addScaled(forward, distanceAhead);
+        NPCEntity proxy = new NPCEntity(world);
+        proxy.setRoleName(roleId);
+        proxy.setDespawnTime(4.5f);
+        world.spawnEntity(proxy, position, new Vector3f(0f, 0f, 0f));
+
+        Ref<EntityStore> ref = proxy.getReference();
+        boolean effectApplied = applyProofEffectToRef(ref, effectId);
+        if (ref != null && ref.isValid()) {
+            activeProofProxies.add(new TemporaryProofProxy(proofId, world, ref, System.currentTimeMillis() + 4500L));
+        }
+        return "[MOTM] Proof " + proofId + " PASS: proxy role=" + roleId
+                + " effect=" + effectId
+                + " effectApplied=" + effectApplied
+                + " position=" + formatVector(position);
+    }
+
+    private String runMovementProof(Player player,
+                                    Store<EntityStore> currentStore,
+                                    String proofId,
+                                    Vector3d forward,
+                                    double distance,
+                                    boolean surfaceRecovery) {
+        Ref<EntityStore> ref = player.getReference();
+        if (ref == null || !ref.isValid() || currentStore == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing player ref/store.";
+        }
+        TransformComponent transform = currentStore.getComponent(ref, TransformComponent.getComponentType());
+        if (transform == null || transform.getPosition() == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing TransformComponent.";
+        }
+        Vector3d start = transform.getPosition().clone();
+        Vector3d destination = start.clone().addScaled(forward, distance);
+        if (surfaceRecovery) {
+            destination.y = Math.max(start.y, destination.y);
+        }
+        Velocity velocity = currentStore.getComponent(ref, Velocity.getComponentType());
+        if (velocity != null && !surfaceRecovery) {
+            velocity.addForce(forward.x * 1.8, 0.15, forward.z * 1.8);
+        } else {
+            transform.teleportPosition(destination);
+        }
+        return "[MOTM] Proof " + proofId + " PASS: movement start=" + formatVector(start)
+                + " destination=" + formatVector(destination)
+                + " usedVelocity=" + (velocity != null && !surfaceRecovery)
+                + " surfaceRecovery=" + surfaceRecovery;
+    }
+
+    private Vector3i proofAnchor(Vector3d base, Vector3d forward, double distanceAhead) {
+        Vector3d anchor = base.clone().addScaled(forward, distanceAhead);
+        return new Vector3i(
+                (int) Math.floor(anchor.x),
+                (int) Math.floor(base.y),
+                (int) Math.floor(anchor.z)
+        );
     }
 
     private void processActiveStyleTests(Store<EntityStore> currentStore) {
@@ -1727,6 +2879,163 @@ public class MenteesMod extends JavaPlugin {
             }
             pendingDevBookGrants.remove(playerId);
         }
+    }
+
+    private void processPendingTerraReviewKitGrants(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingTerraReviewKitGrants)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingTerraReviewKitGrants.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = grantTerraReviewKit(player);
+            player.sendMessage(Message.raw(result));
+            pendingTerraReviewKitGrants.remove(playerId);
+        }
+    }
+
+    private void processPendingTerraReviewInventoryCleans(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingTerraReviewInventoryCleans)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            if (player == null) {
+                pendingTerraReviewInventoryCleans.remove(playerId);
+                continue;
+            }
+            if (!isPlayerInStore(player, currentStore)) {
+                continue;
+            }
+
+            String result = cleanTerraReviewInventory(player);
+            player.sendMessage(Message.raw(result));
+            pendingTerraReviewInventoryCleans.remove(playerId);
+        }
+    }
+
+    private String cleanTerraReviewInventory(Player player) {
+        if (player == null || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null) {
+            return "[MOTM] Terra inventory clean failed: player runtime/store missing.";
+        }
+
+        CombinedItemContainer inventory = getCombinedPlayerInventory(player);
+        if (inventory == null) {
+            return "[MOTM] Terra inventory clean failed: player inventory unavailable.";
+        }
+
+        Set<String> keptEssentials = new java.util.HashSet<>();
+        List<Short> slotsToRemove = new ArrayList<>();
+        inventory.forEach((slot, stack) -> {
+            if (stack == null || stack.getItemId() == null || stack.getQuantity() <= 0) {
+                return;
+            }
+
+            String itemId = stack.getItemId();
+            if (TERRA_REVIEW_ESSENTIAL_ITEM_IDS.contains(itemId) && keptEssentials.add(itemId)) {
+                return;
+            }
+
+            slotsToRemove.add(slot);
+        });
+
+        int removed = 0;
+        for (short slot : slotsToRemove) {
+            try {
+                inventory.removeItemStackFromSlot(slot);
+                removed++;
+            } catch (Throwable e) {
+                LOG.log(java.util.logging.Level.WARNING,
+                        "[MOTM] Terra inventory clean slot removal failed: slot=" + slot,
+                        e);
+            }
+        }
+
+        ensureSpellbookItem(player);
+        int granted = 0;
+        granted += ensureReviewItem(player, "Tool_Pickaxe_Iron");
+        granted += ensureReviewItem(player, "Weapon_Sword_Iron");
+
+        String summary = "[MOTM] Terra review inventory cleaned: removedSlots=" + removed
+                + " kept=spellbook,pickaxe,sword"
+                + " grantedMissing=" + granted;
+        LOG.info(summary + " playerId=" + getRuntimePlayerId(player));
+        return summary;
+    }
+
+    private String grantTerraReviewKit(Player player) {
+        if (player == null || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null) {
+            return "[MOTM] Terra review kit failed: player runtime/store missing.";
+        }
+
+        ensureSpellbookItem(player);
+        ensureDevBookItem(player);
+
+        int granted = 0;
+        List<String> missing = new ArrayList<>();
+        List<String> grantedIds = new ArrayList<>();
+        for (TerraReviewKitItem item : TERRA_REVIEW_KIT_ITEMS) {
+            if (!isItemAssetAvailable(item.itemId())) {
+                missing.add(item.itemId());
+                continue;
+            }
+            try {
+                player.giveItem(new ItemStack(item.itemId(), item.quantity()), player.getReference(), player.getReference().getStore());
+                granted++;
+                grantedIds.add(item.itemId() + "x" + item.quantity());
+            } catch (Throwable e) {
+                LOG.log(java.util.logging.Level.WARNING,
+                        "[MOTM] Terra review kit item grant failed: itemId=" + item.itemId()
+                                + " reason=" + e.getMessage(),
+                        e);
+                missing.add(item.itemId());
+            }
+        }
+
+        String summary = "[MOTM] Terra review kit granted: itemStacks=" + granted
+                + " missing=" + missing.size()
+                + " items=" + String.join(",", grantedIds)
+                + (missing.isEmpty() ? "" : " missingIds=" + String.join(",", missing));
+        LOG.info(summary + " playerId=" + getRuntimePlayerId(player));
+        return summary;
+    }
+
+    private int ensureReviewItem(Player player, String itemId) {
+        if (player == null || itemId == null || itemId.isBlank()) {
+            return 0;
+        }
+
+        CombinedItemContainer inventory = getCombinedPlayerInventory(player);
+        if (inventory == null) {
+            return 0;
+        }
+
+        if (inventory.countItemStacks(stack -> stack != null && itemId.equals(stack.getItemId())) > 0) {
+            return 0;
+        }
+
+        if (!isItemAssetAvailable(itemId)) {
+            LOG.warning("[MOTM] Review item missing from asset map: " + itemId);
+            return 0;
+        }
+
+        try {
+            player.giveItem(new ItemStack(itemId), player.getReference(), player.getReference().getStore());
+            return 1;
+        } catch (Throwable e) {
+            LOG.log(java.util.logging.Level.WARNING,
+                    "[MOTM] Review item grant failed: itemId=" + itemId,
+                    e);
+            return 0;
+        }
+    }
+
+    private boolean isItemAssetAvailable(String itemId) {
+        return itemId != null && !itemId.isBlank()
+                && com.hypixel.hytale.server.core.asset.type.item.config.Item.getAssetMap().getAsset(itemId) != null;
     }
 
     private void processPendingHydroContainerSyncs(Store<EntityStore> currentStore) {
@@ -1835,7 +3144,7 @@ public class MenteesMod extends JavaPlugin {
             player.sendMessage(Message.raw(
                     "[MOTM] Your Hydro waterskin is now "
                             + resourceManager.getWaterContainerInfo(playerData.getPlayerId())
-                            + ". Keep it in your inventory like ammo while casting with your spellbook, then right-click a water source with your empty hand, spellbook, or waterskin to refill."
+                            + ". Waterskins are no longer a casting cost, but they remain available for future Hydro utility tests."
             ));
         }
     }
@@ -2091,6 +3400,195 @@ public class MenteesMod extends JavaPlugin {
 
     public Player getRuntimePlayer(String playerId) {
         return playerId == null ? null : onlineRuntimePlayers.get(playerId);
+    }
+
+    public String describeRuntimePlayerPosition(String playerId) {
+        Player player = getRuntimePlayer(playerId);
+        try {
+            Vector3d position = getPlayerPosition(player);
+            Vector3d forward = normalizeHorizontal(getPlayerForward(player));
+            String worldId = player != null && player.getWorld() != null ? player.getWorld().getName() : "unknown";
+            String summary = "[MOTM] Dev position: world=" + worldId
+                    + " position=" + formatVector(position)
+                    + " forward=" + formatVector(forward);
+            LOG.info(summary);
+            return summary;
+        } catch (Throwable e) {
+            String summary = "[MOTM] Dev position failed safely: " + e.getMessage();
+            LOG.log(java.util.logging.Level.WARNING, summary, e);
+            return summary;
+        }
+    }
+
+    public String queueRuntimePlayerRelocationForTesting(String playerId, String target) {
+        String normalizedTarget = target == null ? "up" : target.toLowerCase(Locale.ROOT);
+        if (!List.of("up", "flatlands", "lane").contains(normalizedTarget)) {
+            return "[MOTM] Dev relocate usage: /motm dev relocate <up|flatlands|lane>";
+        }
+        boolean added = pendingDevRelocations.put(playerId, normalizedTarget) == null;
+        LOG.info("[MOTM] Dev relocate queued: playerId=" + playerId
+                + " target=" + normalizedTarget
+                + " added=" + added);
+        return added
+                ? "[MOTM] Dev relocate queued: " + normalizedTarget + "."
+                : "[MOTM] A dev relocate request is already queued.";
+    }
+
+    public String queueDaylightForTesting(String playerId) {
+        if (playerId == null || playerId.isBlank() || onlineRuntimePlayers.get(playerId) == null) {
+            return "[MOTM] Join a world and run this in-game to force daylight.";
+        }
+        boolean added = pendingDaylightRequests.add(playerId);
+        LOG.info("[MOTM] Dev daylight queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Dev daylight queued."
+                : "[MOTM] Dev daylight is already queued.";
+    }
+
+    public String queueGameModeForTesting(String playerId, String mode) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (playerId == null || playerId.isBlank() || onlineRuntimePlayers.get(playerId) == null) {
+            return "[MOTM] Join a world and run this in-game to change review mode.";
+        }
+
+        GameMode gameMode = parseReviewGameMode(mode);
+        if (gameMode == null) {
+            return "[MOTM] Dev mode usage: /motm dev mode <creative|adventure>. "
+                    + "This Hytale build exposes Adventure and Creative; Survival is not present in the protocol enum.";
+        }
+
+        pendingDevGameModeChanges.put(playerId, gameMode);
+        LOG.info("[MOTM] Dev game mode queued: playerId=" + playerId + " mode=" + gameMode);
+        return "[MOTM] Dev game mode queued: " + gameMode + ".";
+    }
+
+    private GameMode parseReviewGameMode(String mode) {
+        String normalized = mode == null ? "" : mode.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "creative", "c" -> GameMode.Creative;
+            case "adventure", "survival", "s", "a" -> GameMode.Adventure;
+            default -> null;
+        };
+    }
+
+    public String queueTerraReviewKitGrant(String playerId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (playerId == null || playerId.isBlank() || onlineRuntimePlayers.get(playerId) == null) {
+            return "[MOTM] Join a world and run this in-game to receive the Terra review kit.";
+        }
+
+        boolean added = pendingTerraReviewKitGrants.add(playerId);
+        LOG.info("[MOTM] Terra review kit queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Terra review kit queued."
+                : "[MOTM] Terra review kit is already queued.";
+    }
+
+    public String queueTerraReviewInventoryClean(String playerId) {
+        if (!devToolsEnabled) {
+            return devToolsDisabledMessage();
+        }
+        if (playerId == null || playerId.isBlank() || onlineRuntimePlayers.get(playerId) == null) {
+            return "[MOTM] Join a world and run this in-game to clean the Terra review inventory.";
+        }
+
+        boolean added = pendingTerraReviewInventoryCleans.add(playerId);
+        LOG.info("[MOTM] Terra review inventory clean queued: playerId=" + playerId + " added=" + added);
+        return added
+                ? "[MOTM] Terra review inventory clean queued."
+                : "[MOTM] Terra review inventory clean is already queued.";
+    }
+
+    private String relocateRuntimePlayerForTesting(String playerId, String target) {
+        Player player = getRuntimePlayer(playerId);
+        if (player == null || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null) {
+            return "[MOTM] Dev relocate failed: player runtime/store missing.";
+        }
+        TransformComponent transform = player.getReference().getStore()
+                .getComponent(player.getReference(), TransformComponent.getComponentType());
+        if (transform == null || transform.getTransform() == null || transform.getTransform().getPosition() == null) {
+            return "[MOTM] Dev relocate failed: TransformComponent missing.";
+        }
+
+        Vector3d start = transform.getTransform().getPosition().clone();
+        String normalizedTarget = target == null ? "up" : target.toLowerCase(Locale.ROOT);
+        Vector3d destination = switch (normalizedTarget) {
+            case "flatlands" -> new Vector3d(start.x + 96.0, Math.max(start.y + 40.0, 160.0), start.z + 96.0);
+            case "lane" -> new Vector3d(start.x + 96.0, resolveTestingLaneY(player, start), start.z + 96.0);
+            case "up" -> new Vector3d(start.x, start.y + 12.0, start.z);
+            default -> null;
+        };
+        if (destination == null) {
+            return "[MOTM] Dev relocate usage: /motm dev relocate <up|flatlands|lane>";
+        }
+
+        try {
+            if ("flatlands".equals(normalizedTarget) || "lane".equals(normalizedTarget)) {
+                placeRelocationPlatform(player, destination, normalizedTarget);
+            }
+            transform.teleportPosition(destination);
+            String summary = "[MOTM] Dev relocate " + normalizedTarget
+                    + ": start=" + formatVector(start)
+                    + " destination=" + formatVector(destination);
+            LOG.info(summary);
+            return summary;
+        } catch (Throwable e) {
+            String summary = "[MOTM] Dev relocate failed safely: " + e.getMessage();
+            LOG.log(java.util.logging.Level.SEVERE, summary, e);
+            return summary;
+        }
+    }
+
+    private double resolveTestingLaneY(Player player, Vector3d start) {
+        String worldName = player != null && player.getWorld() != null
+                ? player.getWorld().getName().toLowerCase(Locale.ROOT)
+                : "";
+        if (worldName.contains("flat")) {
+            return 80.0;
+        }
+        return start != null ? start.y : 80.0;
+    }
+
+    private void placeRelocationPlatform(Player player, Vector3d destination, String target) {
+        World world = player.getWorld();
+        if (world == null || destination == null) {
+            return;
+        }
+        int blockTypeId = BlockType.getBlockIdOrUnknown("Soil_Grass", "MOTM dev relocation platform");
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            blockTypeId = BlockType.getBlockIdOrUnknown("Rock_Stone_Brick_Pillar_Middle", "MOTM dev relocation platform");
+        }
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            LOG.warning("[MOTM] Dev relocate platform skipped: no platform block resolved.");
+            return;
+        }
+
+        int floorY = (int) Math.floor(destination.y) - 1;
+        int centerX = (int) Math.floor(destination.x);
+        int centerZ = (int) Math.floor(destination.z);
+        BlockSelection platform = new BlockSelection();
+        platform.setPosition(centerX, floorY, centerZ);
+        platform.setAnchorAtWorldPos(centerX, floorY, centerZ);
+        int radius = "lane".equals(target) ? 60 : 30;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                platform.addBlockAtWorldPos(centerX + x, floorY, centerZ + z, blockTypeId, 0, 0, 0);
+            }
+        }
+        try {
+            platform.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            LOG.info("[MOTM] Dev relocate platform placed: target=" + target
+                    + " center=(" + centerX + "," + floorY + "," + centerZ + ")"
+                    + " blocks=" + platform.getBlockCount()
+                    + " blockTypeId=" + blockTypeId);
+        } catch (Throwable e) {
+            LOG.log(java.util.logging.Level.WARNING, "[MOTM] Dev relocate platform failed safely.", e);
+        }
     }
 
     public Player getRuntimePlayer(Ref<EntityStore> entityRef) {
@@ -2840,6 +4338,9 @@ public class MenteesMod extends JavaPlugin {
             ItemStack itemInHand,
             boolean holdingSpellbook
     ) {
+        if (!resourceManager.areAbilityResourceCostsEnabled()) {
+            return false;
+        }
         if (event.getActionType() != InteractionType.Use) {
             return false;
         }
@@ -3130,6 +4631,13 @@ public class MenteesMod extends JavaPlugin {
         }
 
         event.setDamage(event.getDamage() * 1.5f);
+        String playerId = getRuntimePlayerId(terraMiner);
+        var playerData = playerId != null ? playerDataManager.getOnlinePlayer(playerId) : null;
+        String alloyResponse = gameplayPlaybackManager.handleAlloyToolUse(terraMiner, playerData, itemId);
+        if (alloyResponse != null && !alloyResponse.isBlank()) {
+            LOG.info(alloyResponse + " playerId=" + playerId);
+            terraMiner.sendMessage(Message.raw(alloyResponse));
+        }
     }
 
     private Player resolveTerraMinerForBlockDamage(DamageBlockEvent event) {
@@ -3279,9 +4787,40 @@ public class MenteesMod extends JavaPlugin {
             boolean notifyFailures
     ) {}
 
+    private record TemporaryProofSelection(
+            String proofId,
+            World world,
+            Vector3i anchor,
+            BlockSelection originalSelection,
+            long cleanupAtMillis
+    ) {}
+
+    private record TemporaryProofProxy(
+            String proofId,
+            World world,
+            Ref<EntityStore> ref,
+            long cleanupAtMillis
+    ) {}
+
+    private record FluidResolution(
+            String fluidId,
+            int fluidTypeId
+    ) {}
+
+    private record BlockResolution(
+            String blockId,
+            int blockTypeId
+    ) {}
+
     private record StyleLookup(
             String classId,
             StyleData style
+    ) {}
+
+    private record TerraReviewKitItem(
+            String itemId,
+            int quantity,
+            String purpose
     ) {}
 
     private record ActiveStyleTest(

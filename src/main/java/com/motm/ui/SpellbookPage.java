@@ -463,7 +463,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
         setText(commands, "#GrimoireStyleValue.Text", hasStyle ? safe(style.getName()) : "Unchosen");
         setText(commands, "#GrimoireThemeValue.Text", hasStyle ? safe(style.getTheme()) : "No theme yet");
-        setText(commands, "#GrimoireResourceValue.Text", hasStyle ? displayStyleResource(style) : "No class resource");
+        setText(commands, "#GrimoireResourceValue.Text", hasStyle ? "Cooldown-based" : "Choose a style");
         setText(commands, "#GrimoireAbilityRule.Text", "Styles grant all 3 active abilities immediately. Perks stay passive and modify those abilities later.");
 
         List<AbilityData> abilities = hasStyle && style.getAbilities() != null ? style.getAbilities() : Collections.emptyList();
@@ -571,7 +571,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#ResourcesCurrentValue.Text", currentResourceLine(player));
         setText(commands, "#ResourcesRuleValue.Text", player != null && player.getPlayerClass() != null
                 ? resourceRule(player.getPlayerClass())
-                : "Choose a class to unlock its resource system.");
+                : "Choose a class to unlock its casting model.");
         setText(commands, "#ResourcesPracticalValue.Text",
                 "Practical perks can improve sustain, movement, gathering, healing, and survival while playing Hytale normally.");
     }
@@ -732,21 +732,21 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private String currentResourceLine(PlayerData player) {
         if (player == null || player.getPlayerClass() == null) {
-            return "No class resource yet.";
+            return "No casting model yet.";
         }
         return mod.getResourceManager().getResourceDisplay(player.getPlayerId(), player.getPlayerClass());
     }
 
     private String resourceRule(String playerClass) {
         if (playerClass == null) {
-            return "Choose a class to unlock a resource rule.";
+            return "Choose a class to unlock a casting rule.";
         }
         return switch (playerClass.toLowerCase(Locale.ROOT)) {
-            case "terra" -> "Terra spends style-specific materials: stone blocks, seeds, dirt blocks, sand blocks, metal, and gems.";
-            case "hydro" -> "Hydro spends water from a crafted waterskin in inventory like ammo and refills it by right-clicking natural water sources.";
+            case "terra" -> "Terra abilities use cooldowns, durations, action timing, and physical test items for certain weapon/tool interactions.";
+            case "hydro" -> "Hydro abilities use cooldowns and environmental water interactions; waterskins no longer gate casting.";
             case "aero" -> "Aero has no class resource and fights through cooldowns, movement, and momentum.";
-            case "corruptus" -> "Corruptus earns souls from kills and burns them for power.";
-            default -> "Unknown class resource.";
+            case "corruptus" -> "Corruptus abilities use cooldowns, duration, risk, and status effects rather than soul spending.";
+            default -> "Unknown casting model.";
         };
     }
 
@@ -785,8 +785,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 meta.append(visuals).append(" | ");
             }
         }
-        meta.append("Cost ").append(ability.getResourceCost())
-                .append(" | Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
+        meta.append("Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
                 .append(" | Ready in ").append(formatDecimal(getRemainingCooldown(player, ability))).append("s");
         return meta.toString();
     }

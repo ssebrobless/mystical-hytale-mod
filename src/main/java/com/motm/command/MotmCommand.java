@@ -1,8 +1,18 @@
 package com.motm.command;
 
 import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.protocol.MovementSettings;
+import com.hypixel.hytale.protocol.MovementStates;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
+import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
+import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
+import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.MenteesMod;
 import com.motm.manager.LevelingManager;
@@ -388,8 +398,8 @@ public class MotmCommand {
             if (autoClassSwap) {
                 sb.append("Flow: class auto-set from style id.\n");
             }
-            sb.append("Reset: class perks, style, resources, and cooldowns cleared for a clean test swap.\n");
-            sb.append("Test Protection: free-cast enabled and spellbook delivery queued automatically.\n");
+            sb.append("Reset: class perks, style, casting state, and cooldowns cleared for a clean test swap.\n");
+            sb.append("Test Protection: legacy free-cast flag enabled and spellbook delivery queued automatically.\n");
         }
         sb.append("Style: ").append(resolvedStyle.style().getName()).append("\n");
         sb.append("Theme: ").append(resolvedStyle.style().getTheme()).append("\n");
@@ -531,7 +541,7 @@ public class MotmCommand {
 
         StringBuilder sb = new StringBuilder("[MOTM] === Abilities ===\n");
         sb.append("Style: ").append(style.getName())
-                .append(" | Resource: ").append(displayStyleResource(style)).append("\n\n");
+                .append(" | Casting: cooldown-based\n\n");
 
         for (AbilityData ability : abilities) {
             double remainingCooldown = mod.getStyleManager()
@@ -547,8 +557,7 @@ public class MotmCommand {
             if (!visuals.isBlank()) {
                 sb.append("  Visuals: ").append(visuals).append("\n");
             }
-            sb.append("  Cost: ").append(formatResourceCost(style, ability))
-                    .append(" | CD: ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
+            sb.append("  CD: ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
                     .append(" | Status: ")
                     .append(remainingCooldown > 0
                             ? "Cooldown " + formatDecimal(remainingCooldown) + "s"
@@ -737,6 +746,12 @@ public class MotmCommand {
                 if (!execution.summary().isBlank()) {
                     sb.append(" Runtime: ").append(execution.summary()).append(".");
                 }
+                if ("dust_devil".equalsIgnoreCase(activated.getId())) {
+                    String sandstormRuntime = mod.getGameplayPlaybackManager().deactivateAbilityRuntime(player, "sandstorm");
+                    if (!sandstormRuntime.isBlank()) {
+                        sb.append(" Sandstorm ended: ").append(sandstormRuntime).append(".");
+                    }
+                }
             }
 
             return sb.toString();
@@ -761,9 +776,17 @@ public class MotmCommand {
         return switch (args[1].toLowerCase()) {
             case "help" -> getDevHelpMessage();
             case "book" -> handleDevBook(player, runtimePlayer);
+            case "audit" -> handleDevAudit(player, args);
             case "test" -> handleDevTest(player, args, runtimePlayer);
+            case "proof" -> handleDevProof(player, args, runtimePlayer);
+            case "position", "where" -> handleDevPosition(player);
+            case "relocate", "unstuck" -> handleDevRelocate(player, args);
+            case "mode", "gamemode" -> handleDevMode(player, args);
+            case "kit" -> handleDevKit(player, args);
+            case "inventory", "inv" -> handleDevInventory(player, args);
+            case "daylight", "noon" -> mod.queueDaylightForTesting(player.getPlayerId());
             case "freecast" -> handleDevFreeCast(player, args);
-            case "effects" -> handleDevEffects(player);
+            case "effects" -> handleDevEffects(player, runtimePlayer);
             case "clear" -> handleDevClear(player, args);
             case "level" -> handleDevLevel(player, args);
             case "xp" -> handleDevXp(player, args);
@@ -783,9 +806,18 @@ public class MotmCommand {
         return mod.queueDevBookGrant(player.getPlayerId());
     }
 
+    private String handleDevAudit(PlayerData player, String[] args) {
+        String marker = args.length >= 4 && "marker".equalsIgnoreCase(args[2])
+                ? args[3]
+                : Long.toString(System.currentTimeMillis());
+        LOG.info("[MOTM] Dev audit marker: playerId=" + player.getPlayerId()
+                + " marker=" + marker);
+        return "[MOTM] Dev audit marker: " + marker;
+    }
+
     private String handleDevTest(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 3) {
-            return "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";
+            return "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|reset|status|stop>";
         }
         if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
             return "[MOTM] Join a world and run this in-game to start a live style test.";
@@ -804,16 +836,83 @@ public class MotmCommand {
                 }
                 yield mod.startSingleAbilityTest(player.getPlayerId(), args[3]);
             }
-            case "mobs" -> mod.spawnStyleTestMobs(player.getPlayerId());
+            case "mobs" -> {
+                if (args.length >= 4 && "clear".equalsIgnoreCase(args[3])) {
+                    yield mod.clearStyleTestMobs(player.getPlayerId());
+                }
+                if (args.length >= 4 && "count".equalsIgnoreCase(args[3])) {
+                    yield mod.countStyleTestMobs(player.getPlayerId());
+                }
+                yield mod.spawnStyleTestMobs(player.getPlayerId(), args.length >= 4 ? args[3] : "standard");
+            }
+            case "reset", "arena-reset" -> mod.resetStyleReviewArena(player.getPlayerId());
+            case "weapon-hit", "weapon", "attack" -> mod.runStyleTestWeaponHit(player.getPlayerId());
+            case "stomp-land", "stomp-landing" -> mod.forceStyleTestStompLanding(player.getPlayerId());
             case "status" -> mod.getStyleTestStatus(player.getPlayerId());
             case "stop" -> mod.stopStyleTest(player.getPlayerId());
-            default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";
+            default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|reset|status|stop>";
         };
+    }
+
+    private String handleDevProof(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev proof <proofId>\n"
+                    + "Examples: coating-metal, tempblock-metal-wall, tempfluid-lava-ring, "
+                    + "proxy-magma-blob, movement-burrow";
+        }
+        if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
+            return "[MOTM] Join a world and run this in-game to run a proof.";
+        }
+        return mod.queueDevProof(player.getPlayerId(), args[2]);
+    }
+
+    private String handleDevPosition(PlayerData player) {
+        return mod.describeRuntimePlayerPosition(player.getPlayerId());
+    }
+
+    private String handleDevRelocate(PlayerData player, String[] args) {
+        String target = args.length >= 3 ? args[2] : "up";
+        return mod.queueRuntimePlayerRelocationForTesting(player.getPlayerId(), target);
+    }
+
+    private String handleDevMode(PlayerData player, String[] args) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev mode <creative|adventure>. "
+                    + "Use adventure for survival-like Terra mining/damage/durability review.";
+        }
+        return mod.queueGameModeForTesting(player.getPlayerId(), args[2]);
+    }
+
+    private String handleDevKit(PlayerData player, String[] args) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev kit <terra>";
+        }
+        String kit = args[2].toLowerCase(java.util.Locale.ROOT);
+        if ("terra".equals(kit) || "terra-review".equals(kit)) {
+            return mod.queueTerraReviewKitGrant(player.getPlayerId());
+        }
+        return "[MOTM] Unknown dev kit: " + args[2] + ". Available kits: terra.";
+    }
+
+    private String handleDevInventory(PlayerData player, String[] args) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev inventory clean terra-kit\n"
+                    + "Keeps only the MOTM spellbook, iron pickaxe, and iron sword.";
+        }
+
+        String action = args[2].toLowerCase(java.util.Locale.ROOT);
+        String preset = args.length >= 4 ? args[3].toLowerCase(java.util.Locale.ROOT) : "terra-kit";
+        if (!"clean".equals(action) || (!"terra-kit".equals(preset) && !"terra".equals(preset))) {
+            return "[MOTM] Usage: /motm dev inventory clean terra-kit";
+        }
+
+        return mod.queueTerraReviewInventoryClean(player.getPlayerId());
     }
 
     private String handleDevFreeCast(PlayerData player, String[] args) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev freecast <on|off>\n"
+                    + "Ability resource costs are globally disabled; this toggle now only keeps legacy test protections active.\n"
                     + "Current: " + (mod.isFreeCastEnabled(player.getPlayerId()) ? "ON" : "OFF");
         }
 
@@ -821,18 +920,18 @@ public class MotmCommand {
             case "on", "enable", "enabled", "true" -> {
                 mod.setFreeCastEnabled(player.getPlayerId(), true);
                 mod.refreshStatusHud(player.getPlayerId());
-                yield "[MOTM] Dev: free-cast enabled. Ability costs are ignored for testing.";
+                yield "[MOTM] Dev: test protection enabled. Ability resource costs are already globally disabled.";
             }
             case "off", "disable", "disabled", "false" -> {
                 mod.setFreeCastEnabled(player.getPlayerId(), false);
                 mod.refreshStatusHud(player.getPlayerId());
-                yield "[MOTM] Dev: free-cast disabled. Normal resource costs restored.";
+                yield "[MOTM] Dev: test protection disabled. Ability resource costs remain globally disabled.";
             }
             default -> "[MOTM] Usage: /motm dev freecast <on|off>";
         };
     }
 
-    private String handleDevEffects(PlayerData player) {
+    private String handleDevEffects(PlayerData player, Player runtimePlayer) {
         List<StatusEffect> effects = mod.getStatusEffectManager().getEffects(player.getPlayerId());
         StringBuilder sb = new StringBuilder("[MOTM] Dev effects: ");
         sb.append("count=").append(effects.size());
@@ -846,6 +945,7 @@ public class MotmCommand {
                 .append(mod.getStatusEffectManager().isImmobilized(player.getPlayerId()));
         sb.append(" terraStationaryTicks=")
                 .append(mod.getClassPassiveManager().getTerraStationaryTicks(player.getPlayerId()));
+        appendNativeMovementDiagnostics(sb, player, runtimePlayer);
 
         if (effects.isEmpty()) {
             sb.append(" effects=[]");
@@ -869,6 +969,122 @@ public class MotmCommand {
         String result = sb.toString();
         LOG.info(result);
         return result;
+    }
+
+    private void appendNativeMovementDiagnostics(StringBuilder sb, PlayerData player, Player runtimePlayer) {
+        Player resolvedPlayer = runtimePlayer != null ? runtimePlayer : mod.getRuntimePlayer(player.getPlayerId());
+        if (resolvedPlayer == null) {
+            sb.append(" native=no-runtime-player");
+            return;
+        }
+
+        Ref<EntityStore> playerRef = resolvedPlayer.getReference();
+        Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
+        if (playerRef == null || !playerRef.isValid() || store == null) {
+            sb.append(" native=no-player-ref");
+            return;
+        }
+
+        TransformComponent transform = store.getComponent(playerRef, TransformComponent.getComponentType());
+        Velocity velocity = store.getComponent(playerRef, Velocity.getComponentType());
+        MovementStatesComponent movementStatesComponent = store.getComponent(playerRef, MovementStatesComponent.getComponentType());
+        MovementManager movementManager = store.getComponent(playerRef, MovementManager.getComponentType());
+        EntityStatMap statMap = store.getComponent(playerRef, EntityStatMap.getComponentType());
+
+        if (transform != null && transform.getPosition() != null) {
+            sb.append(" nativePos=").append(formatCompactTriple(
+                    transform.getPosition().x,
+                    transform.getPosition().y,
+                    transform.getPosition().z));
+        }
+        if (velocity != null && velocity.getVelocity() != null) {
+            sb.append(" nativeVel=").append(formatCompactTriple(
+                    velocity.getVelocity().x,
+                    velocity.getVelocity().y,
+                    velocity.getVelocity().z));
+        }
+        if (movementStatesComponent != null && movementStatesComponent.getMovementStates() != null) {
+            sb.append(" movementStates=").append(formatMovementStates(movementStatesComponent.getMovementStates()));
+        }
+        if (movementManager != null && movementManager.getSettings() != null) {
+            sb.append(" movementSettings=").append(formatMovementSettings(movementManager.getSettings()));
+        }
+        if (statMap != null) {
+            appendStat(sb, "health", statMap, DefaultEntityStatTypes.getHealth());
+            appendStat(sb, "stamina", statMap, DefaultEntityStatTypes.getStamina());
+            appendStat(sb, "mana", statMap, DefaultEntityStatTypes.getMana());
+            appendStat(sb, "signature", statMap, DefaultEntityStatTypes.getSignatureEnergy());
+        }
+    }
+
+    private String formatMovementStates(MovementStates states) {
+        List<String> active = new java.util.ArrayList<>();
+        if (states.idle) active.add("idle");
+        if (states.horizontalIdle) active.add("horizontalIdle");
+        if (states.jumping) active.add("jumping");
+        if (states.flying) active.add("flying");
+        if (states.walking) active.add("walking");
+        if (states.running) active.add("running");
+        if (states.sprinting) active.add("sprinting");
+        if (states.crouching) active.add("crouching");
+        if (states.forcedCrouching) active.add("forcedCrouching");
+        if (states.falling) active.add("falling");
+        if (states.fallingFar) active.add("fallingFar");
+        if (states.climbing) active.add("climbing");
+        if (states.inFluid) active.add("inFluid");
+        if (states.swimming) active.add("swimming");
+        if (states.swimJumping) active.add("swimJumping");
+        if (states.onGround) active.add("onGround");
+        if (states.mantling) active.add("mantling");
+        if (states.sliding) active.add("sliding");
+        if (states.mounting) active.add("mounting");
+        if (states.rolling) active.add("rolling");
+        if (states.sitting) active.add("sitting");
+        if (states.gliding) active.add("gliding");
+        if (states.sleeping) active.add("sleeping");
+        return active.isEmpty() ? "[]" : "[" + String.join(",", active) + "]";
+    }
+
+    private String formatMovementSettings(MovementSettings settings) {
+        return "{base="
+                + formatOneDecimal(settings.baseSpeed)
+                + ",fwWalk=" + formatOneDecimal(settings.forwardWalkSpeedMultiplier)
+                + ",strafeWalk=" + formatOneDecimal(settings.strafeWalkSpeedMultiplier)
+                + ",fwRun=" + formatOneDecimal(settings.forwardRunSpeedMultiplier)
+                + ",strafeRun=" + formatOneDecimal(settings.strafeRunSpeedMultiplier)
+                + ",fwCrouch=" + formatOneDecimal(settings.forwardCrouchSpeedMultiplier)
+                + ",strafeCrouch=" + formatOneDecimal(settings.strafeCrouchSpeedMultiplier)
+                + ",sprint=" + formatOneDecimal(settings.forwardSprintSpeedMultiplier)
+                + ",minMult=" + formatOneDecimal(settings.minSpeedMultiplier)
+                + ",maxMult=" + formatOneDecimal(settings.maxSpeedMultiplier)
+                + ",accel=" + formatOneDecimal(settings.acceleration)
+                + ",canFly=" + settings.canFly
+                + "}";
+    }
+
+    private void appendStat(StringBuilder sb, String label, EntityStatMap statMap, int statType) {
+        EntityStatValue value = statMap.get(statType);
+        if (value == null) {
+            return;
+        }
+        sb.append(' ')
+                .append(label)
+                .append('=')
+                .append(String.format(java.util.Locale.ROOT, "%.1f/%.1f", value.get(), value.getMax()));
+    }
+
+    private String formatCompactTriple(double x, double y, double z) {
+        return "("
+                + String.format(java.util.Locale.ROOT, "%.2f", x)
+                + ","
+                + String.format(java.util.Locale.ROOT, "%.2f", y)
+                + ","
+                + String.format(java.util.Locale.ROOT, "%.2f", z)
+                + ")";
+    }
+
+    private String formatOneDecimal(float value) {
+        return String.format(java.util.Locale.ROOT, "%.2f", value);
     }
 
 
@@ -1058,7 +1274,7 @@ public class MotmCommand {
         if (player.getPlayerClass() == null) {
             return "[MOTM] Select a class first with /motm class <classId>";
         }
-        StringBuilder sb = new StringBuilder("[MOTM] ")
+        StringBuilder sb = new StringBuilder("[MOTM] Casting Model: ")
                 .append(mod.getResourceManager().getResourceDisplay(player.getPlayerId(), player.getPlayerClass()));
         if (mod.isFreeCastEnabled(player.getPlayerId())) {
             sb.append("\nDev Free-Cast: ON");
@@ -1093,7 +1309,7 @@ public class MotmCommand {
                 + "  /motm audit             - Run the preflight data/runtime audit\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
                 + "  /motm select ...        - Select 3 perks by number\n"
-                + "  /motm resources         - View class resources\n"
+                + "  /motm resources         - View casting model\n"
                 + "  /motm stats             - View your statistics\n"
                 + "  /motm level             - View XP progress\n"
                 + buildDevHelpSummary()
@@ -1116,9 +1332,17 @@ public class MotmCommand {
                 + "  /motm dev book\n"
                 + "  /motm dev test style <styleId>\n"
                 + "  /motm dev test ability <abilityId>\n"
-                + "  /motm dev test mobs\n"
+                + "  /motm dev test mobs [close|stationary|cluster|line|surround|clear|count]\n"
+                + "  /motm dev test reset\n"
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
+                + "  /motm dev proof <proofId>\n"
+                + "  /motm dev position\n"
+                + "  /motm dev relocate <up|flatlands|lane>\n"
+                + "  /motm dev mode <creative|adventure>\n"
+                + "  /motm dev kit terra\n"
+                + "  /motm dev inventory clean terra-kit\n"
+                + "  /motm dev daylight\n"
                 + "  /motm dev freecast <on|off>\n"
                 + "  /motm dev effects\n"
                 + "  /motm dev clear\n"
@@ -1390,7 +1614,7 @@ public class MotmCommand {
         mod.getPlayerDataManager().savePlayerData(player);
         mod.refreshStatusHud(player.getPlayerId());
         return "[MOTM] Dev: player cleared to a fresh state.\n"
-                + "Reset: class, race, style, perks, level, XP, resources, cooldowns, statuses, and marks.";
+                + "Reset: class, race, style, perks, level, XP, casting state, cooldowns, statuses, and marks.";
     }
 
     private Integer parseInteger(String rawValue) {

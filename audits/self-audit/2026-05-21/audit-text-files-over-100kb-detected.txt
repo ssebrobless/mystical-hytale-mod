@@ -1,0 +1,364 @@
+﻿
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\2026-05-21\discovery\package-files.txt
+Length         : 1110706
+SampleNulBytes : 99999
+Utf16Likely    : True
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\2026-05-21\discovery\motm-command-symbols.txt
+Length         : 461192
+SampleNulBytes : 99999
+Utf16Likely    : True
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase9-styles-2-5\2026-05-21T18-06-00\server.log
+Length         : 208520
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-28-47\server.log
+Length         : 199406
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase5\2026-05-21T17-00-41\server.log
+Length         : 186454
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\blockers\2026-05-21\b1-knockback\server.log
+Length         : 182165
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase7-perks\2026-05-21T18-01-30\server.log
+Length         : 180664
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase5\2026-05-21T18-13-53\server.log
+Length         : 179805
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-54-11\server.log
+Length         : 178907
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-47-40\server.log
+Length         : 176394
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T18-14-56\server.log
+Length         : 176305
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T16-55-23\server.log
+Length         : 175866
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-53-25\server.log
+Length         : 175308
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-04-41\server.log
+Length         : 175178
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T20-10-07\server.log
+Length         : 174627
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T16-48-07\server.log
+Length         : 174128
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-46-55\server.log
+Length         : 172795
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-54-38\server.log
+Length         : 172747
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T18-14-11\server.log
+Length         : 172706
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase5\2026-05-21T20-18-44\server.log
+Length         : 172306
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-03-57\server.log
+Length         : 172059
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T18-50-38\server.log
+Length         : 171676
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase5\2026-05-21T17-19-18\server.log
+Length         : 171660
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T18-08-35\server.log
+Length         : 171444
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T20-08-52\server.log
+Length         : 171028
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-47-22\server.log
+Length         : 171009
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T16-45-45\server.log
+Length         : 168813
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T20-19-46\server.log
+Length         : 168806
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T18-49-54\server.log
+Length         : 168077
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-20-23\server.log
+Length         : 168018
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T18-07-48\server.log
+Length         : 167845
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-31-41\server.log
+Length         : 166147
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-45-00\server.log
+Length         : 165694
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-04-50\server.log
+Length         : 165269
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T20-19-02\server.log
+Length         : 165207
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-19-36\server.log
+Length         : 164899
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T18-00-23\server.log
+Length         : 164561
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-32-58\server.log
+Length         : 163969
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\blockers\2026-05-21\b2-idle-slow\server.log
+Length         : 162805
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T16-40-20\server.log
+Length         : 162307
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase5\2026-05-21T18-54-33\server.log
+Length         : 161719
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-59-38\server.log
+Length         : 160962
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-32-13\server.log
+Length         : 160850
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T16-37-01\server.log
+Length         : 159933
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase5\2026-05-21T17-20-55\server.log
+Length         : 159437
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-39-35\server.log
+Length         : 159198
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\phase5\2026-05-21T17-01-03\server.log
+Length         : 158739
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T18-55-37\server.log
+Length         : 158219
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-08-40\server.log
+Length         : 158047
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T20-13-57\server.log
+Length         : 157261
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T20-06-30\server.log
+Length         : 156967
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-36-41\server.log
+Length         : 156824
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-44-51\server.log
+Length         : 155920
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T16-25-36\server.log
+Length         : 155801
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-21-58\server.log
+Length         : 155795
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T18-12-00\server.log
+Length         : 155557
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-15-01\server.log
+Length         : 155478
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\setup-test-world\2026-05-21T17-02-05\server.log
+Length         : 155097
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-07-55\server.log
+Length         : 154928
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T18-54-52\server.log
+Length         : 154620
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T20-05-41\server.log
+Length         : 153368
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-41-56\server.log
+Length         : 153347
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-25-29\server.log
+Length         : 152692
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-21-13\server.log
+Length         : 152676
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-14-16\server.log
+Length         : 152359
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-44-06\server.log
+Length         : 152321
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-34-35\server.log
+Length         : 152040
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T17-01-21\server.log
+Length         : 151978
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T18-11-16\server.log
+Length         : 151958
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T15-52-23\server.log
+Length         : 151650
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T15-48-10\server.log
+Length         : 149391
+SampleNulBytes : 0
+Utf16Likely    : False
+
+FullName       : C:\Users\fishe\Documents\projects\Mystical-Hytale-Mod\audits\harness\load-world\2026-05-21T16-12-50\server.log
+Length         : 148961
+SampleNulBytes : 0
+Utf16Likely    : False
+
+
+

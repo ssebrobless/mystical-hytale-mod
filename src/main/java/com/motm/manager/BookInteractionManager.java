@@ -346,7 +346,7 @@ public class BookInteractionManager {
             }
             case 1 -> {
                 fillResourcesForTesting(player);
-                state.lastMessage = "Active class resources refilled.";
+                state.lastMessage = "Ability resources are disabled; cooldowns are the active gate.";
             }
             case 2 -> {
                 clearTransientEffects(player);
@@ -365,8 +365,8 @@ public class BookInteractionManager {
         List<String> options = getResourceOptionLabels(player);
         if (options.isEmpty()) {
             state.lastMessage = "aero".equalsIgnoreCase(player.getPlayerClass())
-                    ? "Aero has no class resource to manage."
-                    : "Choose a class first to unlock resource tools.";
+                    ? "Aero uses cooldowns, movement, and momentum."
+                    : "Ability resources are disabled. Use Ability Lab for cooldown and interaction testing.";
             return;
         }
 
@@ -701,7 +701,7 @@ public class BookInteractionManager {
                 .append(" | Lv ").append(player.getLevel()).append("\n");
         sb.append("Slots: ").append(currentAbilitySummary(player)).append("\n");
         if (player.getPlayerClass() != null) {
-            sb.append("Resources: ")
+            sb.append("Casting: ")
                     .append(mod.getResourceManager().getResourceDisplay(player.getPlayerId(), player.getPlayerClass()))
                     .append("\n");
         }
@@ -783,7 +783,7 @@ public class BookInteractionManager {
         }
 
         sb.append("Current style: ").append(currentStyleId(player)).append("\n");
-        sb.append("Resource: ").append(mod.getResourceManager().getResourceDisplay(
+        sb.append("Casting: ").append(mod.getResourceManager().getResourceDisplay(
                 player.getPlayerId(),
                 safe(player.getPlayerClass(), "")
         )).append("\n");
@@ -796,7 +796,7 @@ public class BookInteractionManager {
 
         int actionOffset = abilities.size();
         appendOption(sb, state.optionIndex == actionOffset, "Reset cooldowns");
-        appendOption(sb, state.optionIndex == actionOffset + 1, "Refill class resources");
+        appendOption(sb, state.optionIndex == actionOffset + 1, "Confirm cooldown-based casting");
         appendOption(sb, state.optionIndex == actionOffset + 2, "Clear status effects + marks");
         appendOption(sb, state.optionIndex == actionOffset + 3, "Rebuild runtime");
 
@@ -815,12 +815,12 @@ public class BookInteractionManager {
                 sb.append("Aero has no class resource to test.\n");
                 sb.append("Use Ability Lab for cooldown, movement, and momentum testing.\n");
             } else {
-                sb.append("Choose a class first to unlock resource testing.\n");
+                sb.append("Ability resources are disabled. Use Ability Lab for cooldown and interaction testing.\n");
             }
             return;
         }
 
-        sb.append("Current resources: ")
+        sb.append("Casting model: ")
                 .append(mod.getResourceManager().getResourceDisplay(player.getPlayerId(), safe(player.getPlayerClass(), "")))
                 .append("\n");
         if ("hydro".equalsIgnoreCase(player.getPlayerClass())) {
@@ -957,6 +957,9 @@ public class BookInteractionManager {
     }
 
     private List<String> getResourceOptionLabels(PlayerData player) {
+        if (!mod.getResourceManager().areAbilityResourceCostsEnabled()) {
+            return Collections.emptyList();
+        }
         if (player.getPlayerClass() == null) {
             return Collections.emptyList();
         }

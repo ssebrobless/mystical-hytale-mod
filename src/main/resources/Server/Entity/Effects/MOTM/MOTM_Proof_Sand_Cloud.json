@@ -1,0 +1,17 @@
+{
+  "Duration": 0.9,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#f2dea2",
+    "EntityBottomTint": "#8a6b34",
+    "Particles": [
+      {
+        "SystemId": "Earth_Brazier_Glow"
+      },
+      {
+        "SystemId": "Block_Break_Grass_Earth"
+      }
+    ],
+    "ModelVFXId": "Dagger_Dash"
+  }
+}

@@ -1,0 +1,24 @@
+﻿[2026/05/22 03:20:46   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=thunderclap hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 03:20:46   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=thunderclap notifyFailures=true
+[2026/05/22 03:20:46   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=thunderclap
+[2026/05/22 03:20:46   INFO]                  [MOTM] [MOTM] Shocked token applied: ability=thunderclap target=1d52e9a2-3eca-3aff-9d40-fb823500ef82 durationTicks=50
+[2026/05/22 03:20:46   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=thunderclap result=[MOTM] Cast Thunderclap! Runtime: aero cast visuals | applied stun, shocked to 1 target.
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=smite hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=smite notifyFailures=true
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=smite
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=smite result=[MOTM] Cast Smite! Charges 1/2. Runtime: aero cast visuals | launched 1 projectile at 30.0m/s.
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Lightning bonus check: ability=smite target=1d52e9a2-3eca-3aff-9d40-fb823500ef82 shocked=true
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Lightning bonus applied: ability=smite target=1d52e9a2-3eca-3aff-9d40-fb823500ef82 multiplier=1.25
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=1d52e9a2-3eca-3aff-9d40-fb823500ef82 mobType=Goblin_Scrapper
+[2026/05/22 03:20:47   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Shocked token applied: ability=smite target=1d52e9a2-3eca-3aff-9d40-fb823500ef82 durationTicks=80
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Shocked token applied: ability=smite target=1e3f309e-18cc-38a8-a8a4-a818f6cdf970 durationTicks=80
+[2026/05/22 03:20:47   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Spirit_Thunder, modelAssetId=Spirit_Thunder
+[2026/05/22 03:20:50   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 03:20:50   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 03:20:52   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=chain_lightning hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 03:20:52   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=chain_lightning notifyFailures=true
+[2026/05/22 03:20:52   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=chain_lightning
+[2026/05/22 03:20:52   INFO]                  [MOTM] [MOTM] Shocked token applied: ability=chain_lightning target=a438f68c-dd00-31f4-aba6-aa55e94d7761 durationTicks=80
+[2026/05/22 03:20:52   INFO]                  [MOTM] [MOTM] Shocked token applied: ability=chain_lightning target=a438f68c-dd00-31f4-aba6-aa55e94d7761 durationTicks=80
+[2026/05/22 03:20:52   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=chain_lightning result=[MOTM] Cast Chain Lightning! Runtime: aero cast visuals | 1 hit for 19.3 damage | applied dot, shocked to 1 target.

@@ -1,0 +1,8 @@
+﻿Validated audit paths:
+Terra/Quake -> audits/phase5/2026-05-21T17-19-18/report.md; audits/phase5/2026-05-21T17-20-55/report.md; latest regression audits/phase5/2026-05-21T20-18-44/report.md
+Terra/Magma -> audits/phase9-magma/2026-05-21T18-51-28/magma-after-casts.png; commit bd3b7be Validate Terra Magma style slice
+Terra/Metal -> audits/phase9-styles-2-5/2026-05-21T18-06-00/report.md
+Hydro/Icicle -> audits/phase9-styles-2-5/2026-05-21T18-06-00/report.md
+Hydro/Snow -> audits/phase9-snow/2026-05-21T20-17-49/snow-after-casts-role-model-2.png; commit 3872d8a Validate Hydro Snow style slice
+Aero/Wind Blade -> audits/phase9-styles-2-5/2026-05-21T18-06-00/report.md
+Corruptus/Flame -> audits/phase9-styles-2-5/2026-05-21T18-06-00/report.md

@@ -1,0 +1,48 @@
+﻿[2026/05/22 01:30:16   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 01:30:17   INFO]        [CommandManager] imseb executed command: motm dev class set terra
+[2026/05/22 01:30:17   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:30:17   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:30:17   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:30:17   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:30:17   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:30:19   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 01:30:19   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:30:19   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:30:19   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:30:19   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:30:19   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:30:21   INFO]        [CommandManager] imseb executed command: motm style bloom
+[2026/05/22 01:30:21   INFO]                  [MOTM] [MOTM] imseb selected styles: [bloom]
+[2026/05/22 01:30:21   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:30:21   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[bloom]
+[2026/05/22 01:30:21   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:30:21   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:30:21   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[bloom]
+[2026/05/22 01:30:21   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 01:30:22   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:30:22   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:30:22   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:30:22   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Goblin_Scrapper, modelAssetId=Goblin_Scrapper
+[2026/05/22 01:30:22   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Bat, modelAssetId=Bat
+[2026/05/22 01:30:26   INFO]        [CommandManager] imseb executed command: motm dev test ability nightshade
+[2026/05/22 01:30:26   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=nightshade hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:30:26   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=nightshade notifyFailures=true
+[2026/05/22 01:30:26   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=nightshade
+[2026/05/22 01:30:26   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=nightshade result=[MOTM] Cast Nightshade! Runtime: terra cast visuals | 1 hit for 18.1 damage | applied dot to 1 target.
+[2026/05/22 01:30:34   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:30:34   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:30:34   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:30:38   INFO]        [CommandManager] imseb executed command: motm dev test ability frolick
+[2026/05/22 01:30:38   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=frolick hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:30:38   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=frolick notifyFailures=true
+[2026/05/22 01:30:38   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=frolick
+[2026/05/22 01:30:38   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=frolick result=[MOTM] Cast Frolick! Runtime: terra cast visuals | self attack buff | self speed | weapon follow-up ready x3 via Frolick.
+[2026/05/22 01:30:43   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:30:43   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:30:43   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:30:47   INFO]        [CommandManager] imseb executed command: motm dev test ability cacti_cluster
+[2026/05/22 01:30:47   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=cacti_cluster hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:30:47   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=cacti_cluster notifyFailures=true
+[2026/05/22 01:30:47   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=cacti_cluster
+[2026/05/22 01:30:47   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=cacti_cluster result=[MOTM] Cast Cacti Cluster! Runtime: terra cast visuals | launched 5 projectiles at 24.0m/s | volley cadence.
+[2026/05/22 01:30:47   INFO]                  [MOTM] [MOTM] Unmapped NPC type encountered. npcTypeId=Spark_Living, modelAssetId=Spark_Living

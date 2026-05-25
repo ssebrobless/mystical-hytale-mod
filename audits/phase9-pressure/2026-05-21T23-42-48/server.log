@@ -1,0 +1,14 @@
+﻿[2026/05/22 03:42:50   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=air_shot hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 03:42:50   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=air_shot notifyFailures=true
+[2026/05/22 03:42:50   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=air_shot
+[2026/05/22 03:42:50   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=air_shot result=[MOTM] Cast Air Shot! Runtime: aero cast visuals | launched 1 projectile at 32.0m/s.
+[2026/05/22 03:42:55   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bullet_storm hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4977}
+[2026/05/22 03:42:55   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bullet_storm notifyFailures=true
+[2026/05/22 03:42:55   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bullet_storm
+[2026/05/22 03:42:55   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=bullet_storm result=[MOTM] Cast Bullet Storm! Runtime: aero cast visuals | launched 6 projectiles at 34.0m/s | volley cadence.
+[2026/05/22 03:43:00   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=pressure_burst hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4977}
+[2026/05/22 03:43:00   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=pressure_burst notifyFailures=true
+[2026/05/22 03:43:00   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=pressure_burst
+[2026/05/22 03:43:00   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=e703a233-2cd3-3c4e-8f6e-cdeb8c3e81f3 mobType=Goblin_Scrapper
+[2026/05/22 03:43:00   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 03:43:00   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=pressure_burst result=[MOTM] Cast Pressure Burst! Runtime: aero cast visuals | pressure burst aura | radius 4.6m | 3s | 1 hit for 45.4 damage.

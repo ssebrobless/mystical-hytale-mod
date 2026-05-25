@@ -1,0 +1,20 @@
+﻿3872d8a Validate Hydro Snow style slice
+bd3b7be Validate Terra Magma style slice
+c3d14e8 Complete autonomous Hytale roadmap slice
+e9e638b Stabilize spellbook testing and runtime restoration
+1d52b1b Add spellbook, HUD, and class gameplay systems
+28e1e86 Add Hytale action asset mappings for abilities
+c32dcb5 Restore Aero ability profiles
+2207cd3 Restore Corruptus ability profiles
+6a86510 Restore Hydro ability profiles and class passives
+37f2ead Add spatial ability profiles and Terra Hytale metadata
+8561ec7 Fix spellbook asset loading and add interactive UI
+77ef2fe Add visual spellbook custom UI
+614c7d0 Add command-backed spellbook MVP
+9cae18f Simplify perk selection to numbered choices
+e610e93 Add ability test commands for styles
+53de934 Fix ECS mob runtime crash on world load
+cae61fd Clarify class-style-perk progression
+9d7c27d Add /motm dev testing commands
+21e15ef Wire ECS tick and mob runtime hooks
+41a6739 Allow /motm subcommand arguments

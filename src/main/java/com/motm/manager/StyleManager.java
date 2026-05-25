@@ -7,6 +7,8 @@ import com.motm.util.AbilityPresentation;
 import com.motm.util.DataLoader;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 
 /**
@@ -27,13 +29,13 @@ public class StyleManager {
     private final java.util.function.Predicate<String> freeCastChecker;
 
     // playerId -> (abilityId -> remaining cooldown ticks)
-    private final Map<String, Map<String, Integer>> cooldowns = new HashMap<>();
+    private final Map<String, Map<String, Integer>> cooldowns = new ConcurrentHashMap<>();
     // playerId -> (abilityId -> recharge timers for spent charges)
-    private final Map<String, Map<String, List<Integer>>> chargeRecharges = new HashMap<>();
+    private final Map<String, Map<String, List<Integer>>> chargeRecharges = new ConcurrentHashMap<>();
     // playerId -> currently active cast / recovery window
-    private final Map<String, ActionWindow> actionWindows = new HashMap<>();
+    private final Map<String, ActionWindow> actionWindows = new ConcurrentHashMap<>();
     // playerId -> (abilityId -> active toggle state)
-    private final Map<String, Map<String, ToggleState>> activeToggles = new HashMap<>();
+    private final Map<String, Map<String, ToggleState>> activeToggles = new ConcurrentHashMap<>();
 
     public StyleManager(DataLoader dataLoader,
                         ResourceManager resourceManager,
@@ -49,7 +51,7 @@ public class StyleManager {
      * Select styles for a player. Validates they belong to the player's class.
      * @return true if selection was valid and applied
      */
-    public synchronized boolean selectStyles(PlayerData player, List<String> styleIds) {
+    public boolean selectStyles(PlayerData player, List<String> styleIds) {
         if (styleIds.size() > MAX_SELECTED_STYLES) return false;
         if (player.getPlayerClass() == null) return false;
 
@@ -104,10 +106,10 @@ public class StyleManager {
     }
 
     /**
-     * Attempt to use an ability. Checks cooldown and resource cost.
-     * @return the AbilityData if usable, null if on cooldown or insufficient resources
+     * Attempt to use an ability. Checks cooldowns, charges, toggles, and action windows.
+     * @return the ability result when usable, or a failure with the blocking reason
      */
-    public synchronized AbilityUseResult useAbility(PlayerData player, String abilityId) {
+    public AbilityUseResult useAbility(PlayerData player, String abilityId) {
         AbilityData ability = findAbility(player, abilityId);
         if (ability == null) {
             return AbilityUseResult.failed("That ability is unavailable.");
@@ -135,7 +137,10 @@ public class StyleManager {
             );
         }
 
-        if (!isFreeCastEnabled(playerId) && ability.getResourceCost() > 0 && style != null) {
+        if (resourceManager.areAbilityResourceCostsEnabled()
+                && !isFreeCastEnabled(playerId)
+                && ability.getResourceCost() > 0
+                && style != null) {
             String resourceType = style.getResourceType();
             int resolvedCost = classPassiveManager != null
                     ? classPassiveManager.resolveAbilityResourceCost(player, style, ability)
@@ -153,6 +158,12 @@ public class StyleManager {
 
         if (isToggleable(ability)) {
             activateToggle(playerId, ability);
+        }
+
+        String consumedToggle = requiredActiveToggleToConsume(ability);
+        if (!consumedToggle.isBlank() && consumeActiveToggle(playerId, consumedToggle)) {
+            LOG.info("[MOTM] " + ability.getName() + " consumed active toggle " + consumedToggle
+                    + " for player=" + player.getPlayerName());
         }
 
         startActionWindow(playerId, ability);
@@ -194,7 +205,7 @@ public class StyleManager {
 
     // --- Cooldown Management ---
 
-    public synchronized boolean isOnCooldown(String playerId, String abilityId) {
+    public boolean isOnCooldown(String playerId, String abilityId) {
         Map<String, Integer> playerCooldowns = cooldowns.get(playerId);
         if (playerCooldowns == null) return false;
         Integer remaining = playerCooldowns.get(abilityId);
@@ -215,13 +226,13 @@ public class StyleManager {
                 && getNextChargeSeconds(playerId, ability) > 0;
     }
 
-    public synchronized int getRemainingCooldown(String playerId, String abilityId) {
+    public int getRemainingCooldown(String playerId, String abilityId) {
         Map<String, Integer> playerCooldowns = cooldowns.get(playerId);
         if (playerCooldowns == null) return 0;
         return playerCooldowns.getOrDefault(abilityId, 0);
     }
 
-    public synchronized double getRemainingCooldownSeconds(String playerId, String abilityId) {
+    public double getRemainingCooldownSeconds(String playerId, String abilityId) {
         return getRemainingCooldown(playerId, abilityId) / (double) TICKS_PER_SECOND;
     }
 
@@ -242,12 +253,12 @@ public class StyleManager {
         return 0.0;
     }
 
-    public synchronized boolean isActionLocked(String playerId) {
+    public boolean isActionLocked(String playerId) {
         ActionWindow window = actionWindows.get(playerId);
         return window != null && !window.isFinished();
     }
 
-    public synchronized boolean isToggleActive(String playerId, String abilityId) {
+    public boolean isToggleActive(String playerId, String abilityId) {
         Map<String, ToggleState> playerToggles = activeToggles.get(playerId);
         if (playerToggles == null) {
             return false;
@@ -257,7 +268,7 @@ public class StyleManager {
         return state != null && !state.isExpired();
     }
 
-    public synchronized int getCurrentCharges(String playerId, AbilityData ability) {
+    public int getCurrentCharges(String playerId, AbilityData ability) {
         if (!usesCharges(ability)) {
             return 0;
         }
@@ -337,7 +348,7 @@ public class StyleManager {
         return Math.min(base, Math.max(0.08, ability.getCooldownSeconds() * 0.25));
     }
 
-    public synchronized ActionState getActionState(String playerId) {
+    public ActionState getActionState(String playerId) {
         ActionWindow window = actionWindows.get(playerId);
         if (window == null || window.isFinished()) {
             return null;
@@ -352,7 +363,7 @@ public class StyleManager {
         );
     }
 
-    public synchronized AbilitySlotStatus getAbilitySlotStatus(PlayerData player, int slot) {
+    public AbilitySlotStatus getAbilitySlotStatus(PlayerData player, int slot) {
         if (player == null || slot < 1) {
             return AbilitySlotStatus.unavailable();
         }
@@ -455,7 +466,7 @@ public class StyleManager {
             }
             return;
         }
-        cooldowns.computeIfAbsent(playerId, k -> new HashMap<>()).put(abilityId, ticks);
+        cooldowns.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>()).put(abilityId, ticks);
     }
 
     private void startActionWindow(String playerId, AbilityData ability) {
@@ -515,7 +526,7 @@ public class StyleManager {
     /**
      * Tick all cooldowns. Called each server tick.
      */
-    public synchronized void tickCooldowns() {
+    public void tickCooldowns() {
         for (Map<String, Integer> playerCooldowns : cooldowns.values()) {
             playerCooldowns.replaceAll((id, ticks) -> Math.max(0, ticks - 1));
             playerCooldowns.values().removeIf(v -> v <= 0);
@@ -523,36 +534,28 @@ public class StyleManager {
 
         for (Map<String, List<Integer>> playerChargeMap : chargeRecharges.values()) {
             for (List<Integer> rechargeTimers : playerChargeMap.values()) {
-                for (int index = 0; index < rechargeTimers.size(); index++) {
-                    rechargeTimers.set(index, Math.max(0, rechargeTimers.get(index) - 1));
-                }
+                rechargeTimers.replaceAll(ticks -> Math.max(0, ticks - 1));
                 rechargeTimers.removeIf(ticks -> ticks <= 0);
             }
             playerChargeMap.values().removeIf(List::isEmpty);
         }
         chargeRecharges.values().removeIf(Map::isEmpty);
 
-        Iterator<Map.Entry<String, ActionWindow>> iterator = actionWindows.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, ActionWindow> entry = iterator.next();
+        for (Map.Entry<String, ActionWindow> entry : actionWindows.entrySet()) {
             entry.getValue().tick();
             if (entry.getValue().isFinished()) {
-                iterator.remove();
+                actionWindows.remove(entry.getKey(), entry.getValue());
             }
         }
 
-        Iterator<Map.Entry<String, Map<String, ToggleState>>> toggleIterator = activeToggles.entrySet().iterator();
-        while (toggleIterator.hasNext()) {
-            Map.Entry<String, Map<String, ToggleState>> entry = toggleIterator.next();
+        for (Map.Entry<String, Map<String, ToggleState>> entry : activeToggles.entrySet()) {
             String playerId = entry.getKey();
             Map<String, ToggleState> playerToggles = entry.getValue();
-            Iterator<Map.Entry<String, ToggleState>> stateIterator = playerToggles.entrySet().iterator();
-            while (stateIterator.hasNext()) {
-                Map.Entry<String, ToggleState> stateEntry = stateIterator.next();
+            for (Map.Entry<String, ToggleState> stateEntry : playerToggles.entrySet()) {
                 ToggleState state = stateEntry.getValue();
                 state.tick();
                 if (state.isExpired()) {
-                    stateIterator.remove();
+                    playerToggles.remove(stateEntry.getKey(), state);
                     double toggleCooldown = resolveToggleCooldownSeconds(state.ability());
                     if (toggleCooldown > 0) {
                         startCooldown(playerId, stateEntry.getKey(), toggleCooldown);
@@ -561,7 +564,7 @@ public class StyleManager {
             }
 
             if (playerToggles.isEmpty()) {
-                toggleIterator.remove();
+                activeToggles.remove(playerId, playerToggles);
             }
         }
     }
@@ -569,7 +572,7 @@ public class StyleManager {
     /**
      * Apply cooldown reduction (from race/perks). Reduces by a flat number of seconds.
      */
-    public synchronized void applyCooldownReduction(String playerId, int reductionSeconds) {
+    public void applyCooldownReduction(String playerId, int reductionSeconds) {
         Map<String, Integer> playerCooldowns = cooldowns.get(playerId);
         int reductionTicks = reductionSeconds * TICKS_PER_SECOND;
         if (playerCooldowns != null) {
@@ -579,9 +582,7 @@ public class StyleManager {
         Map<String, List<Integer>> playerChargeMap = chargeRecharges.get(playerId);
         if (playerChargeMap != null) {
             for (List<Integer> rechargeTimers : playerChargeMap.values()) {
-                for (int index = 0; index < rechargeTimers.size(); index++) {
-                    rechargeTimers.set(index, Math.max(0, rechargeTimers.get(index) - reductionTicks));
-                }
+                rechargeTimers.replaceAll(ticks -> Math.max(0, ticks - reductionTicks));
                 rechargeTimers.removeIf(ticks -> ticks <= 0);
             }
             playerChargeMap.values().removeIf(List::isEmpty);
@@ -594,7 +595,7 @@ public class StyleManager {
     /**
      * Reset all cooldowns for a player (on death, style change, etc.).
      */
-    public synchronized void resetCooldowns(String playerId) {
+    public void resetCooldowns(String playerId) {
         cooldowns.remove(playerId);
         chargeRecharges.remove(playerId);
         actionWindows.remove(playerId);
@@ -604,7 +605,7 @@ public class StyleManager {
     /**
      * Clean up when player disconnects.
      */
-    public synchronized void onPlayerDisconnect(String playerId) {
+    public void onPlayerDisconnect(String playerId) {
         cooldowns.remove(playerId);
         chargeRecharges.remove(playerId);
         actionWindows.remove(playerId);
@@ -617,11 +618,7 @@ public class StyleManager {
     public String getStyleSummary(StyleData style) {
         StringBuilder sb = new StringBuilder();
         sb.append(style.getName()).append(" (").append(style.getTheme()).append(")\n");
-        sb.append("  Resource: ")
-                .append(style.getResourceType() == null || style.getResourceType().isBlank()
-                        ? "None"
-                        : resourceManager.getDisplayName(style.getResourceType()))
-                .append("\n");
+        sb.append("  Casting: cooldowns, durations, charges, and action timing\n");
         for (AbilityData ability : style.getAbilities()) {
             sb.append("  - ").append(ability.getName());
             if (ability.getDamagePercent() > 0) {
@@ -649,7 +646,7 @@ public class StyleManager {
         return sb.toString();
     }
 
-    public synchronized String getUseFailureReason(PlayerData player, AbilityData ability) {
+    public String getUseFailureReason(PlayerData player, AbilityData ability) {
         return buildUseFailureReason(player, ability, player != null && ability != null
                 ? findStyleForAbility(player, ability.getId())
                 : null);
@@ -685,7 +682,14 @@ public class StyleManager {
                     + formatSeconds(getNextChargeSeconds(playerId, ability)) + "s.";
         }
 
-        if (!isFreeCastEnabled(playerId) && ability.getResourceCost() > 0 && style != null) {
+        if (requiresActiveToggle(ability, "sandstorm") && !isToggleActive(playerId, "sandstorm")) {
+            return ability.getName() + " requires Sandstorm to be active.";
+        }
+
+        if (resourceManager.areAbilityResourceCostsEnabled()
+                && !isFreeCastEnabled(playerId)
+                && ability.getResourceCost() > 0
+                && style != null) {
             String resourceType = style.getResourceType();
             int currentResource = resourceManager.getAmount(playerId, resourceType);
             int resolvedCost = classPassiveManager != null
@@ -724,6 +728,19 @@ public class StyleManager {
         return categorySet(ability).contains("toggle");
     }
 
+    private boolean requiresActiveToggle(AbilityData ability, String toggleAbilityId) {
+        if (ability == null || toggleAbilityId == null || toggleAbilityId.isBlank()) {
+            return false;
+        }
+
+        return "dust_devil".equals(safeLower(ability.getId()))
+                && "sandstorm".equals(safeLower(toggleAbilityId));
+    }
+
+    private String requiredActiveToggleToConsume(AbilityData ability) {
+        return requiresActiveToggle(ability, "sandstorm") ? "sandstorm" : "";
+    }
+
     private double resolveToggleCooldownSeconds(AbilityData ability) {
         if (ability == null) {
             return 0.0;
@@ -754,8 +771,8 @@ public class StyleManager {
         }
 
         chargeRecharges
-                .computeIfAbsent(playerId, ignored -> new HashMap<>())
-                .computeIfAbsent(ability.getId(), ignored -> new ArrayList<>())
+                .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>())
+                .computeIfAbsent(ability.getId(), ignored -> new CopyOnWriteArrayList<>())
                 .add(secondsToTicks(resolveChargeRechargeSeconds(ability)));
     }
 
@@ -811,7 +828,7 @@ public class StyleManager {
                 : -1;
 
         activeToggles
-                .computeIfAbsent(playerId, ignored -> new HashMap<>())
+                .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>())
                 .put(ability.getId(), new ToggleState(ability, totalTicks));
     }
 
@@ -821,9 +838,7 @@ public class StyleManager {
             return;
         }
 
-        Iterator<Map.Entry<String, ToggleState>> iterator = playerToggles.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, ToggleState> entry = iterator.next();
+        for (Map.Entry<String, ToggleState> entry : new ArrayList<>(playerToggles.entrySet())) {
             if (activatedAbilityId.equals(entry.getKey())) {
                 continue;
             }
@@ -833,7 +848,7 @@ public class StyleManager {
                 continue;
             }
 
-            iterator.remove();
+            playerToggles.remove(entry.getKey(), state);
             double toggleCooldown = resolveToggleCooldownSeconds(state.ability());
             if (toggleCooldown > 0) {
                 startCooldown(playerId, entry.getKey(), toggleCooldown);
@@ -855,6 +870,27 @@ public class StyleManager {
         if (playerToggles.isEmpty()) {
             activeToggles.remove(playerId);
         }
+    }
+
+    private boolean consumeActiveToggle(String playerId, String abilityId) {
+        Map<String, ToggleState> playerToggles = activeToggles.get(playerId);
+        if (playerToggles == null) {
+            return false;
+        }
+
+        ToggleState removed = playerToggles.remove(abilityId);
+        if (playerToggles.isEmpty()) {
+            activeToggles.remove(playerId);
+        }
+        if (removed == null) {
+            return false;
+        }
+
+        double toggleCooldown = resolveToggleCooldownSeconds(removed.ability());
+        if (toggleCooldown > 0) {
+            startCooldown(playerId, abilityId, toggleCooldown);
+        }
+        return true;
     }
 
     public enum AbilityPhase {

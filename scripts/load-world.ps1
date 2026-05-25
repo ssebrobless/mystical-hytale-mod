@@ -113,7 +113,7 @@ $result = "FAIL"
 $matched = $null
 $startedAt = Get-Date
 try {
-    $existing = Wait-OnPlayerConnect ([datetime]::MinValue) 1
+    $existing = Wait-OnPlayerConnect $startedAt 1
     if ($existing) {
         $matched = $existing
         Write-Step "Already in world: $($matched.Line)"
@@ -124,11 +124,17 @@ try {
         $coords = Get-Content -Path $coordsPath -Raw | ConvertFrom-Json
         $main = $coords.'1280x720'.main_menu_worlds
         Click-Relative $proc ([double]$main.x_ratio) ([double]$main.y_ratio) "main menu Worlds"
+        Start-Sleep -Milliseconds 900
+        Click-Relative $proc ([double]$main.x_ratio) ([double]$main.y_ratio) "main menu Worlds confirm"
         Start-Sleep -Seconds 2
         $firstWorld = $coords.'1280x720'.worlds_first_card
-        Click-Relative $proc ([double]$firstWorld.x_ratio) ([double]$firstWorld.y_ratio) "first world card"
+        $firstWorldX = if ($firstWorld.x_ratio) { [double]$firstWorld.x_ratio } else { 0.1505 }
+        $firstWorldY = if ($firstWorld.y_ratio) { [double]$firstWorld.y_ratio } else { 0.4743 }
+        Click-Relative $proc $firstWorldX $firstWorldY "first world card"
         Start-Sleep -Milliseconds 400
-        Click-Relative $proc ([double]$firstWorld.x_ratio) ([double]$firstWorld.y_ratio) "first world card confirm"
+        Click-Relative $proc $firstWorldX $firstWorldY "first world card confirm"
+        Start-Sleep -Milliseconds 900
+        Click-Relative $proc $firstWorldX $firstWorldY "first world card final confirm"
         $matched = Wait-OnPlayerConnect $startedAt $LoadTimeoutSec
         if (-not $matched) {
             throw "Timed out waiting for [MOTM] >>> onPlayerConnect."

@@ -1,0 +1,9 @@
+{
+  "Duration": 0.9,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#d8ffd2",
+    "EntityBottomTint": "#1fbf6a",
+    "ModelVFXId": "PrototypeBlockPlaceSuccess"
+  }
+}

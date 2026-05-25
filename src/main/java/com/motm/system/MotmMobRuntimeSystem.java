@@ -72,7 +72,9 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
                 if (npc == null) {
                     continue;
                 }
-                if ("motm_summon".equalsIgnoreCase(npc.getRoleName())) {
+                String roleName = npc.getRoleName();
+                if ("motm_summon".equalsIgnoreCase(roleName)
+                        || "Empty_Role".equalsIgnoreCase(roleName)) {
                     continue;
                 }
 

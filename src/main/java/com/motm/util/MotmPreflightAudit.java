@@ -39,7 +39,7 @@ public final class MotmPreflightAudit {
     private static final int EXPECTED_ABILITIES_PER_STYLE = 3;
     private static final int EXPECTED_TOTAL_STYLES = 40;
     private static final int EXPECTED_TOTAL_ABILITIES = 120;
-    private static final String HUD_DOC_RESOURCE = "Common/UI/Custom/HUD/MOTM_StatusHud.ui";
+    private static final String HUD_DOC_RESOURCE = "Common/UI/Custom/Hud/MOTM_StatusHud.ui";
     private static final String REPORT_FILE_NAME = "motm-preflight-report.txt";
 
     private static final Set<String> SUPPORTED_CAST_TYPES = Set.of(
@@ -300,7 +300,7 @@ public final class MotmPreflightAudit {
 
         String resourceType = safeLower(style.getResourceType());
         Set<String> allowed = ALLOWED_RESOURCE_TYPES.getOrDefault(classId, Set.of());
-        if (!allowed.contains(resourceType)) {
+        if (!resourceType.isBlank() && !allowed.contains(resourceType)) {
             audit.error(scope, "Resource type '" + style.getResourceType() + "' is not valid for class '" + classId + "'.");
         }
     }

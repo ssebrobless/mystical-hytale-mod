@@ -1,0 +1,16 @@
+{
+  "Duration": 1.85,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#ff4a00",
+    "EntityBottomTint": "#7a0600",
+    "Particles": [
+      {
+        "SystemId": "Impact_Fire"
+      },
+      {
+        "SystemId": "Block_Lava_Bubbles"
+      }
+    ]
+  }
+}

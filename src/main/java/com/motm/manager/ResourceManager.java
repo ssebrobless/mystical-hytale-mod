@@ -15,6 +15,7 @@ import java.util.logging.Logger;
  *   - Corruptus: Souls (earned from kills, max 50)
  */
 public class ResourceManager {
+    public static final boolean ABILITY_RESOURCE_COSTS_ENABLED = false;
 
     public interface TerraInventoryBridge {
         int countInventoryResource(String playerId, String resourceType);
@@ -100,6 +101,9 @@ public class ResourceManager {
 
     private Map<String, Integer> createDefaultResources(String playerId, String playerClass) {
         Map<String, Integer> resources = new HashMap<>();
+        if (!areAbilityResourceCostsEnabled() || playerClass == null || playerClass.isBlank()) {
+            return resources;
+        }
 
         switch (playerClass.toLowerCase(Locale.ROOT)) {
             case "hydro" -> {
@@ -277,6 +281,9 @@ public class ResourceManager {
     }
 
     public List<String> getResourceTypesForClass(String playerClass) {
+        if (!areAbilityResourceCostsEnabled()) {
+            return Collections.emptyList();
+        }
         if (playerClass == null || playerClass.isBlank()) {
             return Collections.emptyList();
         }
@@ -290,6 +297,9 @@ public class ResourceManager {
     }
 
     public void fillClassResources(String playerId, String playerClass) {
+        if (!areAbilityResourceCostsEnabled()) {
+            return;
+        }
         if (playerClass == null || playerClass.isBlank()) {
             return;
         }
@@ -327,6 +337,9 @@ public class ResourceManager {
      * Called when a Corruptus player kills a mob — gains souls.
      */
     public void onMobKilled(String playerId, String playerClass) {
+        if (!areAbilityResourceCostsEnabled()) {
+            return;
+        }
         if ("corruptus".equalsIgnoreCase(playerClass)) {
             add(playerId, "souls", SOULS_PER_KILL);
         }
@@ -336,6 +349,9 @@ public class ResourceManager {
      * Refill water for a Hydro player (at water source, rest, etc.).
      */
     public void refillWater(String playerId) {
+        if (!areAbilityResourceCostsEnabled()) {
+            return;
+        }
         int capacity = getHydroCapacity(playerId);
         Map<String, Integer> resources = playerResources.get(playerId);
         if (resources != null && capacity > 0) {
@@ -347,6 +363,9 @@ public class ResourceManager {
      * Upgrade water container tier. Returns true if upgrade was possible.
      */
     public boolean upgradeWaterContainer(String playerId) {
+        if (!areAbilityResourceCostsEnabled()) {
+            return false;
+        }
         int tier = waterContainerTier.getOrDefault(playerId, 0);
         if (tier >= WATER_CONTAINER_CAPACITY.length - 1) return false;
         waterContainerTier.put(playerId, tier + 1);
@@ -437,6 +456,9 @@ public class ResourceManager {
      * Get resource display for a player.
      */
     public String getResourceDisplay(String playerId, String playerClass) {
+        if (!areAbilityResourceCostsEnabled()) {
+            return "Ability resources disabled | Casts use cooldowns, durations, charges, and action timing.";
+        }
         Map<String, Integer> resources = getAllResources(playerId);
         if (playerClass == null || playerClass.isBlank()) {
             return "No resources";
@@ -470,5 +492,9 @@ public class ResourceManager {
 
     private boolean isInventoryBackedTerraResource(String resourceType) {
         return resourceType != null && TERRA_RESOURCE_TYPES.contains(resourceType);
+    }
+
+    public boolean areAbilityResourceCostsEnabled() {
+        return ABILITY_RESOURCE_COSTS_ENABLED;
     }
 }

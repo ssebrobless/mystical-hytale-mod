@@ -1,0 +1,20 @@
+{
+  "Duration": 0.9,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#ff7a18",
+    "EntityBottomTint": "#6b1000",
+    "Particles": [
+      {
+        "SystemId": "Fire_Charge1"
+      },
+      {
+        "SystemId": "Impact_Fire"
+      },
+      {
+        "SystemId": "Block_Lava_Bubbles"
+      }
+    ],
+    "ModelVFXId": "PrototypeBlockPlaceSuccess"
+  }
+}

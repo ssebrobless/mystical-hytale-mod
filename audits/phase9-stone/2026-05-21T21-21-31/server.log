@@ -1,0 +1,51 @@
+﻿[2026/05/22 01:21:32   INFO]        [CommandManager] imseb executed command: motm dev freecast on
+[2026/05/22 01:21:34   INFO]        [CommandManager] imseb executed command: motm dev class set terra
+[2026/05/22 01:21:34   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:21:34   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:21:34   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:21:34   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:21:34   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:21:36   INFO]        [CommandManager] imseb executed command: motm dev styles clear
+[2026/05/22 01:21:36   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:21:36   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:21:36   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:21:36   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:21:36   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[]
+[2026/05/22 01:21:37   INFO]        [CommandManager] imseb executed command: motm style stone
+[2026/05/22 01:21:37   INFO]                  [MOTM] [MOTM] imseb selected styles: [stone]
+[2026/05/22 01:21:37   INFO]                  [MOTM] [MOTM] Queue runtime rebuild: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d
+[2026/05/22 01:21:37   INFO]                  [MOTM] [MOTM] >>> rebuildPlayerRuntimeNow START playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[stone]
+[2026/05/22 01:21:37   INFO]                  [MOTM] [MOTM] Rebuilt perk stat modifiers: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d perks=0 modifiersApplied=0
+[2026/05/22 01:21:37   INFO]                  [MOTM] [MOTM] Applied race bonuses for imseb: Human (HP +5)
+[2026/05/22 01:21:37   INFO]                  [MOTM] [MOTM] <<< rebuildPlayerRuntimeNow END playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d class=terra styles=[stone]
+[2026/05/22 01:21:37   INFO]                  [MOTM] [MOTM] Pending spellbook grant processed: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d granted=false nowHasSpellbook=true
+[2026/05/22 01:21:39   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:21:39   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:21:39   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:21:43   INFO]        [CommandManager] imseb executed command: motm dev test ability rubble_rouser
+[2026/05/22 01:21:43   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rubble_rouser hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:21:43   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rubble_rouser notifyFailures=true
+[2026/05/22 01:21:43   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rubble_rouser
+[2026/05/22 01:21:43   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rubble_rouser result=[MOTM] Cast Rubble Rouser! Runtime: terra cast visuals | launched 1 projectile at 20.0m/s.
+[2026/05/22 01:21:49   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:21:49   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:21:50   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:21:53   INFO]        [CommandManager] imseb executed command: motm dev test ability pillar_strike
+[2026/05/22 01:21:53   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=pillar_strike hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:21:53   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=pillar_strike notifyFailures=true
+[2026/05/22 01:21:53   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=pillar_strike
+[2026/05/22 01:21:53   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=pillar_strike result=[MOTM] Cast Pillar Strike! Runtime: terra cast visuals | 2 hits for 68.0 damage | applied stun to 2 targets.
+[2026/05/22 01:22:00   INFO]        [CommandManager] imseb executed command: motm dev test mobs close
+[2026/05/22 01:22:00   INFO]                  [MOTM] [MOTM] Style test mob spawn queued: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d added=true
+[2026/05/22 01:22:00   INFO]                  [MOTM] [MOTM] Style test mobs spawned: count=2 mode=close grounded=(5103.50, 168.00, 4980.30) floating=(5098.50, 171.00, 4977.50)
+[2026/05/22 01:22:04   INFO]        [CommandManager] imseb executed command: motm dev test ability rockslide
+[2026/05/22 01:22:04   INFO]                  [MOTM] [MOTM] Live ability test target: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rockslide hasTarget=true targetBlock=Vector3i{x=5103, y=168, z=4980}
+[2026/05/22 01:22:04   INFO]                  [MOTM] [MOTM] Queue ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rockslide notifyFailures=true
+[2026/05/22 01:22:04   INFO]                  [MOTM] [MOTM] Processing queued ability cast: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rockslide
+[2026/05/22 01:22:04   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=18b2925f-4c31-3ef8-a869-4f67430b6dce mobType=Goblin_Scrapper
+[2026/05/22 01:22:04   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 01:22:04   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=58c909fc-86a7-3b4f-bef8-0434d3783fc9 mobType=Goblin_Scrapper
+[2026/05/22 01:22:04   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 01:22:04   INFO]                  [MOTM] [MOTM] ability kill detected: player=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d target=62cbda0c-4e3f-3b7c-b838-8cc48f7f8daa mobType=Goblin_Scrapper
+[2026/05/22 01:22:04   WARN]                  [MOTM] [MOTM] Unknown mob type for XP: Goblin_Scrapper, using default 50
+[2026/05/22 01:22:04   INFO]                  [MOTM] [MOTM] Queued ability cast result: playerId=6d49dfd8-b4aa-48ec-b608-4e0c15f00a4d abilityId=rockslide result=[MOTM] Cast Rockslide! Runtime: terra cast visuals | field arms in 0.8s | lasts 3s | radius 6.0m | 3 hits for 136.1 damage.

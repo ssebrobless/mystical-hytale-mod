@@ -18,7 +18,7 @@
     "magic_resist": 10,
     "attack_damage": 12,
     "ability_power": 8,
-    "movement_speed": 0.95,
+    "movement_speed": 1.0,
     "health_regen": 2.5,
     "mana_regen": 1.0
   },

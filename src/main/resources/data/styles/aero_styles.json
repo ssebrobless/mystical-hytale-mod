@@ -452,7 +452,7 @@
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.55,
           "recovery_seconds": 0.32,
-          "effect": "slow+attack_buff",
+          "effect": "slow+attack_buff+speed",
           "categories": [
             "debuff",
             "buff"
