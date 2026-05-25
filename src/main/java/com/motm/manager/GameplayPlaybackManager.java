@@ -7669,7 +7669,6 @@ public class GameplayPlaybackManager {
         modifier += mod.getStatusEffectManager().getDamageIncrease(player.getPlayerId());
         modifier += mod.getStatusEffectManager().consumeOneShot(player.getPlayerId(), StatusEffect.Type.DAMAGE_BUFF);
         modifier += mod.getStatusEffectManager().consumeOneShot(player.getPlayerId(), StatusEffect.Type.STEALTH);
-        modifier += player.getRaceDamageIncrease().getOrDefault("all", 0.0);
         modifier += player.getSynergyDamageIncrease().getOrDefault("all", 0.0);
         modifier += mod.getClassPassiveManager().getAbilityDamageModifier(player);
         ActiveTransformation activeForm = activeTransformationsByPlayer.get(player.getPlayerId());

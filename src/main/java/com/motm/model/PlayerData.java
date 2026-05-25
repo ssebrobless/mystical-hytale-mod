@@ -31,8 +31,7 @@ public class PlayerData {
     private Settings settings = new Settings();
     private Metadata metadata = new Metadata();
 
-    // Phase 1 additions: race, styles, resources
-    private String race;
+    // Phase 1 additions: styles and legacy resource state
     @SerializedName("selected_styles")
     private List<String> selectedStyles = new ArrayList<>();
     @SerializedName("class_resources")
@@ -60,15 +59,6 @@ public class PlayerData {
     private transient double synergyChainBonus = 0;
     private transient double synergyRadiusBonus = 0;
     private transient List<ActiveSynergy> activeSynergyBonuses = new ArrayList<>();
-    private transient int raceHpBonus = 0;
-    private transient Map<String, Double> raceDamageReduction = new HashMap<>();
-    private transient Map<String, Double> raceDamageIncrease = new HashMap<>();
-    private transient Map<String, Double> raceStatBonuses = new HashMap<>();
-    private transient double raceHealingReceivedBonus = 0;
-    private transient double raceCritChanceBonus = 0;
-    private transient int raceCooldownReductionSeconds = 0;
-    private transient Set<String> immunities = new HashSet<>();
-    private transient Set<String> raceSpecialMechanics = new HashSet<>();
 
     // --- Getters and Setters ---
 
@@ -99,8 +89,6 @@ public class PlayerData {
     public Metadata getMetadata() { return metadata; }
 
     // Phase 1 getters/setters
-    public String getRace() { return race; }
-    public void setRace(String race) { this.race = race; }
     public List<String> getSelectedStyles() { return selectedStyles; }
     public void setSelectedStyles(List<String> selectedStyles) { this.selectedStyles = selectedStyles; }
     public Map<String, Integer> getClassResources() { return classResources; }
@@ -141,20 +129,6 @@ public class PlayerData {
     public void setSynergyRadiusBonus(double v) { this.synergyRadiusBonus = v; }
     public List<ActiveSynergy> getActiveSynergyBonuses() { return activeSynergyBonuses; }
     public void setActiveSynergyBonuses(List<ActiveSynergy> v) { this.activeSynergyBonuses = v; }
-    public int getRaceHpBonus() { return raceHpBonus; }
-    public void setRaceHpBonus(int raceHpBonus) { this.raceHpBonus = raceHpBonus; }
-    public Map<String, Double> getRaceDamageReduction() { return raceDamageReduction; }
-    public Map<String, Double> getRaceDamageIncrease() { return raceDamageIncrease; }
-    public Map<String, Double> getRaceStatBonuses() { return raceStatBonuses; }
-    public double getRaceHealingReceivedBonus() { return raceHealingReceivedBonus; }
-    public void setRaceHealingReceivedBonus(double raceHealingReceivedBonus) { this.raceHealingReceivedBonus = raceHealingReceivedBonus; }
-    public double getRaceCritChanceBonus() { return raceCritChanceBonus; }
-    public void setRaceCritChanceBonus(double raceCritChanceBonus) { this.raceCritChanceBonus = raceCritChanceBonus; }
-    public int getRaceCooldownReductionSeconds() { return raceCooldownReductionSeconds; }
-    public void setRaceCooldownReductionSeconds(int raceCooldownReductionSeconds) { this.raceCooldownReductionSeconds = raceCooldownReductionSeconds; }
-    public Set<String> getImmunities() { return immunities; }
-    public Set<String> getRaceSpecialMechanics() { return raceSpecialMechanics; }
-
     public void clearSynergyBonuses() {
         synergyDamageReduction.clear();
         synergyDamageIncrease.clear();
@@ -169,18 +143,6 @@ public class PlayerData {
         activeSynergyBonuses.clear();
     }
 
-    public void clearRaceBonuses() {
-        raceHpBonus = 0;
-        raceDamageReduction.clear();
-        raceDamageIncrease.clear();
-        raceStatBonuses.clear();
-        raceHealingReceivedBonus = 0;
-        raceCritChanceBonus = 0;
-        raceCooldownReductionSeconds = 0;
-        immunities.clear();
-        raceSpecialMechanics.clear();
-    }
-
     public void initRuntimeFields() {
         if (recentKills == null) recentKills = new ArrayList<>();
         if (synergyDamageReduction == null) synergyDamageReduction = new HashMap<>();
@@ -189,11 +151,6 @@ public class PlayerData {
         if (synergyCooldownReduction == null) synergyCooldownReduction = new HashMap<>();
         if (synergyDurationBonus == null) synergyDurationBonus = new HashMap<>();
         if (activeSynergyBonuses == null) activeSynergyBonuses = new ArrayList<>();
-        if (raceDamageReduction == null) raceDamageReduction = new HashMap<>();
-        if (raceDamageIncrease == null) raceDamageIncrease = new HashMap<>();
-        if (raceStatBonuses == null) raceStatBonuses = new HashMap<>();
-        if (immunities == null) immunities = new HashSet<>();
-        if (raceSpecialMechanics == null) raceSpecialMechanics = new HashSet<>();
     }
 
     // --- Nested types ---

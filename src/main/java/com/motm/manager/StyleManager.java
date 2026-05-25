@@ -570,7 +570,7 @@ public class StyleManager {
     }
 
     /**
-     * Apply cooldown reduction (from race/perks). Reduces by a flat number of seconds.
+     * Apply cooldown reduction from future perk effects. Reduces by a flat number of seconds.
      */
     public void applyCooldownReduction(String playerId, int reductionSeconds) {
         Map<String, Integer> playerCooldowns = cooldowns.get(playerId);

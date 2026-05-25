@@ -18,7 +18,6 @@ import com.motm.model.AbilityData;
 import com.motm.model.ClassData;
 import com.motm.model.Perk;
 import com.motm.model.PlayerData;
-import com.motm.model.RaceData;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.PassivePresentation;
@@ -36,7 +35,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     private static final String PAGE_DOCUMENT = "Pages/MOTM_Spellbook.ui";
     private static final int MAX_PERK_ROWS = 10;
     private static final int MAX_ABILITY_ROWS = 3;
-    private static final int MAX_RACE_BUTTONS = 12;
     private static final int MAX_STYLE_BUTTONS = 10;
     private static final List<String> CLASS_ORDER = List.of("terra", "hydro", "aero", "corruptus");
 
@@ -58,8 +56,8 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                       Store<EntityStore> store) {
         commands.append(PAGE_DOCUMENT);
         bindNavigation(events);
-        bindJourneyActions(events);
-        bindGrimoireActions(events);
+        bindClassActions(events);
+        bindStyleActions(events);
         bindPerkActions(events);
         render(commands);
     }
@@ -75,7 +73,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         switch (data.action) {
             case "Navigate" -> navigate(data.section);
             case "ChooseClass" -> chooseClass(data.value);
-            case "ChooseRaceSlot" -> chooseRaceSlot(data.value);
             case "ChooseStyleSlot" -> chooseStyleSlot(data.value);
             case "TogglePerkSlot" -> togglePerkSlot(data.value);
             case "ConfirmPerks" -> confirmPerks();
@@ -90,26 +87,20 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void bindNavigation(UIEventBuilder events) {
         bindSection(events, "#NavOverviewButton", SpellbookManager.Section.OVERVIEW);
-        bindSection(events, "#NavJourneyButton", SpellbookManager.Section.JOURNEY);
-        bindSection(events, "#NavGrimoireButton", SpellbookManager.Section.GRIMOIRE);
+        bindSection(events, "#NavJourneyButton", SpellbookManager.Section.CLASS);
+        bindSection(events, "#NavGrimoireButton", SpellbookManager.Section.ABILITIES);
         bindSection(events, "#NavPerksButton", SpellbookManager.Section.PERKS);
-        bindSection(events, "#NavResourcesButton", SpellbookManager.Section.RESOURCES);
-        bindSection(events, "#NavCodexButton", SpellbookManager.Section.CODEX);
-        bindSection(events, "#NavJournalButton", SpellbookManager.Section.JOURNAL);
+        bindSection(events, "#NavResourcesButton", SpellbookManager.Section.PROGRESSION);
     }
 
-    private void bindJourneyActions(UIEventBuilder events) {
+    private void bindClassActions(UIEventBuilder events) {
         bindAction(events, "#ClassTerraButton", "ChooseClass", "terra");
         bindAction(events, "#ClassHydroButton", "ChooseClass", "hydro");
         bindAction(events, "#ClassAeroButton", "ChooseClass", "aero");
         bindAction(events, "#ClassCorruptusButton", "ChooseClass", "corruptus");
-
-        for (int index = 1; index <= MAX_RACE_BUTTONS; index++) {
-            bindAction(events, "#RaceButton" + index, "ChooseRaceSlot", String.valueOf(index));
-        }
     }
 
-    private void bindGrimoireActions(UIEventBuilder events) {
+    private void bindStyleActions(UIEventBuilder events) {
         for (int index = 1; index <= MAX_STYLE_BUTTONS; index++) {
             bindAction(events, "#StyleButton" + index, "ChooseStyleSlot", String.valueOf(index));
         }
@@ -163,27 +154,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         PlayerData player = currentPlayer();
         if (player != null && classId.equalsIgnoreCase(player.getPlayerClass())) {
             queuedPerkChoices.clear();
-            currentSection = player.getRace() == null
-                    ? SpellbookManager.Section.JOURNEY
-                    : SpellbookManager.Section.GRIMOIRE;
-        }
-    }
-
-    private void chooseRaceSlot(String rawSlot) {
-        PlayerData player = currentPlayer();
-        int slot = parseSlot(rawSlot);
-        List<RaceData> races = mod.getDataLoader().getAllRaces();
-        if (player == null || slot < 1 || slot > races.size()) {
-            statusMessage = "That race slot is not available.";
-            return;
-        }
-
-        RaceData race = races.get(slot - 1);
-        runCommand("race", race.getId());
-
-        player = currentPlayer();
-        if (player != null && race.getId().equalsIgnoreCase(player.getRace())) {
-            currentSection = SpellbookManager.Section.GRIMOIRE;
+            currentSection = SpellbookManager.Section.STYLE;
         }
     }
 
@@ -206,7 +177,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
         player = currentPlayer();
         if (player != null && player.getSelectedStyles().contains(style.getId())) {
-            currentSection = SpellbookManager.Section.GRIMOIRE;
+            currentSection = SpellbookManager.Section.ABILITIES;
         }
     }
 
@@ -282,17 +253,18 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void render(UICommandBuilder commands) {
         PlayerData player = currentPlayer();
+        if (currentSection == SpellbookManager.Section.STYLE) {
+            currentSection = SpellbookManager.Section.ABILITIES;
+        }
         syncTransientUiState(player);
 
         applyNavigationState(commands);
         applyHero(commands, player);
         applyOverview(commands, player);
-        applyJourney(commands, player);
-        applyGrimoire(commands, player);
+        applyClass(commands, player);
+        applyAbilities(commands, player);
         applyPerks(commands, player);
-        applyResources(commands, player);
-        applyCodex(commands, player);
-        applyJournal(commands, player);
+        applyProgression(commands, player);
         applySectionVisibility(commands);
     }
 
@@ -312,12 +284,14 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void applyNavigationState(UICommandBuilder commands) {
         setNavState(commands, SpellbookManager.Section.OVERVIEW, "#NavOverviewButton", "#NavOverviewSelected");
-        setNavState(commands, SpellbookManager.Section.JOURNEY, "#NavJourneyButton", "#NavJourneySelected");
-        setNavState(commands, SpellbookManager.Section.GRIMOIRE, "#NavGrimoireButton", "#NavGrimoireSelected");
+        setNavState(commands, SpellbookManager.Section.CLASS, "#NavJourneyButton", "#NavJourneySelected");
+        setNavState(commands, SpellbookManager.Section.ABILITIES, "#NavGrimoireButton", "#NavGrimoireSelected");
         setNavState(commands, SpellbookManager.Section.PERKS, "#NavPerksButton", "#NavPerksSelected");
-        setNavState(commands, SpellbookManager.Section.RESOURCES, "#NavResourcesButton", "#NavResourcesSelected");
-        setNavState(commands, SpellbookManager.Section.CODEX, "#NavCodexButton", "#NavCodexSelected");
-        setNavState(commands, SpellbookManager.Section.JOURNAL, "#NavJournalButton", "#NavJournalSelected");
+        setNavState(commands, SpellbookManager.Section.PROGRESSION, "#NavResourcesButton", "#NavResourcesSelected");
+        commands.set("#NavCodexButton.Visible", false);
+        commands.set("#NavCodexSelected.Visible", false);
+        commands.set("#NavJournalButton.Visible", false);
+        commands.set("#NavJournalSelected.Visible", false);
     }
 
     private void setNavState(UICommandBuilder commands,
@@ -334,19 +308,19 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void applySectionVisibility(UICommandBuilder commands) {
         commands.set("#OverviewPanel.Visible", currentSection == SpellbookManager.Section.OVERVIEW);
-        commands.set("#JourneyPanel.Visible", currentSection == SpellbookManager.Section.JOURNEY);
-        commands.set("#GrimoirePanel.Visible", currentSection == SpellbookManager.Section.GRIMOIRE);
+        commands.set("#JourneyPanel.Visible", currentSection == SpellbookManager.Section.CLASS);
+        commands.set("#GrimoirePanel.Visible", currentSection == SpellbookManager.Section.ABILITIES);
         commands.set("#PerksPanel.Visible", currentSection == SpellbookManager.Section.PERKS);
-        commands.set("#ResourcesPanel.Visible", currentSection == SpellbookManager.Section.RESOURCES);
-        commands.set("#CodexPanel.Visible", currentSection == SpellbookManager.Section.CODEX);
-        commands.set("#JournalPanel.Visible", currentSection == SpellbookManager.Section.JOURNAL);
+        commands.set("#ResourcesPanel.Visible", currentSection == SpellbookManager.Section.PROGRESSION);
+        commands.set("#CodexPanel.Visible", false);
+        commands.set("#JournalPanel.Visible", false);
     }
 
     private void applyHero(UICommandBuilder commands, PlayerData player) {
         setText(commands, "#SectionTitle.Text", sectionTitle(currentSection));
         setText(commands, "#SectionSubtitle.Text", sectionSubtitle(currentSection));
         setText(commands, "#HeroClassValue.Text", displayClass(player));
-        setText(commands, "#HeroRaceValue.Text", displayRace(player));
+        setText(commands, "#HeroBuildValue.Text", "Style: " + displayStyle(player));
         setText(commands, "#HeroStyleValue.Text", displayStyle(player));
         setText(commands, "#HeroLevelValue.Text", player != null
                 ? player.getLevel() + " / " + LevelingManager.MAX_LEVEL
@@ -358,7 +332,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void applyOverview(UICommandBuilder commands, PlayerData player) {
         setText(commands, "#OverviewIdentityClassValue.Text", displayClass(player));
-        setText(commands, "#OverviewIdentityRaceValue.Text", displayRace(player));
+        setText(commands, "#OverviewIdentityBuildValue.Text", "Build identity is class + style.");
         setText(commands, "#OverviewIdentityStyleValue.Text", displayStyle(player));
         setText(commands, "#OverviewIdentityLevelValue.Text", buildXpLine(player));
         setText(commands, "#OverviewPathNextStepValue.Text", getNextStep(player));
@@ -367,12 +341,11 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 ? String.valueOf(player.getActiveSynergyBonuses().size())
                 : "0");
         setText(commands, "#OverviewPathResourceValue.Text", currentResourceLine(player));
-        setText(commands, "#OverviewPathTipValue.Text", "Journey chooses class and race. Grimoire chooses style. Perk Web confirms 3 passive picks.");
+        setText(commands, "#OverviewPathTipValue.Text", "Choose a class, choose one style, use its three abilities, then shape the build with perks.");
     }
 
-    private void applyJourney(UICommandBuilder commands, PlayerData player) {
+    private void applyClass(UICommandBuilder commands, PlayerData player) {
         ClassData classData = getClassData(player);
-        RaceData raceData = getRaceData(player);
 
         setText(commands, "#JourneyClassValue.Text", displayClass(player));
         setText(commands, "#JourneyThemeValue.Text", classData != null ? safe(classData.getTheme()) : "Choose a class to define your path.");
@@ -388,17 +361,11 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 : "Choose your class here. This becomes your permanent path in normal play.");
         applyClassButtons(commands, player);
 
-        setText(commands, "#JourneyRaceValue.Text", displayRace(player));
-        setText(commands, "#JourneyRacePassiveValue.Text", raceData != null
-                ? compactText(raceData.getPassive(), 120)
-                : "Choose a race to gain identity bonuses.");
-        setText(commands, "#JourneyRaceSpecialValue.Text", raceData != null
-                ? compactText(raceData.getSpecial(), 120)
-                : "Race specialties appear here.");
-        setText(commands, "#JourneyRaceActionValue.Text", player != null && player.getRace() != null
-                ? "Race is currently locked to " + displayRace(player) + ". Use dev race clear if you want to retest another one."
-                : "Choose your race here. This is your long-term identity bonus.");
-        applyRaceButtons(commands, player);
+        setText(commands, "#JourneyStyleIntroValue.Text", "Style");
+        setText(commands, "#JourneyStyleRuleValue.Text", "Styles are the only source of active abilities.");
+        setText(commands, "#JourneyAbilityRuleValue.Text", "Each style grants three cooldown-based abilities.");
+        setText(commands, "#JourneyStyleActionValue.Text", "Choose a style on the Abilities page after selecting a class.");
+        hideRemovedOptionButtons(commands);
 
         setText(commands, "#JourneyStyleValue.Text", displayStyle(player));
         setText(commands, "#JourneyProgressValue.Text", player != null
@@ -420,26 +387,14 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         }
     }
 
-    private void applyRaceButtons(UICommandBuilder commands, PlayerData player) {
-        List<RaceData> races = mod.getDataLoader().getAllRaces();
-        for (int index = 0; index < MAX_RACE_BUTTONS; index++) {
-            String selector = "#RaceButton" + (index + 1);
-            boolean visible = index < races.size();
-            commands.set(selector + ".Visible", visible);
-            if (!visible) {
-                continue;
-            }
-
-            RaceData race = races.get(index);
-            String label = safe(race.getName());
-            if (player != null && race.getId().equalsIgnoreCase(player.getRace())) {
-                label += " *";
-            }
-            setText(commands, selector + ".Text", label);
+    private void hideRemovedOptionButtons(UICommandBuilder commands) {
+        for (int index = 0; index < 12; index++) {
+            String selector = "#RemovedOptionButton" + (index + 1);
+            commands.set(selector + ".Visible", false);
         }
     }
 
-    private void applyGrimoire(UICommandBuilder commands, PlayerData player) {
+    private void applyAbilities(UICommandBuilder commands, PlayerData player) {
         StyleData style = getSelectedStyle(player);
         boolean hasClass = player != null && player.getPlayerClass() != null;
         boolean hasStyle = style != null;
@@ -448,7 +403,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         commands.set("#GrimoireDetails.Visible", hasClass);
         commands.set("#StyleButtonsContainer.Visible", hasClass);
 
-        setText(commands, "#GrimoireEmpty.Text", "Choose a class in Journey to awaken your grimoire.");
+        setText(commands, "#GrimoireEmpty.Text", "Choose a class first to unlock style abilities.");
         setText(commands, "#GrimoireStyleActionValue.Text", !hasClass
                 ? "Choose a class first."
                 : hasStyle
@@ -567,26 +522,13 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#PerksSelectionValue.Text", queuedChoiceLine());
     }
 
-    private void applyResources(UICommandBuilder commands, PlayerData player) {
-        setText(commands, "#ResourcesCurrentValue.Text", currentResourceLine(player));
+    private void applyProgression(UICommandBuilder commands, PlayerData player) {
+        setText(commands, "#ResourcesCurrentValue.Text", buildXpLine(player));
         setText(commands, "#ResourcesRuleValue.Text", player != null && player.getPlayerClass() != null
-                ? resourceRule(player.getPlayerClass())
-                : "Choose a class to unlock its casting model.");
+                ? "Leveling increases stat growth and controls perk-tier unlocks."
+                : "Choose a class to begin progression.");
         setText(commands, "#ResourcesPracticalValue.Text",
-                "Practical perks can improve sustain, movement, gathering, healing, and survival while playing Hytale normally.");
-    }
-
-    private void applyCodex(UICommandBuilder commands, PlayerData player) {
-        setText(commands, "#CodexFlowValue.Text", "Class -> Style -> 3 abilities -> Level milestones -> Perk tiers -> Synergies");
-        setText(commands, "#CodexReactionsValue.Text", "Elemental reactions and status marks will live here as the combat execution layer grows.");
-        setText(commands, "#CodexScalingValue.Text", "Enemies scale with progression and may gain elite titles based on zone and conditions.");
-        setText(commands, "#CodexFocusValue.Text", "Current focus: spellbook UI, passive perk execution, ability controls, and real playback for the mapped Hytale animations/VFX/models.");
-    }
-
-    private void applyJournal(UICommandBuilder commands, PlayerData player) {
-        setText(commands, "#JournalStatusValue.Text", "Story pages are reserved for Mentees lore, discoveries, factions, and future quests.");
-        setText(commands, "#JournalPathValue.Text", "Current Path: " + displayClass(player) + " / " + displayRace(player) + " / " + displayStyle(player));
-        setText(commands, "#JournalFutureValue.Text", "Planned chapters: origin notes, class-specific story beats, race lore, and a discovery log.");
+                "Perks eventually add passive modifiers, triggers, and synergies to class/style builds.");
     }
 
     private String displayClass(PlayerData player) {
@@ -595,14 +537,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         }
         ClassData classData = getClassData(player);
         return classData != null ? safe(classData.getDisplayName()) : safe(player.getPlayerClass());
-    }
-
-    private String displayRace(PlayerData player) {
-        if (player == null || player.getRace() == null) {
-            return "Unchosen";
-        }
-        RaceData raceData = getRaceData(player);
-        return raceData != null ? safe(raceData.getName()) : safe(player.getRace());
     }
 
     private String displayStyle(PlayerData player) {
@@ -658,13 +592,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         return mod.getDataLoader().getClassData(player.getPlayerClass());
     }
 
-    private RaceData getRaceData(PlayerData player) {
-        if (player == null || player.getRace() == null) {
-            return null;
-        }
-        return mod.getDataLoader().getRaceById(player.getRace());
-    }
-
     private StyleData getSelectedStyle(PlayerData player) {
         if (player == null || player.getPlayerClass() == null || player.getSelectedStyles().isEmpty()) {
             return null;
@@ -686,9 +613,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         }
         if (player.getPlayerClass() == null) {
             return "Choose your class.";
-        }
-        if (player.getRace() == null) {
-            return "Choose your race.";
         }
         if (player.getSelectedStyles().isEmpty()) {
             return "Choose your style.";
@@ -804,36 +728,33 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     private String sectionTitle(SpellbookManager.Section section) {
         return switch (section) {
             case OVERVIEW -> "Overview";
-            case JOURNEY -> "Journey";
-            case GRIMOIRE -> "Grimoire";
+            case CLASS -> "Class";
+            case STYLE -> "Style";
+            case ABILITIES -> "Abilities";
             case PERKS -> "Perk Web";
-            case RESOURCES -> "Resources";
-            case CODEX -> "Codex";
-            case JOURNAL -> "Journal";
+            case PROGRESSION -> "Progression";
         };
     }
 
     private String sectionSubtitle(SpellbookManager.Section section) {
         return switch (section) {
             case OVERVIEW -> "Who you are, what you can do, and what comes next.";
-            case JOURNEY -> "Your class, race, style, and progression milestones.";
-            case GRIMOIRE -> "The three active abilities granted by your chosen style.";
+            case CLASS -> "Your class passive and identity.";
+            case STYLE -> "Choose the style that grants your three active abilities.";
+            case ABILITIES -> "The three active abilities granted by your chosen style.";
             case PERKS -> "Passive modifiers, triggers, and synergies that shape your build.";
-            case RESOURCES -> "How your class sustains spellcasting and practical power.";
-            case CODEX -> "Core system notes for reactions, scaling, and combat flow.";
-            case JOURNAL -> "Reserved space for lore, chapters, quests, and discoveries.";
+            case PROGRESSION -> "Leveling, scaling, milestones, and future perk unlocks.";
         };
     }
 
     private String sectionName(SpellbookManager.Section section) {
         return switch (section) {
             case OVERVIEW -> "overview";
-            case JOURNEY -> "journey";
-            case GRIMOIRE -> "grimoire";
+            case CLASS -> "class";
+            case STYLE -> "style";
+            case ABILITIES -> "abilities";
             case PERKS -> "perks";
-            case RESOURCES -> "resources";
-            case CODEX -> "codex";
-            case JOURNAL -> "journal";
+            case PROGRESSION -> "progression";
         };
     }
 

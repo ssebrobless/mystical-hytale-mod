@@ -35,7 +35,6 @@ public class DataLoader {
     private final Map<String, List<Perk>> perkCache = new HashMap<>();
     private final Map<String, List<StyleData>> styleCache = new HashMap<>();
     private List<ElementalReaction> reactionCache = new ArrayList<>();
-    private List<RaceData> raceCache = new ArrayList<>();
     private JsonObject eliteTitles;
     private JsonObject mobXpTable;
     private JsonObject xpConfig;
@@ -51,7 +50,6 @@ public class DataLoader {
         safeLoad("perks", this::loadPerks);
         safeLoad("styles", this::loadStyles);
         safeLoad("reactions", this::loadReactions);
-        safeLoad("races", this::loadRaces);
         safeLoad("leveling", this::loadLevelingData);
         safeLoad("mobs", this::loadMobData);
         safeLoad("elite titles", this::loadEliteTitles);
@@ -169,30 +167,6 @@ public class DataLoader {
 
     public List<ElementalReaction> getElementalReactions() {
         return reactionCache;
-    }
-
-    // --- Race Data ---
-
-    private void loadRaces() {
-        JsonObject wrapper = loadJson("data/races/races.json", JsonObject.class);
-        if (wrapper != null && wrapper.has("races")) {
-            Type listType = new TypeToken<List<RaceData>>() {}.getType();
-            raceCache = GSON.fromJson(wrapper.get("races"), listType);
-            LOG.info("[MOTM] Loaded " + raceCache.size() + " races.");
-        }
-    }
-
-    public List<RaceData> getAllRaces() { return raceCache; }
-
-    public RaceData getRaceById(String raceId) {
-        for (RaceData race : raceCache) {
-            if (race.getId().equals(raceId)) return race;
-        }
-        return null;
-    }
-
-    public boolean isValidRace(String raceId) {
-        return getRaceById(raceId) != null;
     }
 
     // --- Elite Titles ---

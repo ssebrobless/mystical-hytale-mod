@@ -4,7 +4,6 @@ import com.motm.model.AbilityData;
 import com.motm.model.ClassData;
 import com.motm.model.Perk;
 import com.motm.model.PlayerData;
-import com.motm.model.RaceData;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.DataLoader;
@@ -14,51 +13,46 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Centralizes the spellbook information architecture so the same page model can
- * back chat output now and a custom Hytale UI later.
+ * Centralizes the spellbook information architecture for class, style, ability,
+ * level scaling, and perk information.
  */
 public class SpellbookManager {
 
     public enum Section {
         OVERVIEW,
-        JOURNEY,
-        GRIMOIRE,
+        CLASS,
+        STYLE,
+        ABILITIES,
         PERKS,
-        RESOURCES,
-        CODEX,
-        JOURNAL
+        PROGRESSION
     }
 
     private final DataLoader dataLoader;
     private final LevelingManager levelingManager;
     private final StyleManager styleManager;
     private final PerkManager perkManager;
-    private final ResourceManager resourceManager;
     private final ClassPassiveManager classPassiveManager;
 
     public SpellbookManager(DataLoader dataLoader,
                             LevelingManager levelingManager,
                             StyleManager styleManager,
                             PerkManager perkManager,
-                            ResourceManager resourceManager,
                             ClassPassiveManager classPassiveManager) {
         this.dataLoader = dataLoader;
         this.levelingManager = levelingManager;
         this.styleManager = styleManager;
         this.perkManager = perkManager;
-        this.resourceManager = resourceManager;
         this.classPassiveManager = classPassiveManager;
     }
 
     public String render(PlayerData player, Section section) {
         return switch (section) {
             case OVERVIEW -> renderOverview(player);
-            case JOURNEY -> renderJourney(player);
-            case GRIMOIRE -> renderGrimoire(player);
+            case CLASS -> renderClass(player);
+            case STYLE -> renderStyle(player);
+            case ABILITIES -> renderAbilities(player);
             case PERKS -> renderPerks(player);
-            case RESOURCES -> renderResources(player);
-            case CODEX -> renderCodex(player);
-            case JOURNAL -> renderJournal(player);
+            case PROGRESSION -> renderProgression(player);
         };
     }
 
@@ -70,51 +64,47 @@ public class SpellbookManager {
         String normalized = rawValue.trim().toLowerCase(Locale.ROOT);
         return switch (normalized) {
             case "overview", "home", "hub" -> Section.OVERVIEW;
-            case "journey", "identity", "path" -> Section.JOURNEY;
-            case "grimoire", "abilities", "spells", "style" -> Section.GRIMOIRE;
-            case "perks", "web" -> Section.PERKS;
-            case "resources", "resource" -> Section.RESOURCES;
-            case "codex", "guide", "reactions" -> Section.CODEX;
-            case "journal", "story", "lore" -> Section.JOURNAL;
+            case "class", "identity", "path" -> Section.CLASS;
+            case "style", "styles" -> Section.STYLE;
+            case "abilities", "ability", "spells", "combat" -> Section.ABILITIES;
+            case "perks", "perk", "web" -> Section.PERKS;
+            case "progression", "progress", "level", "scaling" -> Section.PROGRESSION;
             default -> null;
         };
     }
 
     public String getSectionList() {
-        return "overview, journey, grimoire, perks, resources, codex, journal";
+        return "overview, class, style, abilities, perks, progression";
     }
 
     private String renderOverview(PlayerData player) {
         StringBuilder sb = new StringBuilder();
         sb.append("[MOTM Spellbook] === Overview ===\n");
         sb.append("+--------------------------------------+\n");
-        sb.append("| Identity                             |\n");
+        sb.append("| Build                                |\n");
         sb.append("+--------------------------------------+\n");
         sb.append("Class: ").append(displayClass(player)).append("\n");
-        sb.append("Race: ").append(displayRace(player)).append("\n");
         sb.append("Style: ").append(displayStyle(player)).append("\n");
         sb.append("Level: ").append(player.getLevel()).append(" | XP: ")
                 .append(player.getCurrentXp()).append("/")
                 .append(levelingManager.calculateXpRequired(player.getLevel())).append("\n");
         sb.append("Growth: ").append(levelingManager.describePlayerStatGrowth(player.getLevel())).append("\n");
         sb.append("+--------------------------------------+\n");
-        sb.append("| Current Path                         |\n");
+        sb.append("| Next                                 |\n");
         sb.append("+--------------------------------------+\n");
         sb.append("Next Step: ").append(getNextStep(player)).append("\n");
         sb.append("Pending Perks: ").append(perkManager.hasPendingPerkSelection(player) ? "Yes" : "No").append("\n");
         sb.append("Active Synergies: ").append(player.getActiveSynergyBonuses().size()).append("\n");
-        sb.append("Casting: ").append(player.getPlayerClass() != null
-                ? resourceManager.getResourceDisplay(player.getPlayerId(), player.getPlayerClass())
-                : "No class selected").append("\n");
+        sb.append("Casting: cooldowns, durations, charges, and action timing\n");
         sb.append("+--------------------------------------+\n");
         sb.append("Sections: ").append(getSectionList()).append("\n");
         sb.append("Use: /motm spellbook <section>");
         return sb.toString();
     }
 
-    private String renderJourney(PlayerData player) {
+    private String renderClass(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Journey ===\n");
+        sb.append("[MOTM Spellbook] === Class ===\n");
         sb.append("Class: ").append(displayClass(player)).append("\n");
         if (player.getPlayerClass() != null) {
             ClassData classData = dataLoader.getClassData(player.getPlayerClass());
@@ -133,29 +123,39 @@ public class SpellbookManager {
                 }
             }
         }
-        sb.append("Race: ").append(displayRace(player)).append("\n");
-        if (player.getRace() != null) {
-            RaceData race = dataLoader.getRaceById(player.getRace());
-            if (race != null) {
-                sb.append("Race Passive: ").append(race.getPassive()).append("\n");
-            }
-        }
         sb.append("Style: ").append(displayStyle(player)).append("\n");
         sb.append("Level: ").append(player.getLevel()).append(" / ").append(LevelingManager.MAX_LEVEL).append("\n");
-        sb.append("Growth: ").append(levelingManager.describePlayerStatGrowth(player.getLevel())).append("\n");
-        sb.append("Total XP Earned: ").append(player.getTotalXpEarned()).append("\n");
-        sb.append("Perks Chosen: ").append(player.getSelectedPerks().size()).append(" / 60\n");
-        sb.append("Achievements: ").append(player.getAchievements().size()).append("\n");
-        sb.append("Next Step: ").append(getNextStep(player)).append("\n");
         sb.append("Return: /motm spellbook overview");
         return sb.toString();
     }
 
-    private String renderGrimoire(PlayerData player) {
+    private String renderStyle(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Grimoire ===\n");
+        sb.append("[MOTM Spellbook] === Style ===\n");
         if (player.getPlayerClass() == null) {
-            sb.append("Choose a class to awaken your grimoire.\n");
+            sb.append("Choose a class first.\n");
+            sb.append("Use: /motm class <id>");
+            return sb.toString();
+        }
+
+        StyleData selected = getSelectedStyle(player);
+        sb.append("Current: ").append(selected != null ? selected.getName() : "Unchosen").append("\n");
+        sb.append("Available Styles:\n");
+        for (StyleData style : dataLoader.getStylesForClass(player.getPlayerClass())) {
+            boolean current = selected != null && selected.getId().equals(style.getId());
+            sb.append(current ? ">> " : "   ");
+            sb.append(style.getId()).append(" - ").append(style.getName()).append("\n");
+            sb.append("   ").append(compact(style.getTheme(), 72)).append("\n");
+        }
+        sb.append("Use: /motm style <styleId>");
+        return sb.toString();
+    }
+
+    private String renderAbilities(PlayerData player) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[MOTM Spellbook] === Abilities ===\n");
+        if (player.getPlayerClass() == null) {
+            sb.append("Choose a class first.\n");
             sb.append("Use: /motm class <id>");
             return sb.toString();
         }
@@ -174,7 +174,7 @@ public class SpellbookManager {
         for (AbilityData ability : style.getAbilities()) {
             double cooldown = styleManager.getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
             sb.append("  ").append(ability.getName()).append(" [").append(ability.getId()).append("]\n");
-            sb.append("    ").append(abilitySummary(ability)).append("\n");
+            sb.append("    ").append(AbilityPresentation.buildEffectSummary(ability)).append("\n");
             String profile = AbilityPresentation.buildSpatialSummary(ability);
             if (!profile.isBlank()) {
                 sb.append("    ").append(profile).append("\n");
@@ -183,9 +183,9 @@ public class SpellbookManager {
             if (!visuals.isBlank()) {
                 sb.append("    ").append(visuals).append("\n");
             }
-            sb.append("    Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s");
+            sb.append("    Cooldown ").append(AbilityPresentation.formatDecimal(ability.getCooldownSeconds())).append("s");
             if (cooldown > 0) {
-                sb.append(" | Ready in ").append(formatDecimal(cooldown)).append("s");
+                sb.append(" | Ready in ").append(AbilityPresentation.formatDecimal(cooldown)).append("s");
             }
             sb.append("\n");
         }
@@ -195,7 +195,7 @@ public class SpellbookManager {
 
     private String renderPerks(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Perk Web ===\n");
+        sb.append("[MOTM Spellbook] === Perks ===\n");
         sb.append("Design: styles grant active abilities; perks modify your build.\n");
 
         if (player.getPlayerClass() == null) {
@@ -230,61 +230,21 @@ public class SpellbookManager {
 
         sb.append("Categories:\n");
         sb.append("  Stats | Utility | Ability Mods | Triggers | Synergies\n");
-        sb.append("Future UI: this page becomes the giant organized perk web.\n");
         return sb.toString();
     }
 
-    private String renderResources(PlayerData player) {
+    private String renderProgression(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Casting ===\n");
-        if (player.getPlayerClass() == null) {
-            sb.append("No class selected yet.\n");
-            sb.append("Use: /motm class <id>");
-            return sb.toString();
-        }
-
-        sb.append("Current: ")
-                .append(resourceManager.getResourceDisplay(player.getPlayerId(), player.getPlayerClass()))
-                .append("\n");
-        sb.append("Casting Notes:\n");
-        sb.append(resourceNotes(player.getPlayerClass())).append("\n");
-        sb.append("Use: /motm abilities");
-        return sb.toString();
-    }
-
-    private String renderCodex(PlayerData player) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Codex ===\n");
-        sb.append("Elemental Flow:\n");
-        sb.append("  class -> style -> 3 abilities -> level -> perks -> synergies\n");
-        sb.append("Reaction System:\n");
-        sb.append("  marks, status effects, and elemental cross-effects live here.\n");
-        sb.append("Action Presentation:\n");
-        sb.append("  every style ability now resolves to built-in Hytale animation, VFX, and optional model assets.\n");
-        sb.append("Mob Scaling:\n");
-        sb.append("  enemies scale from player progression and may gain elite titles.\n");
-        sb.append("Current Focus:\n");
-        sb.append("  spellbook UI, real perk effect hooks, input binding, and stronger ability execution.\n");
-        return sb.toString();
-    }
-
-    private String renderJournal(PlayerData player) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Journal ===\n");
-        sb.append("This section is reserved for story and lore integration.\n");
-        sb.append("Planned:\n");
-        sb.append("  Chapter pages\n");
-        sb.append("  Class-specific notes\n");
-        sb.append("  Race-specific lore\n");
-        sb.append("  Discovery log\n");
-        sb.append("  Quest and faction threads\n");
-        if (player.getPlayerClass() != null) {
-            sb.append("Current Path: ").append(displayClass(player));
-            if (player.getRace() != null) {
-                sb.append(" / ").append(displayRace(player));
-            }
-            sb.append("\n");
-        }
+        sb.append("[MOTM Spellbook] === Progression ===\n");
+        sb.append("Level: ").append(player.getLevel()).append(" / ").append(LevelingManager.MAX_LEVEL).append("\n");
+        sb.append("XP: ").append(player.getCurrentXp()).append("/")
+                .append(levelingManager.calculateXpRequired(player.getLevel())).append("\n");
+        sb.append("Total XP Earned: ").append(player.getTotalXpEarned()).append("\n");
+        sb.append("Growth: ").append(levelingManager.describePlayerStatGrowth(player.getLevel())).append("\n");
+        sb.append("Perks Chosen: ").append(player.getSelectedPerks().size()).append(" / 60\n");
+        sb.append("Achievements: ").append(player.getAchievements().size()).append("\n");
+        sb.append("Next Step: ").append(getNextStep(player)).append("\n");
+        sb.append("Mob Scaling: enemies scale from player progression and elite-title rules.");
         return sb.toString();
     }
 
@@ -294,14 +254,6 @@ public class SpellbookManager {
         }
         ClassData classData = dataLoader.getClassData(player.getPlayerClass());
         return classData != null ? classData.getDisplayName() : player.getPlayerClass();
-    }
-
-    private String displayRace(PlayerData player) {
-        if (player.getRace() == null) {
-            return "Unchosen";
-        }
-        RaceData race = dataLoader.getRaceById(player.getRace());
-        return race != null ? race.getName() : player.getRace();
     }
 
     private String displayStyle(PlayerData player) {
@@ -320,9 +272,6 @@ public class SpellbookManager {
         if (player.getPlayerClass() == null) {
             return "Choose your class";
         }
-        if (player.getRace() == null) {
-            return "Choose your race";
-        }
         if (player.getSelectedStyles().isEmpty()) {
             return "Choose your style";
         }
@@ -337,28 +286,13 @@ public class SpellbookManager {
         return "Refine your build and chase synergies";
     }
 
-    private String resourceNotes(String playerClass) {
-        return switch (playerClass.toLowerCase(Locale.ROOT)) {
-            case "terra" -> "Terra abilities no longer spend materials; physical blocks and items are only used for visuals, tools, or test setup.";
-            case "hydro" -> "Hydro abilities no longer spend waterskin water; water remains a theme and environmental interaction, not a cast cost.";
-            case "aero" -> "Aero does not use a class resource and instead relies on cooldowns, movement, and momentum.";
-            case "corruptus" -> "Corruptus abilities no longer spend souls; its power is governed by cooldowns, duration, risk, and status effects.";
-            default -> "Unknown casting model.";
-        };
-    }
-
-    private String abilitySummary(AbilityData ability) {
-        return AbilityPresentation.buildEffectSummary(ability);
-    }
-
-    private String displayStyleResource(StyleData style) {
-        if (style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
-            return "None";
+    private String compact(String text, int maxLength) {
+        if (text == null) {
+            return "";
         }
-        return resourceManager.getDisplayName(style.getResourceType());
-    }
-
-    private String formatDecimal(double value) {
-        return AbilityPresentation.formatDecimal(value);
+        if (text.length() <= maxLength) {
+            return text;
+        }
+        return text.substring(0, Math.max(0, maxLength - 3)).trim() + "...";
     }
 }

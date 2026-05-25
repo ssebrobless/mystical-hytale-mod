@@ -49,22 +49,22 @@ Group #Root {
     TextButton #NavOverviewButton { Anchor: (Left: 14, Top: 92, Width: 148, Height: 34); Text: "Overview"; Style: @ButtonStyle; }
     Label #NavOverviewSelected { Anchor: (Left: 14, Top: 92, Width: 148, Height: 34); Text: "> Overview"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
-    TextButton #NavJourneyButton { Anchor: (Left: 14, Top: 132, Width: 148, Height: 34); Text: "Journey"; Style: @ButtonStyle; }
-    Label #NavJourneySelected { Anchor: (Left: 14, Top: 132, Width: 148, Height: 34); Text: "> Journey"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+    TextButton #NavJourneyButton { Anchor: (Left: 14, Top: 132, Width: 148, Height: 34); Text: "Class"; Style: @ButtonStyle; }
+    Label #NavJourneySelected { Anchor: (Left: 14, Top: 132, Width: 148, Height: 34); Text: "> Class"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
-    TextButton #NavGrimoireButton { Anchor: (Left: 14, Top: 172, Width: 148, Height: 34); Text: "Grimoire"; Style: @ButtonStyle; }
-    Label #NavGrimoireSelected { Anchor: (Left: 14, Top: 172, Width: 148, Height: 34); Text: "> Grimoire"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+    TextButton #NavGrimoireButton { Anchor: (Left: 14, Top: 172, Width: 148, Height: 34); Text: "Abilities"; Style: @ButtonStyle; }
+    Label #NavGrimoireSelected { Anchor: (Left: 14, Top: 172, Width: 148, Height: 34); Text: "> Abilities"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
     TextButton #NavPerksButton { Anchor: (Left: 14, Top: 212, Width: 148, Height: 34); Text: "Perk Web"; Style: @ButtonStyle; }
     Label #NavPerksSelected { Anchor: (Left: 14, Top: 212, Width: 148, Height: 34); Text: "> Perk Web"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
-    TextButton #NavResourcesButton { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "Resources"; Style: @ButtonStyle; }
-    Label #NavResourcesSelected { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "> Resources"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+    TextButton #NavResourcesButton { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "Progression"; Style: @ButtonStyle; }
+    Label #NavResourcesSelected { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "> Progression"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
-    TextButton #NavCodexButton { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: "Codex"; Style: @ButtonStyle; }
+    TextButton #NavCodexButton { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: ""; Visible: false; Style: @ButtonStyle; }
     Label #NavCodexSelected { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: "> Codex"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
-    TextButton #NavJournalButton { Anchor: (Left: 14, Top: 332, Width: 148, Height: 34); Text: "Journal"; Style: @ButtonStyle; }
+    TextButton #NavJournalButton { Anchor: (Left: 14, Top: 332, Width: 148, Height: 34); Text: ""; Visible: false; Style: @ButtonStyle; }
     Label #NavJournalSelected { Anchor: (Left: 14, Top: 332, Width: 148, Height: 34); Text: "> Journal"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
     Label #ActionStatus {
@@ -83,7 +83,7 @@ Group #Root {
     Label #HeroNextStep { Anchor: (Left: 22, Top: 98, Width: 450, Height: 20); Style: (...@SmallText, TextColor: @Accent); }
 
     Label #HeroClassValue { Anchor: (Left: 510, Top: 18, Width: 250, Height: 18); Style: @ValueText; }
-    Label #HeroRaceValue { Anchor: (Left: 510, Top: 42, Width: 250, Height: 18); Style: @ValueText; }
+    Label #HeroBuildValue { Anchor: (Left: 510, Top: 42, Width: 250, Height: 18); Style: @ValueText; }
     Label #HeroStyleValue { Anchor: (Left: 510, Top: 66, Width: 250, Height: 18); Style: @ValueText; }
     Label #HeroLevelValue { Anchor: (Left: 510, Top: 90, Width: 250, Height: 18); Style: @ValueText; }
     Label #HeroProgress { Anchor: (Left: 510, Top: 112, Width: 250, Height: 16); Style: @SmallText; }
@@ -96,7 +96,7 @@ Group #Root {
     Group #OverviewPanel {
       Anchor: (Left: 18, Top: 18, Width: 756, Height: 472);
       Label #OverviewIdentityClassValue { Anchor: (Left: 0, Top: 0, Width: 350, Height: 22); Style: @ValueText; }
-      Label #OverviewIdentityRaceValue { Anchor: (Left: 0, Top: 30, Width: 350, Height: 22); Style: @ValueText; }
+      Label #OverviewIdentityBuildValue { Anchor: (Left: 0, Top: 30, Width: 350, Height: 22); Style: @ValueText; }
       Label #OverviewIdentityStyleValue { Anchor: (Left: 0, Top: 60, Width: 350, Height: 22); Style: @ValueText; }
       Label #OverviewIdentityLevelValue { Anchor: (Left: 0, Top: 90, Width: 350, Height: 22); Style: @ValueText; }
       Label #OverviewPathNextStepValue { Anchor: (Left: 392, Top: 0, Width: 350, Height: 44); Style: @BodyText; }
@@ -120,22 +120,22 @@ Group #Root {
       TextButton #ClassAeroButton { Anchor: (Left: 0, Top: 296, Width: 170, Height: 32); Text: "Aero"; Style: @ButtonStyle; }
       TextButton #ClassCorruptusButton { Anchor: (Left: 190, Top: 296, Width: 170, Height: 32); Text: "Corruptus"; Style: @ButtonStyle; }
 
-      Label #JourneyRaceValue { Anchor: (Left: 392, Top: 0, Width: 340, Height: 22); Style: @ValueText; }
-      Label #JourneyRacePassiveValue { Anchor: (Left: 392, Top: 28, Width: 340, Height: 45); Style: @SmallText; }
-      Label #JourneyRaceSpecialValue { Anchor: (Left: 392, Top: 78, Width: 340, Height: 45); Style: @SmallText; }
-      Label #JourneyRaceActionValue { Anchor: (Left: 392, Top: 130, Width: 340, Height: 42); Style: @SmallText; }
-      TextButton #RaceButton1 { Anchor: (Left: 392, Top: 184, Width: 108, Height: 28); Text: "Race 1"; Style: @ButtonStyle; }
-      TextButton #RaceButton2 { Anchor: (Left: 512, Top: 184, Width: 108, Height: 28); Text: "Race 2"; Style: @ButtonStyle; }
-      TextButton #RaceButton3 { Anchor: (Left: 632, Top: 184, Width: 108, Height: 28); Text: "Race 3"; Style: @ButtonStyle; }
-      TextButton #RaceButton4 { Anchor: (Left: 392, Top: 218, Width: 108, Height: 28); Text: "Race 4"; Style: @ButtonStyle; }
-      TextButton #RaceButton5 { Anchor: (Left: 512, Top: 218, Width: 108, Height: 28); Text: "Race 5"; Style: @ButtonStyle; }
-      TextButton #RaceButton6 { Anchor: (Left: 632, Top: 218, Width: 108, Height: 28); Text: "Race 6"; Style: @ButtonStyle; }
-      TextButton #RaceButton7 { Anchor: (Left: 392, Top: 252, Width: 108, Height: 28); Text: "Race 7"; Style: @ButtonStyle; }
-      TextButton #RaceButton8 { Anchor: (Left: 512, Top: 252, Width: 108, Height: 28); Text: "Race 8"; Style: @ButtonStyle; }
-      TextButton #RaceButton9 { Anchor: (Left: 632, Top: 252, Width: 108, Height: 28); Text: "Race 9"; Style: @ButtonStyle; }
-      TextButton #RaceButton10 { Anchor: (Left: 392, Top: 286, Width: 108, Height: 28); Text: "Race 10"; Style: @ButtonStyle; }
-      TextButton #RaceButton11 { Anchor: (Left: 512, Top: 286, Width: 108, Height: 28); Text: "Race 11"; Style: @ButtonStyle; }
-      TextButton #RaceButton12 { Anchor: (Left: 632, Top: 286, Width: 108, Height: 28); Text: "Race 12"; Style: @ButtonStyle; }
+      Label #JourneyStyleIntroValue { Anchor: (Left: 392, Top: 0, Width: 340, Height: 22); Style: @ValueText; }
+      Label #JourneyStyleRuleValue { Anchor: (Left: 392, Top: 28, Width: 340, Height: 45); Style: @SmallText; }
+      Label #JourneyAbilityRuleValue { Anchor: (Left: 392, Top: 78, Width: 340, Height: 45); Style: @SmallText; }
+      Label #JourneyStyleActionValue { Anchor: (Left: 392, Top: 130, Width: 340, Height: 42); Style: @SmallText; }
+      TextButton #RemovedOptionButton1 { Anchor: (Left: 392, Top: 184, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton2 { Anchor: (Left: 512, Top: 184, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton3 { Anchor: (Left: 632, Top: 184, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton4 { Anchor: (Left: 392, Top: 218, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton5 { Anchor: (Left: 512, Top: 218, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton6 { Anchor: (Left: 632, Top: 218, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton7 { Anchor: (Left: 392, Top: 252, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton8 { Anchor: (Left: 512, Top: 252, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton9 { Anchor: (Left: 632, Top: 252, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton10 { Anchor: (Left: 392, Top: 286, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton11 { Anchor: (Left: 512, Top: 286, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
+      TextButton #RemovedOptionButton12 { Anchor: (Left: 632, Top: 286, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
       Label #JourneyStyleValue { Anchor: (Left: 392, Top: 338, Width: 340, Height: 20); Style: @ValueText; }
       Label #JourneyProgressValue { Anchor: (Left: 392, Top: 364, Width: 340, Height: 20); Style: @SmallText; }
       Label #JourneyMilestoneValue { Anchor: (Left: 392, Top: 390, Width: 340, Height: 20); Style: @SmallText; }

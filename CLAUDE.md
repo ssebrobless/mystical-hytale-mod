@@ -14,7 +14,8 @@ keeps the older Claude-oriented project rules in sync.
 - NEVER create custom biomes, weapons, armor, or economy systems - Hytale provides all of those natively.
 - Styles = the ONLY source of active abilities (3 per style)
 - Perks = ALWAYS passive bonuses (never active abilities)
-- Races = passive identity bonuses
+- Races are intentionally removed from scope. Keep the mod focused on classes,
+  styles/abilities, leveling/scaling, and passive perks.
 
 ## Plugin Lifecycle
 - `setup()` = data loading (JSON -> model objects). Runs before hooks are available.

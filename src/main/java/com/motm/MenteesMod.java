@@ -251,7 +251,6 @@ public class MenteesMod extends JavaPlugin {
     private ClassPassiveManager classPassiveManager;
     private StyleManager styleManager;
     private ElementalReactionManager elementalReactionManager;
-    private RaceManager raceManager;
     private SpellbookManager spellbookManager;
     private BookInteractionManager bookInteractionManager;
     private GameplayPlaybackManager gameplayPlaybackManager;
@@ -379,13 +378,11 @@ public class MenteesMod extends JavaPlugin {
         );
         styleManager = new StyleManager(dataLoader, resourceManager, classPassiveManager, this::isFreeCastEnabled);
         elementalReactionManager = new ElementalReactionManager(dataLoader, statusEffectManager);
-        raceManager = new RaceManager(dataLoader);
         spellbookManager = new SpellbookManager(
                 dataLoader,
                 levelingManager,
                 styleManager,
                 perkManager,
-                resourceManager,
                 classPassiveManager
         );
         bookInteractionManager = new BookInteractionManager(this);
@@ -512,7 +509,7 @@ public class MenteesMod extends JavaPlugin {
             } else {
                 properties.setProperty("dev_tools_enabled", "false");
                 properties.setProperty("observability_packet_scope", "key");
-                properties.setProperty("notes", "Set dev_tools_enabled=true to enable /motm dev and the Dev Grimoire.");
+                properties.setProperty("notes", "Set dev_tools_enabled=true to enable /motm dev and the Dev Spellbook.");
                 try (var writer = Files.newBufferedWriter(configPath)) {
                     properties.store(writer, "Mentees of the Mystical server settings");
                 }
@@ -663,9 +660,6 @@ public class MenteesMod extends JavaPlugin {
             resourceManager.synchronizePersistentState(player);
             resourceManager.initializeForPlayer(player);
             queueHydroContainerSync(playerId);
-            if (player.getRace() != null) {
-                raceManager.applyRaceBonuses(player, statusEffectManager);
-            }
             classPassiveManager.onPlayerJoin(player);
         } else {
             classPassiveManager.clearPlayerState(playerId);
@@ -1393,7 +1387,7 @@ public class MenteesMod extends JavaPlugin {
             return false;
         }
         player.sendMessage(Message.raw(
-                "[MOTM] A Dev Grimoire has been placed in your inventory. "
+                "[MOTM] A Dev Spellbook has been placed in your inventory. "
                         + "Use to open it, then Ability 1 / 2 / 3 to navigate."
         ));
         return true;
@@ -1443,8 +1437,8 @@ public class MenteesMod extends JavaPlugin {
 
         boolean added = runtimeTasks.devBookGrants().add(playerId);
         return added
-                ? "[MOTM] Dev Grimoire delivery queued."
-                : "[MOTM] Dev Grimoire delivery is already queued.";
+                ? "[MOTM] Dev Spellbook delivery queued."
+                : "[MOTM] Dev Spellbook delivery is already queued.";
     }
 
     public void queueAbilityCast(String playerId,
@@ -3155,7 +3149,7 @@ public class MenteesMod extends JavaPlugin {
 
             boolean granted = ensureDevBookItem(player);
             if (!granted && playerHasDevBook(player)) {
-                player.sendMessage(Message.raw("[MOTM] You already have a Dev Grimoire in your inventory."));
+                player.sendMessage(Message.raw("[MOTM] You already have a Dev Spellbook in your inventory."));
             }
             runtimeTasks.devBookGrants().remove(playerId);
         }
@@ -4025,7 +4019,6 @@ public class MenteesMod extends JavaPlugin {
         resourceManager.synchronizePersistentState(player);
 
         player.clearSynergyBonuses();
-        player.clearRaceBonuses();
 
         if (player.getPlayerClass() == null) {
             refreshPlayerProgressionBonusesNow(playerId);
@@ -4041,9 +4034,6 @@ public class MenteesMod extends JavaPlugin {
         perkManager.reapplyAllPerks(player, synergyEngine);
         queueHydroContainerSync(playerId);
 
-        if (player.getRace() != null) {
-            raceManager.applyRaceBonuses(player, statusEffectManager);
-        }
         refreshPlayerProgressionBonusesNow(playerId);
         classPassiveManager.onPlayerJoin(player);
         if (isFreeCastEnabled(playerId)) {
@@ -5167,7 +5157,6 @@ public class MenteesMod extends JavaPlugin {
                 "playerId", player.getPlayerId(),
                 "playerName", player.getPlayerName(),
                 "classId", player.getPlayerClass(),
-                "raceId", player.getRace(),
                 "selectedStyles", new ArrayList<>(player.getSelectedStyles()),
                 "level", player.getLevel(),
                 "currentXp", player.getCurrentXp(),
@@ -5442,7 +5431,6 @@ public class MenteesMod extends JavaPlugin {
     public ClassPassiveManager getClassPassiveManager() { return classPassiveManager; }
     public StyleManager getStyleManager() { return styleManager; }
     public ElementalReactionManager getElementalReactionManager() { return elementalReactionManager; }
-    public RaceManager getRaceManager() { return raceManager; }
     public SpellbookManager getSpellbookManager() { return spellbookManager; }
     public BookInteractionManager getBookInteractionManager() { return bookInteractionManager; }
     public GameplayPlaybackManager getGameplayPlaybackManager() { return gameplayPlaybackManager; }

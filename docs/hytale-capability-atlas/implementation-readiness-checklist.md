@@ -441,9 +441,9 @@ Dev/test UI can additionally include:
 - audit start/stop.
 
 Remove from production spellbook:
-- Journey
-- Codex
-- Grimoire/story framing
+- Journey (completed: replaced by Class)
+- Codex (completed: hidden/removed from production navigation)
+- Grimoire/story framing (completed: replaced by Abilities)
 - unrelated story tabs.
 
 ### 17. Style Review Runbook

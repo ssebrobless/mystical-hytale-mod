@@ -141,8 +141,8 @@ same MOTM JSONL      same MOTM JSONL
 - MOTM is an RPG overlay mod on top of Hytale native systems.
 - Do not create custom biomes, weapons, armor, or economy systems unless the user
   explicitly redirects the design.
-- Styles are the only source of active abilities. Perks and races are passive
-  identity/progression layers.
+- Styles are the only source of active abilities. Perks are passive
+  progression layers. Races are intentionally not part of this mod.
 - Register Hytale hooks in `start()`, not constructors or `setup()`.
 - Use `docs/hytale-complete-api-alignment-audit.md` and
   `/Users/viathebrink/codebases/HytaleCompleteAPI` as API-pattern references, but

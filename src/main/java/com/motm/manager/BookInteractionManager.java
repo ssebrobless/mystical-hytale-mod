@@ -4,7 +4,6 @@ import com.motm.MenteesMod;
 import com.motm.model.AbilityData;
 import com.motm.model.Perk;
 import com.motm.model.PlayerData;
-import com.motm.model.RaceData;
 import com.motm.model.StyleData;
 
 import java.util.ArrayList;
@@ -15,30 +14,27 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Chat-driven fallback interaction layer for the player spellbook and dev grimoire.
+ * Chat-driven fallback interaction layer for the player spellbook and dev test book.
  *
- * This keeps class, race, style, and test flows usable while the visual custom UI
+ * This keeps class, style, ability, perk, and test flows usable while the visual custom UI
  * layer is paused for stability.
  */
 public class BookInteractionManager {
 
     private static final List<SpellbookManager.Section> SPELLBOOK_SECTIONS = List.of(
             SpellbookManager.Section.OVERVIEW,
-            SpellbookManager.Section.JOURNEY,
-            SpellbookManager.Section.GRIMOIRE,
+            SpellbookManager.Section.CLASS,
+            SpellbookManager.Section.STYLE,
+            SpellbookManager.Section.ABILITIES,
             SpellbookManager.Section.PERKS,
-            SpellbookManager.Section.RESOURCES,
-            SpellbookManager.Section.CODEX,
-            SpellbookManager.Section.JOURNAL
+            SpellbookManager.Section.PROGRESSION
     );
 
     private static final List<DevPage> DEV_PAGES = List.of(
             DevPage.CLASS,
-            DevPage.RACE,
             DevPage.STYLE,
             DevPage.AUTO_TEST,
             DevPage.ABILITIES,
-            DevPage.RESOURCES,
             DevPage.LEVEL,
             DevPage.XP,
             DevPage.PERKS,
@@ -53,15 +49,14 @@ public class BookInteractionManager {
     private static final List<ResetAction> RESET_ACTIONS = List.of(
             new ResetAction("Reset Player", new String[]{"dev", "reset", "player"}),
             new ResetAction("Clear Class", new String[]{"dev", "class", "clear"}),
-            new ResetAction("Clear Race", new String[]{"dev", "race", "clear"}),
             new ResetAction("Clear Styles", new String[]{"dev", "styles", "clear"}),
             new ResetAction("Clear Perks", new String[]{"dev", "perks", "clear"}),
             new ResetAction("Give Spellbook", new String[]{"spellbook", "give"}),
-            new ResetAction("Give Dev Grimoire", new String[]{"dev", "book"})
+            new ResetAction("Give Dev Spellbook", new String[]{"dev", "book"})
     );
     private static final List<String> UTILITY_ACTIONS = List.of(
             "Give Spellbook",
-            "Give Dev Grimoire",
+            "Give Dev Spellbook",
             "Clear Cooldowns",
             "Clear Status Effects",
             "Clear Reaction Marks",
@@ -98,7 +93,6 @@ public class BookInteractionManager {
 
         return switch (state.mode) {
             case CLASS_SELECT -> handleClassSelection(player, state, slot);
-            case RACE_SELECT -> handleRaceSelection(player, state, slot);
             case STYLE_SELECT -> handleStyleSelection(player, state, slot);
             case SECTION_VIEW -> handleSectionNavigation(player, state, slot);
         };
@@ -162,26 +156,6 @@ public class BookInteractionManager {
         return renderSpellbook(player, state);
     }
 
-    private String handleRaceSelection(PlayerData player, SpellbookState state, int slot) {
-        List<RaceData> races = mod.getDataLoader().getAllRaces();
-        if (races.isEmpty()) {
-            state.lastMessage = "No races are loaded.";
-            return renderSpellbook(player, state);
-        }
-
-        switch (slot) {
-            case 1 -> state.selectionIndex = wrap(state.selectionIndex - 1, races.size());
-            case 2 -> {
-                RaceData race = races.get(state.selectionIndex);
-                state.lastMessage = summarize(run(player, "race", race.getId()));
-                syncSpellbookState(player, state, true);
-            }
-            case 3 -> state.selectionIndex = wrap(state.selectionIndex + 1, races.size());
-            default -> state.lastMessage = "Use Ability 1 / 2 / 3 to navigate the spellbook.";
-        }
-        return renderSpellbook(player, state);
-    }
-
     private String handleStyleSelection(PlayerData player, SpellbookState state, int slot) {
         List<StyleData> styles = getStyles(player);
         if (styles.isEmpty()) {
@@ -197,7 +171,7 @@ public class BookInteractionManager {
                 state.lastMessage = summarize(run(player, "style", style.getId()));
                 syncSpellbookState(player, state, true);
                 if (state.mode == SpellbookMode.SECTION_VIEW) {
-                    state.sectionIndex = SPELLBOOK_SECTIONS.indexOf(SpellbookManager.Section.GRIMOIRE);
+                    state.sectionIndex = SPELLBOOK_SECTIONS.indexOf(SpellbookManager.Section.ABILITIES);
                     if (state.sectionIndex < 0) {
                         state.sectionIndex = 0;
                     }
@@ -234,11 +208,9 @@ public class BookInteractionManager {
         DevPage page = currentDevPage(state);
         switch (page) {
             case CLASS -> applyDevClass(player, state);
-            case RACE -> applyDevRace(player, state);
             case STYLE -> applyDevStyle(player, state);
             case AUTO_TEST -> applyAutoTestPreset(player, state);
             case ABILITIES -> applyDevAbility(player, state);
-            case RESOURCES -> applyDevResource(player, state);
             case LEVEL -> applyDevLevel(player, state);
             case XP -> applyDevXp(player, state);
             case PERKS -> applyDevPerkSelection(player, state);
@@ -253,23 +225,6 @@ public class BookInteractionManager {
                 ? run(player, "dev", "class", "clear")
                 : run(player, "dev", "class", "set", classId));
         state.optionIndex = 0;
-    }
-
-    private void applyDevRace(PlayerData player, DevBookState state) {
-        List<RaceData> races = mod.getDataLoader().getAllRaces();
-        int optionCount = races.size() + 1;
-        if (optionCount <= 0) {
-            state.lastMessage = "No race options available.";
-            return;
-        }
-
-        if (state.optionIndex >= races.size()) {
-            state.lastMessage = summarize(run(player, "dev", "race", "clear"));
-            return;
-        }
-
-        RaceData race = races.get(state.optionIndex);
-        state.lastMessage = summarize(run(player, "dev", "race", "set", race.getId()));
     }
 
     private void applyDevStyle(PlayerData player, DevBookState state) {
@@ -550,7 +505,6 @@ public class BookInteractionManager {
 
         int optionCount = switch (targetMode) {
             case CLASS_SELECT -> 4;
-            case RACE_SELECT -> mod.getDataLoader().getAllRaces().size();
             case STYLE_SELECT -> getStyles(player).size();
             case SECTION_VIEW -> SPELLBOOK_SECTIONS.size();
         };
@@ -589,11 +543,9 @@ public class BookInteractionManager {
     private int devOptionCount(PlayerData player, DevBookState state) {
         return switch (currentDevPage(state)) {
             case CLASS -> CLASS_IDS.size();
-            case RACE -> mod.getDataLoader().getAllRaces().size() + 1;
             case STYLE -> getStyles(player).isEmpty() ? 0 : getStyles(player).size() + 1;
             case AUTO_TEST -> AUTO_TEST_PRESETS.size();
             case ABILITIES -> devAbilityOptionCount(player);
-            case RESOURCES -> devResourceOptionCount(player);
             case LEVEL -> LEVEL_PRESETS.size();
             case XP -> XP_PERCENT_PRESETS.size();
             case PERKS -> hasPendingPerks(player)
@@ -607,7 +559,6 @@ public class BookInteractionManager {
     private String renderSpellbook(PlayerData player, SpellbookState state) {
         return switch (state.mode) {
             case CLASS_SELECT -> renderClassPage(state);
-            case RACE_SELECT -> renderRacePage(state);
             case STYLE_SELECT -> renderStylePage(player, state);
             case SECTION_VIEW -> renderSectionPage(player, state);
         };
@@ -629,29 +580,6 @@ public class BookInteractionManager {
             sb.append(i == state.selectionIndex ? "> " : "  ")
                     .append(data.getId()).append(" - ")
                     .append(data.getDisplayName()).append("\n");
-        }
-        return sb.toString();
-    }
-
-    private String renderRacePage(SpellbookState state) {
-        StringBuilder sb = header("Spellbook", "Race Selection", state.lastMessage);
-        List<RaceData> races = mod.getDataLoader().getAllRaces();
-        if (races.isEmpty()) {
-            sb.append("No races are available.\n");
-            return sb.toString();
-        }
-
-        RaceData race = races.get(state.selectionIndex);
-        appendChoiceBox(sb, race.getName());
-        sb.append("Passive: ").append(compact(race.getPassive(), 72)).append("\n");
-        sb.append("Special: ").append(compact(race.getSpecial(), 72)).append("\n");
-        sb.append("Controls: Ability1 prev | Ability2 choose | Ability3 next\n\n");
-        sb.append("Races:\n");
-        for (int i = 0; i < races.size(); i++) {
-            RaceData option = races.get(i);
-            sb.append(i == state.selectionIndex ? "> " : "  ")
-                    .append(option.getId()).append(" - ")
-                    .append(option.getName()).append("\n");
         }
         return sb.toString();
     }
@@ -692,11 +620,10 @@ public class BookInteractionManager {
 
     private String renderDevBook(PlayerData player, DevBookState state) {
         DevPage page = currentDevPage(state);
-        StringBuilder sb = header("Dev Grimoire", page.displayName, state.lastMessage);
+        StringBuilder sb = header("Dev Spellbook", page.displayName, state.lastMessage);
         sb.append("Page ").append(state.pageIndex + 1).append(" / ").append(DEV_PAGES.size())
                 .append(" | Use -> next page\n");
         sb.append("Player: ").append(safe(player.getPlayerClass(), "No class"))
-                .append(" / ").append(safe(player.getRace(), "No race"))
                 .append(" / ").append(currentStyleId(player))
                 .append(" | Lv ").append(player.getLevel()).append("\n");
         sb.append("Slots: ").append(currentAbilitySummary(player)).append("\n");
@@ -709,11 +636,9 @@ public class BookInteractionManager {
 
         switch (page) {
             case CLASS -> renderClassDevOptions(sb, state);
-            case RACE -> renderRaceDevOptions(sb, state);
             case STYLE -> renderStyleDevOptions(player, sb, state);
             case AUTO_TEST -> renderAutoTestOptions(sb, state);
             case ABILITIES -> renderAbilityDevOptions(player, sb, state);
-            case RESOURCES -> renderResourceDevOptions(player, sb, state);
             case LEVEL -> renderLevelDevOptions(sb, state);
             case XP -> renderXpDevOptions(player, sb, state);
             case PERKS -> renderPerkDevOptions(player, sb, state);
@@ -733,15 +658,6 @@ public class BookInteractionManager {
                     : mod.getDataLoader().getClassData(classId).getDisplayName();
             appendOption(sb, i == state.optionIndex, label);
         }
-    }
-
-    private void renderRaceDevOptions(StringBuilder sb, DevBookState state) {
-        sb.append("Race tools:\n");
-        List<RaceData> races = mod.getDataLoader().getAllRaces();
-        for (int i = 0; i < races.size(); i++) {
-            appendOption(sb, i == state.optionIndex, races.get(i).getName());
-        }
-        appendOption(sb, state.optionIndex == races.size(), "Clear race");
     }
 
     private void renderStyleDevOptions(PlayerData player, StringBuilder sb, DevBookState state) {
@@ -899,7 +815,7 @@ public class BookInteractionManager {
             sb.append("Open: /motm spellbook overview\n");
             sb.append("Combat: Left/Right/Use cast your 3 equipped spell slots\n");
             sb.append("Overview: Crouch + Use\n");
-        } else if ("Dev Grimoire".equals(bookName)) {
+        } else if ("Dev Spellbook".equals(bookName)) {
             sb.append("Gesture: Use to open | Ability1/2/3 to navigate\n");
         }
         return sb;
@@ -914,9 +830,6 @@ public class BookInteractionManager {
     private SpellbookMode determineSpellbookMode(PlayerData player) {
         if (player.getPlayerClass() == null) {
             return SpellbookMode.CLASS_SELECT;
-        }
-        if (player.getRace() == null) {
-            return SpellbookMode.RACE_SELECT;
         }
         if (player.getSelectedStyles() == null || player.getSelectedStyles().isEmpty()) {
             return SpellbookMode.STYLE_SELECT;
@@ -1167,18 +1080,15 @@ public class BookInteractionManager {
 
     private enum SpellbookMode {
         CLASS_SELECT,
-        RACE_SELECT,
         STYLE_SELECT,
         SECTION_VIEW
     }
 
     private enum DevPage {
         CLASS("Class Lab"),
-        RACE("Race Lab"),
         STYLE("Style Lab"),
         AUTO_TEST("Auto Test"),
         ABILITIES("Ability Lab"),
-        RESOURCES("Resource Lab"),
         LEVEL("Level Lab"),
         XP("XP Lab"),
         PERKS("Perk Lab"),

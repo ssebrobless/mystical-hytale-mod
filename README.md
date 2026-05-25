@@ -4,7 +4,6 @@
 
 - 4 elemental classes
 - 40 combat styles
-- 12 races
 - 800 perks
 - level progression to 200
 - dynamic mob scaling
@@ -91,8 +90,8 @@ Implemented so far:
 - Hytale Java plugin bootstrap and manifest wiring
 - local build/install flow against the installed Hytale server jar
 - command bridge for `/motm`
-- data loading for classes, perks, styles, races, leveling, mobs, and elite titles
-- race manager runtime bonuses
+- data loading for classes, perks, styles, leveling, mobs, and elite titles
+- class/style ability identity with no race layer
 - mob stat loading and elite title support
 - plugin lifecycle alignment with Hytale's `setup/start/shutdown`
 - real server tick registration

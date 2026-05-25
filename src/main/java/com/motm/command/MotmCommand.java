@@ -24,7 +24,6 @@ import com.motm.model.AbilityData;
 import com.motm.model.ClassData;
 import com.motm.model.Perk;
 import com.motm.model.PlayerData;
-import com.motm.model.RaceData;
 import com.motm.model.StatusEffect;
 import com.motm.model.StyleData;
 import com.motm.proof.MotmProofCatalog;
@@ -97,7 +96,6 @@ public class MotmCommand {
             case "cast" -> handleCast(player, args, runtimePlayer);
             case "spellbook", "book" -> handleSpellbook(player, args, runtimePlayer);
             case "controls" -> handleControls(player, args, runtimePlayer);
-            case "race" -> handleRace(player, args);
             case "resources" -> handleResources(player);
             case "stats" -> handleStats(player);
             case "level" -> handleLevel(player, runtimePlayer);
@@ -425,51 +423,6 @@ public class MotmCommand {
         return sb.toString();
     }
 
-    // --- /motm race [raceId] ---
-
-    private String handleRace(PlayerData player, String[] args) {
-        if (player.getRace() != null && args.length < 2) {
-            RaceData race = mod.getDataLoader().getRaceById(player.getRace());
-            if (race != null) {
-                return "[MOTM] Your race: " + race.getName() + "\n"
-                        + "  " + race.getDescription() + "\n"
-                        + "  HP Bonus: " + (race.getHpBonus() >= 0 ? "+" : "") + race.getHpBonus() + "\n"
-                        + "  Passive: " + race.getPassive();
-            }
-        }
-
-        if (args.length < 2) {
-            StringBuilder sb = new StringBuilder("[MOTM] === Choose Your Race ===\n\n");
-            for (RaceData race : mod.getDataLoader().getAllRaces()) {
-                sb.append("  ").append(race.getId()).append(" - ").append(race.getName())
-                        .append(" (HP: ").append(race.getHpBonus() >= 0 ? "+" : "")
-                        .append(race.getHpBonus()).append(")\n");
-                sb.append("    ").append(race.getPassive()).append("\n\n");
-            }
-            sb.append("Use: /motm race <raceId>");
-            return sb.toString();
-        }
-
-        if (player.getRace() != null) {
-            return "[MOTM] You are already a " + player.getRace() + ". Race cannot be changed.";
-        }
-
-        String raceId = args[1].toLowerCase();
-        if (!mod.getDataLoader().isValidRace(raceId)) {
-            return "[MOTM] Invalid race. Use /motm race to see options.";
-        }
-
-        player.setRace(raceId);
-        RaceData race = mod.getDataLoader().getRaceById(raceId);
-        if (player.getPlayerClass() != null) {
-            rebuildPlayerRuntime(player);
-        }
-        mod.getPlayerDataManager().savePlayerData(player);
-        return "[MOTM] You are now a " + race.getName() + "!\n"
-                + "  " + race.getPassive() + "\n"
-                + "  Special: " + race.getSpecial();
-    }
-
     // --- /motm spellbook [section] ---
 
     private String handleSpellbook(PlayerData player, String[] args, Player runtimePlayer) {
@@ -774,7 +727,7 @@ public class MotmCommand {
 
     String handleDevBook(PlayerData player, Player runtimePlayer) {
         if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
-            return "[MOTM] Join a world and run this in-game to receive the Dev Grimoire.";
+            return "[MOTM] Join a world and run this in-game to receive the Dev Spellbook.";
         }
         return mod.queueDevBookGrant(player.getPlayerId());
     }
@@ -1212,39 +1165,6 @@ public class MotmCommand {
         };
     }
 
-    String handleDevRace(PlayerData player, String[] args) {
-        if (args.length < 3) {
-            return "[MOTM] Usage: /motm dev race <set|clear> [raceId]";
-        }
-
-        return switch (args[2].toLowerCase()) {
-            case "set" -> {
-                if (args.length < 4) {
-                    yield "[MOTM] Usage: /motm dev race set <raceId>";
-                }
-
-                String raceId = args[3].toLowerCase();
-                if (!mod.getDataLoader().isValidRace(raceId)) {
-                    yield "[MOTM] Invalid race. Use /motm race to see valid options.";
-                }
-
-                player.setRace(raceId);
-                rebuildPlayerRuntime(player);
-                mod.getPlayerDataManager().savePlayerData(player);
-
-                RaceData race = mod.getDataLoader().getRaceById(raceId);
-                yield "[MOTM] Dev: race set to " + race.getName() + ".";
-            }
-            case "clear" -> {
-                player.setRace(null);
-                rebuildPlayerRuntime(player);
-                mod.getPlayerDataManager().savePlayerData(player);
-                yield "[MOTM] Dev: race cleared.";
-            }
-            default -> "[MOTM] Usage: /motm dev race <set|clear> [raceId]";
-        };
-    }
-
     String handleDevPerks(PlayerData player, String[] args) {
         if (args.length < 3 || !"clear".equalsIgnoreCase(args[2])) {
             return "[MOTM] Usage: /motm dev perks clear";
@@ -1305,7 +1225,7 @@ public class MotmCommand {
     private String handleInfo() {
         return "[MOTM] === Mentees of the Mystical ===\n"
                 + "Version: 1.0.1\n"
-                + "4 Classes | 40 Styles | 12 Races | 800 Perks | Level 1-200\n"
+                + "4 Classes | 40 Styles | 800 Perks | Level 1-200\n"
                 + "Elemental Reactions | Dynamic Mob Scaling | Synergy System\n\n"
                 + "Flow:\n"
                 + "  1. /motm class <id>\n"
@@ -1316,7 +1236,6 @@ public class MotmCommand {
                 + "  6. /motm perks at Lv. 10+\n\n"
                 + "Commands:\n"
                 + "  /motm class [id]        - View/select class\n"
-                + "  /motm race [id]         - View/select race\n"
                 + "  /motm style [id]        - View/select combat style"
                 + (mod.isDevToolsEnabled() ? " (auto-loads matching class in test builds)\n" : "\n")
                 + "  /motm spellbook [page]  - Open the spellbook page in chat\n"
@@ -1375,8 +1294,6 @@ public class MotmCommand {
                 + "  /motm dev xp add <n>\n"
                 + "  /motm dev class set <id>\n"
                 + "  /motm dev class clear\n"
-                + "  /motm dev race set <id>\n"
-                + "  /motm dev race clear\n"
                 + "  /motm dev perks clear\n"
                 + "  /motm dev styles clear\n"
                 + "  /motm dev reset";
@@ -1387,7 +1304,7 @@ public class MotmCommand {
             return "  Dev tools              - Disabled in this build/server\n";
         }
         return "  /motm dev ...           - Testing/admin tools\n"
-                + "  /motm dev book          - Spawn the Dev Grimoire\n"
+                + "  /motm dev book          - Spawn the Dev Spellbook\n"
                 + "  /motm dev test ...      - Run a live style test sequence\n";
     }
 
@@ -1594,7 +1511,6 @@ public class MotmCommand {
 
     private void resetPlayerForDev(PlayerData player) {
         player.setPlayerClass(null);
-        player.setRace(null);
         player.setLevel(1);
         player.setCurrentXp(0);
         player.setTotalXpEarned(0);
@@ -1625,7 +1541,6 @@ public class MotmCommand {
         player.setRestedBonus(0);
         player.setLastLogoutTimestamp(null);
         player.clearSynergyBonuses();
-        player.clearRaceBonuses();
         mod.getStyleManager().resetCooldowns(player.getPlayerId());
         mod.getStatusEffectManager().clearEffects(player.getPlayerId());
         mod.getElementalReactionManager().clearMarks(player.getPlayerId());
@@ -1637,7 +1552,7 @@ public class MotmCommand {
         mod.getPlayerDataManager().savePlayerData(player);
         mod.refreshStatusHud(player.getPlayerId());
         return "[MOTM] Dev: player cleared to a fresh state.\n"
-                + "Reset: class, race, style, perks, level, XP, casting state, cooldowns, statuses, and marks.";
+                + "Reset: class, style, perks, level, XP, casting state, cooldowns, statuses, and marks.";
     }
 
     private Integer parseInteger(String rawValue) {

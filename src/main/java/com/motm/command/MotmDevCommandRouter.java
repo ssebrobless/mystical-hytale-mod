@@ -42,7 +42,6 @@ final class MotmDevCommandRouter {
             case "level" -> command.handleDevLevel(player, args);
             case "xp" -> command.handleDevXp(player, args);
             case "class" -> command.handleDevClass(player, args);
-            case "race" -> command.handleDevRace(player, args);
             case "perks" -> command.handleDevPerks(player, args);
             case "styles" -> command.handleDevStyles(player, args);
             case "reset" -> command.handleDevReset(player, args);
