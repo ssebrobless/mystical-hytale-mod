@@ -2,6 +2,7 @@ package com.motm.command;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.hypixel.hytale.protocol.MovementStates;
@@ -837,6 +838,264 @@ public class MotmCommand {
         return mod.queueDevProof(player.getPlayerId(), args[2]);
     }
 
+    String handleDevPassive(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length < 3) {
+            return getDevPassiveUsage();
+        }
+
+        Player resolvedPlayer = runtimePlayer != null ? runtimePlayer : mod.getRuntimePlayer(player.getPlayerId());
+        if (resolvedPlayer == null) {
+            return "[MOTM] Join a world and run this in-game to inspect passive runtime state.";
+        }
+
+        return switch (args[2].toLowerCase(java.util.Locale.ROOT)) {
+            case "status" -> buildDevPassiveStatus(player, resolvedPlayer);
+            case "health", "hp" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev passive health <value>";
+                }
+                Double value = parseDouble(args[3]);
+                if (value == null) {
+                    yield "[MOTM] Health value must be numeric.";
+                }
+                yield setRuntimePlayerHealth(player, resolvedPlayer, value.floatValue());
+            }
+            case "incoming-damage", "damage-in" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev passive incoming-damage <amount>";
+                }
+                Double value = parseDouble(args[3]);
+                if (value == null || value <= 0.0) {
+                    yield "[MOTM] Incoming damage must be a positive number.";
+                }
+                yield applyDevIncomingDamage(player, resolvedPlayer, value.floatValue());
+            }
+            case "outgoing-damage", "damage-out" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev passive outgoing-damage <amount> [ability|weapon]";
+                }
+                Double value = parseDouble(args[3]);
+                if (value == null || value <= 0.0) {
+                    yield "[MOTM] Outgoing damage must be a positive number.";
+                }
+                boolean abilityBased = args.length < 5 || !"weapon".equalsIgnoreCase(args[4]);
+                yield applyDevOutgoingDamage(player, resolvedPlayer, value, abilityBased);
+            }
+            case "corruptus-stack", "stack" -> {
+                mod.getClassPassiveManager().onMobKilled(
+                        player,
+                        resolvedPlayer,
+                        "dev-passive-proof-" + System.currentTimeMillis()
+                );
+                yield "[MOTM] Dev passive corruptus stack queued.\n" + buildDevPassiveStatus(player, resolvedPlayer);
+            }
+            case "knockback", "kb" -> {
+                double multiplier = mod.getClassPassiveManager().getIncomingKnockbackMultiplier(player.getPlayerId());
+                String result = "[MOTM] Dev passive knockback multiplier="
+                        + String.format(java.util.Locale.ROOT, "%.3f", multiplier);
+                LOG.info(result);
+                yield result;
+            }
+            case "mining", "mine" -> {
+                String itemId = args.length >= 4 ? args[3] : "Iron_Pickaxe";
+                double multiplier = mod.getClassPassiveManager().getMiningDamageMultiplier(player, itemId);
+                String result = "[MOTM] Dev passive mining multiplier="
+                        + String.format(java.util.Locale.ROOT, "%.3f", multiplier)
+                        + " class=" + (player.getPlayerClass() == null ? "none" : player.getPlayerClass())
+                        + " item=" + itemId;
+                LOG.info(result);
+                yield result;
+            }
+            case "velocity" -> {
+                if (args.length < 5) {
+                    yield "[MOTM] Usage: /motm dev passive velocity <x> <z>";
+                }
+                Double x = parseDouble(args[3]);
+                Double z = parseDouble(args[4]);
+                if (x == null || z == null) {
+                    yield "[MOTM] Velocity x/z values must be numeric.";
+                }
+                yield setRuntimePlayerHorizontalVelocity(player, resolvedPlayer, x, z);
+            }
+            default -> getDevPassiveUsage();
+        };
+    }
+
+    private String getDevPassiveUsage() {
+        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|knockback|mining|velocity>\n"
+                + "Examples:\n"
+                + "  /motm dev passive status\n"
+                + "  /motm dev passive health 50\n"
+                + "  /motm dev passive incoming-damage 20\n"
+                + "  /motm dev passive outgoing-damage 100 ability\n"
+                + "  /motm dev passive corruptus-stack\n"
+                + "  /motm dev passive knockback\n"
+                + "  /motm dev passive mining Iron_Pickaxe\n"
+                + "  /motm dev passive velocity 1.0 0.0";
+    }
+
+    private String buildDevPassiveStatus(PlayerData player, Player runtimePlayer) {
+        StringBuilder sb = new StringBuilder("[MOTM] Dev passive status:");
+        sb.append(" class=").append(player.getPlayerClass() == null ? "none" : player.getPlayerClass());
+        sb.append(" summary=").append(mod.getClassPassiveManager().buildPassiveStateSummary(player));
+        sb.append(" knockbackMultiplier=")
+                .append(String.format(java.util.Locale.ROOT, "%.3f",
+                        mod.getClassPassiveManager().getIncomingKnockbackMultiplier(player.getPlayerId())));
+        sb.append(" terraStationaryTicks=")
+                .append(mod.getClassPassiveManager().getTerraStationaryTicks(player.getPlayerId()));
+        sb.append(" terraCaveVision=")
+                .append(mod.getClassPassiveManager().isTerraCaveVisionActive(player.getPlayerId()));
+        sb.append(" hydroBarrierHp=")
+                .append(String.format(java.util.Locale.ROOT, "%.1f",
+                        mod.getClassPassiveManager().getHydroAquaBarrierShieldHp(player.getPlayerId())));
+        sb.append(" hydroSwimming=")
+                .append(mod.getClassPassiveManager().isHydroSwimming(player.getPlayerId()));
+        sb.append(" hydroUnderwater=")
+                .append(mod.getClassPassiveManager().isHydroUnderwater(player.getPlayerId()));
+        sb.append(" corruptusStacks=")
+                .append(mod.getClassPassiveManager().getCorruptusDarkResurrectionStacks(player.getPlayerId()));
+        sb.append(" corruptusLockoutSeconds=")
+                .append(String.format(java.util.Locale.ROOT, "%.1f",
+                        mod.getClassPassiveManager().getCorruptusPassiveLockoutSecondsRemaining(player.getPlayerId())));
+        appendNativeMovementDiagnostics(sb, player, runtimePlayer);
+
+        String result = sb.toString();
+        LOG.info(result);
+        return result;
+    }
+
+    private String setRuntimePlayerHealth(PlayerData player, Player runtimePlayer, float requestedHealth) {
+        EntityStatMap statMap = resolveRuntimeStatMap(player, runtimePlayer);
+        if (statMap == null) {
+            return "[MOTM] Dev passive health failed: EntityStatMap unavailable.";
+        }
+        EntityStatValue health = statMap.get(DefaultEntityStatTypes.getHealth());
+        if (health == null || health.getMax() <= 0.0f) {
+            return "[MOTM] Dev passive health failed: health stat unavailable.";
+        }
+
+        float before = health.get();
+        float target = Math.max(1.0f, Math.min(requestedHealth, health.getMax()));
+        statMap.setStatValue(DefaultEntityStatTypes.getHealth(), target);
+        String result = "[MOTM] Dev passive health set: before="
+                + String.format(java.util.Locale.ROOT, "%.1f", before)
+                + " after="
+                + String.format(java.util.Locale.ROOT, "%.1f", target)
+                + " max="
+                + String.format(java.util.Locale.ROOT, "%.1f", health.getMax());
+        LOG.info(result);
+        return result;
+    }
+
+    private String applyDevIncomingDamage(PlayerData player, Player runtimePlayer, float incomingDamage) {
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
+        EntityStatMap statMap = resolveRuntimeStatMap(player, runtimePlayer);
+        if (playerRef == null || !playerRef.isValid() || store == null || statMap == null) {
+            return "[MOTM] Dev passive incoming-damage failed: runtime player store unavailable.";
+        }
+        EntityStatValue health = statMap.get(DefaultEntityStatTypes.getHealth());
+        if (health == null || health.getMax() <= 0.0f) {
+            return "[MOTM] Dev passive incoming-damage failed: health stat unavailable.";
+        }
+
+        float healthBefore = health.get();
+        float afterPassives = mod.getClassPassiveManager().handleIncomingPlayerDamage(
+                player.getPlayerId(),
+                playerRef,
+                store,
+                incomingDamage
+        );
+        EntityStatValue postPassiveHealth = statMap.get(DefaultEntityStatTypes.getHealth());
+        float healthAfterPassive = postPassiveHealth != null ? postPassiveHealth.get() : healthBefore;
+        if (afterPassives > 0.0f && postPassiveHealth != null && healthAfterPassive > 0.0f) {
+            statMap.addStatValue(DefaultEntityStatTypes.getHealth(), -afterPassives);
+        }
+        EntityStatValue finalHealth = statMap.get(DefaultEntityStatTypes.getHealth());
+        String result = "[MOTM] Dev passive incoming-damage: requested="
+                + String.format(java.util.Locale.ROOT, "%.1f", incomingDamage)
+                + " afterPassives="
+                + String.format(java.util.Locale.ROOT, "%.1f", afterPassives)
+                + " healthBefore="
+                + String.format(java.util.Locale.ROOT, "%.1f", healthBefore)
+                + " healthAfterPassive="
+                + String.format(java.util.Locale.ROOT, "%.1f", healthAfterPassive)
+                + " healthFinal="
+                + String.format(java.util.Locale.ROOT, "%.1f", finalHealth != null ? finalHealth.get() : -1.0f);
+        LOG.info(result);
+        return result;
+    }
+
+    private String applyDevOutgoingDamage(PlayerData player,
+                                          Player runtimePlayer,
+                                          double outgoingDamage,
+                                          boolean abilityBased) {
+        EntityStatMap statMap = resolveRuntimeStatMap(player, runtimePlayer);
+        if (statMap == null) {
+            return "[MOTM] Dev passive outgoing-damage failed: EntityStatMap unavailable.";
+        }
+        EntityStatValue healthBefore = statMap.get(DefaultEntityStatTypes.getHealth());
+        float before = healthBefore != null ? healthBefore.get() : -1.0f;
+        mod.getClassPassiveManager().onDamageDealt(
+                player,
+                runtimePlayer.getReference(),
+                "dev-passive-proof-target",
+                outgoingDamage,
+                abilityBased
+        );
+        EntityStatValue healthAfter = statMap.get(DefaultEntityStatTypes.getHealth());
+        float after = healthAfter != null ? healthAfter.get() : -1.0f;
+        String result = "[MOTM] Dev passive outgoing-damage: amount="
+                + String.format(java.util.Locale.ROOT, "%.1f", outgoingDamage)
+                + " abilityBased=" + abilityBased
+                + " healthBefore="
+                + String.format(java.util.Locale.ROOT, "%.1f", before)
+                + " healthAfter="
+                + String.format(java.util.Locale.ROOT, "%.1f", after);
+        LOG.info(result);
+        return result;
+    }
+
+    private String setRuntimePlayerHorizontalVelocity(PlayerData player,
+                                                      Player runtimePlayer,
+                                                      double x,
+                                                      double z) {
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
+        if (playerRef == null || !playerRef.isValid() || store == null) {
+            return "[MOTM] Dev passive velocity failed: runtime player store unavailable.";
+        }
+
+        Velocity velocity = store.getComponent(playerRef, Velocity.getComponentType());
+        if (velocity == null) {
+            return "[MOTM] Dev passive velocity failed: Velocity component unavailable.";
+        }
+
+        Vector3d before = velocity.getVelocity();
+        double y = before != null && before.isFinite() ? before.y : 0.0;
+        velocity.set(x, y, z);
+        String result = "[MOTM] Dev passive velocity set: before="
+                + (before == null ? "null" : formatCompactTriple(before.x, before.y, before.z))
+                + " after="
+                + formatCompactTriple(x, y, z)
+                + " class=" + (player.getPlayerClass() == null ? "none" : player.getPlayerClass());
+        LOG.info(result);
+        return result;
+    }
+
+    private EntityStatMap resolveRuntimeStatMap(PlayerData player, Player runtimePlayer) {
+        Player resolvedPlayer = runtimePlayer != null ? runtimePlayer : mod.getRuntimePlayer(player.getPlayerId());
+        if (resolvedPlayer == null) {
+            return null;
+        }
+        Ref<EntityStore> playerRef = resolvedPlayer.getReference();
+        Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
+        if (playerRef == null || !playerRef.isValid() || store == null) {
+            return null;
+        }
+        return store.getComponent(playerRef, EntityStatMap.getComponentType());
+    }
+
     String handleDevPosition(PlayerData player) {
         return mod.describeRuntimePlayerPosition(player.getPlayerId());
     }
@@ -985,6 +1244,7 @@ public class MotmCommand {
             appendStat(sb, "stamina", statMap, DefaultEntityStatTypes.getStamina());
             appendStat(sb, "mana", statMap, DefaultEntityStatTypes.getMana());
             appendStat(sb, "signature", statMap, DefaultEntityStatTypes.getSignatureEnergy());
+            appendStat(sb, "oxygen", statMap, DefaultEntityStatTypes.getOxygen());
         }
     }
 
@@ -1279,6 +1539,7 @@ public class MotmCommand {
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
                 + "  /motm dev proof <proofId> (" + String.join(", ", MotmProofCatalog.ids()) + ")\n"
+                + "  /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|knockback>\n"
                 + "  /motm dev position\n"
                 + "  /motm dev relocate <up|flatlands|lane>\n"
                 + "  /motm dev mode <creative|adventure>\n"
@@ -1558,6 +1819,14 @@ public class MotmCommand {
     private Integer parseInteger(String rawValue) {
         try {
             return Integer.parseInt(rawValue);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Double parseDouble(String rawValue) {
+        try {
+            return Double.parseDouble(rawValue);
         } catch (NumberFormatException e) {
             return null;
         }

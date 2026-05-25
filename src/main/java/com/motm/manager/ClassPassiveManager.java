@@ -10,6 +10,7 @@ import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.PersistentDynamicLight;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
@@ -19,6 +20,7 @@ import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntitySta
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.Modifier;
 import com.hypixel.hytale.server.core.modules.entitystats.modifier.StaticModifier;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -84,6 +86,7 @@ public class ClassPassiveManager {
     private final Set<String> hydroBarrierActivePlayers = new HashSet<>();
     private final Map<String, Integer> stormChargeByPlayer = new HashMap<>();
     private final Map<String, Vector3d> aeroMoveBoostByPlayer = new HashMap<>();
+    private final Map<String, MovementSettingsSnapshot> aeroMovementSettingsByPlayer = new HashMap<>();
     private final Map<String, Integer> corruptusDarkResurrectionStacksByPlayer = new HashMap<>();
     private final Map<String, Long> corruptusPassiveLockoutUntilTickByPlayer = new HashMap<>();
 
@@ -246,6 +249,22 @@ public class ClassPassiveManager {
         }
 
         return 1.0;
+    }
+
+    public synchronized double getMiningDamageMultiplier(PlayerData player, String itemId) {
+        if (player == null || player.getPlayerClass() == null || itemId == null || itemId.isBlank()) {
+            return 1.0;
+        }
+        if (!"terra".equalsIgnoreCase(player.getPlayerClass())) {
+            return 1.0;
+        }
+
+        String normalizedItemId = itemId.toLowerCase(Locale.ROOT);
+        if (!normalizedItemId.contains("pickaxe") && !normalizedItemId.contains("_pick")) {
+            return 1.0;
+        }
+
+        return 1.0 + Math.max(0.0, terraPassive.miningSpeedBonus());
     }
 
     public synchronized float handleIncomingPlayerDamage(String playerId,
@@ -592,6 +611,7 @@ public class ClassPassiveManager {
         }
 
         clearAeroMovementBoost(playerId, playerRef, store);
+        restoreAeroMovementSettings(playerId, playerRef, store);
     }
 
     private void clearTerraPassiveRuntime(String playerId, Player runtimePlayer) {
@@ -942,45 +962,33 @@ public class ClassPassiveManager {
     private void applyAeroMovementSpeedBonus(String playerId,
                                              Ref<EntityStore> entityRef,
                                              Store<EntityStore> store) {
-        if (playerId == null) {
+        if (playerId == null || entityRef == null || store == null) {
             return;
         }
 
-        Velocity velocity = store.getComponent(entityRef, Velocity.getComponentType());
-        if (velocity == null) {
-            aeroMoveBoostByPlayer.remove(playerId);
+        MovementManager movementManager = store.getComponent(entityRef, MovementManager.getComponentType());
+        if (movementManager == null || movementManager.getSettings() == null) {
             return;
         }
 
-        Vector3d lastBoost = aeroMoveBoostByPlayer.getOrDefault(playerId, new Vector3d(0.0, 0.0, 0.0));
-        Vector3d currentVelocity = velocity.getVelocity();
-        if (currentVelocity == null || !currentVelocity.isFinite()) {
-            aeroMoveBoostByPlayer.remove(playerId);
-            return;
-        }
-
-        Vector3d baseVelocity = new Vector3d(
-                currentVelocity.x - lastBoost.x,
-                currentVelocity.y,
-                currentVelocity.z - lastBoost.z
+        var settings = movementManager.getSettings();
+        MovementSettingsSnapshot snapshot = aeroMovementSettingsByPlayer.computeIfAbsent(
+                playerId,
+                ignored -> MovementSettingsSnapshot.from(settings)
         );
-        Vector3d horizontalBase = new Vector3d(baseVelocity.x, 0.0, baseVelocity.z);
-        if (!horizontalBase.isFinite() || horizontalBase.length() < 0.01) {
-            clearAeroMovementBoost(playerId, entityRef, store);
-            return;
-        }
+        float multiplier = (float) Math.max(1.0, 1.0 + aeroPassive.movementSpeedBonus());
 
-        Vector3d newBoost = new Vector3d(
-                horizontalBase.x * aeroPassive.movementSpeedBonus(),
-                0.0,
-                horizontalBase.z * aeroPassive.movementSpeedBonus()
-        );
-        aeroMoveBoostByPlayer.put(playerId, newBoost);
-        velocity.set(
-                baseVelocity.x + newBoost.x,
-                baseVelocity.y,
-                baseVelocity.z + newBoost.z
-        );
+        settings.baseSpeed = snapshot.baseSpeed() * multiplier;
+        settings.forwardWalkSpeedMultiplier = snapshot.forwardWalkSpeedMultiplier() * multiplier;
+        settings.backwardWalkSpeedMultiplier = snapshot.backwardWalkSpeedMultiplier() * multiplier;
+        settings.strafeWalkSpeedMultiplier = snapshot.strafeWalkSpeedMultiplier() * multiplier;
+        settings.forwardRunSpeedMultiplier = snapshot.forwardRunSpeedMultiplier() * multiplier;
+        settings.backwardRunSpeedMultiplier = snapshot.backwardRunSpeedMultiplier() * multiplier;
+        settings.strafeRunSpeedMultiplier = snapshot.strafeRunSpeedMultiplier() * multiplier;
+        settings.forwardSprintSpeedMultiplier = snapshot.forwardSprintSpeedMultiplier() * multiplier;
+        settings.acceleration = snapshot.acceleration() * multiplier;
+
+        updateMovementManager(entityRef, store, movementManager);
     }
 
     private void applyHydroSwimSpeedBonus(String playerId,
@@ -1081,6 +1089,44 @@ public class ClassPassiveManager {
                 currentVelocity.y,
                 currentVelocity.z - lastBoost.z
         );
+    }
+
+    private void restoreAeroMovementSettings(String playerId,
+                                             Ref<EntityStore> entityRef,
+                                             Store<EntityStore> store) {
+        MovementSettingsSnapshot snapshot = aeroMovementSettingsByPlayer.remove(playerId);
+        if (snapshot == null || entityRef == null || store == null) {
+            return;
+        }
+
+        MovementManager movementManager = store.getComponent(entityRef, MovementManager.getComponentType());
+        if (movementManager == null || movementManager.getSettings() == null) {
+            return;
+        }
+
+        var settings = movementManager.getSettings();
+        settings.baseSpeed = snapshot.baseSpeed();
+        settings.forwardWalkSpeedMultiplier = snapshot.forwardWalkSpeedMultiplier();
+        settings.backwardWalkSpeedMultiplier = snapshot.backwardWalkSpeedMultiplier();
+        settings.strafeWalkSpeedMultiplier = snapshot.strafeWalkSpeedMultiplier();
+        settings.forwardRunSpeedMultiplier = snapshot.forwardRunSpeedMultiplier();
+        settings.backwardRunSpeedMultiplier = snapshot.backwardRunSpeedMultiplier();
+        settings.strafeRunSpeedMultiplier = snapshot.strafeRunSpeedMultiplier();
+        settings.forwardSprintSpeedMultiplier = snapshot.forwardSprintSpeedMultiplier();
+        settings.acceleration = snapshot.acceleration();
+        updateMovementManager(entityRef, store, movementManager);
+    }
+
+    private void updateMovementManager(Ref<EntityStore> entityRef,
+                                       Store<EntityStore> store,
+                                       MovementManager movementManager) {
+        if (entityRef == null || store == null || movementManager == null) {
+            return;
+        }
+        PlayerRef universePlayerRef = store.getComponent(entityRef, PlayerRef.getComponentType());
+        if (universePlayerRef != null && universePlayerRef.getPacketHandler() != null) {
+            movementManager.update(universePlayerRef.getPacketHandler());
+        }
     }
 
     private double healPercentOfMax(Ref<EntityStore> entityRef,
@@ -1324,6 +1370,32 @@ public class ClassPassiveManager {
             double signatureEnergyBonus,
             int maxCharge
     ) {}
+
+    private record MovementSettingsSnapshot(
+            float baseSpeed,
+            float forwardWalkSpeedMultiplier,
+            float backwardWalkSpeedMultiplier,
+            float strafeWalkSpeedMultiplier,
+            float forwardRunSpeedMultiplier,
+            float backwardRunSpeedMultiplier,
+            float strafeRunSpeedMultiplier,
+            float forwardSprintSpeedMultiplier,
+            float acceleration
+    ) {
+        static MovementSettingsSnapshot from(com.hypixel.hytale.protocol.MovementSettings settings) {
+            return new MovementSettingsSnapshot(
+                    settings.baseSpeed,
+                    settings.forwardWalkSpeedMultiplier,
+                    settings.backwardWalkSpeedMultiplier,
+                    settings.strafeWalkSpeedMultiplier,
+                    settings.forwardRunSpeedMultiplier,
+                    settings.backwardRunSpeedMultiplier,
+                    settings.strafeRunSpeedMultiplier,
+                    settings.forwardSprintSpeedMultiplier,
+                    settings.acceleration
+            );
+        }
+    }
 
     private record CorruptusPassive(
             double resurrectionHealthFraction,

@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageModule;
+import com.hypixel.hytale.server.core.entity.knockback.KnockbackComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.MenteesMod;
 import com.motm.model.PlayerData;
@@ -79,6 +80,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                 }
             }
             if (targetPlayer != null && targetUuid != null && damage.getAmount() > 0.0f) {
+                applyIncomingKnockbackPassive(targetUuid, damage);
                 damage.setAmount(mod.getClassPassiveManager().handleIncomingPlayerDamage(
                         targetUuid.toString(),
                         targetRef,
@@ -90,6 +92,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
         }
 
         if (targetPlayer != null && targetUuid != null && damage.getAmount() > 0.0f) {
+            applyIncomingKnockbackPassive(targetUuid, damage);
             damage.setAmount(mod.getClassPassiveManager().handleIncomingPlayerDamage(
                     targetUuid.toString(),
                     targetRef,
@@ -136,5 +139,35 @@ public class MotmDamageEventSystem extends DamageEventSystem {
         if (response != null && !response.isBlank()) {
             runtimePlayer.sendMessage(Message.raw(response));
         }
+    }
+
+    private void applyIncomingKnockbackPassive(UUID targetUuid, Damage damage) {
+        if (targetUuid == null || damage == null) {
+            return;
+        }
+
+        double multiplier = mod.getClassPassiveManager().getIncomingKnockbackMultiplier(targetUuid.toString());
+        if (multiplier >= 0.999) {
+            return;
+        }
+
+        KnockbackComponent knockback = damage.getIfPresentMetaObject(Damage.KNOCKBACK_COMPONENT);
+        if (knockback == null) {
+            LOG.info("[MOTM] Incoming knockback passive had no knockback component: playerId="
+                    + targetUuid
+                    + " multiplier="
+                    + String.format(java.util.Locale.ROOT, "%.3f", multiplier));
+            return;
+        }
+
+        knockback.addModifier(multiplier);
+        LOG.info("[MOTM] Incoming knockback passive applied: playerId="
+                + targetUuid
+                + " multiplier="
+                + String.format(java.util.Locale.ROOT, "%.3f", multiplier)
+                + " velocity="
+                + knockback.getVelocity()
+                + " duration="
+                + knockback.getDuration());
     }
 }

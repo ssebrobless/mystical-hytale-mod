@@ -4896,9 +4896,22 @@ public class MenteesMod extends JavaPlugin {
             return;
         }
 
-        event.setDamage(event.getDamage() * 1.5f);
         String playerId = getRuntimePlayerId(terraMiner);
         var playerData = playerId != null ? playerDataManager.getOnlinePlayer(playerId) : null;
+        double multiplier = classPassiveManager.getMiningDamageMultiplier(playerData, itemId);
+        if (multiplier <= 1.0) {
+            return;
+        }
+
+        float damageBefore = event.getDamage();
+        float damageAfter = (float) (damageBefore * multiplier);
+        event.setDamage(damageAfter);
+        LOG.info("[MOTM] Terra mining affinity applied: playerId=" + playerId
+                + " item=" + itemId
+                + " targetBlock=" + event.getTargetBlock()
+                + " damageBefore=" + damageBefore
+                + " damageAfter=" + damageAfter
+                + " multiplier=" + String.format(Locale.ROOT, "%.3f", multiplier));
         String alloyResponse = gameplayPlaybackManager.handleAlloyToolUse(terraMiner, playerData, itemId);
         if (alloyResponse != null && !alloyResponse.isBlank()) {
             LOG.info(alloyResponse + " playerId=" + playerId);
