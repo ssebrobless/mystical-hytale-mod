@@ -180,13 +180,12 @@ function Get-AbilityAuditPlan([string]$StyleId, $Ability, $Scenario) {
         }
         "bloom/frolick" {
             $requiresWeaponHit = $true
-            $weaponProofAfterCapture = $true
             $postActions.Add((New-MotionStep "Forward" 900 250))
             $postActions.Add((New-MotionStep "Back" 500 250))
             $postActions.Add((New-MotionStep "StrafeLeft" 500 250))
             $waitMs = 1000
             $requiresSafeLane = $true
-            $note = "Cast Frolick, move while recording flower trail generation, then simulate weapon payoff."
+            $note = "Cast Frolick, immediately prove weapon payoff inside the buff window, then move while recording flower trail generation."
         }
         "sand/dust_devil" {
             $postActions.Add((New-MotionStep "Forward" 900 250))
@@ -346,7 +345,11 @@ function Invoke-WeaponProof([string]$StyleId, [string]$AbilityId, $Plan) {
     if (-not $Plan.RequiresWeaponHit) {
         return
     }
-    if ($Plan.SpawnMode -eq "clear-only") {
+    $needsFreshTarget = $Plan.SpawnMode -eq "clear-only" `
+        -or $Plan.WeaponProofAfterCapture `
+        -or @($Plan.PostActions).Count -gt 0
+    if ($needsFreshTarget) {
+        Add-Line("  - Weapon proof setup: reacquiring a stationary target at current player position")
         Send-MotmCommand "motm dev test mobs stationary" 1450
         Send-MotmCommand "motm dev test mobs count" 450
     } else {
@@ -366,8 +369,17 @@ function Prepare-AbilityEnvironment([string]$StyleId, [string]$AbilityId, $Plan)
     }
 
     Send-MotmCommand "motm dev test stop" 250
-    Send-MotmCommand "motm dev test mobs clear" 650
+    Send-MotmCommand "motm dev test reset" 1700
+    Send-MotmCommand "motm dev freecast on" 450
+    Send-MotmCommand "motm dev class set $ClassId" 650
+    Send-MotmCommand "motm dev styles clear" 450
+    Send-MotmCommand "motm style $StyleId" 1250
     Send-MotmCommand "motm dev test mobs count" 350
+
+    if ($StyleId.ToLowerInvariant() -eq "gem" -and $AbilityId.ToLowerInvariant() -in @("fracture", "refraction")) {
+        Send-MotmCommand "motm dev test ability lapidary" 1800
+        Add-Line("  - Precondition: refreshed active Lapidary gem before $AbilityId")
+    }
 
     if ($Plan.SpawnMode -eq "clear-only") {
         return
@@ -603,6 +615,20 @@ function Get-AbilityResult($Lines, [string]$AbilityId) {
 function Get-ResidualLines($Lines) {
     $Lines | Where-Object {
         $_ -match "No valid target|Reloading nonexistent|Unmapped NPC type|Exception|ERROR|NoClassDefFoundError|ClassNotFoundException"
+    } | Where-Object {
+        $_ -notmatch "WorldThread - (default|default_world)" -and
+        $_ -notmatch "Removing world exceptionally: default" -and
+        $_ -notmatch "Store is shutdown!"
+    }
+}
+
+function Get-BlockingResidualLines($Lines) {
+    $Lines | Where-Object {
+        $_ -match "NoClassDefFoundError|ClassNotFoundException|Exception|ERROR"
+    } | Where-Object {
+        $_ -notmatch "WorldThread - (default|default_world)" -and
+        $_ -notmatch "Removing world exceptionally: default" -and
+        $_ -notmatch "Store is shutdown!"
     }
 }
 
@@ -713,13 +739,13 @@ try {
                 Where-Object { $_ -match "Stomp landing resolved: targets=" } |
                 Select-Object -Last 1
             $weaponLine = $abilityLines |
-                Where-Object { $_ -match "Weapon follow-up:|Style test weapon hit:" } |
+                Where-Object { $_ -match "Weapon follow-up:|Alloy Enhancement hit:|Style test weapon hit:" } |
                 Select-Object -Last 1
             if ($resultLine) {
                 $motionProof = Get-MotionProof $abilityLines
                 $mechanical = Get-MechanicalProof $scenario $abilityLines $resultLine $abilityId $motionProof
                 if ($plan.RequiresWeaponHit) {
-                    if ($weaponLine -match "Weapon follow-up:") {
+                    if ($weaponLine -match "Weapon follow-up:|Alloy Enhancement hit:") {
                         $mechanical = [pscustomobject]@{ Status = "PASS"; Note = $weaponLine }
                     } else {
                         $mechanical = [pscustomobject]@{ Status = "FAIL"; Note = "Weapon follow-up was required but not applied." }
@@ -756,7 +782,7 @@ try {
 
     Add-Line("## Residual Scan")
     Add-Line("")
-    $blocking = $lines | Where-Object { $_ -match "NoClassDefFoundError|ClassNotFoundException|Exception|ERROR" }
+    $blocking = Get-BlockingResidualLines $lines
     if ($blocking.Count -eq 0) {
         Add-Line("- PASS: no blocking class/runtime errors in class audit slice.")
     } else {

@@ -173,6 +173,25 @@ public class GameplayPlaybackManager {
         return "";
     }
 
+    private void logTerraAbilityEvent(String event,
+                                      PlayerData player,
+                                      StyleData style,
+                                      AbilityData ability,
+                                      String details) {
+        if (player == null || ability == null || !"terra".equals(lower(player.getPlayerClass()))) {
+            return;
+        }
+        LOG.info("[MOTM][terra-audit] event=" + event
+                + " playerId=" + safe(player.getPlayerId())
+                + " styleId=" + safe(style != null ? style.getId() : currentStyleId(player))
+                + " abilityId=" + safe(ability.getId())
+                + (details == null || details.isBlank() ? "" : " " + details));
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
+    }
+
     public synchronized ExecutionResult executeAbility(Player runtimePlayer,
                                                        PlayerData player,
                                                        StyleData style,
@@ -181,6 +200,10 @@ public class GameplayPlaybackManager {
         if (runtimePlayer == null || player == null || style == null || ability == null) {
             return ExecutionResult.none("Runtime player context is unavailable.");
         }
+
+        logTerraAbilityEvent("cast.begin", player, style, ability,
+                "castType=" + lower(ability.getCastType())
+                        + " targetType=" + lower(ability.getTargetType()));
 
         if ("jump_land".equalsIgnoreCase(ability.getTrigger())) {
             return armJumpLandAbility(runtimePlayer, player, style, ability);
@@ -238,6 +261,15 @@ public class GameplayPlaybackManager {
                 ? "No live runtime was applied."
                 : String.join(" | ", summaryParts);
 
+        logTerraAbilityEvent("cast.end", player, style, ability,
+                "summary=" + summary
+                        + " combatTargets=" + combat.targetsHit()
+                        + " projectiles=" + projectileLaunch.launched()
+                        + " field=" + fieldRuntime.activated()
+                        + " terrain=" + supplementalTerrain.activated()
+                        + " summons=" + summons.spawned()
+                        + " form=" + form.applied());
+
         return new ExecutionResult(
                 playback, combat.targetsHit(), combat.totalDamage(),
                 summons.spawned(), summons.buffed(), form.applied(), summary);
@@ -270,6 +302,9 @@ public class GameplayPlaybackManager {
                 false
         ));
 
+        logTerraAbilityEvent("stomp.armed", player, style, ability,
+                "startY=" + AbilityPresentation.formatDecimal(transform.getTransform().getPosition().y)
+                        + " timeoutMs=" + STOMP_ARM_TIMEOUT_MILLIS);
         LOG.info("[MOTM] Stomp armed: player=" + player.getPlayerName()
                 + " - next jump's landing will trigger the shockwave");
         String effectId = resolveEffectId(player.getPlayerClass(), currentStyleId(player), ability);
@@ -943,8 +978,11 @@ public class GameplayPlaybackManager {
         } else if (isCasterCenteredAreaAbility(ability)) {
             origin = resolveStableCasterCenteredOrigin(player.getPlayerId(), origin);
         }
+        Vector3d gemAnchor = resolveActiveLapidaryGemCenter(player, ability, store);
         Vector3d ironWallForward = ironWall ? resolveIronWallForward(forward) : null;
-        Vector3d center = ironWallForward != null
+        Vector3d center = gemAnchor != null
+                ? gemAnchor
+                : ironWallForward != null
                 ? resolveIronWallCenter(origin, ironWallForward)
                 : resolveAreaCenter(origin, forward, context, resolveRange(ability), ability);
         if (center == null) {
@@ -1173,9 +1211,9 @@ public class GameplayPlaybackManager {
                         "obsidian_skin",
                         getPosition(playerRef, store),
                         lavaExpireAt,
-                        "Lava_Source",
-                        "Lava",
-                        "Rock_Volcanic_Cracked_Lava"
+                        "Rock_Volcanic_Cracked_Lava",
+                        "Rock_Volcanic_Cracked_Incandescent",
+                        "Rock_Magma_Cooled"
                 );
                 if (!lavaShell.isBlank()) {
                     parts.add(lavaShell.replace("terrain ", "lava shell "));
@@ -1206,7 +1244,8 @@ public class GameplayPlaybackManager {
                     parts.add(terrain);
                 }
             }
-            case "sapling", "nightshade", "frolick", "cacti_cluster", "lapidary", "glare", "debris" -> {
+            case "sapling", "nightshade", "frolick", "cacti_cluster", "lapidary", "glare", "debris",
+                 "fracture", "refraction" -> {
                 String terrain = placeAbilityTerrainSelection(runtimePlayer, player, ability, context, abilityId);
                 if (!terrain.isBlank()) {
                     parts.add(terrain);
@@ -1670,7 +1709,7 @@ public class GameplayPlaybackManager {
         }
         if (terrainEffect.contains("stone_pillar")) {
             return placeStackingColumnSelection(runtimePlayer.getWorld(), "stone_pillar", center,
-                    Math.max(3, (int) Math.round(ability.getHeight())),
+                    3,
                     expireAtMillis, "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
         }
         return "";
@@ -1726,7 +1765,9 @@ public class GameplayPlaybackManager {
                 : System.currentTimeMillis()
                 + (long) (Math.max(2.0, ability.getDurationSeconds() > 0 ? ability.getDurationSeconds() : 4.0) * 1000);
         Vector3d center = context != null && context.targetBlock() != null
-                ? new Vector3d(context.targetBlock().getX(), context.targetBlock().getY(), context.targetBlock().getZ())
+                ? new Vector3d(context.targetBlock().getX() + 0.5,
+                context.targetBlock().getY() + 1.0,
+                context.targetBlock().getZ() + 0.5)
                 : origin.clone().addScaled(new Vector3d(forward.x, 0.0, forward.z), 3.5);
 
         return switch (reason) {
@@ -1753,6 +1794,21 @@ public class GameplayPlaybackManager {
                 yield placed.isBlank()
                         ? "green gem aura" + hpProxy
                         : placed + " + green aura" + hpProxy;
+            }
+            case "fracture" -> {
+                Vector3d gemCenter = resolveActiveLapidaryGemCenter(player, ability, store);
+                Vector3d burstCenter = gemCenter != null ? gemCenter : center;
+                String terrain = placeRingBlockSelection(world, reason, burstCenter, Math.max(2.0, ability.getRadius()),
+                        Math.min(expireAt, System.currentTimeMillis() + 1200L),
+                        "Rock_Crystal_Green_Block", "Rock_Crystal_Green_Large", "Plant_Bush_Crystal");
+                yield terrain.isBlank() ? "green fracture burst" : "green fracture burst + " + terrain;
+            }
+            case "refraction" -> {
+                Vector3d gemCenter = resolveActiveLapidaryGemCenter(player, ability, store);
+                Vector3d auraCenter = gemCenter != null ? gemCenter : center;
+                String terrain = placeRingBlockSelection(world, reason, auraCenter, Math.max(2.0, ability.getRadius()),
+                        expireAt, "Rock_Crystal_Green_Block", "Rock_Crystal_Green_Large", "Plant_Bush_Crystal");
+                yield terrain.isBlank() ? "green refraction aura" : "green refraction aura + " + terrain;
             }
             case "glare" -> {
                 if (context != null && context.explicitTargetRef() != null) {
@@ -2034,6 +2090,7 @@ public class GameplayPlaybackManager {
         activeLapidaryGems.add(new ActiveLapidaryGem(
                 player.getPlayerId(),
                 proxyRef,
+                center.clone(),
                 gemHealth,
                 gemHealth,
                 expireAtMillis,
@@ -2213,7 +2270,7 @@ public class GameplayPlaybackManager {
         }
         for (int i = 1; i <= 4; i++) {
             Vector3d pos = origin.clone().addScaled(back, i);
-            Vector3i block = blockAnchor(pos);
+            Vector3i block = surfaceDecorationAnchor(pos);
             selection.addBlockAtWorldPos(block.getX(), block.getY(), block.getZ(), blockTypeId, 0, 0, 0);
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
@@ -6771,7 +6828,11 @@ public class GameplayPlaybackManager {
                 ? Math.cos(Math.toRadians(12.0))
                 : Math.cos(Math.toRadians(35.0));
 
-        Vector3d areaCenter = resolveAreaCenter(origin, forward, context, range, ability);
+        String ownerPlayerId = resolveEntityId(playerRef, store);
+        Vector3d gemAnchor = resolveActiveLapidaryGemCenter(ownerPlayerId, ability, store);
+        Vector3d areaCenter = gemAnchor != null
+                ? gemAnchor
+                : resolveAreaCenter(origin, forward, context, range, ability);
         Ref<EntityStore> explicitTarget = resolveExplicitTarget(store, context.explicitTargetRef(), range, origin);
         List<TargetCandidate> candidates = new ArrayList<>();
 
@@ -6864,6 +6925,32 @@ public class GameplayPlaybackManager {
 
     private boolean isCasterCenteredAreaAbility(AbilityData ability) {
         return ability != null && "lava_pool".equals(lower(ability.getId()));
+    }
+
+    private Vector3d resolveActiveLapidaryGemCenter(PlayerData player, AbilityData ability, Store<EntityStore> store) {
+        return player == null ? null : resolveActiveLapidaryGemCenter(player.getPlayerId(), ability, store);
+    }
+
+    private Vector3d resolveActiveLapidaryGemCenter(String ownerPlayerId, AbilityData ability, Store<EntityStore> store) {
+        if (ownerPlayerId == null || ownerPlayerId.isBlank() || ability == null || store == null
+                || !isGemAnchoredAbility(ability)) {
+            return null;
+        }
+        for (ActiveLapidaryGem gem : activeLapidaryGems) {
+            if (gem == null || !ownerPlayerId.equals(gem.ownerPlayerId)
+                    || gem.ref == null || !gem.ref.isValid() || !belongsToCurrentStore(gem.ref, store)) {
+                continue;
+            }
+            return gem.center.clone();
+        }
+        LOG.info("[MOTM][terra-audit] event=gem.anchor.missing playerId=" + safe(ownerPlayerId)
+                + " abilityId=" + safe(ability.getId()));
+        return null;
+    }
+
+    private boolean isGemAnchoredAbility(AbilityData ability) {
+        String abilityId = lower(ability != null ? ability.getId() : null);
+        return "fracture".equals(abilityId) || "refraction".equals(abilityId);
     }
 
     private Vector3d resolveProjectileOrigin(Ref<EntityStore> playerRef,
@@ -8699,6 +8786,7 @@ public class GameplayPlaybackManager {
     private static final class ActiveLapidaryGem {
         private final String ownerPlayerId;
         private final Ref<EntityStore> ref;
+        private final Vector3d center;
         private double currentHp;
         private final double maxHp;
         private final long expireAtMillis;
@@ -8706,12 +8794,14 @@ public class GameplayPlaybackManager {
 
         private ActiveLapidaryGem(String ownerPlayerId,
                                   Ref<EntityStore> ref,
+                                  Vector3d center,
                                   double currentHp,
                                   double maxHp,
                                   long expireAtMillis,
                                   String lastLabel) {
             this.ownerPlayerId = ownerPlayerId;
             this.ref = ref;
+            this.center = center;
             this.currentHp = currentHp;
             this.maxHp = maxHp;
             this.expireAtMillis = expireAtMillis;

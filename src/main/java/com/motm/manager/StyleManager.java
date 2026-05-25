@@ -106,8 +106,8 @@ public class StyleManager {
     }
 
     /**
-     * Attempt to use an ability. Checks cooldown and resource cost.
-     * @return the AbilityData if usable, null if on cooldown or insufficient resources
+     * Attempt to use an ability. Checks cooldowns, charges, toggles, and action windows.
+     * @return the ability result when usable, or a failure with the blocking reason
      */
     public AbilityUseResult useAbility(PlayerData player, String abilityId) {
         AbilityData ability = findAbility(player, abilityId);
@@ -137,7 +137,10 @@ public class StyleManager {
             );
         }
 
-        if (!isFreeCastEnabled(playerId) && ability.getResourceCost() > 0 && style != null) {
+        if (resourceManager.areAbilityResourceCostsEnabled()
+                && !isFreeCastEnabled(playerId)
+                && ability.getResourceCost() > 0
+                && style != null) {
             String resourceType = style.getResourceType();
             int resolvedCost = classPassiveManager != null
                     ? classPassiveManager.resolveAbilityResourceCost(player, style, ability)
@@ -155,6 +158,12 @@ public class StyleManager {
 
         if (isToggleable(ability)) {
             activateToggle(playerId, ability);
+        }
+
+        String consumedToggle = requiredActiveToggleToConsume(ability);
+        if (!consumedToggle.isBlank() && consumeActiveToggle(playerId, consumedToggle)) {
+            LOG.info("[MOTM] " + ability.getName() + " consumed active toggle " + consumedToggle
+                    + " for player=" + player.getPlayerName());
         }
 
         startActionWindow(playerId, ability);
@@ -525,9 +534,7 @@ public class StyleManager {
 
         for (Map<String, List<Integer>> playerChargeMap : chargeRecharges.values()) {
             for (List<Integer> rechargeTimers : playerChargeMap.values()) {
-                for (int index = 0; index < rechargeTimers.size(); index++) {
-                    rechargeTimers.set(index, Math.max(0, rechargeTimers.get(index) - 1));
-                }
+                rechargeTimers.replaceAll(ticks -> Math.max(0, ticks - 1));
                 rechargeTimers.removeIf(ticks -> ticks <= 0);
             }
             playerChargeMap.values().removeIf(List::isEmpty);
@@ -575,9 +582,7 @@ public class StyleManager {
         Map<String, List<Integer>> playerChargeMap = chargeRecharges.get(playerId);
         if (playerChargeMap != null) {
             for (List<Integer> rechargeTimers : playerChargeMap.values()) {
-                for (int index = 0; index < rechargeTimers.size(); index++) {
-                    rechargeTimers.set(index, Math.max(0, rechargeTimers.get(index) - reductionTicks));
-                }
+                rechargeTimers.replaceAll(ticks -> Math.max(0, ticks - reductionTicks));
                 rechargeTimers.removeIf(ticks -> ticks <= 0);
             }
             playerChargeMap.values().removeIf(List::isEmpty);
@@ -613,11 +618,7 @@ public class StyleManager {
     public String getStyleSummary(StyleData style) {
         StringBuilder sb = new StringBuilder();
         sb.append(style.getName()).append(" (").append(style.getTheme()).append(")\n");
-        sb.append("  Resource: ")
-                .append(style.getResourceType() == null || style.getResourceType().isBlank()
-                        ? "None"
-                        : resourceManager.getDisplayName(style.getResourceType()))
-                .append("\n");
+        sb.append("  Casting: cooldowns, durations, charges, and action timing\n");
         for (AbilityData ability : style.getAbilities()) {
             sb.append("  - ").append(ability.getName());
             if (ability.getDamagePercent() > 0) {
@@ -681,7 +682,14 @@ public class StyleManager {
                     + formatSeconds(getNextChargeSeconds(playerId, ability)) + "s.";
         }
 
-        if (!isFreeCastEnabled(playerId) && ability.getResourceCost() > 0 && style != null) {
+        if (requiresActiveToggle(ability, "sandstorm") && !isToggleActive(playerId, "sandstorm")) {
+            return ability.getName() + " requires Sandstorm to be active.";
+        }
+
+        if (resourceManager.areAbilityResourceCostsEnabled()
+                && !isFreeCastEnabled(playerId)
+                && ability.getResourceCost() > 0
+                && style != null) {
             String resourceType = style.getResourceType();
             int currentResource = resourceManager.getAmount(playerId, resourceType);
             int resolvedCost = classPassiveManager != null
@@ -718,6 +726,19 @@ public class StyleManager {
         }
 
         return categorySet(ability).contains("toggle");
+    }
+
+    private boolean requiresActiveToggle(AbilityData ability, String toggleAbilityId) {
+        if (ability == null || toggleAbilityId == null || toggleAbilityId.isBlank()) {
+            return false;
+        }
+
+        return "dust_devil".equals(safeLower(ability.getId()))
+                && "sandstorm".equals(safeLower(toggleAbilityId));
+    }
+
+    private String requiredActiveToggleToConsume(AbilityData ability) {
+        return requiresActiveToggle(ability, "sandstorm") ? "sandstorm" : "";
     }
 
     private double resolveToggleCooldownSeconds(AbilityData ability) {
@@ -849,6 +870,27 @@ public class StyleManager {
         if (playerToggles.isEmpty()) {
             activeToggles.remove(playerId);
         }
+    }
+
+    private boolean consumeActiveToggle(String playerId, String abilityId) {
+        Map<String, ToggleState> playerToggles = activeToggles.get(playerId);
+        if (playerToggles == null) {
+            return false;
+        }
+
+        ToggleState removed = playerToggles.remove(abilityId);
+        if (playerToggles.isEmpty()) {
+            activeToggles.remove(playerId);
+        }
+        if (removed == null) {
+            return false;
+        }
+
+        double toggleCooldown = resolveToggleCooldownSeconds(removed.ability());
+        if (toggleCooldown > 0) {
+            startCooldown(playerId, abilityId, toggleCooldown);
+        }
+        return true;
     }
 
     public enum AbilityPhase {

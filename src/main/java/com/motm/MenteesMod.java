@@ -41,6 +41,8 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
+import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
 import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
@@ -162,12 +164,12 @@ public class MenteesMod extends JavaPlugin {
             new TerraReviewKitItem("Tool_Shovel_Iron", 1, "non-pickaxe negative mining control"),
             new TerraReviewKitItem("Weapon_Sword_Iron", 1, "physical melee weapon tests"),
             new TerraReviewKitItem("Weapon_Shield_Iron", 1, "durability shield / blocking tests"),
-            new TerraReviewKitItem("Rock_Stone", 64, "stone-block resource"),
-            new TerraReviewKitItem("Soil_Dirt", 64, "dirt-block resource"),
-            new TerraReviewKitItem("Soil_Sand", 64, "sand-block resource"),
-            new TerraReviewKitItem("Ingredient_Bar_Iron", 32, "metal resource"),
-            new TerraReviewKitItem("Rock_Gem_Emerald", 16, "gem resource"),
-            new TerraReviewKitItem("Plant_Seeds_Wheat", 32, "seed resource"),
+            new TerraReviewKitItem("Rock_Stone", 64, "stone/terrain test material"),
+            new TerraReviewKitItem("Soil_Dirt", 64, "dirt/terrain test material"),
+            new TerraReviewKitItem("Soil_Sand", 64, "sand/terrain test material"),
+            new TerraReviewKitItem("Ingredient_Bar_Iron", 32, "metal visual test material"),
+            new TerraReviewKitItem("Rock_Gem_Emerald", 16, "gem visual test material"),
+            new TerraReviewKitItem("Plant_Seeds_Wheat", 32, "plant visual test material"),
             new TerraReviewKitItem("Rock_Crystal_Green_Block", 16, "green crystal/gem visual blocks"),
             new TerraReviewKitItem("Build_GreyDark_Cube", 32, "dark stone/metal visual block"),
             new TerraReviewKitItem("Build_Grey_Cube", 32, "neutral review marker block")
@@ -568,7 +570,7 @@ public class MenteesMod extends JavaPlugin {
         // Reapply perks and synergies if class is set
         if (player.getPlayerClass() != null) {
             perkManager.reapplyAllPerks(player, synergyEngine);
-            // Initialize class resources
+            // Initialize legacy resource state for save compatibility; ability casting no longer spends it.
             resourceManager.synchronizePersistentState(player);
             resourceManager.initializeForPlayer(player);
             queueHydroContainerSync(playerId);
@@ -1705,6 +1707,20 @@ public class MenteesMod extends JavaPlugin {
                 target,
                 "Weapon_Sword_Iron"
         );
+        if (response == null || response.isBlank()) {
+            Damage simulatedNativeHit = new Damage(
+                    new Damage.EntitySource(playerRef),
+                    DamageCause.PHYSICAL,
+                    10.0f
+            );
+            response = gameplayPlaybackManager.handleNativeWeaponDamage(
+                    runtimePlayer,
+                    playerData,
+                    target,
+                    "Weapon_Sword_Iron",
+                    simulatedNativeHit
+            );
+        }
         if (response == null || response.isBlank()) {
             String summary = "[MOTM] Style test weapon hit: no follow-up/passive applied.";
             LOG.info(summary + " playerId=" + playerId);
@@ -3128,7 +3144,7 @@ public class MenteesMod extends JavaPlugin {
             player.sendMessage(Message.raw(
                     "[MOTM] Your Hydro waterskin is now "
                             + resourceManager.getWaterContainerInfo(playerData.getPlayerId())
-                            + ". Keep it in your inventory like ammo while casting with your spellbook, then right-click a water source with your empty hand, spellbook, or waterskin to refill."
+                            + ". Waterskins are no longer a casting cost, but they remain available for future Hydro utility tests."
             ));
         }
     }
@@ -4322,6 +4338,9 @@ public class MenteesMod extends JavaPlugin {
             ItemStack itemInHand,
             boolean holdingSpellbook
     ) {
+        if (!resourceManager.areAbilityResourceCostsEnabled()) {
+            return false;
+        }
         if (event.getActionType() != InteractionType.Use) {
             return false;
         }
