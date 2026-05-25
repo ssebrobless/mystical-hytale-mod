@@ -14,8 +14,11 @@
 
 - `src/main/java/com/motm` - mod source
 - `src/main/resources/data` - gameplay JSON data
+- `docs/ABILITY_REFERENCE.md` - GitHub-facing catalog of all 40 styles and 120 active abilities
+- `docs/hytale-capability-atlas/` - Hytale capability research, primitive choices, and implementation gates
 - `PLAN.md` - original implementation plan used to start the project
 - `scripts/build-install.ps1` - local build and install helper
+- `scripts/audit-no-resource.ps1` - verifies the no-resource casting model across all classes/styles/abilities
 
 ## Build And Install
 
@@ -46,9 +49,30 @@ Implemented so far:
 - real server tick registration
 - real mob spawn/death event hooks
 - Terra/Quake vertical slice validated across two cold launches
-- custom spellbook UI page with seven working navigation tabs
+- custom spellbook and development review surfaces
 - Phase 7 perk runtime layer for stat modifiers and on-kill healing
 - Phase 9 live validation for Terra/Metal, Hydro/Icicle, Aero/Wind Blade, Corruptus/Flame, Terra/Magma, and Hydro/Snow
+- no-resource active ability model: all 40 styles and 120 abilities cast through cooldowns, durations, charges, action timing, positioning, and item conditions instead of class resource spending
+
+## Ability Reference
+
+The current class/style/ability catalog is documented in [`docs/ABILITY_REFERENCE.md`](docs/ABILITY_REFERENCE.md).
+
+Current shape:
+
+```text
+MOTM
++-- 4 classes
++-- 40 styles
++-- 120 active abilities
++-- 0 active ability resource costs
+```
+
+Use this check before claiming ability data and docs are still aligned:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/audit-no-resource.ps1
+```
 
 Still in progress:
 
