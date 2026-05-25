@@ -5,7 +5,7 @@
       "name": "Flame",
       "class_id": "corruptus",
       "theme": "Fire attacks, burning DoT",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "fireball",
@@ -21,7 +21,7 @@
           ],
           "charges": 3,
           "charge_recharge_seconds": 2.0,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "projectile",
           "target_type": "enemy",
           "range": 18,
@@ -43,7 +43,7 @@
             "self_damage",
             "aoe"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_burst",
           "target_type": "self_centered",
           "radius": 4,
@@ -62,7 +62,7 @@
           "categories": [
             "damage"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "execute",
           "target_type": "enemy",
           "range": 14
@@ -74,7 +74,7 @@
       "name": "Necro",
       "class_id": "corruptus",
       "theme": "Undead summons, life drain",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "raise_dead",
@@ -89,7 +89,7 @@
             "summon",
             "damage"
           ],
-          "resource_cost": 9,
+          "resource_cost": 0,
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
@@ -110,7 +110,7 @@
             "damage",
             "lifesteal"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "channel",
           "target_type": "enemy",
           "range": 14,
@@ -128,7 +128,7 @@
           "categories": [
             "debuff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "curse",
           "target_type": "enemy",
           "range": 16,
@@ -141,7 +141,7 @@
       "name": "Shadow",
       "class_id": "corruptus",
       "theme": "Stealth, clones, evasion",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "shadow_step",
@@ -159,7 +159,7 @@
           ],
           "charges": 2,
           "charge_recharge_seconds": 3.0,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "teleport",
           "target_type": "enemy",
           "range": 12,
@@ -180,7 +180,7 @@
           "categories": [
             "stealth"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 5,
@@ -200,7 +200,7 @@
             "evasion",
             "aoe"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 10,
@@ -215,7 +215,7 @@
       "name": "Hell Flame",
       "class_id": "corruptus",
       "theme": "Hellfire, self-damage, overwhelming power",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "hellfire",
@@ -230,7 +230,7 @@
             "dot",
             "debuff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "projectile_burst",
           "target_type": "enemy",
           "range": 16,
@@ -252,7 +252,7 @@
             "buff",
             "aoe"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 12,
@@ -272,7 +272,7 @@
           "categories": [
             "debuff"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "curse",
           "target_type": "enemy",
           "range": 16,
@@ -285,7 +285,7 @@
       "name": "Mentokinesis",
       "class_id": "corruptus",
       "theme": "Mind control, psychic damage, stuns",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "dominate",
@@ -300,7 +300,7 @@
             "crowd_control",
             "debuff"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "gaze",
           "target_type": "enemy",
           "range": 15,
@@ -319,7 +319,7 @@
             "damage",
             "crowd_control"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "projectile",
           "target_type": "enemy",
           "range": 16,
@@ -338,7 +338,7 @@
           "categories": [
             "buff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 8,
@@ -351,7 +351,7 @@
       "name": "Imbuement",
       "class_id": "corruptus",
       "theme": "Self-buffs, enhancement magic",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "imbue_power",
@@ -365,7 +365,7 @@
           "categories": [
             "buff"
           ],
-          "resource_cost": 1,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 8
@@ -384,7 +384,7 @@
             "healing"
           ],
           "heal_percent": 10,
-          "resource_cost": 1,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 8,
@@ -403,7 +403,7 @@
             "buff",
             "evasion"
           ],
-          "resource_cost": 1,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 7,
@@ -417,7 +417,7 @@
       "name": "Attonement",
       "class_id": "corruptus",
       "theme": "Purification, healing, cleansing",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "sanctuary",
@@ -432,7 +432,7 @@
             "healing"
           ],
           "heal_percent": 15,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "support_zone",
           "target_type": "ground_target",
           "range": 12,
@@ -454,7 +454,7 @@
             "healing"
           ],
           "heal_percent": 10,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 5
@@ -471,7 +471,7 @@
           "categories": [
             "buff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "cleanse",
           "target_type": "self",
           "duration_seconds": 6,
@@ -484,7 +484,7 @@
       "name": "Void",
       "class_id": "corruptus",
       "theme": "Void magic, summoning, destruction",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "rift",
@@ -499,7 +499,7 @@
             "dot",
             "aoe"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 14,
@@ -522,7 +522,7 @@
           ],
           "charges": 2,
           "charge_recharge_seconds": 7.0,
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
@@ -543,7 +543,7 @@
             "damage",
             "crowd_control"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "execute",
           "target_type": "enemy",
           "range": 12,
@@ -556,7 +556,7 @@
       "name": "Scarak",
       "class_id": "corruptus",
       "theme": "Insect swarms, summoning, overwhelming numbers",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "scarak_egg",
@@ -572,7 +572,7 @@
           ],
           "charges": 3,
           "charge_recharge_seconds": 3.0,
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 8,
@@ -592,7 +592,7 @@
           "categories": [
             "buff"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "summon_buff",
           "target_type": "allied_summons",
           "radius": 12,
@@ -610,7 +610,7 @@
           "categories": [
             "summon"
           ],
-          "resource_cost": 4,
+          "resource_cost": 0,
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
@@ -625,7 +625,7 @@
       "name": "Primordial",
       "class_id": "corruptus",
       "theme": "Ancient beast forms, transformation",
-      "resource_type": "souls",
+      "resource_type": "",
       "abilities": [
         {
           "id": "pterodactyl_form",
@@ -641,7 +641,7 @@
             "evasion",
             "buff"
           ],
-          "resource_cost": 1,
+          "resource_cost": 0,
           "cast_type": "transformation",
           "target_type": "self",
           "duration_seconds": 10,
@@ -663,7 +663,7 @@
             "damage",
             "buff"
           ],
-          "resource_cost": 2,
+          "resource_cost": 0,
           "cast_type": "transformation",
           "target_type": "self",
           "duration_seconds": 10,
@@ -687,7 +687,7 @@
             "buff",
             "crowd_control"
           ],
-          "resource_cost": 3,
+          "resource_cost": 0,
           "cast_type": "transformation",
           "target_type": "self",
           "duration_seconds": 12,

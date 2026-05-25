@@ -141,25 +141,20 @@ public class MotmStatusHud extends CustomUIHud {
                 ));
             }
             case "hydro" -> {
-                int water = mod.getResourceManager().getAmount(playerId, "water");
-                int maxWater = Math.max(1, mod.getResourceManager().getMaxAmount(playerId, "water"));
-                boolean lowWaterMode = passiveManager.isHydroLowResourceMode(playerId);
                 boolean swimming = passiveManager.isHydroSwimming(playerId);
                 boolean underwater = passiveManager.isHydroUnderwater(playerId);
                 buffs.add(new HudStatusEntry(
                         "Hydro",
-                        lowWaterMode
-                                ? "Low Water"
-                                : underwater
+                        underwater
                                 ? "Underwater"
                                 : swimming
                                 ? "Swimming"
                                 : "Tidal Flow",
-                        lowWaterMode ? StatusTone.BUFF : StatusTone.PASSIVE,
+                        StatusTone.PASSIVE,
                         StatusIcon.HEALTH,
-                        1.0 - Math.max(0.0, Math.min(water / (double) maxWater, 1.0)),
+                        1.0,
                         underwater ? "O2+" : swimming ? "SW" : "",
-                        lowWaterMode ? 100 : 85
+                        85
                 ));
             }
             case "aero" -> {
@@ -174,16 +169,14 @@ public class MotmStatusHud extends CustomUIHud {
                 ));
             }
             case "corruptus" -> {
-                int souls = mod.getResourceManager().getAmount(playerId, "souls");
-                int maxSouls = Math.max(1, mod.getResourceManager().getMaxAmount(playerId, "souls"));
                 buffs.add(new HudStatusEntry(
-                        "Souls",
-                        souls > 0 ? "Harvest" : "Empty",
-                        souls > 0 ? StatusTone.BUFF : StatusTone.PASSIVE,
+                        "Corruptus",
+                        "Void Flame",
+                        StatusTone.PASSIVE,
                         StatusIcon.MAGIC,
-                        Math.max(0.0, Math.min(souls / (double) maxSouls, 1.0)),
-                        souls > 0 ? Integer.toString(souls) : "",
-                        souls > 0 ? 100 : 84
+                        1.0,
+                        "",
+                        84
                 ));
             }
             default -> {
@@ -631,6 +624,9 @@ public class MotmStatusHud extends CustomUIHud {
 
     private ResourceSnapshot buildResourceSnapshot(PlayerData player) {
         if (player == null || player.getPlayerClass() == null) {
+            return ResourceSnapshot.hidden();
+        }
+        if (!mod.getResourceManager().areAbilityResourceCostsEnabled()) {
             return ResourceSnapshot.hidden();
         }
 

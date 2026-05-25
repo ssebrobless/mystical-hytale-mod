@@ -300,7 +300,7 @@ public final class MotmPreflightAudit {
 
         String resourceType = safeLower(style.getResourceType());
         Set<String> allowed = ALLOWED_RESOURCE_TYPES.getOrDefault(classId, Set.of());
-        if (!allowed.contains(resourceType)) {
+        if (!resourceType.isBlank() && !allowed.contains(resourceType)) {
             audit.error(scope, "Resource type '" + style.getResourceType() + "' is not valid for class '" + classId + "'.");
         }
     }

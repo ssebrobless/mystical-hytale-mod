@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * Represents an active ability granted by a style.
- * Abilities have cooldowns, resource costs, damage, effects, and
+ * Abilities have cooldowns, optional legacy resource-cost data, damage, effects, and
  * richer spatial metadata for Hytale's 3D combat runtime.
  */
 public class AbilityData {

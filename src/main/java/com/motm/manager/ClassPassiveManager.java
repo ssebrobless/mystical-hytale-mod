@@ -171,6 +171,9 @@ public class ClassPassiveManager {
     }
 
     public synchronized int resolveAbilityResourceCost(PlayerData player, StyleData style, AbilityData ability) {
+        if (!resourceManager.areAbilityResourceCostsEnabled()) {
+            return 0;
+        }
         if (player == null || style == null || ability == null) {
             return 0;
         }
@@ -195,7 +198,9 @@ public class ClassPassiveManager {
             return 0.0;
         }
 
-        if ("hydro".equalsIgnoreCase(player.getPlayerClass()) && isHydroLowResource(player.getPlayerId())) {
+        if (resourceManager.areAbilityResourceCostsEnabled()
+                && "hydro".equalsIgnoreCase(player.getPlayerClass())
+                && isHydroLowResource(player.getPlayerId())) {
             return hydroPassive.lowResourceDamageModifier();
         }
 
@@ -283,10 +288,7 @@ public class ClassPassiveManager {
                 yield "Earthen Resilience: " + formatDecimal(stationarySeconds) + "s still · " + shieldState;
             }
             case "hydro" -> {
-                int water = resourceManager.getAmount(player.getPlayerId(), "water");
-                int maxWater = resourceManager.getMaxAmount(player.getPlayerId(), "water");
-                String mode = isHydroLowResource(player.getPlayerId()) ? "low-water flow active" : "stable flow";
-                yield "Tidal Flow: " + water + "/" + maxWater + " water · " + mode;
+                yield "Tidal Flow: spell-vamp, swim speed, and underwater sustain active";
             }
             case "aero" -> {
                 int charge = stormChargeByPlayer.getOrDefault(player.getPlayerId(), 0);
@@ -294,10 +296,7 @@ public class ClassPassiveManager {
                 yield "Storm Surge: " + charge + "/" + aeroPassive.maxCharge() + " storm charge · " + mode;
             }
             case "corruptus" -> {
-                int souls = resourceManager.getAmount(player.getPlayerId(), "souls");
-                int maxSouls = Math.max(1, resourceManager.getMaxAmount(player.getPlayerId(), "souls"));
-                String mode = souls > 0 ? "abilities fueled" : "harvest souls from kills";
-                yield "Soul Harvest: " + souls + "/" + maxSouls + " souls · " + mode;
+                yield "Soul Harvest: resource spending disabled; Corruptus abilities cast on cooldowns";
             }
             default -> "";
         };

@@ -103,7 +103,7 @@ public class SpellbookManager {
         sb.append("Next Step: ").append(getNextStep(player)).append("\n");
         sb.append("Pending Perks: ").append(perkManager.hasPendingPerkSelection(player) ? "Yes" : "No").append("\n");
         sb.append("Active Synergies: ").append(player.getActiveSynergyBonuses().size()).append("\n");
-        sb.append("Resources: ").append(player.getPlayerClass() != null
+        sb.append("Casting: ").append(player.getPlayerClass() != null
                 ? resourceManager.getResourceDisplay(player.getPlayerId(), player.getPlayerClass())
                 : "No class selected").append("\n");
         sb.append("+--------------------------------------+\n");
@@ -169,7 +169,7 @@ public class SpellbookManager {
 
         sb.append("Style: ").append(style.getName()).append("\n");
         sb.append("Theme: ").append(style.getTheme()).append("\n");
-        sb.append("Resource: ").append(displayStyleResource(style)).append("\n");
+        sb.append("Casting: cooldowns, durations, charges, and action timing\n");
         sb.append("Abilities:\n");
         for (AbilityData ability : style.getAbilities()) {
             double cooldown = styleManager.getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
@@ -183,8 +183,7 @@ public class SpellbookManager {
             if (!visuals.isBlank()) {
                 sb.append("    ").append(visuals).append("\n");
             }
-            sb.append("    Cost ").append(ability.getResourceCost())
-                    .append(" | Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s");
+            sb.append("    Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s");
             if (cooldown > 0) {
                 sb.append(" | Ready in ").append(formatDecimal(cooldown)).append("s");
             }
@@ -237,7 +236,7 @@ public class SpellbookManager {
 
     private String renderResources(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Resources ===\n");
+        sb.append("[MOTM Spellbook] === Casting ===\n");
         if (player.getPlayerClass() == null) {
             sb.append("No class selected yet.\n");
             sb.append("Use: /motm class <id>");
@@ -247,9 +246,9 @@ public class SpellbookManager {
         sb.append("Current: ")
                 .append(resourceManager.getResourceDisplay(player.getPlayerId(), player.getPlayerClass()))
                 .append("\n");
-        sb.append("Class Resource Notes:\n");
+        sb.append("Casting Notes:\n");
         sb.append(resourceNotes(player.getPlayerClass())).append("\n");
-        sb.append("Use: /motm resources");
+        sb.append("Use: /motm abilities");
         return sb.toString();
     }
 
@@ -340,11 +339,11 @@ public class SpellbookManager {
 
     private String resourceNotes(String playerClass) {
         return switch (playerClass.toLowerCase(Locale.ROOT)) {
-            case "terra" -> "Terra spends style-specific materials: stone blocks, seeds, dirt blocks, sand blocks, metal, and gems.";
-            case "hydro" -> "Hydro spends water from a crafted waterskin kept in your inventory like ammo while casting with the spellbook, and refills it by right-clicking a water source.";
+            case "terra" -> "Terra abilities no longer spend materials; physical blocks and items are only used for visuals, tools, or test setup.";
+            case "hydro" -> "Hydro abilities no longer spend waterskin water; water remains a theme and environmental interaction, not a cast cost.";
             case "aero" -> "Aero does not use a class resource and instead relies on cooldowns, movement, and momentum.";
-            case "corruptus" -> "Corruptus earns souls from kills and cashes them into power.";
-            default -> "Unknown class resource.";
+            case "corruptus" -> "Corruptus abilities no longer spend souls; its power is governed by cooldowns, duration, risk, and status effects.";
+            default -> "Unknown casting model.";
         };
     }
 

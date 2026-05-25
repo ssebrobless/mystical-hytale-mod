@@ -398,8 +398,8 @@ public class MotmCommand {
             if (autoClassSwap) {
                 sb.append("Flow: class auto-set from style id.\n");
             }
-            sb.append("Reset: class perks, style, resources, and cooldowns cleared for a clean test swap.\n");
-            sb.append("Test Protection: free-cast enabled and spellbook delivery queued automatically.\n");
+            sb.append("Reset: class perks, style, casting state, and cooldowns cleared for a clean test swap.\n");
+            sb.append("Test Protection: legacy free-cast flag enabled and spellbook delivery queued automatically.\n");
         }
         sb.append("Style: ").append(resolvedStyle.style().getName()).append("\n");
         sb.append("Theme: ").append(resolvedStyle.style().getTheme()).append("\n");
@@ -541,7 +541,7 @@ public class MotmCommand {
 
         StringBuilder sb = new StringBuilder("[MOTM] === Abilities ===\n");
         sb.append("Style: ").append(style.getName())
-                .append(" | Resource: ").append(displayStyleResource(style)).append("\n\n");
+                .append(" | Casting: cooldown-based\n\n");
 
         for (AbilityData ability : abilities) {
             double remainingCooldown = mod.getStyleManager()
@@ -557,8 +557,7 @@ public class MotmCommand {
             if (!visuals.isBlank()) {
                 sb.append("  Visuals: ").append(visuals).append("\n");
             }
-            sb.append("  Cost: ").append(formatResourceCost(style, ability))
-                    .append(" | CD: ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
+            sb.append("  CD: ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
                     .append(" | Status: ")
                     .append(remainingCooldown > 0
                             ? "Cooldown " + formatDecimal(remainingCooldown) + "s"
@@ -747,6 +746,12 @@ public class MotmCommand {
                 if (!execution.summary().isBlank()) {
                     sb.append(" Runtime: ").append(execution.summary()).append(".");
                 }
+                if ("dust_devil".equalsIgnoreCase(activated.getId())) {
+                    String sandstormRuntime = mod.getGameplayPlaybackManager().deactivateAbilityRuntime(player, "sandstorm");
+                    if (!sandstormRuntime.isBlank()) {
+                        sb.append(" Sandstorm ended: ").append(sandstormRuntime).append(".");
+                    }
+                }
             }
 
             return sb.toString();
@@ -907,6 +912,7 @@ public class MotmCommand {
     private String handleDevFreeCast(PlayerData player, String[] args) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev freecast <on|off>\n"
+                    + "Ability resource costs are globally disabled; this toggle now only keeps legacy test protections active.\n"
                     + "Current: " + (mod.isFreeCastEnabled(player.getPlayerId()) ? "ON" : "OFF");
         }
 
@@ -914,12 +920,12 @@ public class MotmCommand {
             case "on", "enable", "enabled", "true" -> {
                 mod.setFreeCastEnabled(player.getPlayerId(), true);
                 mod.refreshStatusHud(player.getPlayerId());
-                yield "[MOTM] Dev: free-cast enabled. Ability costs are ignored for testing.";
+                yield "[MOTM] Dev: test protection enabled. Ability resource costs are already globally disabled.";
             }
             case "off", "disable", "disabled", "false" -> {
                 mod.setFreeCastEnabled(player.getPlayerId(), false);
                 mod.refreshStatusHud(player.getPlayerId());
-                yield "[MOTM] Dev: free-cast disabled. Normal resource costs restored.";
+                yield "[MOTM] Dev: test protection disabled. Ability resource costs remain globally disabled.";
             }
             default -> "[MOTM] Usage: /motm dev freecast <on|off>";
         };
@@ -1268,7 +1274,7 @@ public class MotmCommand {
         if (player.getPlayerClass() == null) {
             return "[MOTM] Select a class first with /motm class <classId>";
         }
-        StringBuilder sb = new StringBuilder("[MOTM] ")
+        StringBuilder sb = new StringBuilder("[MOTM] Casting Model: ")
                 .append(mod.getResourceManager().getResourceDisplay(player.getPlayerId(), player.getPlayerClass()));
         if (mod.isFreeCastEnabled(player.getPlayerId())) {
             sb.append("\nDev Free-Cast: ON");
@@ -1303,7 +1309,7 @@ public class MotmCommand {
                 + "  /motm audit             - Run the preflight data/runtime audit\n"
                 + "  /motm perks             - View perk choices (not styles)\n"
                 + "  /motm select ...        - Select 3 perks by number\n"
-                + "  /motm resources         - View class resources\n"
+                + "  /motm resources         - View casting model\n"
                 + "  /motm stats             - View your statistics\n"
                 + "  /motm level             - View XP progress\n"
                 + buildDevHelpSummary()
@@ -1608,7 +1614,7 @@ public class MotmCommand {
         mod.getPlayerDataManager().savePlayerData(player);
         mod.refreshStatusHud(player.getPlayerId());
         return "[MOTM] Dev: player cleared to a fresh state.\n"
-                + "Reset: class, race, style, perks, level, XP, resources, cooldowns, statuses, and marks.";
+                + "Reset: class, race, style, perks, level, XP, casting state, cooldowns, statuses, and marks.";
     }
 
     private Integer parseInteger(String rawValue) {

@@ -36,22 +36,8 @@
   "passive_ability": {
     "id": "corruptus_passive_soul_harvest",
     "name": "Soul Harvest",
-    "description": "Hostile mobs slain by Corruptus grant Souls. Souls are spent like mana to fuel Corruptus abilities, so every kill feeds your next cast.",
-    "effects": [
-      {
-        "type": "resource_generation",
-        "resource": "souls",
-        "trigger": "mob_kill",
-        "value": 3,
-        "value_type": "per_kill",
-        "max": 50
-      },
-      {
-        "type": "resource_cast_pool",
-        "resource": "souls",
-        "trigger": "ability_cast"
-      }
-    ]
+    "description": "Corruptus abilities now use cooldowns instead of Souls. Its passive identity focuses on risky void-flame pressure, damage over time, and future corruption-trigger interactions.",
+    "effects": []
   },
   "innate_resistances": {
     "fire": 0.15,
