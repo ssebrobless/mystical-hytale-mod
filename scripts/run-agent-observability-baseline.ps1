@@ -172,6 +172,7 @@ function Assert-RunEvidence {
     $controlPath = Join-Path $motmRawDir "control.jsonl"
     $causalityPath = Join-Path $motmRawDir "causality.jsonl"
     $clientIntentPath = Join-Path $motmRawDir "client-intent.jsonl"
+    $serverTruthPath = Join-Path $motmRawDir "server-truth.jsonl"
     $packetPath = Join-Path $motmRawDir "packets.jsonl"
 
     $controlEvents = Read-JsonlObjects $controlPath
@@ -208,6 +209,7 @@ function Assert-RunEvidence {
     }
 
     $clientIntentEvents = Read-JsonlObjects $clientIntentPath
+    $serverTruthEvents = Read-JsonlObjects $serverTruthPath
     $untracedClientIntent = @($clientIntentEvents | Where-Object {
         -not $_.parseError -and [string]::IsNullOrWhiteSpace([string]$_.traceId)
     })
@@ -244,7 +246,17 @@ function Assert-RunEvidence {
                                 -and [Int64]$_.epochMillis -le $windowEnd
                         }).Count -gt 0
                     }
-                    if (-not $hasCorroboratingClientIntent) {
+                    $hasCorroboratingServerTruth = $false
+                    if ($ability -eq "iron_wall") {
+                        $hasCorroboratingServerTruth = @($serverTruthEvents | Where-Object {
+                            -not $_.parseError `
+                                -and [string]$_.traceId -eq $abilityTraceId `
+                                -and [string]$_.type -eq "temporary_selection_placed" `
+                                -and [string]$_.data.reason -eq "iron_wall" `
+                                -and [Int32]$_.data.blockCount -gt 0
+                        }).Count -gt 0
+                    }
+                    if (-not $hasCorroboratingClientIntent -and -not $hasCorroboratingServerTruth) {
                         throw "Ability $ability trace $abilityTraceId has no matching client-intent evidence."
                     }
                 }
@@ -345,6 +357,9 @@ try {
     foreach ($ability in $Abilities) {
         Invoke-ObservedCommand "motm dev observe marker ability-$ability-before"
         Invoke-ObservedCommand "motm dev test ability $ability" -TimeoutMilliseconds 9000 -DelayMilliseconds 2200
+        if ($ability -eq "stomp") {
+            Invoke-ObservedCommand "motm dev test stomp-land" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
+        }
         Invoke-ObservedCommand "motm dev observe snapshot ability-$ability-after"
     }
 
