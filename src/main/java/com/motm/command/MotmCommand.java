@@ -27,6 +27,7 @@ import com.motm.model.PlayerData;
 import com.motm.model.RaceData;
 import com.motm.model.StatusEffect;
 import com.motm.model.StyleData;
+import com.motm.proof.MotmProofCatalog;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.PassivePresentation;
 
@@ -42,9 +43,11 @@ public class MotmCommand {
     private static final Logger LOG = Logger.getLogger("MOTM");
     private static final List<String> CLASS_ID_ORDER = List.of("terra", "hydro", "aero", "corruptus");
     private final MenteesMod mod;
+    private final MotmDevCommandRouter devCommandRouter;
 
     public MotmCommand(MenteesMod mod) {
         this.mod = mod;
+        this.devCommandRouter = new MotmDevCommandRouter(mod, this);
     }
 
     /**
@@ -766,48 +769,17 @@ public class MotmCommand {
     // --- /motm dev ... ---
 
     private String handleDev(PlayerData player, String[] args, Player runtimePlayer) {
-        if (!mod.isDevToolsEnabled()) {
-            return mod.devToolsDisabledMessage();
-        }
-        if (args.length < 2) {
-            return getDevHelpMessage();
-        }
-
-        return switch (args[1].toLowerCase()) {
-            case "help" -> getDevHelpMessage();
-            case "book" -> handleDevBook(player, runtimePlayer);
-            case "observe", "observability" -> handleDevObserve(player, args, runtimePlayer);
-            case "audit" -> handleDevAudit(player, args);
-            case "test" -> handleDevTest(player, args, runtimePlayer);
-            case "proof" -> handleDevProof(player, args, runtimePlayer);
-            case "position", "where" -> handleDevPosition(player);
-            case "relocate", "unstuck" -> handleDevRelocate(player, args);
-            case "mode", "gamemode" -> handleDevMode(player, args);
-            case "kit" -> handleDevKit(player, args);
-            case "inventory", "inv" -> handleDevInventory(player, args);
-            case "daylight", "noon" -> mod.queueDaylightForTesting(player.getPlayerId());
-            case "freecast" -> handleDevFreeCast(player, args);
-            case "effects" -> handleDevEffects(player, runtimePlayer);
-            case "clear" -> handleDevClear(player, args);
-            case "level" -> handleDevLevel(player, args);
-            case "xp" -> handleDevXp(player, args);
-            case "class" -> handleDevClass(player, args);
-            case "race" -> handleDevRace(player, args);
-            case "perks" -> handleDevPerks(player, args);
-            case "styles" -> handleDevStyles(player, args);
-            case "reset" -> handleDevReset(player, args);
-            default -> "[MOTM] Unknown dev subcommand.\n" + getDevHelpMessage();
-        };
+        return devCommandRouter.route(player, args, runtimePlayer);
     }
 
-    private String handleDevBook(PlayerData player, Player runtimePlayer) {
+    String handleDevBook(PlayerData player, Player runtimePlayer) {
         if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
             return "[MOTM] Join a world and run this in-game to receive the Dev Grimoire.";
         }
         return mod.queueDevBookGrant(player.getPlayerId());
     }
 
-    private String handleDevObserve(PlayerData player, String[] args, Player runtimePlayer) {
+    String handleDevObserve(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev observe <start|stop|status|scenario|marker|snapshot|spellbook> ...";
         }
@@ -854,7 +826,7 @@ public class MotmCommand {
         };
     }
 
-    private String handleDevAudit(PlayerData player, String[] args) {
+    String handleDevAudit(PlayerData player, String[] args) {
         String marker = args.length >= 4 && "marker".equalsIgnoreCase(args[2])
                 ? args[3]
                 : Long.toString(System.currentTimeMillis());
@@ -863,7 +835,7 @@ public class MotmCommand {
         return "[MOTM] Dev audit marker: " + marker;
     }
 
-    private String handleDevTest(PlayerData player, String[] args, Player runtimePlayer) {
+    String handleDevTest(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|reset|status|stop>";
         }
@@ -902,11 +874,9 @@ public class MotmCommand {
         };
     }
 
-    private String handleDevProof(PlayerData player, String[] args, Player runtimePlayer) {
+    String handleDevProof(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 3) {
-            return "[MOTM] Usage: /motm dev proof <proofId>\n"
-                    + "Examples: coating-metal, tempblock-metal-wall, tempfluid-lava-ring, "
-                    + "proxy-magma-blob, movement-burrow";
+            return MotmProofCatalog.usage();
         }
         if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
             return "[MOTM] Join a world and run this in-game to run a proof.";
@@ -914,16 +884,16 @@ public class MotmCommand {
         return mod.queueDevProof(player.getPlayerId(), args[2]);
     }
 
-    private String handleDevPosition(PlayerData player) {
+    String handleDevPosition(PlayerData player) {
         return mod.describeRuntimePlayerPosition(player.getPlayerId());
     }
 
-    private String handleDevRelocate(PlayerData player, String[] args) {
+    String handleDevRelocate(PlayerData player, String[] args) {
         String target = args.length >= 3 ? args[2] : "up";
         return mod.queueRuntimePlayerRelocationForTesting(player.getPlayerId(), target);
     }
 
-    private String handleDevMode(PlayerData player, String[] args) {
+    String handleDevMode(PlayerData player, String[] args) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev mode <creative|adventure>. "
                     + "Use adventure for survival-like Terra mining/damage/durability review.";
@@ -931,7 +901,7 @@ public class MotmCommand {
         return mod.queueGameModeForTesting(player.getPlayerId(), args[2]);
     }
 
-    private String handleDevKit(PlayerData player, String[] args) {
+    String handleDevKit(PlayerData player, String[] args) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev kit <terra>";
         }
@@ -942,7 +912,7 @@ public class MotmCommand {
         return "[MOTM] Unknown dev kit: " + args[2] + ". Available kits: terra.";
     }
 
-    private String handleDevInventory(PlayerData player, String[] args) {
+    String handleDevInventory(PlayerData player, String[] args) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev inventory clean terra-kit\n"
                     + "Keeps only the MOTM spellbook, iron pickaxe, and iron sword.";
@@ -957,7 +927,7 @@ public class MotmCommand {
         return mod.queueTerraReviewInventoryClean(player.getPlayerId());
     }
 
-    private String handleDevFreeCast(PlayerData player, String[] args) {
+    String handleDevFreeCast(PlayerData player, String[] args) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev freecast <on|off>\n"
                     + "Ability resource costs are globally disabled; this toggle now only keeps legacy test protections active.\n"
@@ -979,7 +949,7 @@ public class MotmCommand {
         };
     }
 
-    private String handleDevEffects(PlayerData player, Player runtimePlayer) {
+    String handleDevEffects(PlayerData player, Player runtimePlayer) {
         List<StatusEffect> effects = mod.getStatusEffectManager().getEffects(player.getPlayerId());
         StringBuilder sb = new StringBuilder("[MOTM] Dev effects: ");
         sb.append("count=").append(effects.size());
@@ -1136,7 +1106,7 @@ public class MotmCommand {
     }
 
 
-    private String handleDevLevel(PlayerData player, String[] args) {
+    String handleDevLevel(PlayerData player, String[] args) {
         if (args.length < 4) {
             return "[MOTM] Usage: /motm dev level <set|add> <value>";
         }
@@ -1168,7 +1138,7 @@ public class MotmCommand {
         return "[MOTM] Dev: level changed " + oldLevel + " -> " + newLevel + ".";
     }
 
-    private String handleDevXp(PlayerData player, String[] args) {
+    String handleDevXp(PlayerData player, String[] args) {
         if (args.length < 4) {
             return "[MOTM] Usage: /motm dev xp <set|add> <value>";
         }
@@ -1205,7 +1175,7 @@ public class MotmCommand {
         return "[MOTM] Dev: XP changed " + oldXp + " -> " + newXp + ".";
     }
 
-    private String handleDevClass(PlayerData player, String[] args) {
+    String handleDevClass(PlayerData player, String[] args) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev class <set|clear> [classId]";
         }
@@ -1242,7 +1212,7 @@ public class MotmCommand {
         };
     }
 
-    private String handleDevRace(PlayerData player, String[] args) {
+    String handleDevRace(PlayerData player, String[] args) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev race <set|clear> [raceId]";
         }
@@ -1275,7 +1245,7 @@ public class MotmCommand {
         };
     }
 
-    private String handleDevPerks(PlayerData player, String[] args) {
+    String handleDevPerks(PlayerData player, String[] args) {
         if (args.length < 3 || !"clear".equalsIgnoreCase(args[2])) {
             return "[MOTM] Usage: /motm dev perks clear";
         }
@@ -1287,7 +1257,7 @@ public class MotmCommand {
         return "[MOTM] Dev: perks and perk history cleared.";
     }
 
-    private String handleDevStyles(PlayerData player, String[] args) {
+    String handleDevStyles(PlayerData player, String[] args) {
         if (args.length < 3 || !"clear".equalsIgnoreCase(args[2])) {
             return "[MOTM] Usage: /motm dev styles clear";
         }
@@ -1298,7 +1268,7 @@ public class MotmCommand {
         return "[MOTM] Dev: styles cleared.";
     }
 
-    private String handleDevClear(PlayerData player, String[] args) {
+    String handleDevClear(PlayerData player, String[] args) {
         if (args.length >= 3 && !"player".equalsIgnoreCase(args[2]) && !"all".equalsIgnoreCase(args[2])) {
             return "[MOTM] Usage: /motm dev clear\n"
                     + "Optional: /motm dev clear player";
@@ -1307,7 +1277,7 @@ public class MotmCommand {
         return performFullDevPlayerClear(player);
     }
 
-    private String handleDevReset(PlayerData player, String[] args) {
+    String handleDevReset(PlayerData player, String[] args) {
         if (args.length >= 3 && !"player".equalsIgnoreCase(args[2]) && !"all".equalsIgnoreCase(args[2])) {
             return "[MOTM] Usage: /motm dev reset\n"
                     + "Optional: /motm dev reset player";
@@ -1372,9 +1342,10 @@ public class MotmCommand {
         return mod.runPreflightAudit().toChatSummary();
     }
 
-    private String getDevHelpMessage() {
-        if (!mod.isDevToolsEnabled()) {
-            return mod.devToolsDisabledMessage();
+    String getDevHelpMessage() {
+        String denied = MotmCommandAuth.deniedMessage(mod.isDevToolsEnabled(), mod.devToolsDisabledMessage());
+        if (denied != null) {
+            return denied;
         }
         return "[MOTM] === Dev Commands ===\n"
                 + "  /motm dev book\n"
@@ -1388,7 +1359,7 @@ public class MotmCommand {
                 + "  /motm dev test reset\n"
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
-                + "  /motm dev proof <proofId>\n"
+                + "  /motm dev proof <proofId> (" + String.join(", ", MotmProofCatalog.ids()) + ")\n"
                 + "  /motm dev position\n"
                 + "  /motm dev relocate <up|flatlands|lane>\n"
                 + "  /motm dev mode <creative|adventure>\n"

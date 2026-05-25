@@ -46,6 +46,7 @@ import com.motm.model.StatusEffect;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.HytaleAssetResolver;
+import com.motm.util.MotmInventoryOps;
 import com.motm.util.MotmObservability;
 
 import java.util.ArrayList;
@@ -2468,66 +2469,31 @@ public class GameplayPlaybackManager {
     }
 
     private Vector3i blockAnchor(Vector3d center) {
-        return new Vector3i(
-                (int) Math.floor(center.x),
-                (int) Math.floor(center.y),
-                (int) Math.floor(center.z)
-        );
+        return MotmPlaybackGeometry.blockAnchor(center);
     }
 
     private Vector3i fluidGroundAnchor(Vector3d center) {
-        return new Vector3i(
-                (int) Math.floor(center.x),
-                (int) Math.floor(center.y) - 1,
-                (int) Math.floor(center.z)
-        );
+        return MotmPlaybackGeometry.fluidGroundAnchor(center);
     }
 
     private Vector3i surfaceDecorationAnchor(Vector3d center) {
-        return new Vector3i(
-                (int) Math.floor(center.x),
-                (int) Math.floor(center.y),
-                (int) Math.floor(center.z)
-        );
+        return MotmPlaybackGeometry.surfaceDecorationAnchor(center);
     }
 
     private boolean sameBlock(Vector3i first, Vector3i second) {
-        return first != null
-                && second != null
-                && first.getX() == second.getX()
-                && first.getY() == second.getY()
-                && first.getZ() == second.getZ();
+        return MotmPlaybackGeometry.sameBlock(first, second);
     }
 
     private Vector3d normalizeHorizontal(Vector3d vector) {
-        Vector3d horizontal = vector == null ? new Vector3d(0.0, 0.0, -1.0) : new Vector3d(vector.x, 0.0, vector.z);
-        if (!horizontal.isFinite() || horizontal.length() < 0.001) {
-            return new Vector3d(0.0, 0.0, -1.0);
-        }
-        horizontal.normalize();
-        return horizontal;
+        return MotmPlaybackGeometry.normalizeHorizontal(vector);
     }
 
     private Vector3i horizontalRightStep(Vector3d direction) {
-        Vector3d right = new Vector3d(-direction.z, 0.0, direction.x);
-        if (Math.abs(right.x) >= Math.abs(right.z)) {
-            return new Vector3i(right.x >= 0.0 ? 1 : -1, 0, 0);
-        }
-        return new Vector3i(0, 0, right.z >= 0.0 ? 1 : -1);
+        return MotmPlaybackGeometry.horizontalRightStep(direction);
     }
 
     private Vector3i horizontalStep(Vector3d direction) {
-        Vector3d step = direction != null ? direction.clone() : new Vector3d(1.0, 0.0, 0.0);
-        step.y = 0.0;
-        if (!step.isFinite() || step.length() < 0.001) {
-            step = new Vector3d(1.0, 0.0, 0.0);
-        } else {
-            step.normalize();
-        }
-        if (Math.abs(step.x) >= Math.abs(step.z)) {
-            return new Vector3i(step.x >= 0.0 ? 1 : -1, 0, 0);
-        }
-        return new Vector3i(0, 0, step.z >= 0.0 ? 1 : -1);
+        return MotmPlaybackGeometry.horizontalStep(direction);
     }
 
     private int resolveRuntimeBlockTypeId(String... blockIds) {
@@ -8323,28 +8289,23 @@ public class GameplayPlaybackManager {
     }
 
     private Vector3d subtract(Vector3d left, Vector3d right) {
-        return new Vector3d(left.x - right.x, left.y - right.y, left.z - right.z);
+        return MotmPlaybackGeometry.subtract(left, right);
     }
 
     private Vector3d normalize(Vector3d vector) {
-        Vector3d normalized = vector.clone();
-        if (normalized.length() < 0.0001) {
-            return new Vector3d(0.0, 0.0, 1.0);
-        }
-        normalized.normalize();
-        return normalized;
+        return MotmPlaybackGeometry.normalize(vector);
     }
 
     private double dot(Vector3d left, Vector3d right) {
-        return (left.x * right.x) + (left.y * right.y) + (left.z * right.z);
+        return MotmPlaybackGeometry.dot(left, right);
     }
 
     private double length(Vector3d value) {
-        return Math.sqrt((value.x * value.x) + (value.y * value.y) + (value.z * value.z));
+        return MotmPlaybackGeometry.length(value);
     }
 
     private double distance(Vector3d left, Vector3d right) {
-        return length(subtract(left, right));
+        return MotmPlaybackGeometry.distance(left, right);
     }
 
     private boolean isAlloyFollowUp(ActiveWeaponFollowUp followUp) {
@@ -8403,7 +8364,9 @@ public class GameplayPlaybackManager {
         }
 
         ItemStack restored = stack.withRestoredDurability(stack.getMaxDurability());
-        container.setItemStackForSlot(slot, restored);
+        if (!MotmInventoryOps.restoreSlot(container, slot, restored, LOG, "restoreActiveContainerDurability")) {
+            return false;
+        }
         LOG.info("[MOTM] Alloy Enhancement restored durability: item=" + itemId
                 + " slot=" + slot
                 + " durability=" + formatDistance(stack.getDurability())

@@ -36,6 +36,8 @@
 - `scripts/query-observability-evidence.ps1` - lists runs, sources, events, and raw evidence windows for shell-based agents
 - `scripts/audit-no-resource.ps1` - verifies the no-resource casting model across all classes/styles/abilities
 - `docs/agent-driven-verification-observability.md` - architecture contract and completion checklist for the verification platform
+- `docs/runtime-architecture-refactor-checklist.md` - current runtime ownership map
+  and refactor completion record
 
 ## Build And Install
 
@@ -175,6 +177,29 @@ Older screenshot/log-tail testing plans remain as historical context or narrow
 supplemental checks. Final acceptance for new behavior should be supported by an
 `audits/agent-observability/<runId>/` bundle with raw MOTM JSONL streams,
 client/server logs, telemetry, indexes, and a manifest.
+
+## Runtime Architecture
+
+Runtime ownership is intentionally narrow so feature agents can add behavior and
+verification signal without guessing through `MenteesMod` internals:
+
+```text
+MenteesMod
++-- lifecycle wiring and public compatibility facade
++-- MotmRuntimeTasks for deferred tick work
++-- MotmInventoryOps for inventory mutations
++-- MotmDevCommandRouter / MotmCommandAuth for dev command surfaces
++-- MotmProofCatalog for proof ids and help text
++-- GameplayPlaybackManager, with shared geometry in MotmPlaybackGeometry
+```
+
+When adding a feature, extend the nearest owner first. New deferred runtime work
+belongs in `MotmRuntimeTasks`; new proof probes belong in `MotmProofCatalog` and
+the observability harness; new inventory mutation paths belong in
+`MotmInventoryOps`; new `/motm dev` routes belong behind `MotmDevCommandRouter`
+and `MotmCommandAuth`. Keep raw evidence contracts intact when changing or
+adding harness commands, and keep `AGENTS.md` plus `CLAUDE.md` aligned whenever
+agent workflow expectations change.
 
 Still in progress:
 

@@ -53,6 +53,34 @@
   inferred behavior as sufficient when server truth or MOTM telemetry can be
   exposed directly.
 
+## Runtime Architecture Boundaries
+
+```
+MenteesMod
+├─ lifecycle wiring + compatibility facade
+├─ MotmRuntimeTasks owns deferred tick work
+├─ MotmInventoryOps owns inventory mutations
+├─ MotmDevCommandRouter + MotmCommandAuth own dev command routing/gating
+├─ MotmProofCatalog owns proof ids/help text
+└─ GameplayPlaybackManager delegates shared geometry to MotmPlaybackGeometry
+```
+
+- Add new deferred in-game work to `MotmRuntimeTasks`; do not add new ad hoc
+  pending maps, sets, or queues to `MenteesMod`.
+- Route inventory grants/removals/restores through `MotmInventoryOps` so
+  transaction handling and failure logging stay consistent.
+- Add new `/motm dev proof ...` ids to `MotmProofCatalog` before wiring runtime
+  behavior, then exercise them through the observability harness.
+- Keep `/motm dev` entry points gated through `MotmCommandAuth` and routed
+  through `MotmDevCommandRouter`.
+- Store lifecycle registration handles when the Hytale API returns them, and
+  verify API signatures against the installed Hytale jar before assuming docs
+  are current.
+- When `GameplayPlaybackManager` grows, prefer extracting mechanically reusable
+  slices such as geometry, effect application, visual proxy helpers, or
+  ability-family runtimes while preserving the public manager API until tests
+  prove the slice stable.
+
 ## Platform Notes
 
 ```

@@ -63,9 +63,17 @@ assets, logs, and runtime evidence win when details conflict.
 
 | Reference | Why It Matters |
 | --- | --- |
-| `src/main/java/com/motm/MenteesMod.java` | Main runtime, dev command polling, proof hooks, HUD install, player lifecycle. |
-| `src/main/java/com/motm/command/MotmCommand.java` | `/motm` and `/motm dev` command surface. |
+| `AGENTS.md` | Canonical feature loop, runtime ownership rules, and agent testing policy. |
+| `CLAUDE.md` | Claude-oriented mirror of the canonical agent rules; keep it aligned with `AGENTS.md`. |
+| `src/main/java/com/motm/MenteesMod.java` | Plugin lifecycle, manager wiring, runtime facade, dev command polling, HUD install, player lifecycle. |
+| `src/main/java/com/motm/runtime/MotmRuntimeTasks.java` | Named owner for deferred tick work and observability queue sizes. |
+| `src/main/java/com/motm/util/MotmInventoryOps.java` | Named owner for inventory grant/remove/restore mutation wrappers and failure logging. |
+| `src/main/java/com/motm/command/MotmCommand.java` | Public `/motm` command behavior and compatibility command methods. |
+| `src/main/java/com/motm/command/MotmCommandAuth.java` | Dev/test command authorization boundary. |
+| `src/main/java/com/motm/command/MotmDevCommandRouter.java` | `/motm dev ...` routing table. |
+| `src/main/java/com/motm/proof/MotmProofCatalog.java` | Discoverable proof ids and proof help text. |
 | `src/main/java/com/motm/manager/GameplayPlaybackManager.java` | Actual ability playback/runtime implementation. |
+| `src/main/java/com/motm/manager/MotmPlaybackGeometry.java` | Reusable playback geometry helpers extracted from the large runtime manager. |
 | `src/main/java/com/motm/util/HytaleAssetResolver.java` | Asset/role/particle/model resolution rules. |
 | `src/main/java/com/motm/util/MotmPreflightAudit.java` | Preflight readiness and static validation surface. |
 | `src/main/resources/Server/Entity/Effects/MOTM/` | Current custom effect assets and server-authored visual/status intent. |

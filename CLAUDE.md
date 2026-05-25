@@ -22,18 +22,39 @@ keeps the older Claude-oriented project rules in sync.
 - NEVER register hooks in the constructor or in `setup()`.
 
 ## Build
-- Build: `powershell -ExecutionPolicy Bypass -File scripts/build-install.ps1`
-- JDK 25 + Gradle 9.1 (auto-downloaded to `.tools/`)
-- Internal build installs to `%APPDATA%/Hytale/UserData/Mods/`
+- Windows build/install: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-install.ps1`
+- macOS build/install: `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/build-install.ps1`
+- JDK 25 + Gradle Wrapper are canonical. `scripts/ensure-dev-environment.ps1`
+  finds or downloads the portable JDK into `.tools/jdk-25` and runs the checked-in
+  wrapper instead of requiring a machine-specific Gradle install.
+- Internal builds install to the detected Hytale `UserData/Mods` directory.
 
 ## Testing
 - Default in-game harness: `scripts/run-agent-observability-baseline.ps1`
 - Evidence bundle: `audits/agent-observability/<runId>/`
 - Query evidence with `scripts/query-observability-evidence.ps1`
+- If the harness does not expose enough signal for a feature, extend the
+  harness first: add a scenario, `/motm dev` probe, proof id, JSONL event,
+  collector source, or query mode while preserving raw evidence and run
+  manifests.
 - Older screenshot/log-tail audit scripts are supplemental only. Do not use them
   as the final acceptance path for new behavior unless the observability harness
   has also produced a supporting run bundle.
 
+## Runtime Architecture
+- `AGENTS.md` is the source of truth for the feature loop and runtime ownership.
+- Add deferred tick work to `MotmRuntimeTasks`, not new ad hoc pending
+  collections in `MenteesMod`.
+- Route inventory grants/removals/restores through `MotmInventoryOps`.
+- Keep `/motm dev` gating/routing in `MotmCommandAuth` and
+  `MotmDevCommandRouter`.
+- Add discoverable runtime proofs through `MotmProofCatalog` and the proof runner
+  registry, then exercise them through the observability harness.
+- Keep `GameplayPlaybackManager`'s public API stable while extracting reusable
+  slices such as geometry, visual proxy helpers, effect helpers, or ability
+  family runtimes.
+
 ## Known Issues
-- `MenteesMod.java` and `GameplayPlaybackManager.java` are god classes. Extraction direction is documented in `CODEX_CORRECTIONS_PLAN.md`.
+- `GameplayPlaybackManager.java` is still large. Prefer small, test-backed slices
+  that keep public behavior stable rather than broad rewrites.
 - Custom HUD documents require `IncludesAssetPack=true`, and HUD install should be deferred briefly after join so the client can resolve the UI safely.
