@@ -8,6 +8,11 @@ reference and smell detector, not as the final authority. The installed Hytale
 server jar, compile behavior, and live observability evidence still win when the
 reference and runtime disagree.
 
+Implementation status: the first cleanup pass is captured in
+`docs/runtime-architecture-refactor-checklist.md`. Future agents should treat
+this audit as historical rationale and use the current owners in `AGENTS.md`,
+`CLAUDE.md`, and the README when adding new runtime behavior.
+
 ```
 ╔═══════════════════════╦═══════════════════════╦══════════════════════╗
 ║ HytaleCompleteAPI     ║ MOTM Today            ║ Improvement Pressure ║
