@@ -4,6 +4,16 @@ Updated: 2026-05-24
 
 This is the GitHub-facing ability reference for all classes, styles, and active abilities currently shipped in the mod data. It is generated from the checked-in JSON under `src/main/resources/data/classes` and `src/main/resources/data/styles`.
 
+For concept review, do not treat this file as the whole design brief. Pair it
+with:
+
+- `docs/FRIEND_REVIEW_GUIDE.md`
+- `CODEX_CLASS_STYLE_ABILITY_REVIEW_MOCKUP_2026-05-22.md`
+- `CODEX_CONCEPT_REVIEW_DECISIONS_2026-05-22.md`
+
+Those files describe the intended function, visual read, and user-approved
+corrections for the abilities.
+
 ## Casting Model
 
 ```text

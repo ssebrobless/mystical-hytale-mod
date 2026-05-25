@@ -64,6 +64,8 @@ Key counts from the installed game package:
 
 ## Files
 
+- `../FRIEND_REVIEW_GUIDE.md` tells an outside reviewer where to start and how
+  to interpret the concept docs, current JSON, and implementation maps.
 - `../ABILITY_REFERENCE.md` is the GitHub-facing reference for every class,
   style, and active ability. It reflects the current no-resource casting model.
 - `source-index.md` records useful public and local sources.

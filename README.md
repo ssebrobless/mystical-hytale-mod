@@ -14,6 +14,7 @@
 
 - `src/main/java/com/motm` - mod source
 - `src/main/resources/data` - gameplay JSON data
+- `docs/FRIEND_REVIEW_GUIDE.md` - orientation guide for outside reviewers and review tools
 - `docs/ABILITY_REFERENCE.md` - GitHub-facing catalog of all 40 styles and 120 active abilities
 - `docs/hytale-capability-atlas/` - Hytale capability research, primitive choices, and implementation gates
 - `PLAN.md` - original implementation plan used to start the project
@@ -57,6 +58,11 @@ Implemented so far:
 ## Ability Reference
 
 The current class/style/ability catalog is documented in [`docs/ABILITY_REFERENCE.md`](docs/ABILITY_REFERENCE.md).
+
+For the intended ability fantasy, exact recovered function details, visual read,
+and review priorities, start with [`docs/FRIEND_REVIEW_GUIDE.md`](docs/FRIEND_REVIEW_GUIDE.md), then read
+[`CODEX_CLASS_STYLE_ABILITY_REVIEW_MOCKUP_2026-05-22.md`](CODEX_CLASS_STYLE_ABILITY_REVIEW_MOCKUP_2026-05-22.md) and
+[`CODEX_CONCEPT_REVIEW_DECISIONS_2026-05-22.md`](CODEX_CONCEPT_REVIEW_DECISIONS_2026-05-22.md).
 
 Current shape:
 
