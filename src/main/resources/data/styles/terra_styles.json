@@ -229,7 +229,7 @@
         {
           "id": "rubble_rouser",
           "name": "Rubble Rouser",
-          "description": "Hurl rubble that knocks back the enemy",
+          "description": "Coat your arms in stone and make your next unarmed strike hurl rubble in an area",
           "damage_percent": 8,
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.35,
@@ -240,13 +240,14 @@
             "crowd_control"
           ],
           "resource_cost": 0,
-          "cast_type": "projectile",
-          "target_type": "enemy",
+          "cast_type": "self_buff",
+          "target_type": "self",
           "range": 16,
           "max_range": 16,
           "projectile_speed": 20,
           "knockback_force": 3.5,
-          "travel_type": "rubble_shot"
+          "duration_seconds": 8,
+          "travel_type": "rubble_followup"
         },
         {
           "id": "pillar_strike",

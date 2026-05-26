@@ -473,7 +473,7 @@ public final class HytaleAssetResolver {
 
         if ("terra".equals(lower(classId)) && "quake".equals(style)
                 && ("aftershock".equals(abilityId) || "sinkhole".equals(abilityId))) {
-            return FX_TERRA_QUAKE_LOOP;
+            return "sinkhole".equals(abilityId) ? "MOTM_Terra_Sinkhole_Cracks" : FX_TERRA_QUAKE_LOOP;
         }
         if ("terra".equals(lower(classId)) && "magma".equals(style)) {
             if ("lava_pool".equals(abilityId)) {

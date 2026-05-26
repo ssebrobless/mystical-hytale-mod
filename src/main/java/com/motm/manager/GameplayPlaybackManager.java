@@ -149,6 +149,7 @@ public class GameplayPlaybackManager {
     private final List<ActiveLineControl> activeLineControls = new ArrayList<>();
     private final List<ActivePlayerAnchor> activePlayerAnchors = new ArrayList<>();
     private final List<ActiveSelfEffect> activeSelfEffects = new ArrayList<>();
+    private final List<ActiveDelayedBurst> activeDelayedBursts = new ArrayList<>();
     private final Set<Ref<EntityStore>> visualProxyRefs = ConcurrentHashMap.newKeySet();
     private final Map<String, List<BuriedVictim>> buriedVictimsByField = new HashMap<>();
     private final Set<String> reportedAbilityKillEntityIds = ConcurrentHashMap.newKeySet();
@@ -234,6 +235,8 @@ public class GameplayPlaybackManager {
                 runtimePlayer, player, style, ability, playback);
         AbilitySpecificRuntimeResult specificRuntime = applySpecificCastRuntime(
                 runtimePlayer, player, style, ability, context, playback);
+        MovementContactRuntimeResult movementContact = applyMovementContactRuntime(
+                runtimePlayer, player, style, ability, playback);
         SupportResolution support = applyCasterRuntime(runtimePlayer, player, ability);
         CombatResolution combat = projectileLaunch.launched() > 0
                 ? CombatResolution.none()
@@ -265,6 +268,7 @@ public class GameplayPlaybackManager {
         if (!fieldRuntime.summary().isBlank()) summaryParts.add(fieldRuntime.summary());
         if (!supplementalTerrain.summary().isBlank()) summaryParts.add(supplementalTerrain.summary());
         if (!specificRuntime.summary().isBlank()) summaryParts.add(specificRuntime.summary());
+        if (!movementContact.summary().isBlank()) summaryParts.add(movementContact.summary());
         if (!support.summary().isBlank()) summaryParts.add(support.summary());
         if (!combat.summary().isBlank()) summaryParts.add(combat.summary());
         if (lifestealHealing > 0) summaryParts.add("lifesteal " + AbilityPresentation.formatDecimal(lifestealHealing));
@@ -285,6 +289,7 @@ public class GameplayPlaybackManager {
                         + " projectiles=" + projectileLaunch.launched()
                         + " field=" + fieldRuntime.activated()
                         + " terrain=" + supplementalTerrain.activated()
+                        + " movementContact=" + movementContact.targetsHit()
                         + " summons=" + summons.spawned()
                         + " form=" + form.applied());
         mod.recordCausality("ability_cast_end", traceId, MotmObservability.mapOf(
@@ -297,6 +302,7 @@ public class GameplayPlaybackManager {
                 "projectiles", projectileLaunch.launched(),
                 "fieldActivated", fieldRuntime.activated(),
                 "terrainActivated", supplementalTerrain.activated(),
+                "movementContactTargets", movementContact.targetsHit(),
                 "summonsSpawned", summons.spawned(),
                 "summonsBuffed", summons.buffed(),
                 "formApplied", form.applied()
@@ -366,6 +372,8 @@ public class GameplayPlaybackManager {
                 belongsToCurrentStore(anchor.ownerRef(), currentStore) && processPlayerAnchor(anchor, currentStore, now));
         activeSelfEffects.removeIf(effect ->
                 belongsToCurrentStore(effect.ownerRef(), currentStore) && processActiveSelfEffect(effect, currentStore, now));
+        activeDelayedBursts.removeIf(burst ->
+                belongsToCurrentStore(burst.ownerRef(), currentStore) && processDelayedBurstTick(burst, currentStore, now));
         activeLapidaryGems.removeIf(gem -> processLapidaryGem(gem, currentStore, now));
         activeStackingColumns.removeIf(column -> processStackingColumn(column, currentStore, now));
         activeTerrainSelections.removeIf(selection -> processTemporaryTerrainSelection(selection, currentStore, now));
@@ -554,6 +562,7 @@ public class GameplayPlaybackManager {
         int fields = removeFieldsForPlayer(playerId, currentStore);
         int anchors = removePlayerAnchorsForPlayer(playerId);
         int selfEffects = removeSelfEffectsForPlayer(playerId);
+        int delayedBursts = removeDelayedBurstsForPlayer(playerId);
         int gems = removeLapidaryGemsForPlayer(playerId);
         int columns = removeStackingColumnsForWorld(currentWorld);
         int trails = removeMovingTerrainTrailsForWorld(currentWorld);
@@ -581,6 +590,7 @@ public class GameplayPlaybackManager {
                 + " fields=" + fields
                 + " anchors=" + anchors
                 + " selfEffects=" + selfEffects
+                + " delayedBursts=" + delayedBursts
                 + " gems=" + gems
                 + " columns=" + columns
                 + " trails=" + trails
@@ -607,6 +617,7 @@ public class GameplayPlaybackManager {
         snapshot.put("activeLineControls", activeLineControls.size());
         snapshot.put("activePlayerAnchors", activePlayerAnchors.size());
         snapshot.put("activeSelfEffects", activeSelfEffects.size());
+        snapshot.put("activeDelayedBursts", activeDelayedBursts.size());
         snapshot.put("visualProxyRefs", visualProxyRefs.size());
         snapshot.put("activeTransformations", activeTransformationsByPlayer.size());
         snapshot.put("activeWeaponFollowUps", activeWeaponFollowUpsByPlayer.size());
@@ -647,6 +658,7 @@ public class GameplayPlaybackManager {
                 continue;
             }
             releaseSinkholeField(field, currentStore);
+            restoreFieldTemporaryTerrain(field, currentStore);
             despawnFieldVisual(field);
             activeFields.remove(index);
             removed++;
@@ -655,15 +667,44 @@ public class GameplayPlaybackManager {
     }
 
     private int removePlayerAnchorsForPlayer(String playerId) {
-        int before = activePlayerAnchors.size();
-        activePlayerAnchors.removeIf(anchor -> playerId.equals(anchor.ownerPlayerId()));
-        return before - activePlayerAnchors.size();
+        int removed = 0;
+        for (int index = activePlayerAnchors.size() - 1; index >= 0; index--) {
+            ActivePlayerAnchor anchor = activePlayerAnchors.get(index);
+            if (!playerId.equals(anchor.ownerPlayerId())) {
+                continue;
+            }
+            Store<EntityStore> store = anchor.ownerRef() != null && anchor.ownerRef().isValid()
+                    ? anchor.ownerRef().getStore()
+                    : null;
+            setAnchorMovementFreeze(anchor.ownerRef(), store, false);
+            zeroVelocity(anchor.ownerRef(), store);
+            activePlayerAnchors.remove(index);
+            removed++;
+        }
+        return removed;
     }
 
     private int removeSelfEffectsForPlayer(String playerId) {
-        int before = activeSelfEffects.size();
-        activeSelfEffects.removeIf(effect -> playerId.equals(effect.ownerPlayerId()));
-        return before - activeSelfEffects.size();
+        int removed = 0;
+        for (int index = activeSelfEffects.size() - 1; index >= 0; index--) {
+            ActiveSelfEffect effect = activeSelfEffects.get(index);
+            if (!playerId.equals(effect.ownerPlayerId())) {
+                continue;
+            }
+            Store<EntityStore> store = effect.ownerRef() != null && effect.ownerRef().isValid()
+                    ? effect.ownerRef().getStore()
+                    : null;
+            removeEffectById(effect.ownerRef(), store, effect.effectId());
+            activeSelfEffects.remove(index);
+            removed++;
+        }
+        return removed;
+    }
+
+    private int removeDelayedBurstsForPlayer(String playerId) {
+        int before = activeDelayedBursts.size();
+        activeDelayedBursts.removeIf(burst -> playerId.equals(burst.ownerPlayerId()));
+        return before - activeDelayedBursts.size();
     }
 
     private int removeLapidaryGemsForPlayer(String playerId) {
@@ -1071,6 +1112,16 @@ public class GameplayPlaybackManager {
                     visual.nextRefreshAtMillis(),
                     traceId
             ));
+            LOG.info("[MOTM] projectile_launch abilityId=" + safe(ability.getId())
+                    + " index=" + (index + 1) + "/" + projectileCount
+                    + " origin=" + formatVector(origin)
+                    + " direction=" + formatVector(projectileDirection)
+                    + " speedPerTick=" + AbilityPresentation.formatDecimal(speedPerTick)
+                    + " maxDistance=" + AbilityPresentation.formatDecimal(maxDistance)
+                    + " collisionRadius=" + AbilityPresentation.formatDecimal(collisionRadius)
+                    + " impactRadius=" + AbilityPresentation.formatDecimal(impactRadius)
+                    + " visualProxy=" + (visual.visualRef() != null ? visual.visualRef().getIndex() : "none")
+                    + " traceId=" + safe(traceId));
         }
 
         String label = projectileCount == 1 ? "projectile" : "projectiles";
@@ -1341,6 +1392,14 @@ public class GameplayPlaybackManager {
                     parts.add("alloy coating");
                 }
             }
+            case "rubble_rouser" -> {
+                if (applyEffectById(playerRef, store, "MOTM_Proof_Coating_Stone")) {
+                    parts.add("stone-arm coating");
+                }
+                parts.add("next unarmed strike throws rubble");
+                logTerraAbilityEvent("rubble_rouser.armed", player, style, ability,
+                        "uses=1 splashRadius=2.8");
+            }
             case "obsidian_skin" -> {
                 long nowMillis = System.currentTimeMillis();
                 long lavaExpireAt = nowMillis + 1_800L;
@@ -1395,7 +1454,7 @@ public class GameplayPlaybackManager {
                 parts.add("root anchor");
             }
             case "pillar_strike" -> {
-                Vector3d center = resolveCastContextPosition(context, playerRef, store);
+                Vector3d center = resolveContextTargetOrBlockPosition(context, playerRef, store);
                 String terrain = placeStackingColumnSelection(
                         runtimePlayer.getWorld(),
                         "stone_pillar",
@@ -1407,6 +1466,14 @@ public class GameplayPlaybackManager {
                 if (!terrain.isBlank()) {
                     parts.add(terrain);
                 }
+                LOG.info("[MOTM][terra-audit] event=pillar_strike.column target="
+                        + (context != null && context.explicitTargetRef() != null
+                        ? resolveEntityId(context.explicitTargetRef(), store)
+                        : "block")
+                        + " center=" + formatVector(center)
+                        + " terrain=" + terrain);
+                int launched = launchTargetsFromPoint(playerRef, store, ability, center, Math.max(2.5, ability.getRadius()), true);
+                parts.add("pillar launched " + launched + " target" + (launched == 1 ? "" : "s"));
             }
             case "frolick", "cacti_cluster", "lapidary", "glare", "debris",
                  "fracture", "refraction" -> {
@@ -1447,6 +1514,18 @@ public class GameplayPlaybackManager {
         return parts.isEmpty()
                 ? AbilitySpecificRuntimeResult.none()
                 : new AbilitySpecificRuntimeResult(String.join(" | ", parts));
+    }
+
+    private Vector3d resolveContextTargetOrBlockPosition(CastContext context,
+                                                         Ref<EntityStore> fallbackRef,
+                                                         Store<EntityStore> store) {
+        if (context != null && context.explicitTargetRef() != null && context.explicitTargetRef().isValid()) {
+            Vector3d targetPosition = getPosition(context.explicitTargetRef(), store);
+            if (targetPosition != null) {
+                return new Vector3d(targetPosition);
+            }
+        }
+        return resolveCastContextPosition(context, fallbackRef, store);
     }
 
     private boolean applyOwnerStatusToken(String token,
@@ -2635,6 +2714,12 @@ public class GameplayPlaybackManager {
             LOG.info("[MOTM] Temporary Terra terrain placed: reason=" + reason
                     + " anchor=" + anchor
                     + " summary=" + summary);
+            if (isSurfaceDecorationReason(reason)) {
+                LOG.info("[MOTM] surface_place_result ability=" + reason
+                        + " placedOnTop=true"
+                        + " replacedOriginalBlock=false"
+                        + " protectedBlocks=" + protectedKeys.size());
+            }
             mod.recordServerTruth("temporary_selection_placed", null, MotmObservability.mapOf(
                     "reason", reason,
                     "anchor", "(" + anchor.x + "," + anchor.y + "," + anchor.z + ")",
@@ -2650,6 +2735,16 @@ public class GameplayPlaybackManager {
                     + " error=" + e.getMessage());
             return "";
         }
+    }
+
+    private boolean isSurfaceDecorationReason(String reason) {
+        String normalized = lower(reason);
+        return normalized.contains("frolick")
+                || normalized.contains("sapling")
+                || normalized.contains("nightshade")
+                || normalized.contains("rooted")
+                || normalized.contains("vines")
+                || normalized.contains("sinkhole_cracks");
     }
 
     public boolean isTemporaryAbilityTerrainBlock(Vector3i block) {
@@ -2952,12 +3047,19 @@ public class GameplayPlaybackManager {
         }
 
         boolean expired = now >= projectile.expireAtMillis() || projectile.travelledDistance() >= projectile.maxDistance();
+        boolean groundMarkerLanded = isGroundMarkerProjectile(projectile.ability())
+                && hasGroundMarkerReachedSurface(projectile, store, to);
         if (isGroundMarkerProjectile(projectile.ability())) {
-            if (expired) {
+            if (expired || groundMarkerLanded) {
                 placeProjectileGroundMarkerImpact(projectile, player, store, to);
+                LOG.info("[MOTM] projectile_despawn abilityId=" + safe(projectile.ability().getId())
+                        + " reason=" + (groundMarkerLanded ? "ground_marker_surface" : "ground_marker_expired")
+                        + " flightTicks=" + Math.max(0, Math.round((now - projectile.activateAtMillis()) / 50.0))
+                        + " travelled=" + AbilityPresentation.formatDecimal(projectile.travelledDistance())
+                        + " position=" + formatVector(to));
                 despawnProjectileVisual(projectile);
             }
-            return expired;
+            return expired || groundMarkerLanded;
         }
 
         if (isPiercingProjectile(projectile.ability())) {
@@ -2976,6 +3078,12 @@ public class GameplayPlaybackManager {
         }
 
         applyProjectileImpact(projectile, player, store, to, directHit);
+        LOG.info("[MOTM] projectile_despawn abilityId=" + safe(projectile.ability().getId())
+                + " reason=" + (directHit != null ? "direct_hit" : "expired")
+                + " hitTarget=" + (directHit != null && directHit.isValid() ? resolveEntityId(directHit, store) : "none")
+                + " flightTicks=" + Math.max(0, Math.round((now - projectile.activateAtMillis()) / 50.0))
+                + " travelled=" + AbilityPresentation.formatDecimal(projectile.travelledDistance())
+                + " position=" + formatVector(to));
         if (shouldLeaveProjectileVisualOnImpact(projectile.ability())) {
             visualProxyRefs.remove(projectile.visualRef());
         } else {
@@ -3011,6 +3119,21 @@ public class GameplayPlaybackManager {
         }
         String abilityId = lower(ability.getId());
         return "sapling".equals(abilityId) || "nightshade".equals(abilityId);
+    }
+
+    private boolean hasGroundMarkerReachedSurface(ActiveProjectile projectile,
+                                                  Store<EntityStore> store,
+                                                  Vector3d position) {
+        if (projectile == null || store == null || position == null) {
+            return false;
+        }
+        Vector3d ownerPosition = getPosition(projectile.ownerRef(), store);
+        if (ownerPosition == null) {
+            return false;
+        }
+        return projectile.direction().y < -0.05
+                && projectile.travelledDistance() >= 1.5
+                && position.y <= ownerPosition.y + 0.15;
     }
 
     private void placeProjectileGroundMarkerImpact(ActiveProjectile projectile,
@@ -3328,6 +3451,95 @@ public class GameplayPlaybackManager {
         if (travelType.contains("arcing_shot") && allowSplash) {
             applyProjectileSplashToken(projectile, player, store, impactPosition, primaryTarget, "slow", 1.8, 1);
         }
+
+        if (isCactiClusterProjectile(projectile)) {
+            applyTokenToTarget("slow", primaryTarget, store, projectile.ownerRef(), player.getPlayerId(), projectile.ability());
+            applyTokenToTarget("dot", primaryTarget, store, projectile.ownerRef(), player.getPlayerId(), projectile.ability());
+            scheduleCactiClusterBurst(projectile, primaryTarget, store, impactPosition);
+            LOG.info("[MOTM][terra-audit] event=cacti_cluster.attached target="
+                    + resolveEntityId(primaryTarget, store)
+                    + " impact=" + formatVector(impactPosition)
+                    + " burstDelaySeconds=" + AbilityPresentation.formatDecimal(
+                    Math.max(1.0, projectile.ability().getDurationSeconds())));
+        }
+    }
+
+    private void scheduleCactiClusterBurst(ActiveProjectile projectile,
+                                           Ref<EntityStore> primaryTarget,
+                                           Store<EntityStore> store,
+                                           Vector3d impactPosition) {
+        if (projectile == null || projectile.ability() == null || primaryTarget == null
+                || !primaryTarget.isValid() || store == null || impactPosition == null) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        long burstAt = now + (long) (Math.max(1.0, projectile.ability().getDurationSeconds()) * 1000);
+        String primaryEntityId = resolveEntityId(primaryTarget, store);
+        activeDelayedBursts.add(new ActiveDelayedBurst(
+                projectile.ownerPlayerId(),
+                projectile.ownerRef(),
+                projectile.classId(),
+                projectile.styleId(),
+                projectile.ability(),
+                new Vector3d(impactPosition),
+                primaryEntityId,
+                burstAt,
+                Math.max(4.0, projectile.ability().getRadius() > 0 ? projectile.ability().getRadius() : 4.0),
+                mod.currentObservabilityTraceId()
+        ));
+
+        World world = store.getExternalData() != null ? store.getExternalData().getWorld() : null;
+        if (world != null) {
+            placeSurfaceColumnSelection(world, "cacti_cluster", impactPosition, 2, burstAt + 350L,
+                    "Plant_Cactus_1", "Prototype_Cactus_Kit_Tall_Base", "Prototype_Cactus_One");
+        }
+    }
+
+    private boolean processDelayedBurstTick(ActiveDelayedBurst burst,
+                                            Store<EntityStore> currentStore,
+                                            long now) {
+        if (burst == null || burst.ownerRef() == null || !burst.ownerRef().isValid()) {
+            return true;
+        }
+        if (now < burst.burstAtMillis()) {
+            return false;
+        }
+        if (currentStore == null) {
+            return false;
+        }
+
+        PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(burst.ownerPlayerId());
+        if (player == null) {
+            return true;
+        }
+
+        int affected = 0;
+        for (Ref<EntityStore> targetRef : collectNearbyNpcTargets(currentStore, burst.center(), burst.radius(), 10)) {
+            if (targetRef == null || !targetRef.isValid()) {
+                continue;
+            }
+            String entityId = resolveEntityId(targetRef, currentStore);
+            if (entityId == null || entityId.equals(burst.primaryEntityId())) {
+                continue;
+            }
+            applyTokenToTarget("slow", targetRef, currentStore, burst.ownerRef(), player.getPlayerId(), burst.ability());
+            applyTokenToTarget("dot", targetRef, currentStore, burst.ownerRef(), player.getPlayerId(), burst.ability());
+            applyEffectById(targetRef, currentStore, resolveImpactEffectId(burst.classId(), burst.styleId(), burst.ability()));
+            affected++;
+        }
+
+        LOG.info("[MOTM][terra-audit] event=cacti_cluster.burst center=" + formatVector(burst.center())
+                + " primaryTarget=" + safe(burst.primaryEntityId())
+                + " radius=" + AbilityPresentation.formatDecimal(burst.radius())
+                + " affectedSplashTargets=" + affected);
+        return true;
+    }
+
+    private boolean isCactiClusterProjectile(ActiveProjectile projectile) {
+        return projectile != null
+                && projectile.ability() != null
+                && "cacti_cluster".equals(lower(projectile.ability().getId()));
     }
 
     private void applyProjectileSplashToken(ActiveProjectile projectile,
@@ -3796,9 +4008,11 @@ public class GameplayPlaybackManager {
         Player runtimePlayer = mod.getRuntimePlayer(field.ownerPlayerId());
         if (runtimePlayer != null) {
             Vector3d groundedCenter = new Vector3d(field.center());
-            groundedCenter.y = groundedCenter.y - 1.0;
+            groundedCenter.y = groundedCenter.y - 1.65;
             spawnQuakeImpactRing(runtimePlayer, field.ability(), groundedCenter);
-            LOG.info("[MOTM] Sinkhole surface marker placed: quake impact proxy only center=" + groundedCenter);
+            LOG.info("[MOTM] Sinkhole surface marker placed: crack particles only center=" + groundedCenter
+                    + " durationMillis=" + Math.max(900L, durationMillis)
+                    + " blocksPlaced=0");
         } else {
             LOG.info("[MOTM] Sinkhole surface marker skipped: runtime player unavailable center=" + field.center());
         }
@@ -4634,7 +4848,8 @@ public class GameplayPlaybackManager {
         }
 
         List<Vector3d> positions = new ArrayList<>();
-        positions.add(new Vector3d(center));
+        Vector3d visualCenter = fieldVisualCenter(center, ability);
+        positions.add(visualCenter);
         String castType = lower(ability.getCastType());
         if ("barrier".equals(castType) && lineDirection != null && lineDirection.isFinite()) {
             double span = Math.max(2.0, Math.min(Math.max(halfWidth, 0.0), 7.0));
@@ -4643,7 +4858,7 @@ public class GameplayPlaybackManager {
                 if (Math.abs(offset) < 0.3) {
                     continue;
                 }
-                positions.add(new Vector3d(center).fma(offset, normalized));
+                positions.add(new Vector3d(visualCenter).fma(offset, normalized));
             }
             return positions;
         }
@@ -4652,7 +4867,15 @@ public class GameplayPlaybackManager {
             return positions;
         }
 
-        return buildAreaVisualPositions(center, ability);
+        return buildAreaVisualPositions(visualCenter, ability);
+    }
+
+    private Vector3d fieldVisualCenter(Vector3d center, AbilityData ability) {
+        Vector3d visualCenter = new Vector3d(center);
+        if ("sinkhole".equals(lower(ability != null ? ability.getId() : null))) {
+            visualCenter.y -= 1.0;
+        }
+        return visualCenter;
     }
 
     private List<Vector3d> buildAreaVisualPositions(Vector3d center, AbilityData ability) {
@@ -4746,6 +4969,73 @@ public class GameplayPlaybackManager {
                 start,
                 new Vector3d(target),
                 buildMovementSummary(castType, horizontalDistance, verticalDistance)
+        );
+    }
+
+    private MovementContactRuntimeResult applyMovementContactRuntime(Player runtimePlayer,
+                                                                     PlayerData player,
+                                                                     StyleData style,
+                                                                     AbilityData ability,
+                                                                     PlaybackResult playback) {
+        if (runtimePlayer == null || player == null || ability == null || playback == null
+                || !playback.movementApplied() || playback.startPosition() == null || playback.endPosition() == null) {
+            return MovementContactRuntimeResult.none();
+        }
+
+        String abilityId = lower(ability.getId());
+        if (!"rockslide".equals(abilityId) && !"dust_devil".equals(abilityId)) {
+            return MovementContactRuntimeResult.none();
+        }
+
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef != null && playerRef.isValid() ? playerRef.getStore() : null;
+        if (playerRef == null || store == null) {
+            return MovementContactRuntimeResult.none();
+        }
+
+        double radius = Math.max("rockslide".equals(abilityId) ? 2.35 : 2.75, ability.getRadius());
+        int targetsHit = 0;
+        double totalDamage = 0.0;
+        for (Ref<EntityStore> targetRef : collectTargetsAlongSegment(store,
+                playback.startPosition(),
+                playback.endPosition(),
+                radius,
+                8)) {
+            String entityId = resolveEntityId(targetRef, store);
+            if (entityId == null || entityId.equals(player.getPlayerId())) {
+                continue;
+            }
+            double damage = Math.max(1.0, resolveDamageAmount(player, ability) * 0.75);
+            damage *= resolveIncomingDamageMultiplier(entityId);
+            damage = mod.getStatusEffectManager().absorbDamage(entityId, damage);
+            if (damage > 0.0) {
+                Damage hitDamage = new Damage(new Damage.EntitySource(playerRef), DamageCause.PHYSICAL, (float) damage);
+                DamageSystems.executeDamage(targetRef, store, hitDamage);
+                applyPostDamageClassPassives(player, playerRef, entityId, damage, false);
+                totalDamage += damage;
+            }
+            applyKnockbackFromPoint(targetRef, store, playback.startPosition(), ability);
+            applyEffectById(targetRef, store, resolveImpactEffectId(player.getPlayerClass(), style != null ? style.getId() : currentStyleId(player), ability));
+            targetsHit++;
+        }
+
+        if (targetsHit <= 0) {
+            logTerraAbilityEvent(abilityId + ".dash", player, style, ability,
+                    "targets=0 from=" + formatVector(playback.startPosition())
+                            + " to=" + formatVector(playback.endPosition()));
+            return MovementContactRuntimeResult.none();
+        }
+
+        player.getStatistics().setTotalDamageDealt(player.getStatistics().getTotalDamageDealt() + totalDamage);
+        logTerraAbilityEvent(abilityId + ".dash", player, style, ability,
+                "targets=" + targetsHit
+                        + " damage=" + AbilityPresentation.formatDecimal(totalDamage)
+                        + " from=" + formatVector(playback.startPosition())
+                        + " to=" + formatVector(playback.endPosition()));
+        return new MovementContactRuntimeResult(
+                targetsHit,
+                totalDamage,
+                humanize(abilityId) + " contact pushed " + targetsHit + " target" + (targetsHit == 1 ? "" : "s")
         );
     }
 
@@ -5063,6 +5353,12 @@ public class GameplayPlaybackManager {
         long now = System.currentTimeMillis();
         activeLineControls.removeIf(lineControl -> lineControl.ownerPlayerId().equals(player.getPlayerId()));
         Vector3d targetAnchor = vines ? getPosition(targetRef, store) : null;
+        String vinesTerrain = "";
+        if (vines && targetAnchor != null && runtimePlayer.getWorld() != null) {
+            long expireAt = now + (long) (durationSeconds * 1000);
+            vinesTerrain = placeSurfacePatchSelection(runtimePlayer.getWorld(), "vines", targetAnchor, 1, expireAt,
+                    "Plant_Roots_Leafy", "Plant_Roots_Cave", "Plant_Vine_Thick_Roots");
+        }
         activeLineControls.add(new ActiveLineControl(
                 player.getPlayerId(),
                 ownerRef,
@@ -5077,6 +5373,7 @@ public class GameplayPlaybackManager {
                 (vines ? "vines root/dot " : "current pull ")
                         + AbilityPresentation.formatDecimal(durationSeconds)
                         + "s"
+                        + (vinesTerrain.isBlank() ? "" : " | " + vinesTerrain)
         );
     }
 
@@ -6320,6 +6617,10 @@ public class GameplayPlaybackManager {
             return 0.0;
         }
 
+        if (isVinesAbility(ability)) {
+            return 30.0;
+        }
+
         if (ability.getDurationSeconds() > 0.0) {
             return Math.max(1.0, ability.getDurationSeconds());
         }
@@ -6718,6 +7019,7 @@ public class GameplayPlaybackManager {
     private int resolveFollowUpUses(AbilityData ability, List<String> tokens) {
         return switch (lower(ability.getId())) {
             case "alloy_enhancement" -> 3;
+            case "rubble_rouser" -> 1;
             case "umbral_veil" -> 1;
             case "lapidary", "imbue_fortitude", "absorb" -> 2;
             case "battle_cry", "waverider", "river_rapids", "frolick", "refraction", "imbue_swiftness" -> 3;
@@ -6748,6 +7050,7 @@ public class GameplayPlaybackManager {
 
         return switch (lower(ability.getId())) {
             case "alloy_enhancement" -> bonus + 9.0;
+            case "rubble_rouser" -> bonus + 6.0;
             case "imbue_power" -> bonus + 8.0;
             case "battle_cry", "overheat", "river_rapids", "refraction" -> bonus + 4.0;
             case "waverider", "frolick", "imbue_swiftness" -> bonus + 2.0;
@@ -6777,6 +7080,7 @@ public class GameplayPlaybackManager {
 
     private double resolveFollowUpSplashRadius(AbilityData ability) {
         return switch (lower(ability.getId())) {
+            case "rubble_rouser" -> 2.8;
             case "battle_cry" -> 2.5;
             case "overheat" -> 2.6;
             case "river_rapids" -> 2.8;
@@ -6787,6 +7091,7 @@ public class GameplayPlaybackManager {
 
     private double resolveFollowUpSplashDamageRatio(AbilityData ability) {
         return switch (lower(ability.getId())) {
+            case "rubble_rouser" -> 0.45;
             case "battle_cry" -> 0.35;
             case "overheat" -> 0.45;
             case "river_rapids" -> 0.30;
@@ -6817,6 +7122,7 @@ public class GameplayPlaybackManager {
 
     private String resolveFollowUpRiderToken(AbilityData ability) {
         return switch (lower(ability.getId())) {
+            case "rubble_rouser" -> "knockback";
             case "overheat" -> "burn";
             case "hidrosis", "smoke_form" -> "blind";
             case "battle_cry", "triceratops_form" -> "knockback";
@@ -7674,7 +7980,8 @@ public class GameplayPlaybackManager {
 
     private boolean suppressGenericCasterVisual(AbilityData ability) {
         return switch (lower(ability != null ? ability.getId() : null)) {
-            case "iron_wall", "metal_coat", "alloy_enhancement", "obsidian_skin", "magma_sling" -> true;
+            case "iron_wall", "metal_coat", "alloy_enhancement", "obsidian_skin", "magma_sling",
+                    "rubble_rouser" -> true;
             default -> false;
         };
     }
@@ -7800,7 +8107,8 @@ public class GameplayPlaybackManager {
         return switch (castType) {
             case "projectile_volley" -> switch (abilityId) {
                 case "bullet_storm" -> 6;
-                case "frozen_needles", "cacti_cluster" -> 5;
+                case "frozen_needles" -> 5;
+                case "cacti_cluster" -> 1;
                 case "debris" -> 4;
                 default -> travelType.contains("storm") ? 5 : DEFAULT_PROJECTILE_CLUSTER_COUNT + 1;
             };
@@ -7813,6 +8121,9 @@ public class GameplayPlaybackManager {
     }
 
     private double resolveProjectileSpeedPerTick(AbilityData ability) {
+        if ("cacti_cluster".equals(lower(ability != null ? ability.getId() : null))) {
+            return 9.0 / StyleManager.TICKS_PER_SECOND;
+        }
         double speedPerSecond = ability.getProjectileSpeed() > 0
                 ? ability.getProjectileSpeed()
                 : DEFAULT_PROJECTILE_SPEED;
@@ -7837,6 +8148,9 @@ public class GameplayPlaybackManager {
     private double resolveProjectileCollisionRadius(AbilityData ability, String castType) {
         if (isMagmaSlingAbility(ability)) {
             return 1.8;
+        }
+        if ("cacti_cluster".equals(lower(ability != null ? ability.getId() : null))) {
+            return 1.65;
         }
         if (ability.getWidth() > 0) {
             return Math.max(DEFAULT_PROJECTILE_COLLISION_RADIUS, ability.getWidth() / 3.5);
@@ -8405,6 +8719,34 @@ public class GameplayPlaybackManager {
         return true;
     }
 
+    private int launchTargetsFromPoint(Ref<EntityStore> sourceRef,
+                                       Store<EntityStore> store,
+                                       AbilityData ability,
+                                       Vector3d center,
+                                       double radius,
+                                       boolean applyStun) {
+        if (sourceRef == null || store == null || ability == null || center == null) {
+            return 0;
+        }
+
+        int launched = 0;
+        for (Ref<EntityStore> targetRef : collectNearbyNpcTargets(store, center, radius, 8)) {
+            if (targetRef == null || !targetRef.isValid()) {
+                continue;
+            }
+            boolean moved = applyKnockbackFromPoint(targetRef, store, center, ability);
+            if (!moved) {
+                continue;
+            }
+            if (applyStun) {
+                applyTargetToken("stun", targetRef, store, sourceRef, resolveEntityId(sourceRef, store), ability);
+            }
+            applyEffectById(targetRef, store, resolveImpactEffectId("terra", "stone", ability));
+            launched++;
+        }
+        return launched;
+    }
+
     private Vector3d resolveCastContextPosition(CastContext context,
                                                 Ref<EntityStore> fallbackRef,
                                                 Store<EntityStore> store) {
@@ -8487,11 +8829,32 @@ public class GameplayPlaybackManager {
         if (entityId == null) {
             return false;
         }
+        if (sourcePlayerId != null && sourcePlayerId.equals(entityId)) {
+            LOG.info("[MOTM] target_skipped reason=caster ability=" + safe(ability != null ? ability.getId() : "")
+                    + " token=" + normalized
+                    + " target=" + entityId);
+            return false;
+        }
+        NPCEntity npc = store != null && targetRef != null && targetRef.isValid()
+                ? store.getComponent(targetRef, NPCEntity.getComponentType())
+                : null;
+        if (npc != null && isMotmSummon(npc)) {
+            LOG.info("[MOTM] target_skipped reason=allied_summon ability=" + safe(ability != null ? ability.getId() : "")
+                    + " token=" + normalized
+                    + " target=" + entityId);
+            return false;
+        }
 
         if ("knockback".equals(normalized)) {
-            return isAnchorDragAbility(ability)
+            boolean applied = isAnchorDragAbility(ability)
                     ? applyAnchorDrag(targetRef, store, sourceRef, ability)
                     : applyKnockback(targetRef, store, sourceRef, ability);
+            if (applied) {
+                LOG.info("[MOTM] target_hit reason=hostile ability=" + safe(ability != null ? ability.getId() : "")
+                        + " token=" + normalized
+                        + " target=" + entityId);
+            }
+            return applied;
         }
 
         if ("stun_if_wall".equals(normalized)) {
@@ -8514,6 +8877,9 @@ public class GameplayPlaybackManager {
         }
 
         mod.getStatusEffectManager().applyEffect(entityId, effect);
+        LOG.info("[MOTM] target_hit reason=hostile ability=" + safe(ability != null ? ability.getId() : "")
+                + " token=" + normalized
+                + " target=" + entityId);
         if (effect.getType() == StatusEffect.Type.SHOCKED) {
             recentShockedTargets.put(entityId, System.currentTimeMillis());
             LOG.info("[MOTM] Shocked token applied: ability=" + ability.getId()
@@ -8935,6 +9301,17 @@ public class GameplayPlaybackManager {
         public long nextApplyAtMillis() { return nextApplyAtMillis; }
     }
 
+    private record ActiveDelayedBurst(String ownerPlayerId,
+                                      Ref<EntityStore> ownerRef,
+                                      String classId,
+                                      String styleId,
+                                      AbilityData ability,
+                                      Vector3d center,
+                                      String primaryEntityId,
+                                      long burstAtMillis,
+                                      double radius,
+                                      String traceId) {}
+
     public record ExecutionResult(
             PlaybackResult playback,
             int targetsHit,
@@ -9014,6 +9391,12 @@ public class GameplayPlaybackManager {
     private record LineControlRuntimeResult(boolean started, String summary) {
         private static LineControlRuntimeResult none() {
             return new LineControlRuntimeResult(false, "");
+        }
+    }
+
+    private record MovementContactRuntimeResult(int targetsHit, double damage, String summary) {
+        private static MovementContactRuntimeResult none() {
+            return new MovementContactRuntimeResult(0, 0.0, "");
         }
     }
 
