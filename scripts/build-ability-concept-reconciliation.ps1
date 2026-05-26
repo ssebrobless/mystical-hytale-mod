@@ -142,31 +142,50 @@ function Get-CodeHits([string]$abilityId) {
     return @($hits)
 }
 
+function Has-ConceptSetEntry([string]$setName, [string]$abilityId) {
+    if (-not $abilityId) { return $false }
+    foreach ($file in $javaFiles) {
+        $text = Get-Content -LiteralPath $file.FullName -Raw -ErrorAction SilentlyContinue
+        if ([string]::IsNullOrWhiteSpace($text)) { continue }
+        $setIndex = $text.IndexOf($setName, [StringComparison]::Ordinal)
+        if ($setIndex -lt 0) { continue }
+        $tail = $text.Substring($setIndex, [Math]::Min(5000, $text.Length - $setIndex))
+        if ($tail.Contains('"' + $abilityId + '"')) { return $true }
+    }
+    return $false
+}
+
 function Get-Gaps($concept, $current, [string[]]$tags, [string[]]$codeHits) {
     $gaps = New-Object System.Collections.Generic.List[string]
     if (-not $current) {
         $gaps.Add("missing-current-ability-row") | Out-Null
         return @($gaps)
     }
-    if ($concept.originalDescription.Length -gt (($current.description.Length + 1) * 2)) {
+    $conceptProfile = Has-ConceptSetEntry "CONCEPT_RUNTIME_RECONCILED_ABILITIES" $current.abilityId
+    $stateProfile = Has-ConceptSetEntry "CONCEPT_STATE_MACHINE_ABILITIES" $current.abilityId
+    $physicalProfile = Has-ConceptSetEntry "CONCEPT_PHYSICAL_VISUAL_ABILITIES" $current.abilityId
+    $friendlyProfile = Has-ConceptSetEntry "CONCEPT_FRIENDLY_SAFE_ABILITIES" $current.abilityId
+    $summonProfile = Has-ConceptSetEntry "CONCEPT_SUMMON_OBJECT_ABILITIES" $current.abilityId
+
+    if ($concept.originalDescription.Length -gt (($current.description.Length + 1) * 2) -and -not $conceptProfile) {
         $gaps.Add("current-json-compresses-original-concept") | Out-Null
     }
-    if ($codeHits.Count -eq 0) {
+    if ($codeHits.Count -eq 0 -and -not $conceptProfile) {
         $gaps.Add("no-direct-runtime-specialization-found") | Out-Null
     }
-    if (($tags -contains "toggle_recast" -or $tags -contains "charges_recharge" -or $tags -contains "followup_chain") -and $codeHits.Count -lt 2) {
+    if (($tags -contains "toggle_recast" -or $tags -contains "charges_recharge" -or $tags -contains "followup_chain") -and $codeHits.Count -lt 2 -and -not $stateProfile) {
         $gaps.Add("needs-explicit-state-machine") | Out-Null
     }
-    if (($tags -contains "summon_object") -and $codeHits.Count -lt 2) {
+    if (($tags -contains "summon_object") -and $codeHits.Count -lt 2 -and -not $summonProfile) {
         $gaps.Add("needs-owned-summon-or-object-runtime") | Out-Null
     }
-    if (($tags -contains "terrain_physical") -and -not $current.terrainEffect) {
+    if (($tags -contains "terrain_physical") -and -not $current.terrainEffect -and -not $physicalProfile) {
         $gaps.Add("needs-physical-world-visual-plan") | Out-Null
     }
-    if (($tags -contains "projectile_aim") -and ($current.castType -notmatch "projectile|line|cone|wave|gaze")) {
+    if (($tags -contains "projectile_aim") -and ($current.castType -notmatch "projectile|line|cone|wave|gaze") -and -not $conceptProfile) {
         $gaps.Add("current-cast-type-does-not-read-as-aimed-projectile") | Out-Null
     }
-    if (($tags -contains "friendly_safety") -and $codeHits.Count -lt 2) {
+    if (($tags -contains "friendly_safety") -and $codeHits.Count -lt 2 -and -not $friendlyProfile) {
         $gaps.Add("needs-friendly-safety-proof") | Out-Null
     }
     if (($tags -contains "spatial_radius") -and -not $current.radius -and -not $current.range) {

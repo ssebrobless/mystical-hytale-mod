@@ -84,6 +84,74 @@ public class GameplayPlaybackManager {
             "burn", "dot", "stun", "stun_if_wall", "slow", "slow_stack", "vulnerability",
             "freeze", "root", "blind", "deafen", "disoriented", "attack_slow",
             "grounded", "shocked", "lightning", "knockback", "curse");
+    private static final Set<String> CONCEPT_RUNTIME_RECONCILED_ABILITIES = Set.of(
+            "stomp", "aftershock", "sinkhole",
+            "iron_wall", "metal_coat", "alloy_enhancement",
+            "lava_pool", "obsidian_skin", "magma_sling",
+            "rubble_rouser", "pillar_strike", "rockslide",
+            "rooted", "vines", "sapling",
+            "nightshade", "frolick", "cacti_cluster",
+            "gargoyle", "glare", "tunnel",
+            "burrow", "mudpit", "debris",
+            "sandstorm", "dust_devil", "vitrification",
+            "lapidary", "fracture", "refraction",
+            "frozen_needles", "stalactite_crash", "skate",
+            "snow_imp", "snowstorm", "frosty",
+            "high_tide", "waverider", "riptide",
+            "piercing_rain", "rainbow", "splash",
+            "scald", "geyser", "overheat",
+            "vapor_vanish", "dispersion", "hidrosis",
+            "ice_cap", "glacier", "ice_shelf",
+            "tide_pool", "abyssal_assist", "rip_current",
+            "leap_frog", "river_rapids", "swamp_monster",
+            "bilge_dump", "anchor_haul", "oil_spill",
+            "shriek", "sonic_boom", "battle_cry",
+            "jet_burst", "afterburner", "mach_punch",
+            "thunderclap", "smite", "chain_lightning",
+            "twister", "funnel_cloud", "eye_of_the_storm",
+            "leap", "divebomb", "hang_time",
+            "air_slash", "gale_cutter", "razor_wind",
+            "smoke_bomb", "vanish", "smoke_form",
+            "gust", "cyclone_shield", "tempest",
+            "air_shot", "bullet_storm", "pressure_burst",
+            "smog", "toxic_breath", "acid_rain",
+            "fireball", "ignite", "combust",
+            "raise_dead", "life_drain", "death_mark",
+            "shadow_step", "umbral_veil", "dark_embrace",
+            "hellfire", "infernal_ground", "soul_scorch",
+            "dominate", "mind_shatter", "hivemind",
+            "imbue_power", "imbue_fortitude", "imbue_swiftness",
+            "sanctuary", "absorb", "purify",
+            "rift", "void_spawn", "consume",
+            "scarak_egg", "brood_surge", "locust_queen",
+            "pterodactyl_form", "triceratops_form", "t_rex_form");
+    private static final Set<String> CONCEPT_STATE_MACHINE_ABILITIES = Set.of(
+            "alloy_enhancement", "obsidian_skin", "rubble_rouser", "vines", "sapling",
+            "gargoyle", "glare", "tunnel", "sandstorm", "dust_devil", "vitrification",
+            "lapidary", "fracture", "refraction", "snowstorm", "waverider", "riptide",
+            "piercing_rain", "vapor_vanish", "dispersion", "ice_cap", "ice_shelf",
+            "abyssal_assist", "rip_current", "leap_frog", "river_rapids", "bilge_dump",
+            "oil_spill", "sonic_boom", "jet_burst", "afterburner", "mach_punch",
+            "divebomb", "hang_time", "razor_wind", "air_shot", "infernal_ground",
+            "soul_scorch", "shadow_step", "umbral_veil", "death_mark", "mind_shatter",
+            "hivemind");
+    private static final Set<String> CONCEPT_PHYSICAL_VISUAL_ABILITIES = Set.of(
+            "stomp", "aftershock", "sinkhole", "iron_wall", "lava_pool", "obsidian_skin",
+            "magma_sling", "pillar_strike", "rockslide", "rooted", "vines", "sapling",
+            "nightshade", "frolick", "cacti_cluster", "glare", "tunnel", "burrow",
+            "mudpit", "debris", "sandstorm", "dust_devil", "lapidary", "fracture",
+            "refraction", "stalactite_crash", "snowstorm", "waverider", "riptide",
+            "scald", "ice_cap", "ice_shelf", "river_rapids", "anchor_haul",
+            "fireball", "life_drain", "consume", "hellfire", "infernal_ground",
+            "triceratops_form", "shriek", "sonic_boom", "twister", "funnel_cloud",
+            "mach_punch", "divebomb", "hang_time", "air_slash", "gale_cutter",
+            "air_shot", "bullet_storm", "rip_current", "leap_frog");
+    private static final Set<String> CONCEPT_FRIENDLY_SAFE_ABILITIES = Set.of(
+            "lava_pool", "mudpit", "rockslide", "frolick", "life_drain", "soul_scorch",
+            "smoke_bomb", "toxic_breath", "oil_spill");
+    private static final Set<String> CONCEPT_SUMMON_OBJECT_ABILITIES = Set.of(
+            "sapling", "lapidary", "snow_imp", "frosty", "swamp_monster", "funnel_cloud",
+            "raise_dead", "shadow_step", "void_spawn", "scarak_egg", "locust_queen");
     private static final double MAX_HORIZONTAL_MOVEMENT = 12.0;
     private static final double MAX_VERTICAL_MOVEMENT = 6.0;
     private static final double DEFAULT_LINE_HALF_WIDTH = 1.75;
@@ -252,6 +320,9 @@ public class GameplayPlaybackManager {
         FormRuntimeResult form = applyTransformation(runtimePlayer, player, style, ability);
         SummonRuntimeResult summons = handleSummonRuntime(runtimePlayer, player, style, ability, context);
         WeaponFollowUpResult followUp = armWeaponFollowUp(player, ability);
+        AbilitySpecificRuntimeResult conceptRuntime = applyConceptRuntimeProfile(
+                player, style, ability, playback, projectileLaunch, fieldRuntime, supplementalTerrain,
+                specificRuntime, movementContact, combat, targetEffects, lineControl, channel, form, summons, followUp);
 
         if (combat.totalDamage() > 0) {
             player.getStatistics().setTotalDamageDealt(
@@ -278,6 +349,7 @@ public class GameplayPlaybackManager {
         if (!form.summary().isBlank()) summaryParts.add(form.summary());
         if (!summons.summary().isBlank()) summaryParts.add(summons.summary());
         if (!followUp.summary().isBlank()) summaryParts.add(followUp.summary());
+        if (!conceptRuntime.summary().isBlank()) summaryParts.add(conceptRuntime.summary());
 
         String summary = summaryParts.isEmpty()
                 ? "No live runtime was applied."
@@ -291,7 +363,8 @@ public class GameplayPlaybackManager {
                         + " terrain=" + supplementalTerrain.activated()
                         + " movementContact=" + movementContact.targetsHit()
                         + " summons=" + summons.spawned()
-                        + " form=" + form.applied());
+                        + " form=" + form.applied()
+                        + " concept=" + !conceptRuntime.summary().isBlank());
         mod.recordCausality("ability_cast_end", traceId, MotmObservability.mapOf(
                 "playerId", player.getPlayerId(),
                 "styleId", safe(style.getId()),
@@ -305,7 +378,11 @@ public class GameplayPlaybackManager {
                 "movementContactTargets", movementContact.targetsHit(),
                 "summonsSpawned", summons.spawned(),
                 "summonsBuffed", summons.buffed(),
-                "formApplied", form.applied()
+                "formApplied", form.applied(),
+                "conceptRuntime", !conceptRuntime.summary().isBlank(),
+                "conceptRoute", conceptRoute(ability),
+                "conceptVisualPlan", conceptVisualPlan(ability),
+                "conceptSafety", conceptSafetyPlan(ability)
         ));
 
         return new ExecutionResult(
@@ -1514,6 +1591,163 @@ public class GameplayPlaybackManager {
         return parts.isEmpty()
                 ? AbilitySpecificRuntimeResult.none()
                 : new AbilitySpecificRuntimeResult(String.join(" | ", parts));
+    }
+
+    private AbilitySpecificRuntimeResult applyConceptRuntimeProfile(PlayerData player,
+                                                                    StyleData style,
+                                                                    AbilityData ability,
+                                                                    PlaybackResult playback,
+                                                                    ProjectileLaunchResult projectileLaunch,
+                                                                    FieldRuntimeResult fieldRuntime,
+                                                                    SupplementalTerrainRuntimeResult supplementalTerrain,
+                                                                    AbilitySpecificRuntimeResult specificRuntime,
+                                                                    MovementContactRuntimeResult movementContact,
+                                                                    CombatResolution combat,
+                                                                    EffectResolution targetEffects,
+                                                                    LineControlRuntimeResult lineControl,
+                                                                    ChannelRuntimeResult channel,
+                                                                    FormRuntimeResult form,
+                                                                    SummonRuntimeResult summons,
+                                                                    WeaponFollowUpResult followUp) {
+        String abilityId = lower(ability != null ? ability.getId() : null);
+        if (!CONCEPT_RUNTIME_RECONCILED_ABILITIES.contains(abilityId)) {
+            return AbilitySpecificRuntimeResult.none();
+        }
+
+        String route = conceptRoute(ability);
+        String visualPlan = conceptVisualPlan(ability);
+        String safety = conceptSafetyPlan(ability);
+        boolean mechanicalSignal = hasConceptMechanicalSignal(
+                playback, projectileLaunch, fieldRuntime, supplementalTerrain, specificRuntime,
+                movementContact, combat, targetEffects, lineControl, channel, form, summons, followUp);
+        boolean visualSignal = hasConceptVisualSignal(
+                ability, projectileLaunch, fieldRuntime, supplementalTerrain, specificRuntime, form, summons);
+
+        mod.recordCausality("ability_concept_route", mod.currentObservabilityTraceId(), MotmObservability.mapOf(
+                "playerId", player != null ? player.getPlayerId() : "",
+                "classId", player != null ? safe(player.getPlayerClass()) : "",
+                "styleId", style != null ? safe(style.getId()) : "",
+                "abilityId", safe(ability != null ? ability.getId() : ""),
+                "route", route,
+                "visualPlan", visualPlan,
+                "safety", safety,
+                "mechanicalSignal", mechanicalSignal,
+                "visualSignal", visualSignal,
+                "stateMachine", CONCEPT_STATE_MACHINE_ABILITIES.contains(abilityId),
+                "physicalVisual", CONCEPT_PHYSICAL_VISUAL_ABILITIES.contains(abilityId),
+                "friendlySafe", CONCEPT_FRIENDLY_SAFE_ABILITIES.contains(abilityId),
+                "summonOrObject", CONCEPT_SUMMON_OBJECT_ABILITIES.contains(abilityId)
+        ));
+
+        StringBuilder summary = new StringBuilder("concept route: ").append(route);
+        if (!visualPlan.isBlank()) {
+            summary.append(" | visual: ").append(visualPlan);
+        }
+        if (!safety.isBlank()) {
+            summary.append(" | safety: ").append(safety);
+        }
+        summary.append(" | mechanical ").append(mechanicalSignal ? "ok" : "needs-live-proof");
+        summary.append(" | visual ").append(visualSignal ? "ok" : "needs-live-proof");
+        return new AbilitySpecificRuntimeResult(summary.toString());
+    }
+
+    private boolean hasConceptMechanicalSignal(PlaybackResult playback,
+                                               ProjectileLaunchResult projectileLaunch,
+                                               FieldRuntimeResult fieldRuntime,
+                                               SupplementalTerrainRuntimeResult supplementalTerrain,
+                                               AbilitySpecificRuntimeResult specificRuntime,
+                                               MovementContactRuntimeResult movementContact,
+                                               CombatResolution combat,
+                                               EffectResolution targetEffects,
+                                               LineControlRuntimeResult lineControl,
+                                               ChannelRuntimeResult channel,
+                                               FormRuntimeResult form,
+                                               SummonRuntimeResult summons,
+                                               WeaponFollowUpResult followUp) {
+        return (playback != null && !playback.summary().isBlank())
+                || (projectileLaunch != null && projectileLaunch.launched() > 0)
+                || (fieldRuntime != null && fieldRuntime.activated())
+                || (supplementalTerrain != null && supplementalTerrain.activated())
+                || (specificRuntime != null && !specificRuntime.summary().isBlank())
+                || (movementContact != null && movementContact.targetsHit() > 0)
+                || (combat != null && (combat.targetsHit() > 0 || combat.totalDamage() > 0.0))
+                || (targetEffects != null && !targetEffects.summary().isBlank())
+                || (lineControl != null && lineControl.started())
+                || (channel != null && channel.started())
+                || (form != null && form.applied())
+                || (summons != null && (summons.spawned() > 0 || summons.buffed() > 0))
+                || (followUp != null && !followUp.summary().isBlank());
+    }
+
+    private boolean hasConceptVisualSignal(AbilityData ability,
+                                           ProjectileLaunchResult projectileLaunch,
+                                           FieldRuntimeResult fieldRuntime,
+                                           SupplementalTerrainRuntimeResult supplementalTerrain,
+                                           AbilitySpecificRuntimeResult specificRuntime,
+                                           FormRuntimeResult form,
+                                           SummonRuntimeResult summons) {
+        String abilityId = lower(ability != null ? ability.getId() : null);
+        if (!CONCEPT_PHYSICAL_VISUAL_ABILITIES.contains(abilityId)) {
+            return true;
+        }
+        return (projectileLaunch != null && projectileLaunch.launched() > 0)
+                || (fieldRuntime != null && fieldRuntime.activated())
+                || (supplementalTerrain != null && supplementalTerrain.activated())
+                || (specificRuntime != null && !specificRuntime.summary().isBlank())
+                || (form != null && form.applied())
+                || (summons != null && summons.spawned() > 0);
+    }
+
+    private String conceptRoute(AbilityData ability) {
+        if (ability == null) {
+            return "";
+        }
+        String abilityId = lower(ability.getId());
+        if (CONCEPT_SUMMON_OBJECT_ABILITIES.contains(abilityId)) {
+            return "owned summon/object lifecycle";
+        }
+        if (CONCEPT_STATE_MACHINE_ABILITIES.contains(abilityId)) {
+            return "explicit state machine";
+        }
+        String castType = lower(ability.getCastType());
+        if (DELAYED_PROJECTILE_CAST_TYPES.contains(castType)) {
+            return "aimed projectile";
+        }
+        if (PERSISTENT_FIELD_CAST_TYPES.contains(castType) || isPersistentFieldAbility(ability)) {
+            return "persistent field";
+        }
+        if (MOVEMENT_CAST_TYPES.contains(castType)) {
+            return "movement/form";
+        }
+        if (AREA_CAST_TYPES.contains(castType) || CONE_CAST_TYPES.contains(castType)) {
+            return "area/status";
+        }
+        return "self/support";
+    }
+
+    private String conceptVisualPlan(AbilityData ability) {
+        if (ability == null) {
+            return "";
+        }
+        String abilityId = lower(ability.getId());
+        if (CONCEPT_PHYSICAL_VISUAL_ABILITIES.contains(abilityId)) {
+            return "physical/proxy world visual";
+        }
+        String terrain = lower(ability.getTerrainEffect());
+        if (!terrain.isBlank()) {
+            return "terrain/effect: " + terrain;
+        }
+        if (CONCEPT_SUMMON_OBJECT_ABILITIES.contains(abilityId)) {
+            return "owned visible entity/object";
+        }
+        return "effect/status visual";
+    }
+
+    private String conceptSafetyPlan(AbilityData ability) {
+        String abilityId = lower(ability != null ? ability.getId() : null);
+        return CONCEPT_FRIENDLY_SAFE_ABILITIES.contains(abilityId)
+                ? "hostile-only; caster/allies/summons skipped"
+                : "standard hostile targeting";
     }
 
     private Vector3d resolveContextTargetOrBlockPosition(CastContext context,
