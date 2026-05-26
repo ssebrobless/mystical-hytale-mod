@@ -119,6 +119,67 @@ function Get-SlotActions {
     )
 }
 
+function New-InputStep {
+    param(
+        [string]$Action,
+        [string]$Label
+    )
+
+    [PSCustomObject]@{
+        action = $Action
+        label = ($Label -replace '[^A-Za-z0-9_.-]', '-')
+    }
+}
+
+function Get-AbilityExercisePlan {
+    param($Slot)
+
+    $abilityId = ([string]$Slot.ability).ToLowerInvariant()
+    $castType = ([string]$Slot.cast).ToLowerInvariant()
+    $steps = New-Object System.Collections.Generic.List[object]
+
+    # Stomp is armed by the cast and proved by a follow-up jump/landing.
+    if ($abilityId -eq "stomp" -and $ControlMode -eq "PrimarySecondaryUse") {
+        $steps.Add((New-InputStep "Stomp" "$($Slot.label)-arm-and-land"))
+        return $steps
+    }
+
+    $steps.Add((New-InputStep $Slot.action $Slot.label))
+
+    $movementAbilities = @(
+        "rockslide", "burrow", "tunnel", "dust_devil", "jet_burst", "afterburner",
+        "mach_punch", "dispersion", "leap_frog", "skate", "shadow_step"
+    )
+    $jumpAbilities = @("leap", "divebomb", "hang_time")
+    $trailAbilities = @("frolick", "sandstorm", "smoke_form", "waverider", "river_rapids")
+    $weaponFollowUps = @("alloy_enhancement", "rubble_rouser", "razor_wind", "oil_spill")
+    $aimNudges = @(
+        "sapling", "nightshade", "magma_sling", "vitrification", "rubble_rouser",
+        "air_slash", "gale_cutter", "air_shot", "bullet_storm", "smite", "fireball",
+        "hellfire", "mind_shatter", "scald", "frozen_needles", "anchor_haul"
+    )
+
+    if ($aimNudges -contains $abilityId -or $castType -match "projectile|line|gaze|cone|chain") {
+        $steps.Add((New-InputStep "FaceRight" "$($Slot.label)-aim-nudge"))
+    }
+    if ($movementAbilities -contains $abilityId -or $castType -match "dash|teleport|transformation") {
+        $steps.Add((New-InputStep "Forward" "$($Slot.label)-movement-followup"))
+    }
+    if ($jumpAbilities -contains $abilityId -or $castType -match "leap|dive|air") {
+        $steps.Add((New-InputStep "ForwardJump" "$($Slot.label)-jump-followup"))
+    }
+    if ($trailAbilities -contains $abilityId) {
+        $steps.Add((New-InputStep "Forward" "$($Slot.label)-trail-followup"))
+        $steps.Add((New-InputStep "StrafeRight" "$($Slot.label)-trail-strafe"))
+    }
+    if ($weaponFollowUps -contains $abilityId) {
+        $steps.Add((New-InputStep "LeftClick" "$($Slot.label)-weapon-followup-1"))
+        $steps.Add((New-InputStep "LeftClick" "$($Slot.label)-weapon-followup-2"))
+    }
+
+    return $steps
+}
+
 function Assert-NormalControlEvidence {
     param($Expected)
 
@@ -165,6 +226,7 @@ $expected = @($slotActions | ForEach-Object {
         action = $_.action
         label = $_.label
         ability = $abilities[$_.slot - 1]
+        cast = [string]$style.abilities[$_.slot - 1].cast_type
     }
 })
 
@@ -196,7 +258,11 @@ try {
 
     foreach ($slot in $expected) {
         Invoke-ObservedCommand "motm dev observe marker normal-control-slot-$($slot.slot)-before" -Delay 150
-        Invoke-InputAction $slot.action $slot.label
+        $exercisePlan = @(Get-AbilityExercisePlan $slot)
+        Add-Line("- Exercise plan for slot $($slot.slot) / $($slot.ability): " + (($exercisePlan | ForEach-Object { $_.action }) -join " -> "))
+        foreach ($step in $exercisePlan) {
+            Invoke-InputAction $step.action $step.label
+        }
         Invoke-ObservedCommand "motm dev observe snapshot normal-control-slot-$($slot.slot)-after" -Delay 250
     }
 

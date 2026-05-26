@@ -144,6 +144,12 @@ movement path, dash, leap, tunnel, swim, summon AI, or player-positioned fields.
 runner. It sets a class/style, selects the spellbook hotbar slot, sends actual
 player input for slots 1-3, collects MOTM observability evidence, and then
 requires the expected ability id to appear after the matching input marker.
+The probe now also attaches a small exercise plan to each ability: projectiles
+receive an aim nudge, dash/teleport/transformation abilities receive movement,
+jump and dive abilities receive a jump follow-up, trail abilities move/strafe
+after activation, and weapon-buff abilities perform follow-up attacks. This is
+still server-truth oriented, but it prevents the old "stand still and call it
+tested" failure mode.
 
 Example:
 
@@ -172,6 +178,32 @@ Use this probe before calling any style complete through normal player controls.
 If the probe fails, the failure is either the custom spellbook interaction
 contract, the current keybind/action mapping, or the ability's normal route, not
 the generic `/motm dev test ability` route.
+
+Queue-only planning run:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-concept-verification-layers.ps1 `
+  -WorldName "MOTM Creative Test" `
+  -Layers NormalControl `
+  -ControlMode Both `
+  -DryRunQueue
+```
+
+Live all-style normal-control run, after Hytale is opened through the official
+launcher and the target world is loaded:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-concept-verification-layers.ps1 `
+  -WorldName "MOTM Creative Test" `
+  -Layers NormalControl `
+  -ControlMode Both `
+  -SkipBuild `
+  -StopOnFailure
+```
+
+If no foregroundable `Hytale` window is found, the runner now writes a single
+`NormalControlPreflight=BLOCKED` row instead of producing a misleading pile of
+ability failures.
 
 ## Immediate Implementation Order
 

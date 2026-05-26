@@ -8,6 +8,7 @@ param(
     [ValidateSet("PrimarySecondaryUse", "AbilityKeys", "Both")]
     [string]$ControlMode = "PrimarySecondaryUse",
     [switch]$SkipBuild,
+    [switch]$DryRunQueue,
     [switch]$StopOnFailure
 )
 
@@ -61,6 +62,72 @@ function Get-ProofIds {
     })
 }
 
+function Test-HytaleWindowAvailable {
+    $window = Get-Process -ErrorAction SilentlyContinue |
+        Where-Object { $_.MainWindowTitle -eq "Hytale" -and $_.MainWindowHandle -ne 0 } |
+        Select-Object -First 1
+    return $null -ne $window
+}
+
+function Add-Row {
+    param(
+        [string]$Layer,
+        [string]$Status,
+        [string]$Log,
+        [string]$Note
+    )
+
+    $script:rows.Add([PSCustomObject]@{
+        layer = $Layer
+        status = $Status
+        log = $Log
+        note = $Note
+    })
+}
+
+function Get-AbilityExerciseTags {
+    param(
+        [string]$AbilityId,
+        [string]$CastType
+    )
+
+    $ability = $AbilityId.ToLowerInvariant()
+    $cast = $CastType.ToLowerInvariant()
+    $tags = New-Object System.Collections.Generic.List[string]
+    $tags.Add("normal-input")
+
+    $movementAbilities = @(
+        "rockslide", "burrow", "tunnel", "dust_devil", "jet_burst", "afterburner",
+        "mach_punch", "dispersion", "leap_frog", "skate", "shadow_step"
+    )
+    $jumpAbilities = @("stomp", "leap", "divebomb", "hang_time")
+    $trailAbilities = @("frolick", "sandstorm", "smoke_form", "waverider", "river_rapids")
+    $weaponFollowUps = @("alloy_enhancement", "rubble_rouser", "razor_wind", "oil_spill")
+    $aimNudges = @(
+        "sapling", "nightshade", "magma_sling", "vitrification", "rubble_rouser",
+        "air_slash", "gale_cutter", "air_shot", "bullet_storm", "smite", "fireball",
+        "hellfire", "mind_shatter", "scald", "frozen_needles", "anchor_haul"
+    )
+
+    if ($aimNudges -contains $ability -or $cast -match "projectile|line|gaze|cone|chain") {
+        $tags.Add("aim-nudge")
+    }
+    if ($movementAbilities -contains $ability -or $cast -match "dash|teleport|transformation") {
+        $tags.Add("movement-followup")
+    }
+    if ($jumpAbilities -contains $ability -or $cast -match "leap|dive|air") {
+        $tags.Add("jump-followup")
+    }
+    if ($trailAbilities -contains $ability) {
+        $tags.Add("trail-move-strafe")
+    }
+    if ($weaponFollowUps -contains $ability) {
+        $tags.Add("weapon-followup-attacks")
+    }
+
+    return $tags
+}
+
 function Invoke-LayerCommand {
     param(
         [string]$Label,
@@ -88,12 +155,7 @@ function Invoke-LayerCommand {
     if ($status -eq "PASS") {
         Add-Line("  - PASS")
     }
-    $rows.Add([PSCustomObject]@{
-        layer = $Label
-        status = $status
-        log = $LogName
-        note = $note
-    })
+    Add-Row $Label $status $LogName $note
 }
 
 $script:PowerShellExe = Resolve-PowerShellExecutable
@@ -107,6 +169,11 @@ Add-Line("- Classes: $($Classes -join ', ')")
 Add-Line("- Styles: " + $(if ($Styles.Count -gt 0) { $Styles -join ", " } else { "all selected classes" }))
 Add-Line("- Layers: $($Layers -join ', ')")
 Add-Line("")
+
+if ($DryRunQueue) {
+    Add-Line("## Dry Run Queue")
+    Add-Line("")
+}
 
 if ($Layers -contains "PrimitiveProofs") {
     $proofs = Get-ProofIds
@@ -127,12 +194,32 @@ if ($Layers -contains "PrimitiveProofs") {
 
 if ($Layers -contains "NormalControl") {
     $modes = if ($ControlMode -eq "Both") { @("PrimarySecondaryUse", "AbilityKeys") } else { @($ControlMode) }
+    if (-not $DryRunQueue -and -not (Test-HytaleWindowAvailable)) {
+        $note = "No foregroundable Hytale window found. Launch through the official launcher, enter the target world, then rerun this command."
+        Add-Line("## NormalControl Preflight")
+        Add-Line("")
+        Add-Line("BLOCKED: $note")
+        Add-Row "NormalControlPreflight" "BLOCKED" "" $note
+    } else {
     foreach ($style in $selectedStyles) {
         $classId = ([string]$style.'class_id').ToLowerInvariant()
         $styleId = ([string]$style.id).ToLowerInvariant()
         foreach ($mode in $modes) {
             $label = "NormalControl:{0}/{1}:{2}" -f $classId, $styleId, $mode
             $safeLabel = $label -replace '[^A-Za-z0-9_.-]', '-'
+            if ($DryRunQueue) {
+                Add-Line("- $label")
+                $slotNumber = 1
+                foreach ($ability in @($style.abilities)) {
+                    $abilityId = [string]$ability.id
+                    $castType = [string]$ability.cast_type
+                    $tags = @(Get-AbilityExerciseTags $abilityId $castType)
+                    Add-Line("  - slot ${slotNumber}: ${abilityId} (${castType}) -> $($tags -join ', ')")
+                    $slotNumber++
+                }
+                Add-Row $label "QUEUED" "" "Dry run only; no input sent."
+                continue
+            }
             $args = @(
                 "-NoProfile",
                 "-ExecutionPolicy", "Bypass",
@@ -146,13 +233,14 @@ if ($Layers -contains "NormalControl") {
             Invoke-LayerCommand $label $args "$safeLabel.log"
         }
     }
+    }
 }
 
 $rows | Export-Csv -LiteralPath (Join-Path $outDir "summary.csv") -NoTypeInformation -Encoding UTF8
 $rows | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $outDir "summary.json") -Encoding UTF8
 $report | Set-Content -LiteralPath (Join-Path $outDir "report.md") -Encoding UTF8
 
-$failures = @($rows | Where-Object { $_.status -ne "PASS" }).Count
+$failures = @($rows | Where-Object { $_.status -notin @("PASS", "QUEUED") }).Count
 Write-Host "[run-concept-verification-layers] report: $(Join-Path $outDir "report.md")"
 if ($failures -gt 0) {
     Write-Host "[run-concept-verification-layers] FAILURES: $failures"
