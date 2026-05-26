@@ -275,24 +275,24 @@
         {
           "id": "rockslide",
           "name": "Rockslide",
-          "description": "Trigger a rockslide dealing heavy damage and slowing",
+          "description": "Dash forward through enemies, pushing them aside while rocks, dirt, and debris kick up underfoot",
           "damage_percent": 20,
           "cooldown_seconds": 6,
-          "cast_time_seconds": 0.8,
+          "cast_time_seconds": 0.25,
           "recovery_seconds": 0.32,
-          "effect": "slow",
+          "effect": "knockback+grounded",
           "categories": [
             "damage",
-            "debuff"
+            "crowd_control"
           ],
           "resource_cost": 0,
-          "cast_type": "ground_zone",
-          "target_type": "ground_target",
-          "range": 16,
-          "radius": 6,
-          "delay_seconds": 0.8,
-          "duration_seconds": 3,
-          "terrain_effect": "falling_rocks"
+          "cast_type": "dash",
+          "target_type": "self",
+          "range": 5,
+          "radius": 2.4,
+          "dash_distance": 5,
+          "duration_seconds": 1.2,
+          "terrain_effect": "ruptured_earth"
         }
       ]
     },
@@ -330,7 +330,7 @@
           "cooldown_seconds": 0,
           "cast_time_seconds": 0.4,
           "recovery_seconds": 0.24,
-          "effect": "stun",
+          "effect": "root+dot",
           "categories": [
             "damage",
             "crowd_control"

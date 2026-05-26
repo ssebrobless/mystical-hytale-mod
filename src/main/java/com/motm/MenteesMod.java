@@ -278,6 +278,7 @@ public class MenteesMod extends JavaPlugin {
     private final Map<String, ActiveStyleTest> activeStyleTests = new ConcurrentHashMap<>();
     private final Set<String> freeCastPlayers = ConcurrentHashMap.newKeySet();
     private final Set<String> startupSelectionProtectedPlayers = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingRuntimeEntityEffectClears = ConcurrentHashMap.newKeySet();
     private final Map<String, Long> recentSpellbookSlotInputs = new ConcurrentHashMap<>();
     private final Map<String, Double> lastAppliedTargetHealthByPlayer = new ConcurrentHashMap<>();
     private final Map<String, Float> lastObservedFreeCastHealthByPlayer = new ConcurrentHashMap<>();
@@ -758,6 +759,7 @@ public class MenteesMod extends JavaPlugin {
         if (isDevToolsEnabled()) {
             statusEffectManager.clearEffects(playerId);
             elementalReactionManager.clearMarks(playerId);
+            queueRuntimeEntityEffectsClearForDev(playerId);
             setFreeCastEnabled(playerId, true);
             if (!ensureSpellbookItem(runtimePlayer)) {
                 queueSpellbookGrant(playerId);
@@ -993,6 +995,7 @@ public class MenteesMod extends JavaPlugin {
         resourceManager.tick();
         processPendingFreeCastInvulnerabilityClears(currentStore);
         processPendingRuntimeRebuilds(currentStore);
+        processPendingRuntimeEntityEffectClears(currentStore);
         processFreeCastTestSafety(currentStore);
         classPassiveManager.tick(onlineRuntimePlayers, currentStore);
         tickRuntimePerks(currentStore);
@@ -1036,8 +1039,11 @@ public class MenteesMod extends JavaPlugin {
         for (Map.Entry<String, Player> entry : Map.copyOf(onlineRuntimePlayers).entrySet()) {
             String playerId = entry.getKey();
             Player runtimePlayer = entry.getValue();
-            PlayerData playerData = playerDataManager.getOnlinePlayer(playerId);
             Ref<EntityStore> playerRef = runtimePlayer != null ? runtimePlayer.getReference() : null;
+            if (playerRef == null || !playerRef.isValid() || !isRefInCurrentStore(playerRef, currentStore)) {
+                continue;
+            }
+            PlayerData playerData = playerDataManager.getOnlinePlayer(playerId);
             runtimePerkManager.onPlayerTick(playerData, runtimePlayer, playerRef, currentStore, 0L);
         }
     }
@@ -2494,6 +2500,7 @@ public class MenteesMod extends JavaPlugin {
             String arenaResult = scrubStyleReviewArena(player);
             statusEffectManager.clearEffects(playerId);
             elementalReactionManager.clearMarks(playerId);
+            String visualResult = clearRuntimeEntityEffectsForDev(playerId, currentStore);
             styleManager.resetCooldowns(playerId);
             setFreeCastEnabled(playerId, false);
             activeStyleTests.remove(playerId);
@@ -2503,6 +2510,7 @@ public class MenteesMod extends JavaPlugin {
 
             String summary = "[MOTM] Style review arena reset: " + mobResult
                     + " | runtime=" + runtimeResult
+                    + " | visuals=" + visualResult
                     + " | arena=" + arenaResult;
             LOG.info(summary + " playerId=" + playerId);
             player.sendMessage(Message.raw(summary));
@@ -4350,6 +4358,9 @@ public class MenteesMod extends JavaPlugin {
         }
         statusEffectManager.clearEffects(playerId);
         elementalReactionManager.clearMarks(playerId);
+        if (isDevToolsEnabled()) {
+            queueRuntimeEntityEffectsClearForDev(playerId);
+        }
         gameplayPlaybackManager.clearArmedStomp(playerId);
         resourceManager.clearPlayerState(playerId);
         resourceManager.synchronizePersistentState(player);
@@ -5230,6 +5241,14 @@ public class MenteesMod extends JavaPlugin {
             return;
         }
 
+        if (gameplayPlaybackManager != null
+                && gameplayPlaybackManager.isTemporaryAbilityTerrainBlock(event.getTargetBlock())) {
+            event.setDamage(0.0f);
+            LOG.info("[MOTM] Protected temporary ability terrain from block damage: targetBlock="
+                    + event.getTargetBlock());
+            return;
+        }
+
         Player blockActor = resolveRuntimePlayerForBlockDamage(event, false);
         if (blockActor != null && runtimePerkManager != null) {
             String actorId = getRuntimePlayerId(blockActor);
@@ -5265,6 +5284,7 @@ public class MenteesMod extends JavaPlugin {
         float damageBefore = event.getDamage();
         float damageAfter = (float) (damageBefore * multiplier);
         event.setDamage(damageAfter);
+        classPassiveManager.markTerraMiningAffinityActive(playerId);
         LOG.info("[MOTM] Terra mining affinity applied: playerId=" + playerId
                 + " item=" + itemId
                 + " targetBlock=" + event.getTargetBlock()
@@ -5814,6 +5834,77 @@ public class MenteesMod extends JavaPlugin {
     public Set<String> getRecognizedSpellbookItemIds() { return SPELLBOOK_ITEM_IDS; }
     public Set<String> getRecognizedDevBookItemIds() { return DEV_GRIMOIRE_ITEM_IDS; }
     public boolean isCustomHudEnabled() { return CUSTOM_HUD_ENABLED; }
+
+    public String queueRuntimeEntityEffectsClearForDev(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return "no-player-id";
+        }
+        pendingRuntimeEntityEffectClears.add(playerId);
+        return "queued";
+    }
+
+    private void processPendingRuntimeEntityEffectClears(Store<EntityStore> currentStore) {
+        for (String playerId : Set.copyOf(pendingRuntimeEntityEffectClears)) {
+            Player player = onlineRuntimePlayers.get(playerId);
+            Ref<EntityStore> playerRef = player != null ? player.getReference() : null;
+            if (playerRef == null || !playerRef.isValid() || !isRefInCurrentStore(playerRef, currentStore)) {
+                continue;
+            }
+
+            String result = clearRuntimeEntityEffectsForDev(playerId, currentStore);
+            pendingRuntimeEntityEffectClears.remove(playerId);
+            LOG.info("[MOTM] Pending dev visual effect clear processed: playerId="
+                    + playerId + " result=" + result);
+        }
+    }
+
+    public String clearRuntimeEntityEffectsForDev(String playerId) {
+        return clearRuntimeEntityEffectsForDev(playerId, null);
+    }
+
+    public String clearRuntimeEntityEffectsForDev(String playerId, Store<EntityStore> currentStore) {
+        if (playerId == null || playerId.isBlank()) {
+            return "no-player-id";
+        }
+
+        Player runtimePlayer = onlineRuntimePlayers.get(playerId);
+        if (runtimePlayer == null) {
+            return "no-runtime-player";
+        }
+
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid()) {
+            return "no-player-store";
+        }
+        if (!isRefInCurrentStore(playerRef, currentStore)) {
+            return "wrong-store";
+        }
+
+        Store<EntityStore> store = currentStore != null ? currentStore : playerRef.getStore();
+        if (store == null) {
+            return "no-player-store";
+        }
+        EffectControllerComponent controller = store.getComponent(playerRef, EffectControllerComponent.getComponentType());
+        if (controller == null) {
+            return "no-effect-controller";
+        }
+
+        int before = controller.getActiveEffectIndexes() != null
+                ? controller.getActiveEffectIndexes().length
+                : controller.getAllActiveEntityEffects().length;
+        controller.clearEffects(playerRef, store);
+        LOG.info("[MOTM] Dev visual effects cleared: playerId=" + playerId
+                + " nativeEffectsBefore=" + before);
+        return "cleared " + before + " native effect" + (before == 1 ? "" : "s");
+    }
+
+    private boolean isRefInCurrentStore(Ref<EntityStore> ref, Store<EntityStore> currentStore) {
+        if (ref == null || !ref.isValid() || ref.getStore() == null) {
+            return false;
+        }
+        return currentStore == null || ref.getStore() == currentStore || ref.getStore().equals(currentStore);
+    }
+
     public MotmPreflightAudit.AuditReport runPreflightAudit() {
         lastPreflightAudit = MotmPreflightAudit.run(this);
         return lastPreflightAudit;

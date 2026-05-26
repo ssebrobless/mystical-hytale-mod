@@ -1,4 +1,4 @@
-Group #Root {
+﻿Group #Root {
   Anchor: (
     Bottom: 32,
     Width: 420,
@@ -7,7 +7,7 @@ Group #Root {
 
   Group #StatusRoot {
     Anchor: (
-      Bottom: 154,
+      Bottom: 96,
       Width: 420,
       Height: 34
     );
@@ -1000,16 +1000,17 @@ Group #Root {
 
   Group #XpRoot {
     Anchor: (
-      Bottom: 126,
-      Width: 420,
-      Height: 24
+      Left: -700,
+      Top: -775,
+      Width: 270,
+      Height: 34
     );
 
     ProgressBar #XpBar {
       Anchor: (
         Left: 0,
-        Top: 0,
-        Width: 420,
+        Top: 18,
+        Width: 270,
         Height: 8
       );
       BarTexturePath: "Assets/BarFill_Xp.png";
@@ -1018,9 +1019,9 @@ Group #Root {
     Label #XpLabel {
       Anchor: (
         Left: 0,
-        Top: 10,
-        Width: 420,
-        Height: 12
+        Top: 0,
+        Width: 270,
+        Height: 16
       );
       Style: (
         FontSize: 12,
@@ -1033,7 +1034,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 22,
-        Width: 420,
+        Width: 270,
         Height: 12
       );
       Visible: false;
@@ -1041,6 +1042,89 @@ Group #Root {
         FontSize: 11,
         TextColor: #c7c8d2
       );
+    }
+  }
+
+  Group #PassiveTrackerRoot {
+    Anchor: (
+      Left: 430,
+      Top: -710,
+      Width: 380,
+      Height: 230
+    );
+    Visible: false;
+
+    Group #TrackerRow1Root { Anchor: (Left: 0, Top: 0, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow1NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow1Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow1TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow1Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow2Root { Anchor: (Left: 0, Top: 18, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow2NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow2Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow2TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow2Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow3Root { Anchor: (Left: 0, Top: 36, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow3NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow3Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow3TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow3Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow4Root { Anchor: (Left: 0, Top: 54, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow4NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow4Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow4TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow4Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow5Root { Anchor: (Left: 0, Top: 72, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow5NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow5Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow5TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow5Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow6Root { Anchor: (Left: 0, Top: 90, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow6NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow6Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow6TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow6Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow7Root { Anchor: (Left: 0, Top: 108, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow7NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow7Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow7TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow7Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow8Root { Anchor: (Left: 0, Top: 126, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow8NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow8Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow8TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow8Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow9Root { Anchor: (Left: 0, Top: 144, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow9NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow9Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow9TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow9Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow10Root { Anchor: (Left: 0, Top: 162, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow10NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow10Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow10TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow10Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow11Root { Anchor: (Left: 0, Top: 180, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow11NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow11Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow11TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow11Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
+    }
+    Group #TrackerRow12Root { Anchor: (Left: 0, Top: 198, Width: 320, Height: 18); Visible: false;
+      Label #TrackerRow12NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
+      Label #TrackerRow12Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
+      Label #TrackerRow12TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
+      Label #TrackerRow12Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
     }
   }
 

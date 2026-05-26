@@ -38,7 +38,7 @@ final class MotmDevCommandRouter {
             case "inventory", "inv" -> command.handleDevInventory(player, args);
             case "daylight", "noon" -> mod.queueDaylightForTesting(player.getPlayerId());
             case "freecast" -> command.handleDevFreeCast(player, args);
-            case "effects" -> command.handleDevEffects(player, runtimePlayer);
+            case "effects" -> command.handleDevEffects(player, args, runtimePlayer);
             case "clear" -> command.handleDevClear(player, args);
             case "level" -> command.handleDevLevel(player, args);
             case "xp" -> command.handleDevXp(player, args);

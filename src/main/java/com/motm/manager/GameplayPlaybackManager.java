@@ -141,6 +141,7 @@ public class GameplayPlaybackManager {
     private final List<ActiveProjectile> activeProjectiles = new ArrayList<>();
     private final List<ActiveField> activeFields = new ArrayList<>();
     private final List<TemporaryTerrainSelection> activeTerrainSelections = new ArrayList<>();
+    private final Set<String> activeTemporaryTerrainBlockKeys = ConcurrentHashMap.newKeySet();
     private final List<ActiveMovingTerrainTrail> activeMovingTerrainTrails = new ArrayList<>();
     private final List<ActiveStackingColumn> activeStackingColumns = new ArrayList<>();
     private final List<ActiveLapidaryGem> activeLapidaryGems = new ArrayList<>();
@@ -355,6 +356,7 @@ public class GameplayPlaybackManager {
         if (currentStore == null) {
             return;
         }
+        pruneVisualProxyRefs(currentStore);
         long now = System.currentTimeMillis();
         activeProjectiles.removeIf(projectile ->
                 belongsToCurrentStore(projectile.ownerRef(), currentStore) && processProjectileTick(projectile, now));
@@ -511,7 +513,7 @@ public class GameplayPlaybackManager {
         float despawnSeconds = 1.0f;
         int spawned = 0;
         String roleId = HytaleAssetResolver.resolveFieldRoleId("terra", "quake", ability);
-        for (Vector3d position : positions) {
+        for (Vector3d position : isQuakeGroundImpactAbility(ability) ? List.of(center.clone()) : positions) {
             NPCEntity proxy = new NPCEntity(world);
             proxy.setRoleName(roleId);
             proxy.setDespawnTime(despawnSeconds);
@@ -752,6 +754,8 @@ public class GameplayPlaybackManager {
                     + " context=" + context
                     + " error=" + e.getMessage());
             return false;
+        } finally {
+            activeTemporaryTerrainBlockKeys.removeAll(selection.protectedBlockKeys());
         }
     }
 
@@ -761,7 +765,12 @@ public class GameplayPlaybackManager {
         }
         int removed = 0;
         for (Ref<EntityStore> visualRef : List.copyOf(visualProxyRefs)) {
-            if (visualRef == null || !visualRef.isValid() || visualRef.getStore() != currentStore) {
+            if (visualRef == null || !visualRef.isValid()) {
+                visualProxyRefs.remove(visualRef);
+                removed++;
+                continue;
+            }
+            if (visualRef.getStore() != currentStore) {
                 continue;
             }
             NPCEntity npc = currentStore.getComponent(visualRef, NPCEntity.getComponentType());
@@ -772,6 +781,18 @@ public class GameplayPlaybackManager {
             removed++;
         }
         return removed;
+    }
+
+    private int pruneVisualProxyRefs(Store<EntityStore> currentStore) {
+        if (visualProxyRefs.isEmpty()) {
+            return 0;
+        }
+        int before = visualProxyRefs.size();
+        visualProxyRefs.removeIf(visualRef ->
+                visualRef == null
+                        || !visualRef.isValid()
+                        || (currentStore != null && visualRef.getStore() != currentStore));
+        return before - visualProxyRefs.size();
     }
 
     private boolean sameWorld(World left, World right) {
@@ -998,6 +1019,14 @@ public class GameplayPlaybackManager {
             speedPerTick = mod.getRuntimePerkManager().modifyProjectileSpeed(player, speedPerTick);
         }
         double maxDistance = Math.max(resolveRange(ability), 4.0);
+        if (isGroundMarkerProjectile(ability) && context != null && context.targetBlock() != null) {
+            Vector3d markerTarget = new Vector3d(
+                    context.targetBlock().x + 0.5,
+                    context.targetBlock().y + 1.0,
+                    context.targetBlock().z + 0.5
+            );
+            maxDistance = Math.max(1.0, Math.min(maxDistance, distance(origin, markerTarget)));
+        }
         double impactRadius = resolveProjectileImpactRadius(ability, castType);
         double collisionRadius = resolveProjectileCollisionRadius(ability, castType);
         double spreadDegrees = resolveProjectileSpreadDegrees(castType, ability, projectileCount);
@@ -1355,8 +1384,31 @@ public class GameplayPlaybackManager {
                 if (!terrain.isBlank()) {
                     parts.add(terrain);
                 }
+                long expireAt = System.currentTimeMillis()
+                        + (long) (Math.max(1.0, ability.getDurationSeconds() > 0
+                        ? ability.getDurationSeconds()
+                        : 5.0) * 1000);
+                startPlayerAnchor(player, playerRef, store, "rooted", expireAt, "");
+                if (applyOwnerStatusToken("root", player, ability)) {
+                    parts.add("self rooted");
+                }
+                parts.add("root anchor");
             }
-            case "sapling", "nightshade", "frolick", "cacti_cluster", "lapidary", "glare", "debris",
+            case "pillar_strike" -> {
+                Vector3d center = resolveCastContextPosition(context, playerRef, store);
+                String terrain = placeStackingColumnSelection(
+                        runtimePlayer.getWorld(),
+                        "stone_pillar",
+                        center,
+                        3,
+                        System.currentTimeMillis() + 3_200L,
+                        "Rock_Stone_Brick_Pillar_Middle",
+                        "Rock_Stone_Brick");
+                if (!terrain.isBlank()) {
+                    parts.add(terrain);
+                }
+            }
+            case "frolick", "cacti_cluster", "lapidary", "glare", "debris",
                  "fracture", "refraction" -> {
                 String terrain = placeAbilityTerrainSelection(runtimePlayer, player, ability, context, abilityId);
                 if (!terrain.isBlank()) {
@@ -1435,6 +1487,8 @@ public class GameplayPlaybackManager {
             LOG.warning("[MOTM] Temporary Terra terrain restore failed: reason=" + selection.reason()
                     + " anchor=" + selection.anchor()
                     + " error=" + e.getMessage());
+        } finally {
+            activeTemporaryTerrainBlockKeys.removeAll(selection.protectedBlockKeys());
         }
         return true;
     }
@@ -1568,11 +1622,16 @@ public class GameplayPlaybackManager {
         if (now >= anchor.expireAtMillis()) {
             setAnchorMovementFreeze(anchor.ownerRef(), currentStore, false);
             zeroVelocity(anchor.ownerRef(), currentStore);
-            boolean applied = applyEffectById(anchor.ownerRef(), currentStore, anchor.completionEffectId());
-            startActiveSelfEffect(anchor.ownerRef(), anchor.ownerPlayerId(), anchor.completionEffectId(), now + 6_250L);
+            boolean applied = false;
+            if (anchor.completionEffectId() != null && !anchor.completionEffectId().isBlank()) {
+                applied = applyEffectById(anchor.ownerRef(), currentStore, anchor.completionEffectId());
+                startActiveSelfEffect(anchor.ownerRef(), anchor.ownerPlayerId(), anchor.completionEffectId(), now + 6_250L);
+            }
             LOG.info("[MOTM] Player anchor released: reason=" + anchor.reason()
                     + " playerId=" + anchor.ownerPlayerId()
-                    + " completionEffect=" + anchor.completionEffectId()
+                    + " completionEffect=" + (anchor.completionEffectId() == null || anchor.completionEffectId().isBlank()
+                    ? "none"
+                    : anchor.completionEffectId())
                     + " applied=" + applied);
             return true;
         }
@@ -1719,11 +1778,16 @@ public class GameplayPlaybackManager {
             }
 
             BlockSelection selection = baseSelection(anchor);
+            Set<String> protectedKeys = new LinkedHashSet<>();
             selection.addBlockAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ(), blockTypeId, 0, 0, 0);
+            protectedKeys.add(blockKey(anchor));
             selection.addBlockAtWorldPos(anchor.getX() + right.getX(), anchor.getY(), anchor.getZ() + right.getZ(), blockTypeId, 0, 0, 0);
+            protectedKeys.add(blockKey(anchor.getX() + right.getX(), anchor.getY(), anchor.getZ() + right.getZ()));
             selection.addBlockAtWorldPos(anchor.getX() - right.getX(), anchor.getY(), anchor.getZ() - right.getZ(), blockTypeId, 0, 0, 0);
+            protectedKeys.add(blockKey(anchor.getX() - right.getX(), anchor.getY(), anchor.getZ() - right.getZ()));
             placeTemporarySelection(trail.world, trail.reason, anchor, selection,
-                    Math.min(trail.expireAtMillis, now + 4500L), "3 surface trail flowers on movement path");
+                    Math.min(trail.expireAtMillis, now + 4500L),
+                    "3 surface trail flowers on movement path", protectedKeys);
             trail.lastAnchor = anchor;
             placed++;
         }
@@ -1756,7 +1820,8 @@ public class GameplayPlaybackManager {
         BlockSelection selection = baseSelection(block);
         selection.addBlockAtWorldPos(block.getX(), block.getY(), block.getZ(), column.blockTypeId, 0, 0, 0);
         placeTemporarySelection(column.world, column.reason, block, selection, column.expireAtMillis,
-                "pillar stage " + (column.placedHeight + 1) + "/" + column.height);
+                "pillar stage " + (column.placedHeight + 1) + "/" + column.height,
+                Set.of(blockKey(block)));
         column.placedHeight++;
         column.nextStageAtMillis = now + 90L;
         return column.placedHeight >= column.height;
@@ -1793,6 +1858,15 @@ public class GameplayPlaybackManager {
                                    Store<EntityStore> store,
                                    long expireAtMillis,
                                    String completionEffectId) {
+        startPlayerAnchor(player, ownerRef, store, "obsidian_skin", expireAtMillis, completionEffectId);
+    }
+
+    private void startPlayerAnchor(PlayerData player,
+                                   Ref<EntityStore> ownerRef,
+                                   Store<EntityStore> store,
+                                   String reason,
+                                   long expireAtMillis,
+                                   String completionEffectId) {
         if (player == null || player.getPlayerId() == null || ownerRef == null || !ownerRef.isValid() || store == null) {
             return;
         }
@@ -1802,14 +1876,17 @@ public class GameplayPlaybackManager {
         }
         activePlayerAnchors.removeIf(existing -> player.getPlayerId().equals(existing.ownerPlayerId()));
         activePlayerAnchors.add(new ActivePlayerAnchor(
-                "obsidian_skin",
+                reason == null || reason.isBlank() ? "player_anchor" : reason,
                 player.getPlayerId(),
                 ownerRef,
                 anchor.clone(),
                 expireAtMillis,
                 completionEffectId
         ));
-        LOG.info("[MOTM] Player anchor started: reason=obsidian_skin player=" + player.getPlayerName()
+        setAnchorMovementFreeze(ownerRef, store, true);
+        zeroVelocity(ownerRef, store);
+        LOG.info("[MOTM] Player anchor started: reason=" + (reason == null || reason.isBlank() ? "player_anchor" : reason)
+                + " player=" + player.getPlayerName()
                 + " anchor=" + formatVector(anchor));
     }
 
@@ -2138,13 +2215,24 @@ public class GameplayPlaybackManager {
                                               int radius,
                                               long expireAtMillis,
                                               String... blockIds) {
+        return placeSurfacePatchSelection(world, reason, center, radius, expireAtMillis, true, blockIds);
+    }
+
+    private String placeSurfacePatchSelection(World world,
+                                              String reason,
+                                              Vector3d center,
+                                              int radius,
+                                              long expireAtMillis,
+                                              boolean elevated,
+                                              String... blockIds) {
         int blockTypeId = resolveRuntimeBlockTypeId(blockIds);
         if (world == null || center == null || blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
             return "";
         }
 
-        Vector3i anchor = surfaceOverlayAnchor(center);
+        Vector3i anchor = elevated ? surfaceOverlayAnchor(center) : fluidGroundAnchor(center);
         BlockSelection selection = baseSelection(anchor);
+        Set<String> protectedKeys = new LinkedHashSet<>();
         int r = Math.max(0, radius);
         for (int x = -r; x <= r; x++) {
             for (int z = -r; z <= r; z++) {
@@ -2152,11 +2240,14 @@ public class GameplayPlaybackManager {
                 if (dist > r + 0.25) {
                     continue;
                 }
-                selection.addBlockAtWorldPos(anchor.getX() + x, anchor.getY(), anchor.getZ() + z, blockTypeId, 0, 0, 0);
+                int worldX = anchor.getX() + x;
+                int worldZ = anchor.getZ() + z;
+                selection.addBlockAtWorldPos(worldX, anchor.getY(), worldZ, blockTypeId, 0, 0, 0);
+                protectedKeys.add(blockKey(worldX, anchor.getY(), worldZ));
             }
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
-                selection.getBlockCount() + " surface decoration blocks");
+                selection.getBlockCount() + " surface decoration blocks", protectedKeys);
     }
 
     private String placeFloatingClusterSelection(World world,
@@ -2305,12 +2396,15 @@ public class GameplayPlaybackManager {
 
         Vector3i anchor = surfaceOverlayAnchor(center);
         BlockSelection selection = baseSelection(anchor);
+        Set<String> protectedKeys = new LinkedHashSet<>();
         int h = Math.max(1, height);
         for (int y = 0; y < h; y++) {
-            selection.addBlockAtWorldPos(anchor.getX(), anchor.getY() + y, anchor.getZ(), blockTypeId, 0, 0, 0);
+            int worldY = anchor.getY() + y;
+            selection.addBlockAtWorldPos(anchor.getX(), worldY, anchor.getZ(), blockTypeId, 0, 0, 0);
+            protectedKeys.add(blockKey(anchor.getX(), worldY, anchor.getZ()));
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
-                selection.getBlockCount() + " surface column blocks");
+                selection.getBlockCount() + " surface column blocks", protectedKeys);
     }
 
     private String placeStackingColumnSelection(World world,
@@ -2358,13 +2452,24 @@ public class GameplayPlaybackManager {
                                            double radius,
                                            long expireAtMillis,
                                            String... blockIds) {
+        return placeRingBlockSelection(world, reason, center, radius, expireAtMillis, true, blockIds);
+    }
+
+    private String placeRingBlockSelection(World world,
+                                           String reason,
+                                           Vector3d center,
+                                           double radius,
+                                           long expireAtMillis,
+                                           boolean elevated,
+                                           String... blockIds) {
         int blockTypeId = resolveRuntimeBlockTypeId(blockIds);
         if (world == null || center == null || blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
             return "";
         }
 
-        Vector3i anchor = surfaceOverlayAnchor(center);
+        Vector3i anchor = elevated ? surfaceOverlayAnchor(center) : fluidGroundAnchor(center);
         BlockSelection selection = baseSelection(anchor);
+        Set<String> protectedKeys = new LinkedHashSet<>();
         int ring = Math.max(1, (int) Math.round(radius));
         for (int x = -ring; x <= ring; x++) {
             for (int z = -ring; z <= ring; z++) {
@@ -2372,11 +2477,14 @@ public class GameplayPlaybackManager {
                 if (dist < ring - 0.4 || dist > ring + 0.4) {
                     continue;
                 }
-                selection.addBlockAtWorldPos(anchor.getX() + x, anchor.getY(), anchor.getZ() + z, blockTypeId, 0, 0, 0);
+                int worldX = anchor.getX() + x;
+                int worldZ = anchor.getZ() + z;
+                selection.addBlockAtWorldPos(worldX, anchor.getY(), worldZ, blockTypeId, 0, 0, 0);
+                protectedKeys.add(blockKey(worldX, anchor.getY(), worldZ));
             }
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
-                selection.getBlockCount() + " ring blocks");
+                selection.getBlockCount() + " ring blocks", protectedKeys);
     }
 
     private String placeTrailSelection(World world,
@@ -2393,6 +2501,7 @@ public class GameplayPlaybackManager {
 
         Vector3i anchor = surfaceOverlayAnchor(origin);
         BlockSelection selection = baseSelection(anchor);
+        Set<String> protectedKeys = new LinkedHashSet<>();
         Vector3d back = new Vector3d(-forward.x, 0.0, -forward.z);
         if (!back.isFinite() || back.length() < 0.001) {
             back = new Vector3d(0.0, 0.0, -1.0);
@@ -2403,9 +2512,10 @@ public class GameplayPlaybackManager {
             Vector3d pos = origin.clone().addScaled(back, i);
             Vector3i block = surfaceOverlayAnchor(pos);
             selection.addBlockAtWorldPos(block.getX(), block.getY(), block.getZ(), blockTypeId, 0, 0, 0);
+            protectedKeys.add(blockKey(block));
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
-                selection.getBlockCount() + " trail flowers");
+                selection.getBlockCount() + " trail flowers", protectedKeys);
     }
 
     private String placeObsidianBlockShellSelection(World world,
@@ -2494,16 +2604,31 @@ public class GameplayPlaybackManager {
                                            BlockSelection selection,
                                            long expireAtMillis,
                                            String summary) {
+        return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis, summary, Set.of());
+    }
+
+    private String placeTemporarySelection(World world,
+                                           String reason,
+                                           Vector3i anchor,
+                                           BlockSelection selection,
+                                           long expireAtMillis,
+                                           String summary,
+                                           Set<String> protectedBlockKeys) {
         if (world == null || anchor == null || selection == null) {
             return "";
         }
         try {
             BlockSelection original = selection.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            Set<String> protectedKeys = protectedBlockKeys == null || protectedBlockKeys.isEmpty()
+                    ? Set.of()
+                    : Set.copyOf(protectedBlockKeys);
+            activeTemporaryTerrainBlockKeys.addAll(protectedKeys);
             activeTerrainSelections.add(new TemporaryTerrainSelection(
                     reason,
                     world,
                     anchor,
                     original,
+                    protectedKeys,
                     Math.max(System.currentTimeMillis() + 1200L, expireAtMillis)
             ));
             LOG.info("[MOTM] Temporary Terra terrain placed: reason=" + reason
@@ -2524,6 +2649,18 @@ public class GameplayPlaybackManager {
                     + " error=" + e.getMessage());
             return "";
         }
+    }
+
+    public boolean isTemporaryAbilityTerrainBlock(Vector3i block) {
+        return block != null && activeTemporaryTerrainBlockKeys.contains(blockKey(block));
+    }
+
+    private static String blockKey(Vector3i block) {
+        return block == null ? "" : blockKey(block.getX(), block.getY(), block.getZ());
+    }
+
+    private static String blockKey(int x, int y, int z) {
+        return x + "," + y + "," + z;
     }
 
     private BlockSelection baseSelection(Vector3i anchor) {
@@ -2813,12 +2950,20 @@ public class GameplayPlaybackManager {
             return false;
         }
 
+        boolean expired = now >= projectile.expireAtMillis() || projectile.travelledDistance() >= projectile.maxDistance();
+        if (isGroundMarkerProjectile(projectile.ability())) {
+            if (expired) {
+                placeProjectileGroundMarkerImpact(projectile, player, store, to);
+                despawnProjectileVisual(projectile);
+            }
+            return expired;
+        }
+
         if (isPiercingProjectile(projectile.ability())) {
             applyProjectileTraversalHits(projectile, player, store, from, to);
         }
 
         Ref<EntityStore> directHit = resolveProjectileHit(projectile, store, from, to);
-        boolean expired = now >= projectile.expireAtMillis() || projectile.travelledDistance() >= projectile.maxDistance();
         if (isPiercingProjectile(projectile.ability())) {
             if (expired) {
                 despawnProjectileVisual(projectile);
@@ -2857,6 +3002,90 @@ public class GameplayPlaybackManager {
 
     private boolean isVinesAbility(AbilityData ability) {
         return ability != null && "vines".equals(lower(ability.getId()));
+    }
+
+    private boolean isGroundMarkerProjectile(AbilityData ability) {
+        if (ability == null) {
+            return false;
+        }
+        String abilityId = lower(ability.getId());
+        return "sapling".equals(abilityId) || "nightshade".equals(abilityId);
+    }
+
+    private void placeProjectileGroundMarkerImpact(ActiveProjectile projectile,
+                                                   PlayerData player,
+                                                   Store<EntityStore> store,
+                                                   Vector3d impactPosition) {
+        if (projectile == null || projectile.ability() == null || store == null
+                || store.getExternalData() == null || impactPosition == null) {
+            return;
+        }
+
+        World world = store.getExternalData().getWorld();
+        if (world == null) {
+            return;
+        }
+
+        long expireAt = System.currentTimeMillis()
+                + (long) (Math.max(4.0, projectile.ability().getDurationSeconds()) * 1000);
+        Vector3d groundedImpact = groundMarkerImpactPosition(projectile, store, impactPosition);
+        String abilityId = lower(projectile.ability().getId());
+        String terrain;
+        if ("sapling".equals(abilityId)) {
+            terrain = placeSurfaceColumnSelection(world, "sapling", groundedImpact, 1, expireAt,
+                    "Plant_Sapling_Oak", "Plant_Sapling_Crystal");
+        } else {
+            terrain = placeSurfaceColumnSelection(world, "nightshade", groundedImpact, 1, expireAt,
+                    "Plant_Flower_Common_Purple", "Plant_Flower_Common_Blue");
+        }
+
+        int lured = applyMarkerLure(projectile, player, store, groundedImpact);
+        LOG.info("[MOTM][terra-audit] event=ground_marker_projectile.impact abilityId=" + abilityId
+                + " position=" + formatVector(groundedImpact)
+                + " terrain=" + terrain
+                + " lured=" + lured);
+    }
+
+    private Vector3d groundMarkerImpactPosition(ActiveProjectile projectile,
+                                                Store<EntityStore> store,
+                                                Vector3d impactPosition) {
+        Vector3d ownerPosition = projectile != null ? getPosition(projectile.ownerRef(), store) : null;
+        if (ownerPosition == null || impactPosition == null) {
+            return impactPosition;
+        }
+        return new Vector3d(impactPosition.x, ownerPosition.y, impactPosition.z);
+    }
+
+    private int applyMarkerLure(ActiveProjectile projectile,
+                                PlayerData player,
+                                Store<EntityStore> store,
+                                Vector3d impactPosition) {
+        if (projectile == null || player == null || store == null || impactPosition == null) {
+            return 0;
+        }
+        int applied = 0;
+        double radius = Math.max(4.0, projectile.ability().getRadius() > 0 ? projectile.ability().getRadius() : 5.0);
+        for (Ref<EntityStore> targetRef : collectNearbyNpcTargets(store, impactPosition, radius, 8)) {
+            if (targetRef == null || !targetRef.isValid()) {
+                continue;
+            }
+            NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
+            Vector3d targetPosition = getPosition(targetRef, store);
+            if (npc == null || npc.isDespawning() || targetPosition == null) {
+                continue;
+            }
+            Vector3d toMarker = subtract(impactPosition, targetPosition);
+            toMarker.y = 0.0;
+            if (!toMarker.isFinite() || toMarker.length() < 0.001) {
+                continue;
+            }
+            toMarker.normalize();
+            Vector3d destination = targetPosition.clone().addScaled(toMarker, Math.min(2.25, distance(targetPosition, impactPosition)));
+            npc.moveTo(targetRef, destination.x, destination.y, destination.z, store);
+            applyTargetToken("disoriented", targetRef, store, projectile.ownerRef(), player.getPlayerId(), projectile.ability());
+            applied++;
+        }
+        return applied;
     }
 
     private boolean processFieldTick(ActiveField field, long now) {
@@ -3505,7 +3734,11 @@ public class GameplayPlaybackManager {
                 }
             }
 
-            applyEffectById(targetRef, store, impactEffectId);
+            if (!isQuakeGroundImpactAbility(field.ability())) {
+                applyEffectById(targetRef, store, impactEffectId);
+            } else {
+                applyAerialQuakeClarityEffect(field.ability(), targetRef, store, impactEffectId);
+            }
             applyFieldTargetEffects(field, player, targetRef, store);
         }
 
@@ -3557,23 +3790,14 @@ public class GameplayPlaybackManager {
         if (field == null || field.ownerRef() == null || !field.ownerRef().isValid()) {
             return;
         }
-        Store<EntityStore> store = field.ownerRef().getStore();
-        World world = store != null && store.getExternalData() != null
-                ? store.getExternalData().getWorld()
-                : null;
-        if (world == null) {
-            return;
-        }
-
-        long expireAt = System.currentTimeMillis() + Math.max(1200L, durationMillis);
-        String cracks = placeSurfacePatchSelection(world, "sinkhole_cracks", field.center(), 2, expireAt,
-                "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
-        String dust = placeRingBlockSelection(world, "sinkhole_dust_ring", field.center(), 3.0, expireAt,
-                "Soil_Dirt", "Soil_Grass");
-        if (!cracks.isBlank() || !dust.isBlank()) {
-            LOG.info("[MOTM] Sinkhole surface marker placed: cracks=" + !cracks.isBlank()
-                    + " dustRing=" + !dust.isBlank()
-                    + " center=" + field.center());
+        Player runtimePlayer = mod.getRuntimePlayer(field.ownerPlayerId());
+        if (runtimePlayer != null) {
+            Vector3d groundedCenter = field.center().clone();
+            groundedCenter.y = groundedCenter.y - 1.0;
+            spawnQuakeImpactRing(runtimePlayer, field.ability(), groundedCenter);
+            LOG.info("[MOTM] Sinkhole surface marker placed: quake impact proxy only center=" + groundedCenter);
+        } else {
+            LOG.info("[MOTM] Sinkhole surface marker skipped: runtime player unavailable center=" + field.center());
         }
     }
 
@@ -3791,6 +4015,11 @@ public class GameplayPlaybackManager {
 
         if (terrainEffect.contains("sinkhole")) {
             applyTargetToken("root", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            return;
+        }
+
+        if (terrainEffect.contains("lingering_tremor") || terrainEffect.contains("seismic_shockwave")) {
+            applyKnockbackFromPoint(targetRef, store, field.center(), field.ability());
             return;
         }
 
@@ -4193,9 +4422,6 @@ public class GameplayPlaybackManager {
         if (proxyRef == null || !proxyRef.isValid() || store == null || ability == null) {
             return;
         }
-        if (!"magma_sling".equals(lower(ability.getId()))) {
-            return;
-        }
         try {
             store.removeComponentIfExists(proxyRef, Nameplate.getComponentType());
             store.removeComponentIfExists(proxyRef, DisplayNameComponent.getComponentType());
@@ -4203,7 +4429,8 @@ public class GameplayPlaybackManager {
             store.removeComponentIfExists(proxyRef, RespondToHit.getComponentType());
             store.removeComponentIfExists(proxyRef, CollisionResultComponent.getComponentType());
         } catch (Exception e) {
-            LOG.warning("[MOTM] Magma Sling visual proxy cleanup failed safely: " + e.getMessage());
+            LOG.warning("[MOTM] Projectile visual proxy cleanup failed safely: abilityId="
+                    + lower(ability.getId()) + " error=" + e.getMessage());
         }
     }
 
@@ -4432,6 +4659,9 @@ public class GameplayPlaybackManager {
 
         List<Vector3d> positions = new ArrayList<>();
         positions.add(center.clone());
+        if (isQuakeGroundImpactAbility(ability)) {
+            return List.copyOf(positions);
+        }
         double radius = ability.getRadius() > 0 ? ability.getRadius() : DEFAULT_AREA_RADIUS;
         double ringRadius = Math.max(1.8, Math.min(radius * 0.62, 5.5));
         positions.add(center.clone().add(ringRadius, 0.0, 0.0));
@@ -4566,7 +4796,11 @@ public class GameplayPlaybackManager {
             }
 
             if (resolvedDamage <= 0.0) {
-                applyEffectById(targetRef, store, impactEffectId);
+                if (!isQuakeGroundImpactAbility(ability)) {
+                    applyEffectById(targetRef, store, impactEffectId);
+                } else {
+                    applyAerialQuakeClarityEffect(ability, targetRef, store, impactEffectId);
+                }
                 continue;
             }
 
@@ -4574,7 +4808,11 @@ public class GameplayPlaybackManager {
             DamageSystems.executeDamage(targetRef, store, damage);
             reportAbilityKillIfDead(player.getPlayerId(), player, targetRef, store, targetEntityId);
             applyPostDamageClassPassives(player, playerRef, targetEntityId, resolvedDamage, true);
-            applyEffectById(targetRef, store, impactEffectId);
+            if (!isQuakeGroundImpactAbility(ability)) {
+                applyEffectById(targetRef, store, impactEffectId);
+            } else {
+                applyAerialQuakeClarityEffect(ability, targetRef, store, impactEffectId);
+            }
             if ("chain".equals(castType) && travelType.contains("chain_lightning")) {
                 applyTokenToTarget("shocked", targetRef, store, playerRef, player.getPlayerId(), ability);
             }
@@ -4740,7 +4978,14 @@ public class GameplayPlaybackManager {
                     continue;
                 }
 
-                if (applyTargetToken(token, targetRef, store, playerRef, player.getPlayerId(), ability)) {
+                boolean applied = false;
+                if (isQuakeGroundImpactAbility(ability) && "knockback".equals(token)) {
+                    Vector3d origin = resolveCastContextPosition(context, playerRef, store);
+                    applied = applyKnockbackFromPoint(targetRef, store, origin, ability);
+                } else {
+                    applied = applyTargetToken(token, targetRef, store, playerRef, player.getPlayerId(), ability);
+                }
+                if (applied) {
                     appliedCount++;
                     affectedEntities.add(entityId);
                     appliedTokens.add(token);
@@ -4814,11 +5059,13 @@ public class GameplayPlaybackManager {
 
         long now = System.currentTimeMillis();
         activeLineControls.removeIf(lineControl -> lineControl.ownerPlayerId().equals(player.getPlayerId()));
+        Vector3d targetAnchor = vines ? getPosition(targetRef, store) : null;
         activeLineControls.add(new ActiveLineControl(
                 player.getPlayerId(),
                 ownerRef,
                 targetRef,
                 ability,
+                targetAnchor != null ? targetAnchor.clone() : null,
                 now + (long) (durationSeconds * 1000),
                 now + LINE_CONTROL_PULSE_INTERVAL_MS
         ));
@@ -4864,9 +5111,39 @@ public class GameplayPlaybackManager {
         if (lineControl.ability().getPullForce() > 0.0) {
             applyLineControlPull(lineControl.targetRef(), store, lineControl.ownerRef(), lineControl.ability());
         }
+        if (isVinesAbility(lineControl.ability())) {
+            applyVinesRootHold(lineControl, player, store);
+        }
         applyRepeatingLineControlEffects(lineControl, player, store);
         lineControl.nextPulseAtMillis = now + LINE_CONTROL_PULSE_INTERVAL_MS;
         return false;
+    }
+
+    private void applyVinesRootHold(ActiveLineControl lineControl,
+                                    PlayerData player,
+                                    Store<EntityStore> store) {
+        if (lineControl == null || player == null || store == null
+                || lineControl.targetRef() == null || !lineControl.targetRef().isValid()) {
+            return;
+        }
+
+        Vector3d anchor = lineControl.anchorPosition();
+        if (anchor != null) {
+            NPCEntity npc = store.getComponent(lineControl.targetRef(), NPCEntity.getComponentType());
+            if (npc != null && !npc.isDespawning()) {
+                npc.moveTo(lineControl.targetRef(), anchor.x, anchor.y, anchor.z, store);
+                zeroVelocity(lineControl.targetRef(), store);
+            }
+        }
+
+        String entityId = resolveEntityId(lineControl.targetRef(), store);
+        if (entityId != null && !entityId.equals(player.getPlayerId())) {
+            applyTargetToken("root", lineControl.targetRef(), store,
+                    lineControl.ownerRef(), player.getPlayerId(), lineControl.ability());
+            applyEffectById(lineControl.targetRef(), store, resolveImpactEffectId("terra", "arbor", lineControl.ability()));
+            LOG.info("[MOTM][terra-audit] event=vines.hold target=" + entityId
+                    + " anchor=" + formatVector(anchor));
+        }
     }
 
     private FormRuntimeResult applyTransformation(Player runtimePlayer,
@@ -7195,7 +7472,9 @@ public class GameplayPlaybackManager {
             return null;
         }
 
-        if (context.explicitTargetRef() != null && context.explicitTargetRef().isValid()) {
+        if (!isGroundMarkerProjectile(ability)
+                && context.explicitTargetRef() != null
+                && context.explicitTargetRef().isValid()) {
             Vector3d targetPosition = getPosition(context.explicitTargetRef(), store);
             if (targetPosition != null) {
                 Vector3d aimPoint = isMagmaSlingAbility(ability)
@@ -7340,6 +7619,9 @@ public class GameplayPlaybackManager {
     private String resolveFieldVisualEffectId(String classId,
                                               String styleId,
                                               AbilityData ability) {
+        if (isSinkhole(ability)) {
+            return null;
+        }
         String themed = resolveThemedEffectId(classId, styleId, ability, RuntimeEffectKind.FIELD);
         if (themed != null) {
             return themed;
@@ -8086,6 +8368,77 @@ public class GameplayPlaybackManager {
         return applyKnockbackResult(targetRef, store, sourceRef, ability).applied();
     }
 
+    private boolean applyKnockbackFromPoint(Ref<EntityStore> targetRef,
+                                            Store<EntityStore> store,
+                                            Vector3d origin,
+                                            AbilityData ability) {
+        Vector3d targetPosition = getPosition(targetRef, store);
+        if (targetPosition == null || origin == null) {
+            return false;
+        }
+
+        Vector3d direction = subtract(targetPosition, origin);
+        direction.y = 0.0;
+        if (!direction.isFinite() || direction.length() < 0.001) {
+            direction = new Vector3d(0.0, 0.0, 1.0);
+        } else {
+            direction.normalize();
+        }
+
+        double push = ability != null && ability.getKnockbackForce() > 0
+                ? Math.min(ability.getKnockbackForce(), 5.0)
+                : 2.5;
+        double lift = ability != null && ability.isKnockup() ? Math.max(0.6, ability.getLaunchHeight()) : 0.0;
+        Vector3d destination = targetPosition.clone()
+                .addScaled(direction, push)
+                .add(0.0, lift, 0.0);
+
+        NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
+        if (npc == null) {
+            return false;
+        }
+
+        npc.moveTo(targetRef, destination.x, destination.y, destination.z, store);
+        return true;
+    }
+
+    private Vector3d resolveCastContextPosition(CastContext context,
+                                                Ref<EntityStore> fallbackRef,
+                                                Store<EntityStore> store) {
+        if (context != null && context.targetBlock() != null) {
+            Vector3i block = context.targetBlock();
+            return new Vector3d(block.getX() + 0.5, block.getY(), block.getZ() + 0.5);
+        }
+        return getPosition(fallbackRef, store);
+    }
+
+    private void applyAerialQuakeClarityEffect(AbilityData ability,
+                                               Ref<EntityStore> targetRef,
+                                               Store<EntityStore> store,
+                                               String effectId) {
+        if (!isQuakeGroundImpactAbility(ability)
+                || targetRef == null
+                || !targetRef.isValid()
+                || store == null
+                || isTargetGrounded(targetRef, store)) {
+            return;
+        }
+        applyEffectById(targetRef, store, effectId);
+    }
+
+    private boolean isQuakeGroundImpactAbility(AbilityData ability) {
+        if (ability == null) {
+            return false;
+        }
+        String abilityId = lower(ability.getId());
+        String terrainEffect = lower(ability.getTerrainEffect());
+        return "stomp".equals(abilityId)
+                || "aftershock".equals(abilityId)
+                || "sinkhole".equals(abilityId)
+                || terrainEffect.contains("seismic_shockwave")
+                || terrainEffect.contains("lingering_tremor");
+    }
+
     private KnockbackResult applyKnockbackResult(Ref<EntityStore> targetRef,
                                                  Store<EntityStore> store,
                                                  Ref<EntityStore> sourceRef,
@@ -8827,6 +9180,7 @@ public class GameplayPlaybackManager {
         private final Ref<EntityStore> ownerRef;
         private final Ref<EntityStore> targetRef;
         private final AbilityData ability;
+        private final Vector3d anchorPosition;
         private final long expireAtMillis;
         private long nextPulseAtMillis;
 
@@ -8834,12 +9188,14 @@ public class GameplayPlaybackManager {
                                   Ref<EntityStore> ownerRef,
                                   Ref<EntityStore> targetRef,
                                   AbilityData ability,
+                                  Vector3d anchorPosition,
                                   long expireAtMillis,
                                   long nextPulseAtMillis) {
             this.ownerPlayerId = ownerPlayerId;
             this.ownerRef = ownerRef;
             this.targetRef = targetRef;
             this.ability = ability;
+            this.anchorPosition = anchorPosition;
             this.expireAtMillis = expireAtMillis;
             this.nextPulseAtMillis = nextPulseAtMillis;
         }
@@ -8848,6 +9204,7 @@ public class GameplayPlaybackManager {
         public Ref<EntityStore> ownerRef() { return ownerRef; }
         public Ref<EntityStore> targetRef() { return targetRef; }
         public AbilityData ability() { return ability; }
+        public Vector3d anchorPosition() { return anchorPosition; }
         public long expireAtMillis() { return expireAtMillis; }
         public long nextPulseAtMillis() { return nextPulseAtMillis; }
     }
@@ -8939,6 +9296,7 @@ public class GameplayPlaybackManager {
                                              World world,
                                              Vector3i anchor,
                                              BlockSelection originalSelection,
+                                             Set<String> protectedBlockKeys,
                                              long expireAtMillis) { }
 
     private static final class ActiveMovingTerrainTrail {

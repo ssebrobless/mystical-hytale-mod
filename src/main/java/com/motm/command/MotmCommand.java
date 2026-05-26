@@ -409,6 +409,7 @@ public class MotmCommand {
                         + ". Select that class first with /motm class " + resolvedStyle.classId() + ".";
             }
         } else {
+            resetRuntimeForLoadoutSwap(player, runtimePlayer);
             clearClassProgression(player);
             player.setPlayerClass(resolvedStyle.classId());
             player.setFirstJoin(false);
@@ -1286,7 +1287,16 @@ public class MotmCommand {
         };
     }
 
-    String handleDevEffects(PlayerData player, Player runtimePlayer) {
+    String handleDevEffects(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length >= 3 && "clear".equalsIgnoreCase(args[2])) {
+            mod.getStatusEffectManager().clearEffects(player.getPlayerId());
+            String nativeResult = mod.queueRuntimeEntityEffectsClearForDev(player.getPlayerId());
+            mod.refreshStatusHud(player.getPlayerId());
+            String result = "[MOTM] Dev effects cleared: statuses cleared, visuals=" + nativeResult + ".";
+            LOG.info(result);
+            return result;
+        }
+
         List<StatusEffect> effects = mod.getStatusEffectManager().getEffects(player.getPlayerId());
         StringBuilder sb = new StringBuilder("[MOTM] Dev effects: ");
         sb.append("count=").append(effects.size());
@@ -1320,6 +1330,7 @@ public class MotmCommand {
             }
             sb.append("]");
         }
+        sb.append(" | use /motm dev effects clear to remove native model VFX during testing");
 
         String result = sb.toString();
         LOG.info(result);
@@ -1612,6 +1623,7 @@ public class MotmCommand {
         }
 
         player.getSelectedStyles().clear();
+        resetRuntimeForLoadoutSwap(player, mod.getRuntimePlayer(player.getPlayerId()));
         mod.getPlayerDataManager().savePlayerData(player);
         rebuildPlayerRuntime(player);
         return "[MOTM] Dev: styles cleared.";
@@ -1739,6 +1751,28 @@ public class MotmCommand {
 
     private void rebuildPlayerRuntime(PlayerData player) {
         mod.rebuildPlayerRuntime(player);
+    }
+
+    private String resetRuntimeForLoadoutSwap(PlayerData player, Player runtimePlayer) {
+        if (player == null || player.getPlayerId() == null || runtimePlayer == null
+                || mod.getGameplayPlaybackManager() == null) {
+            return "";
+        }
+
+        Ref<EntityStore> runtimeRef = runtimePlayer.getReference();
+        Store<EntityStore> runtimeStore = runtimeRef != null && runtimeRef.isValid()
+                ? runtimeRef.getStore()
+                : null;
+        String playbackReset = mod.getGameplayPlaybackManager().resetReviewRuntime(
+                player.getPlayerId(),
+                runtimeStore,
+                runtimePlayer
+        );
+        String nativeReset = mod.clearRuntimeEntityEffectsForDev(player.getPlayerId(), runtimeStore);
+        LOG.info("[MOTM] Loadout swap runtime reset: playerId=" + player.getPlayerId()
+                + " playback=" + playbackReset
+                + " nativeEffects=" + nativeReset);
+        return playbackReset;
     }
 
     private String formatSelectedStyleSummary(PlayerData player) {

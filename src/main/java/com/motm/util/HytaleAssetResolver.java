@@ -92,6 +92,7 @@ public final class HytaleAssetResolver {
     private static final String MODEL_VOID_EYE = "Common/NPC/Void/Eye_Void/Models/Model.blockymodel";
     private static final String MODEL_FROG = "Common/NPC/Critter/Frog/Models/Model.blockymodel";
     private static final String MODEL_FIREBALL_PROJECTILE = "Common/Items/Projectiles/Fireball.blockymodel";
+    private static final String MODEL_RUBBLE_PROJECTILE = "Server/Models/Projectiles/Items/Rubble/Rubble_Stone.json";
     private static final String ROLE_EMPTY = "Empty_Role";
     private static final String ROLE_SLUG_MAGMA = "Slug_Magma";
     private static final String ROLE_SPARK_LIVING = "Spark_Living";
@@ -150,6 +151,12 @@ public final class HytaleAssetResolver {
         String style = lower(styleId);
 
         if ("terra".equals(lower(classId)) && "magma".equals(style) && "magma_sling".equals(abilityId)) {
+            return ROLE_EMPTY;
+        }
+        if ("terra".equals(lower(classId))
+                && (("stone".equals(style) && "rubble_rouser".equals(abilityId))
+                || ("arbor".equals(style) && ("sapling".equals(abilityId) || "vines".equals(abilityId)))
+                || ("bloom".equals(style) && "nightshade".equals(abilityId)))) {
             return ROLE_EMPTY;
         }
 
@@ -541,6 +548,9 @@ public final class HytaleAssetResolver {
         if ("terra".equals(lower(classId)) && "magma".equals(lower(styleId)) && "magma_sling".equals(abilityId)) {
             return MODEL_FIREBALL_PROJECTILE;
         }
+        if ("terra".equals(lower(classId)) && "stone".equals(lower(styleId)) && "rubble_rouser".equals(abilityId)) {
+            return MODEL_RUBBLE_PROJECTILE;
+        }
 
         if (!summonName.isBlank()) {
             return switch (summonName) {
@@ -605,7 +615,6 @@ public final class HytaleAssetResolver {
         if (segments.length >= 3 && "Models".equalsIgnoreCase(segments[segments.length - 2])) {
             return segments[segments.length - 3];
         }
-
         String fileName = segments[segments.length - 1];
         return fileName.replaceFirst("\\.[^.]+$", "");
     }

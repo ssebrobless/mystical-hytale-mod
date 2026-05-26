@@ -5,7 +5,6 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.protocol.ColorLight;
 import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
@@ -57,7 +56,7 @@ public class ClassPassiveManager {
     private static final String HYDRO_AQUA_BARRIER_EFFECT_ID = "MOTM_Hydro_Aqua_Barrier";
     private static final String HYDRO_OXYGEN_MODIFIER_ID = "motm_hydro_passive_oxygen";
     private static final String AERO_SIGNATURE_ENERGY_MODIFIER_ID = "motm_aero_passive_signature_energy";
-    private static final ColorLight TERRA_CAVE_LIGHT = new ColorLight((byte) 9, (byte) 120, (byte) 110, (byte) 90);
+    private static final int TERRA_MINING_AFFINITY_ACTIVE_TICKS = 2 * TICKS_PER_SECOND;
     private static final int TERRA_CAVE_MAX_Y = 80;
     private static final int TERRA_CAVE_SCAN_DISTANCE = 10;
     private static final int TERRA_CAVE_REQUIRED_SOLID_BLOCKS = 3;
@@ -79,6 +78,7 @@ public class ClassPassiveManager {
     private final Map<String, Integer> stationaryTicksByPlayer = new HashMap<>();
     private final Set<String> terraShieldPrimedPlayers = new HashSet<>();
     private final Set<String> terraCaveVisionPlayers = new HashSet<>();
+    private final Map<String, Long> terraMiningAffinityActiveUntilTickByPlayer = new HashMap<>();
     private final Map<String, Vector3d> hydroSwimBoostByPlayer = new HashMap<>();
     private final Map<String, Long> hydroBarrierReadyTickByPlayer = new HashMap<>();
     private final Set<String> hydroSwimmingPlayers = new HashSet<>();
@@ -316,6 +316,20 @@ public class ClassPassiveManager {
         return playerId != null && terraCaveVisionPlayers.contains(playerId);
     }
 
+    public synchronized boolean isTerraMiningAffinityActive(String playerId) {
+        return playerId != null
+                && terraMiningAffinityActiveUntilTickByPlayer.getOrDefault(playerId, 0L) > tickCounter;
+    }
+
+    public synchronized void markTerraMiningAffinityActive(String playerId) {
+        if (playerId != null && !playerId.isBlank()) {
+            terraMiningAffinityActiveUntilTickByPlayer.put(
+                    playerId,
+                    tickCounter + TERRA_MINING_AFFINITY_ACTIVE_TICKS
+            );
+        }
+    }
+
     public synchronized boolean isHydroLowResourceMode(String playerId) {
         return isHydroLowResource(playerId);
     }
@@ -330,6 +344,10 @@ public class ClassPassiveManager {
 
     public synchronized double getHydroAquaBarrierShieldHp(String playerId) {
         return statusEffectManager.getShieldHp(playerId, HYDRO_AQUA_BARRIER_SOURCE_ID);
+    }
+
+    public synchronized double getHydroAquaBarrierCooldownSecondsRemaining(String playerId) {
+        return hydroBarrierSecondsUntilReady(playerId);
     }
 
     public synchronized int getCorruptusDarkResurrectionStacks(String playerId) {
@@ -618,6 +636,7 @@ public class ClassPassiveManager {
         terraCaveVisionPlayers.remove(playerId);
         terraShieldPrimedPlayers.remove(playerId);
         stationaryTicksByPlayer.remove(playerId);
+        terraMiningAffinityActiveUntilTickByPlayer.remove(playerId);
 
         if (runtimePlayer == null) {
             return;
@@ -628,7 +647,7 @@ public class ClassPassiveManager {
             return;
         }
 
-        playerRef.getStore().removeComponentIfExists(playerRef, PersistentDynamicLight.getComponentType());
+        clearTerraCaveVisionLight(playerRef, playerRef.getStore());
     }
 
     private void clearCorruptusPassiveRuntime(String playerId) {
@@ -768,16 +787,29 @@ public class ClassPassiveManager {
                                        Vector3d position) {
         boolean active = isUndergroundCave(runtimePlayer, position);
         if (active) {
-            if (terraCaveVisionPlayers.add(playerId)) {
-                store.putComponent(
-                        playerRef,
-                        PersistentDynamicLight.getComponentType(),
-                        new PersistentDynamicLight(new ColorLight(TERRA_CAVE_LIGHT))
-                );
-            }
-        } else if (terraCaveVisionPlayers.remove(playerId)) {
-            store.removeComponentIfExists(playerRef, PersistentDynamicLight.getComponentType());
+            terraCaveVisionPlayers.add(playerId);
+            applyTerraCaveVisionLight(playerRef, store);
+        } else {
+            terraCaveVisionPlayers.remove(playerId);
+            clearTerraCaveVisionLight(playerRef, store);
         }
+    }
+
+    private void applyTerraCaveVisionLight(Ref<EntityStore> playerRef, Store<EntityStore> store) {
+        if (playerRef == null || !playerRef.isValid() || store == null) {
+            return;
+        }
+        // Player-attached dynamic lights visibly tint the player/item model. Terra passives
+        // should remain invisible, so cave vision is currently HUD/mechanical until a true
+        // per-player fullbright or post-process route is proven.
+        clearTerraCaveVisionLight(playerRef, store);
+    }
+
+    private void clearTerraCaveVisionLight(Ref<EntityStore> playerRef, Store<EntityStore> store) {
+        if (playerRef == null || !playerRef.isValid() || store == null) {
+            return;
+        }
+        store.removeComponentIfExists(playerRef, PersistentDynamicLight.getComponentType());
     }
 
     private boolean isUndergroundCave(Player runtimePlayer, Vector3d position) {

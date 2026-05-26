@@ -63,6 +63,7 @@ public class RuntimePerkManager {
     private static final String AERO_SHARPSHOOTER = "aero_t01_sharpshooter";
     private static final String HYDRO_NEPTUNES_GRACE = "hydro_t01_neptunes_grace";
     private static final String HYDRO_SEMIAQUATIC = "hydro_t01_semiaquatic";
+    private static final String HYDRO_BIG_LUNGS = "hydro_t01_big_lungs";
     private static final String HYDRO_RAINY_DAY = "hydro_t01_rainy_day";
     private static final String HYDRO_FREEZING_WINDS = "hydro_t01_freezing_winds";
     private static final String CORRUPTUS_IGNITE = "corruptus_t01_ignite";
@@ -73,6 +74,8 @@ public class RuntimePerkManager {
     private static final String TERRA_HEAVYWEIGHT = "terra_t01_heavyweight";
     private static final String TERRA_ECO_FRIENDLY = "terra_t01_eco_friendly";
     private static final String TERRA_MOLE_MAN = "terra_t01_mole_man";
+    private static final String TERRA_BLACKSMITH = "terra_t01_blacksmith";
+    private static final String TERRA_TOOLSMITH = "terra_t01_toolsmith";
 
     private final MenteesMod mod;
     private final Map<String, Map<String, Long>> cooldownUntilTickByPlayer = new HashMap<>();
@@ -111,6 +114,26 @@ public class RuntimePerkManager {
         } else {
             restoreMovement(playerId, runtimePlayer);
         }
+    }
+
+    public List<RuntimePerkHudEntry> getHudEntries(PlayerData player) {
+        if (player == null || player.getPlayerId() == null || player.getSelectedPerks() == null) {
+            return List.of();
+        }
+
+        List<RuntimePerkHudEntry> entries = new ArrayList<>();
+        for (String perkId : player.getSelectedPerks()) {
+            if (perkId == null || perkId.isBlank()) {
+                continue;
+            }
+            entries.add(new RuntimePerkHudEntry(
+                    perkId,
+                    resolvePerkName(perkId),
+                    cooldownSecondsRemaining(player.getPlayerId(), perkId),
+                    isHudActive(player, perkId)
+            ));
+        }
+        return entries;
     }
 
     public float modifyIncomingDamage(PlayerData target, Ref<EntityStore> targetRef, Store<EntityStore> store,
@@ -738,6 +761,84 @@ public class RuntimePerkManager {
         return player != null && player.getSelectedPerks() != null && player.getSelectedPerks().contains(perkId);
     }
 
+    private String resolvePerkName(String perkId) {
+        var perk = mod.getDataLoader().getPerkByIdAnyClass(perkId);
+        if (perk != null && perk.getName() != null && !perk.getName().isBlank()) {
+            return perk.getName();
+        }
+        return titleize(perkId);
+    }
+
+    private boolean isHudActive(PlayerData player, String perkId) {
+        if (player == null || perkId == null) {
+            return false;
+        }
+
+        String playerId = player.getPlayerId();
+        return switch (perkId) {
+            case AERO_ACCELERATE -> {
+                SprintState state = sprintStateByPlayer.get(playerId);
+                yield state != null && state.sprintStartTick >= 0L;
+            }
+            case AERO_BUNNY_HOP -> {
+                SprintState state = sprintStateByPlayer.get(playerId);
+                yield state != null && state.bunnyCharges > 0;
+            }
+            case AERO_BIG_STRIDES -> {
+                SprintState state = sprintStateByPlayer.get(playerId);
+                yield state != null
+                        && state.sprintStartTick >= 0L
+                        && tickCounter - state.sprintStartTick <= 3L * TICKS_PER_SECOND;
+            }
+            case HYDRO_SEMIAQUATIC -> {
+                SwimState state = swimStateByPlayer.get(playerId);
+                yield state != null && state.swimStartTick >= 0L;
+            }
+            case HYDRO_RAINY_DAY -> {
+                long lastRegenTick = rainyDayLastRegenTickByPlayer.getOrDefault(playerId, Long.MIN_VALUE);
+                yield tickCounter - lastRegenTick <= TICKS_PER_SECOND + 5L;
+            }
+            case CORRUPTUS_IGNITE -> activeIgnites.stream()
+                    .anyMatch(dot -> playerId.equals(dot.ownerPlayerId) && dot.expireAtTick > tickCounter);
+            case CORRUPTUS_DESPERATION -> healthFraction(playerId) < 0.70;
+            case TERRA_ECO_FRIENDLY -> {
+                TemporaryDamageReduction reduction = temporaryDamageReductionByPlayer.get(playerId);
+                yield reduction != null && reduction.expireAtTick > tickCounter;
+            }
+            case TERRA_MOLE_MAN -> mod.getClassPassiveManager().isTerraCaveVisionActive(playerId);
+            case AERO_TWINKLETOES, AERO_SHARPSHOOTER, HYDRO_BIG_LUNGS,
+                    CORRUPTUS_HAUNTING, CORRUPTUS_VAMPIRISM,
+                    TERRA_HEAVYWEIGHT, TERRA_BLACKSMITH, TERRA_TOOLSMITH -> false;
+            default -> false;
+        };
+    }
+
+    private double cooldownSecondsRemaining(String playerId, String key) {
+        long readyTick = cooldownUntilTickByPlayer.getOrDefault(playerId, Map.of()).getOrDefault(key, 0L);
+        return Math.max(0.0, (readyTick - tickCounter) / (double) TICKS_PER_SECOND);
+    }
+
+    private String titleize(String raw) {
+        String normalized = raw == null ? "" : raw.replace('_', ' ').replace('-', ' ').trim();
+        if (normalized.isBlank()) {
+            return "Perk";
+        }
+        StringBuilder result = new StringBuilder();
+        for (String part : normalized.split("\\s+")) {
+            if (part.isBlank()) {
+                continue;
+            }
+            if (result.length() > 0) {
+                result.append(' ');
+            }
+            result.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                result.append(part.substring(1).toLowerCase(Locale.ROOT));
+            }
+        }
+        return result.toString();
+    }
+
     private boolean isNativeWeapon(ItemStack heldItem) {
         return heldItem != null && heldItem.getItem() != null && heldItem.getItem().getWeapon() != null;
     }
@@ -936,6 +1037,8 @@ public class RuntimePerkManager {
     }
 
     private record RainState(boolean raining, int weatherIndex, String weatherId) {}
+
+    public record RuntimePerkHudEntry(String id, String name, double cooldownSeconds, boolean active) {}
 
     private static final class IgniteDot {
         private final String ownerPlayerId;

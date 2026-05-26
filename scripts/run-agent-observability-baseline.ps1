@@ -9,6 +9,7 @@ param(
     [int]$CleanupDelayMilliseconds = 5500,
     [string]$StyleId = "",
     [string[]]$Abilities = @(),
+    [string]$MobMode = "stationary",
     [string[]]$Proofs = @("coating-metal")
 )
 
@@ -344,7 +345,7 @@ try {
     Invoke-ObservedCommand "motm dev position"
     Invoke-ObservedCommand "motm dev effects"
     Invoke-ObservedCommand "motm dev freecast on"
-    Invoke-ObservedCommand "motm dev test mobs stationary" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
+    Invoke-ObservedCommand "motm dev test mobs $MobMode" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
     Invoke-ObservedCommand "motm dev test mobs count"
     Invoke-ObservedCommand "motm dev observe snapshot after-target-setup"
 

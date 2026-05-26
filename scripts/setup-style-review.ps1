@@ -40,10 +40,12 @@ Send-MotmCommand "motm dev daylight" 450
 if (-not $SkipRelocate) {
     Send-MotmCommand "motm dev relocate lane" 1600
 }
+Send-MotmCommand "motm dev effects clear" 700
 Send-MotmCommand "motm dev test reset" 1300
 Send-MotmCommand "motm dev freecast on" 700
 Send-MotmCommand "motm dev class set $ClassId"
 Send-MotmCommand "motm dev styles clear"
+Send-MotmCommand "motm dev effects clear" 700
 Send-MotmCommand "motm style $StyleId" 1100
 if ($ReviewMode -ne "unchanged") {
     Send-MotmCommand "motm dev mode $ReviewMode" 1000

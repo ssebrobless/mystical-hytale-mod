@@ -27,6 +27,7 @@ public class MotmStatusHud extends CustomUIHud {
     private static final String HUD_DOCUMENT = "Hud/MOTM_StatusHud.ui";
     private static final int MAX_BUFF_SLOTS = 3;
     private static final int MAX_DEBUFF_SLOTS = 3;
+    private static final int MAX_TRACKER_ROWS = 12;
     private static final int TICKS_PER_SECOND = 20;
 
     private final MenteesMod mod;
@@ -51,36 +52,186 @@ public class MotmStatusHud extends CustomUIHud {
     private void render(UICommandBuilder commands) {
         PlayerData player = currentPlayer();
         renderStatusStrip(commands, player);
+        renderPassiveTracker(commands, player);
         renderXp(commands, player);
         renderResource(commands, player);
         renderAbilitySlots(commands, player);
     }
 
     private void renderStatusStrip(UICommandBuilder commands, PlayerData player) {
-        List<HudStatusEntry> buffs = new ArrayList<>();
-        List<HudStatusEntry> debuffs = new ArrayList<>();
-
-        if (player != null && player.getPlayerId() != null) {
-            appendPassiveEntry(player, buffs);
-            appendStatusEffectEntries(player, buffs, debuffs);
-        }
-
-        buffs.sort(Comparator.comparingInt(HudStatusEntry::priority).reversed());
-        debuffs.sort(Comparator.comparingInt(HudStatusEntry::priority).reversed());
-
-        String primaryLine = buildStatusSummaryLine(buffs, 3);
-        String secondaryLine = buildStatusSummaryLine(debuffs, 3);
-        boolean visible = !primaryLine.isBlank() || !secondaryLine.isBlank();
+        String primaryLine = buildClassStyleLine(player);
+        boolean visible = !primaryLine.isBlank();
 
         commands.set("#StatusRoot.Visible", visible);
         setText(commands, "#StatusLine1.Text", primaryLine);
-        setText(commands, "#StatusLine2.Text", secondaryLine);
+        setText(commands, "#StatusLine2.Text", "");
         commands.set("#StatusLine1.Visible", !primaryLine.isBlank());
-        commands.set("#StatusLine2.Visible", !secondaryLine.isBlank());
+        commands.set("#StatusLine2.Visible", false);
 
-        // Hide the legacy icon-slot widgets; we now render a text-first status summary.
+        // Hide legacy icon-slot widgets; passive/perk readiness now lives in the top-right tracker.
         renderStatusSlots(commands, "BuffStatus", List.of(), MAX_BUFF_SLOTS);
         renderStatusSlots(commands, "DebuffStatus", List.of(), MAX_DEBUFF_SLOTS);
+    }
+
+    private String buildClassStyleLine(PlayerData player) {
+        if (player == null || player.getPlayerClass() == null || player.getPlayerClass().isBlank()) {
+            return "";
+        }
+        return displayClassName(player.getPlayerClass()) + ": " + displaySelectedStyleName(player);
+    }
+
+    private String displayClassName(String classId) {
+        if (classId == null || classId.isBlank()) {
+            return "No Class";
+        }
+        return titleCase(classId);
+    }
+
+    private String displaySelectedStyleName(PlayerData player) {
+        StyleData style = getSelectedStyle(player);
+        if (style == null) {
+            return "No Style";
+        }
+        if (style.getName() != null && !style.getName().isBlank()) {
+            return style.getName();
+        }
+        return titleCase(style.getId());
+    }
+
+    private void renderPassiveTracker(UICommandBuilder commands, PlayerData player) {
+        List<TrackerEntry> entries = buildPassiveTrackerEntries(player);
+        commands.set("#PassiveTrackerRoot.Visible", !entries.isEmpty());
+
+        for (int index = 1; index <= MAX_TRACKER_ROWS; index++) {
+            TrackerEntry entry = index <= entries.size() ? entries.get(index - 1) : null;
+            renderTrackerRow(commands, index, entry);
+        }
+    }
+
+    private List<TrackerEntry> buildPassiveTrackerEntries(PlayerData player) {
+        if (player == null || player.getPlayerId() == null || player.getPlayerClass() == null) {
+            return List.of();
+        }
+
+        List<TrackerEntry> entries = new ArrayList<>();
+        appendClassPassiveTrackerEntries(player, entries);
+
+        var runtimePerks = mod.getRuntimePerkManager();
+        if (runtimePerks != null) {
+            for (var perkEntry : runtimePerks.getHudEntries(player)) {
+                entries.add(new TrackerEntry(
+                        perkEntry.name(),
+                        perkEntry.cooldownSeconds(),
+                        perkEntry.active()
+                ));
+            }
+        }
+        return entries;
+    }
+
+    private void appendClassPassiveTrackerEntries(PlayerData player, List<TrackerEntry> entries) {
+        String playerId = player.getPlayerId();
+        String classId = safeLower(player.getPlayerClass());
+        var passiveManager = mod.getClassPassiveManager();
+
+        switch (classId) {
+            case "terra" -> {
+                entries.add(new TrackerEntry("Immovable", 0.0, false));
+                entries.add(new TrackerEntry(
+                        "Miner's Affinity",
+                        0.0,
+                        passiveManager.isTerraMiningAffinityActive(playerId)
+                ));
+                entries.add(new TrackerEntry("Cave Vision", 0.0, passiveManager.isTerraCaveVisionActive(playerId)));
+            }
+            case "hydro" -> {
+                boolean swimming = passiveManager.isHydroSwimming(playerId);
+                boolean underwater = passiveManager.isHydroUnderwater(playerId);
+                double barrierHp = passiveManager.getHydroAquaBarrierShieldHp(playerId);
+                entries.add(new TrackerEntry("Tidal Flow", 0.0, swimming || underwater));
+                entries.add(new TrackerEntry(
+                        "Aqua Barrier",
+                        barrierHp > 0.0 ? 0.0 : passiveManager.getHydroAquaBarrierCooldownSecondsRemaining(playerId),
+                        barrierHp > 0.0
+                ));
+            }
+            case "aero" -> {
+                entries.add(new TrackerEntry("Skybound", 0.0, false));
+                entries.add(new TrackerEntry("Tempo Surge", 0.0, false));
+            }
+            case "corruptus" -> {
+                int stacks = passiveManager.getCorruptusDarkResurrectionStacks(playerId);
+                double lockout = passiveManager.getCorruptusPassiveLockoutSecondsRemaining(playerId);
+                entries.add(new TrackerEntry("Dark Resurrection " + stacks + "/3", lockout, false));
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void renderTrackerRow(UICommandBuilder commands, int index, TrackerEntry entry) {
+        String prefix = "#TrackerRow" + index;
+        commands.set(prefix + "Root.Visible", entry != null);
+        if (entry == null) {
+            setText(commands, prefix + "Name.Text", "");
+            setText(commands, prefix + "NameShadow.Text", "");
+            setText(commands, prefix + "Timer.Text", "");
+            setText(commands, prefix + "TimerShadow.Text", "");
+            commands.set(prefix + "Timer.Visible", false);
+            commands.set(prefix + "TimerShadow.Visible", false);
+            return;
+        }
+
+        boolean coolingDown = entry.cooldownSeconds() > 0.0;
+        String nameColor = entry.active() ? "#a8ff9a" : coolingDown ? "#a6a6a6" : "#ffffff";
+        String timerColor = coolingDown && !entry.active() ? "#a6a6a6" : "#ffffff";
+        String timerText = coolingDown ? formatTrackerTimer(entry.cooldownSeconds()) : "";
+
+        setText(commands, prefix + "Name.Text", fitTrackerName(entry.name()));
+        setText(commands, prefix + "NameShadow.Text", fitTrackerName(entry.name()));
+        setText(commands, prefix + "Timer.Text", timerText);
+        setText(commands, prefix + "TimerShadow.Text", timerText);
+        commands.set(prefix + "Name.Style.TextColor", nameColor);
+        commands.set(prefix + "Name.Style.RenderBold", entry.active());
+        commands.set(prefix + "NameShadow.Style.RenderBold", entry.active());
+        commands.set(prefix + "Timer.Style.TextColor", timerColor);
+        commands.set(prefix + "Timer.Style.RenderBold", false);
+        commands.set(prefix + "TimerShadow.Style.RenderBold", false);
+        commands.set(prefix + "Timer.Visible", coolingDown);
+        commands.set(prefix + "TimerShadow.Visible", coolingDown);
+    }
+
+    private String fitTrackerName(String name) {
+        if (name == null || name.isBlank()) {
+            return "";
+        }
+        String normalized = name.trim();
+        return normalized.length() <= 22 ? normalized : normalized.substring(0, 21).trim() + ".";
+    }
+
+    private String formatTrackerTimer(double seconds) {
+        return Math.max(0, (int) Math.ceil(seconds)) + "s";
+    }
+
+    private String titleCase(String raw) {
+        String normalized = raw == null ? "" : raw.replace('_', ' ').replace('-', ' ').trim();
+        if (normalized.isBlank()) {
+            return "";
+        }
+        StringBuilder result = new StringBuilder();
+        for (String part : normalized.split("\\s+")) {
+            if (part.isBlank()) {
+                continue;
+            }
+            if (result.length() > 0) {
+                result.append(' ');
+            }
+            result.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                result.append(part.substring(1).toLowerCase(Locale.ROOT));
+            }
+        }
+        return result.toString();
     }
 
     private String buildStatusSummaryLine(List<HudStatusEntry> entries, int maxEntries) {
@@ -748,6 +899,12 @@ public class MotmStatusHud extends CustomUIHud {
             double progress,
             String counter,
             int priority
+    ) {}
+
+    private record TrackerEntry(
+            String name,
+            double cooldownSeconds,
+            boolean active
     ) {}
 
     private static final class AggregatedEffect {
