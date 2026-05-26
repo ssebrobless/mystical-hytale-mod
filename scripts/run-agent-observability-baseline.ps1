@@ -10,7 +10,8 @@ param(
     [string]$StyleId = "",
     [string[]]$Abilities = @(),
     [string]$MobMode = "stationary",
-    [string[]]$Proofs = @("coating-metal")
+    [string[]]$Proofs = @("coating-metal"),
+    [switch]$NoDefaultProofs
 )
 
 $ErrorActionPreference = "Stop"
@@ -98,6 +99,9 @@ if ([string]::IsNullOrWhiteSpace($RunId)) {
     $RunId = Get-Date -Format "yyyy-MM-ddTHH-mm-ss"
 }
 $Proofs = @($Proofs | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+if ($NoDefaultProofs) {
+    $Proofs = @()
+}
 $Abilities = @($Abilities | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 $JavaHome = Resolve-JavaHome $JavaHome
 if (-not [string]::IsNullOrWhiteSpace($JavaHome)) {

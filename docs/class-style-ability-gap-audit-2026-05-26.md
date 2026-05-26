@@ -61,8 +61,8 @@ These classes are not cleared. Each style must receive the same concept-vs-runti
 live pass before the mod is called complete.
 
 Structural no-resource coverage passed for all 40 styles / 120 abilities in
-`coverage-20260526c`; this proves data shape and no-resource setup, not visual
-or full mechanical correctness.
+`coverage-20260526c` and `full-style-post-sweep-20260526`; this proves data
+shape and no-resource setup, not visual or full mechanical correctness.
 
 | Class | Styles | Main primitive risks to verify |
 |---|---|---|
@@ -80,9 +80,39 @@ or full mechanical correctness.
 | Cleanup route | Log or observation that temporary blocks, fields, effects, proxies, and statuses ended. |
 | Safety route | Explicit skip logs or proof that caster/allies/summons were not negatively affected. |
 
+## Full Runtime Cast Sweep - 2026-05-26
+
+```
+40 styles
+  |-- Terra:      10/10 PASS in full-style-sweep-20260526-terra-full
+  |-- Hydro:      10/10 PASS in full-style-sweep-20260526-non-terra-full-r2
+  |-- Aero:       10/10 PASS in full-style-sweep-20260526-non-terra-full-r2
+  `-- Corruptus:  10/10 PASS in full-style-sweep-20260526-non-terra-full-r2
+
+120 abilities
+  `-- all queued, observed, snapshotted, collected, and reported by the
+     agent observability baseline without missing ability_cast_end evidence.
+```
+
+| Scope | Evidence | Result | Meaning |
+|---|---|---|---|
+| Terra all styles | `audits/style-sweeps/full-style-sweep-20260526-terra-full/report.md` | PASS | Every Terra style swapped cleanly, fired all three abilities, collected observability bundles, and cleared test mobs. |
+| Hydro/Aero/Corruptus all styles | `audits/style-sweeps/full-style-sweep-20260526-non-terra-full-r2/report.md` | PASS | Every non-Terra style swapped cleanly, fired all three abilities, collected observability bundles, and cleared test mobs. |
+| No-resource data/runtime gates | `scripts/audit-no-resource.ps1` | PASS | Resources remain disabled globally across all class/style ability data and runtime resource gates. |
+| Ability data coverage | `audits/ability-coverage/full-style-post-sweep-20260526/report.md` | PASS | All 40 styles and all 120 abilities have required structural fields and no resource costs. |
+| Warning scan | sweep driver logs | PASS with note | No real failure signatures found; the only warning-pattern hits were the ability id `stalactite_crash` containing the substring `crash`. |
+
+This sweep proves the baseline runtime route: style selection, ability queuing,
+ability completion telemetry, snapshots, evidence collection, and target cleanup.
+It does **not** by itself prove exact player-facing aesthetics, exact crosshair
+trajectory feel, movement-path behavior, ally/caster safety, summon AI quality,
+or normal-control input timing. Those still require purpose-built probes or live
+manual review, not generic stationary/cluster casts.
+
 ## Immediate Implementation Order
 
-1. Run movement-specific proofs for Frolick, Tunnel, Burrow, Sandstorm/Dust Devil, and Gem object control rather than generic stationary-mob casts.
-2. Continue Terra one style at a time for Self Petrification, Soil, Sand, and Gem using purpose-built movement/control scenarios.
-3. After Terra is clean, run the same matrix class-by-class for Hydro, Aero, and Corruptus.
-4. Keep every style's result tied to a run id; do not mark visual quality PASS without either user confirmation or a purpose-built visual/proxy proof.
+1. Add purpose-built movement/control probes for Frolick, Tunnel, Burrow, Sandstorm/Dust Devil, Gem object control, Aero vertical movement, Hydro swim lanes, and Corruptus summons/transforms.
+2. Add target-position/aim probes for crosshair-sensitive projectiles and ground-target abilities.
+3. Add ally/caster/summon safety probes for every AoE, field, DoT, root, slow, burn, knockback, and temporary terrain ability.
+4. Add visual/proxy probes that expose the chosen asset/effect ids, colors, block/material ids, proxy counts, and cleanup counts per ability.
+5. Keep every style's result tied to a run id; do not mark visual quality PASS without either user confirmation or a purpose-built visual/proxy proof.
