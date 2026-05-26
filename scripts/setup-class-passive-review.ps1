@@ -73,9 +73,9 @@ function Get-ClassPlan([string]$Id) {
                 styleHint = "wind_blade first, then vertical-movement styles"
                 commands = @()
                 checklist = @(
-                    "Skybound speed: walk, sprint, and strafe; confirm the passive is fast without sideways slowdown.",
+                    "Wind Walker speed: walk, sprint, and strafe; confirm the passive is fast without sideways slowdown.",
                     "Energy bonus: check HUD/status evidence for increased native Hytale energy.",
-                    "Vertical movement: defer overlap checks to Aero style tests so Skybound does not duplicate jump/dive/hover logic."
+                    "Vertical movement: defer overlap checks to Aero style tests so Wind Walker does not duplicate jump/dive/hover logic."
                 )
             }
         }
@@ -88,7 +88,7 @@ function Get-ClassPlan([string]$Id) {
                     "motm dev test mobs cluster"
                 )
                 checklist = @(
-                    "Dark Resurrection stacks: kill three hostile/test targets and confirm stack count reaches 3.",
+                    "Soul Harvest stacks: kill five hostile/test targets and confirm stack count reaches 5.",
                     "Resurrection: take lethal damage only after stacks are verified; confirm revive to half HP.",
                     "Lockout: after resurrection, confirm no new passive stacks are gained for the cooldown window."
                 )

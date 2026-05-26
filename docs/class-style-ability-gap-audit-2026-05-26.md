@@ -67,8 +67,8 @@ shape and no-resource setup, not visual or full mechanical correctness.
 | Class | Styles | Main primitive risks to verify |
 |---|---|---|
 | Hydro | icicle, snow, surf, rain, boiling, vapor, iceberg, saltwater, freshwater, bilgewater | Water/ice fields, swim/speed proofs, bubble shields, ride/summon behavior, rain/weather detection, ally-safe healing/shields. |
-| Aero | wind_blade, thunder, gale_wizard, scream, pressure, tornado, smoke, jet, jump, pollution | Projectile aim/trails, vertical movement interactions with Skybound, sprint/bunny-hop style movement, smoke/stealth visibility, storm/tornado fields. |
-| Corruptus | flame, necro, shadow, hell_flame, mentokinesis, imbuement, attonement, void, scarak, primordial | Dark Resurrection cooldown lockout, corruption/fire visuals, summons/ghosts/minions, self-damage tradeoffs, execute/curse rules, no ally harm. |
+| Aero | wind_blade, thunder, gale_wizard, scream, pressure, tornado, smoke, jet, jump, pollution | Projectile aim/trails, vertical movement interactions with Wind Walker, sprint/bunny-hop style movement, smoke/stealth visibility, storm/tornado fields. |
+| Corruptus | flame, necro, shadow, hell_flame, mentokinesis, imbuement, attonement, void, scarak, primordial | Soul Harvest stack buffs/resurrection lockout, corruption/fire visuals, summons/ghosts/minions, self-damage tradeoffs, execute/curse rules, no ally harm. |
 
 ## Required Verification For Every Ability
 

@@ -8,8 +8,8 @@ Use this before style/ability review. The goal is to prove each class passive wi
 ╠════════════╬════════════════════╬═════════════════════╬══════════════╣
 ║ Terra      ║ Immovable          ║ A/B mining + damage ║ instrumented ║
 ║ Hydro      ║ Tidal Flow         ║ HP/shield deltas    ║ needs run    ║
-║ Aero       ║ Skybound Tempo     ║ position/velocity   ║ needs run    ║
-║ Corruptus  ║ Dark Resurrection  ║ stack/HP/lockout    ║ needs run    ║
+║ Aero       ║ Wind Walker        ║ position/velocity   ║ needs run    ║
+║ Corruptus  ║ Soul Harvest       ║ stack/HP/lockout    ║ needs run    ║
 ╚════════════╩════════════════════╩═════════════════════╩══════════════╝
 ```
 
@@ -128,7 +128,7 @@ Expected: `hydroSwimming=true` once exposed or movement/velocity evidence shows 
 
 ## Aero
 
-### Skybound Movement
+### Wind Walker Movement
 
 Purpose: confirm Aero movement is faster without causing sideways slow.
 
@@ -155,9 +155,9 @@ Expected: signature max is multiplied by 1.8 if the native stat exists for the c
 
 ## Corruptus
 
-### Dark Resurrection Stacks
+### Soul Harvest Stacks
 
-Purpose: confirm hostile kills add stacks up to 3.
+Purpose: confirm hostile kills add stacks up to 5 and Infernal Aura scales with those stacks.
 
 Proof:
 
@@ -166,7 +166,7 @@ Proof:
 3. Kill three targets with Corruptus abilities.
 4. Run `/motm class` after each kill.
 
-Expected: `Dark Resurrection: 1/3`, `2/3`, then `3/3`.
+Expected: `Soul Harvest: 1/5`, `2/5`, through `5/5`, with damage bonus and damage reduction increasing per stack.
 
 ### Resurrection And Lockout
 
@@ -174,7 +174,7 @@ Purpose: confirm lethal damage heals to half HP and starts the 10 minute passive
 
 Proof:
 
-1. Reach 3 stacks.
+1. Reach 5 stacks.
 2. Disable test protection.
 3. Take controlled lethal damage.
 4. Capture `/motm class` and `/motm dev effects`.

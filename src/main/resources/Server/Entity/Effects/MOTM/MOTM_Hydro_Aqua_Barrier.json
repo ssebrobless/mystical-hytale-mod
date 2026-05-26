@@ -1,15 +1,13 @@
 {
-  "Duration": 1.35,
+  "Duration": 1.5,
   "OverlapBehavior": "Extend",
   "ApplicationEffects": {
-    "EntityTopTint": "#d6fbff",
-    "EntityBottomTint": "#3ba9ff",
     "Particles": [
       {
         "SystemId": "Water_Bubble_Stream"
       },
       {
-        "SystemId": "Water_Can_Splash"
+        "SystemId": "Bubbles"
       }
     ]
   }

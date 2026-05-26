@@ -149,7 +149,7 @@ movement.
 
 User-approved class concern:
 
-- Skybound or any Aero passive vertical movement must be tested against every
+- Wind Walker and any Aero style vertical movement must be tested against every
   Aero style that jumps, dives, hovers, launches, prevents fall damage, or
   modifies momentum.
 - Vertical movement effects should layer clearly instead of duplicating,
@@ -170,8 +170,9 @@ transformations.
 
 User-approved passive change:
 
-- Dark Resurrection should revive/heal to half HP, not full HP.
-- If Dark Resurrection triggers, its 10 minute cooldown applies to all
+- Soul Harvest should build to 5 stacks. Each stack should grant Infernal Aura
+  bonuses, and 5 stacks should revive/heal to half HP instead of full HP.
+- If Soul Harvest resurrection triggers, its 10 minute cooldown applies to all
   Corruptus passive abilities, and passive stacks cannot be gained during that
   cooldown.
 - Corruptus abilities no longer spend Souls. Dark power is governed by cooldown,

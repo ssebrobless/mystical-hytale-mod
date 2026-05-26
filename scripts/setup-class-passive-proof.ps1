@@ -163,7 +163,7 @@ switch ($TestId) {
         Add-Line $instructions "The script simulated three kill stacks, lowered HP, then simulated lethal incoming damage."
         Add-Line $instructions ""
         Add-Line $instructions "## Expected Evidence"
-        Add-Line $instructions "- Dark Resurrection stack state advances to 3/3."
+        Add-Line $instructions "- Soul Harvest stack state advances to 5/5."
         Add-Line $instructions "- Lethal incoming damage is canceled, health returns to the resurrection threshold, stacks reset, and lockout starts."
     }
 }

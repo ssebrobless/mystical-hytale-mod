@@ -274,7 +274,7 @@ Resource cost: none
 ## Aero - The Storm Dancer
 
 Theme: Air  
-Passive: **Skybound Tempo Surge** - You move 25% faster at all times and your native Hytale energy bar is increased by 80%. Vertical movement from Aero style abilities is handled by the style ability itself so Skybound does not duplicate jumps, dives, hovers, or launch resets.
+Passive: **Wind Walker** - You move 25% faster at all times and your native Hytale energy bar is increased by 80%. Vertical movement from Aero style abilities is handled by the style ability itself so Wind Walker does not duplicate jumps, dives, hovers, or launch resets.
 
 ### Scream (`scream`)
 
@@ -390,7 +390,7 @@ Resource cost: none
 ## Corruptus - The Void Flame
 
 Theme: Dark Magic + Fire  
-Passive: **Dark Resurrection** - Hostile kills build up to 3 Dark Resurrection stacks. At 3 stacks, lethal damage heals you to half HP instead of killing you, clears the stacks, and starts a 10 minute lockout that prevents all Corruptus passive stack gain. Corruptus abilities use cooldowns instead of Souls.
+Passive: **Soul Harvest** - Hostile kills build up to 5 Soul Harvest stacks. Each stack fuels Infernal Aura, granting 2% increased damage and 1% damage reduction per stack. At 5 stacks, lethal damage heals you to half HP instead of killing you, clears the stacks, and starts a 10 minute lockout that prevents all Corruptus passive stack gain. Corruptus abilities use cooldowns instead of Souls.
 
 ### Flame (`flame`)
 

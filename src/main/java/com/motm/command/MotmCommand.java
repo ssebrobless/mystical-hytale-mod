@@ -2010,12 +2010,15 @@ public class MotmCommand {
     }
 
     private String performFullDevPlayerClear(PlayerData player) {
+        String runtimeReset = resetRuntimeForLoadoutSwap(player, mod.getRuntimePlayer(player.getPlayerId()));
         resetPlayerForDev(player);
         rebuildPlayerRuntime(player);
         mod.getPlayerDataManager().savePlayerData(player);
         mod.refreshStatusHud(player.getPlayerId());
+        LOG.info("[MOTM] Dev clear runtime cleanup: playerId=" + player.getPlayerId()
+                + " playback=" + runtimeReset);
         return "[MOTM] Dev: player cleared to a fresh state.\n"
-                + "Reset: class, style, perks, level, XP, casting state, cooldowns, statuses, and marks.";
+                + "Reset: class, style, perks, level, XP, casting state, cooldowns, statuses, marks, and runtime visuals.";
     }
 
     private Integer parseInteger(String rawValue) {

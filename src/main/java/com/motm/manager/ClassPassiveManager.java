@@ -61,8 +61,9 @@ public class ClassPassiveManager {
     private static final int TERRA_CAVE_MAX_Y = 80;
     private static final int TERRA_CAVE_SCAN_DISTANCE = 10;
     private static final int TERRA_CAVE_REQUIRED_SOLID_BLOCKS = 3;
-    private static final int CORRUPTUS_DARK_RESURRECTION_MAX_STACKS = 3;
-    private static final int CORRUPTUS_DARK_RESURRECTION_LOCKOUT_TICKS = 10 * 60 * TICKS_PER_SECOND;
+    private static final int CORRUPTUS_SOUL_HARVEST_MAX_STACKS = 5;
+    private static final int CORRUPTUS_SOUL_HARVEST_LOCKOUT_TICKS = 10 * 60 * TICKS_PER_SECOND;
+    private static final int PERSISTENT_AQUA_BARRIER_TICKS = Integer.MAX_VALUE / 4;
     private static final Pattern DECIMAL_PATTERN = Pattern.compile("([0-9]+(?:\\.[0-9]+)?)");
 
     private final DataLoader dataLoader;
@@ -236,6 +237,10 @@ public class ClassPassiveManager {
             return hydroPassive.lowResourceDamageModifier();
         }
 
+        if ("corruptus".equalsIgnoreCase(player.getPlayerClass())) {
+            return getCorruptusSoulHarvestDamageBonus(player.getPlayerId());
+        }
+
         return 0.0;
     }
 
@@ -290,6 +295,10 @@ public class ClassPassiveManager {
 
         if ("hydro".equalsIgnoreCase(player.getPlayerClass())) {
             updateHydroAquaBarrierCooldown(playerId);
+        }
+
+        if ("corruptus".equalsIgnoreCase(player.getPlayerClass())) {
+            adjustedDamage *= Math.max(0.0, 1.0 - getCorruptusSoulHarvestDamageReduction(playerId));
         }
 
         if ("corruptus".equalsIgnoreCase(player.getPlayerClass())
@@ -355,6 +364,10 @@ public class ClassPassiveManager {
         return playerId == null ? 0 : corruptusDarkResurrectionStacksByPlayer.getOrDefault(playerId, 0);
     }
 
+    public synchronized int getCorruptusSoulHarvestMaxStacks() {
+        return corruptusPassive.maxStacks();
+    }
+
     public synchronized double getCorruptusPassiveLockoutSecondsRemaining(String playerId) {
         return corruptusPassiveLockoutSecondsRemaining(playerId);
     }
@@ -398,7 +411,7 @@ public class ClassPassiveManager {
 
         String playerId = player.getPlayerId();
         if (isCorruptusPassiveLockedOut(playerId)) {
-            LOG.info("[MOTM] Dark Resurrection stack blocked by lockout: player=" + playerId);
+            LOG.info("[MOTM] Soul Harvest stack blocked by lockout: player=" + playerId);
             return;
         }
 
@@ -407,8 +420,10 @@ public class ClassPassiveManager {
                 corruptusDarkResurrectionStacksByPlayer.getOrDefault(playerId, 0) + 1
         );
         corruptusDarkResurrectionStacksByPlayer.put(playerId, stacks);
-        LOG.info("[MOTM] Dark Resurrection stack gained: player=" + playerId
-                + " stacks=" + stacks + "/" + corruptusPassive.maxStacks());
+        LOG.info("[MOTM] Soul Harvest stack gained: player=" + playerId
+                + " stacks=" + stacks + "/" + corruptusPassive.maxStacks()
+                + " damageBonus=" + formatDecimal(getCorruptusSoulHarvestDamageBonus(playerId) * 100.0)
+                + "% damageReduction=" + formatDecimal(getCorruptusSoulHarvestDamageReduction(playerId) * 100.0) + "%");
     }
 
     public synchronized String buildPassiveStateSummary(PlayerData player) {
@@ -430,19 +445,21 @@ public class ClassPassiveManager {
             return "Tidal Flow: spell-vamp, swim speed, underwater sustain | " + barrier;
         }
         if ("aero".equals(classId)) {
-            return "Skybound/Tempo Surge: +" + formatDecimal(aeroPassive.movementSpeedBonus() * 100.0)
+            return "Wind Walker: +" + formatDecimal(aeroPassive.movementSpeedBonus() * 100.0)
                     + "% horizontal speed | +" + formatDecimal(aeroPassive.signatureEnergyBonus() * 100.0)
                     + "% native Hytale energy";
         }
         if ("corruptus".equals(classId)) {
             int stacks = corruptusDarkResurrectionStacksByPlayer.getOrDefault(player.getPlayerId(), 0);
             double lockout = corruptusPassiveLockoutSecondsRemaining(player.getPlayerId());
-            return "Dark Resurrection: " + stacks + "/" + corruptusPassive.maxStacks()
-                    + " stacks | lockout " + formatDecimal(lockout) + "s";
+            return "Soul Harvest: " + stacks + "/" + corruptusPassive.maxStacks()
+                    + " stacks | +" + formatDecimal(getCorruptusSoulHarvestDamageBonus(player.getPlayerId()) * 100.0)
+                    + "% damage | -" + formatDecimal(getCorruptusSoulHarvestDamageReduction(player.getPlayerId()) * 100.0)
+                    + "% damage taken | lockout " + formatDecimal(lockout) + "s";
         }
 
         if ("aero".equalsIgnoreCase(player.getPlayerClass())) {
-            return "Tempo Surge: +25% movement speed | +80% native Hytale energy";
+            return "Wind Walker: +25% movement speed | +80% native Hytale energy";
         }
 
         return switch (player.getPlayerClass().toLowerCase(Locale.ROOT)) {
@@ -458,12 +475,15 @@ public class ClassPassiveManager {
                 yield "Tidal Flow: spell-vamp, swim speed, and underwater sustain active";
             }
             case "aero" -> {
-                int charge = stormChargeByPlayer.getOrDefault(player.getPlayerId(), 0);
-                String mode = charge >= aeroPassive.maxCharge() ? "charged" : "building";
-                yield "Storm Surge: " + charge + "/" + aeroPassive.maxCharge() + " storm charge - " + mode;
+                yield "Wind Walker: +" + formatDecimal(aeroPassive.movementSpeedBonus() * 100.0)
+                        + "% movement speed | +" + formatDecimal(aeroPassive.signatureEnergyBonus() * 100.0)
+                        + "% native Hytale energy";
             }
             case "corruptus" -> {
-                yield "Soul Harvest: resource spending disabled; Corruptus abilities cast on cooldowns";
+                int stacks = corruptusDarkResurrectionStacksByPlayer.getOrDefault(player.getPlayerId(), 0);
+                yield "Soul Harvest: " + stacks + "/" + corruptusPassive.maxStacks()
+                        + " stacks - Infernal Aura +" + formatDecimal(getCorruptusSoulHarvestDamageBonus(player.getPlayerId()) * 100.0)
+                        + "% damage";
             }
             default -> "";
         };
@@ -603,6 +623,7 @@ public class ClassPassiveManager {
         }
 
         Store<EntityStore> store = playerRef.getStore();
+        removeEffectById(playerRef, store, HYDRO_AQUA_BARRIER_EFFECT_ID);
         EntityStatMap entityStatMap = store.getComponent(playerRef, EntityStatMap.getComponentType());
         if (entityStatMap != null) {
             entityStatMap.removeModifier(DefaultEntityStatTypes.getOxygen(), HYDRO_OXYGEN_MODIFIER_ID);
@@ -672,6 +693,7 @@ public class ClassPassiveManager {
         }
 
         updateHydroAquaBarrierCooldown(playerId);
+        removeEffectById(playerRef, store, HYDRO_AQUA_BARRIER_EFFECT_ID);
         if (tickCounter < hydroBarrierReadyTickByPlayer.getOrDefault(playerId, 0L)) {
             return;
         }
@@ -704,6 +726,16 @@ public class ClassPassiveManager {
         hydroBarrierReadyTickByPlayer.put(playerId, tickCounter + hydroPassive.aquaBarrierCooldownTicks());
         LOG.info("[MOTM] Aqua Barrier depleted: player=" + playerId
                 + " cooldownTicks=" + hydroPassive.aquaBarrierCooldownTicks());
+    }
+
+    private double getCorruptusSoulHarvestDamageBonus(String playerId) {
+        int stacks = Math.max(0, corruptusDarkResurrectionStacksByPlayer.getOrDefault(playerId, 0));
+        return stacks * Math.max(0.0, corruptusPassive.damageBonusPerStack());
+    }
+
+    private double getCorruptusSoulHarvestDamageReduction(String playerId) {
+        int stacks = Math.max(0, corruptusDarkResurrectionStacksByPlayer.getOrDefault(playerId, 0));
+        return stacks * Math.max(0.0, corruptusPassive.damageReductionPerStack());
     }
 
     private double hydroBarrierSecondsUntilReady(String playerId) {
@@ -748,7 +780,7 @@ public class ClassPassiveManager {
         corruptusPassiveLockoutUntilTickByPlayer.put(playerId, tickCounter + corruptusPassive.lockoutTicks());
         statusEffectManager.removeEffect(playerId, StatusEffect.Type.BURN);
         statusEffectManager.removeEffect(playerId, StatusEffect.Type.DOT);
-        LOG.info("[MOTM] Dark Resurrection triggered: player=" + playerId
+        LOG.info("[MOTM] Soul Harvest resurrection triggered: player=" + playerId
                 + " restoredHealth=" + formatDecimal(targetHealth)
                 + " lockoutTicks=" + corruptusPassive.lockoutTicks());
     }
@@ -779,6 +811,31 @@ public class ClassPassiveManager {
         }
 
         return controller.addEffect(entityRef, effect, store);
+    }
+
+    private boolean removeEffectById(Ref<EntityStore> entityRef, Store<EntityStore> store, String effectId) {
+        if (entityRef == null || !entityRef.isValid() || store == null || effectId == null || effectId.isBlank()) {
+            return false;
+        }
+
+        int effectIndex = EntityEffect.getAssetMap().getIndexOrDefault(effectId, -1);
+        if (effectIndex < 0) {
+            return false;
+        }
+
+        EffectControllerComponent controller = store.getComponent(entityRef, EffectControllerComponent.getComponentType());
+        if (controller == null || !controller.hasEffect(effectIndex)) {
+            return false;
+        }
+
+        try {
+            controller.removeEffect(entityRef, effectIndex, store);
+            return true;
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] Class passive effect removal skipped safely: effect=" + effectId
+                    + " error=" + e.getMessage());
+            return false;
+        }
     }
 
     private void updateTerraCaveVision(Player runtimePlayer,
@@ -1289,9 +1346,10 @@ public class ClassPassiveManager {
         int aquaBarrierCooldownTicks = Math.max(TICKS_PER_SECOND, (int) Math.round(
                 getPassiveValue(passive, "aqua_barrier_cooldown_seconds", 8.0) * TICKS_PER_SECOND
         ));
-        int aquaBarrierDurationTicks = Math.max(TICKS_PER_SECOND, (int) Math.round(
-                getPassiveValue(passive, "aqua_barrier_duration_seconds", 20.0) * TICKS_PER_SECOND
-        ));
+        double aquaBarrierDurationSeconds = getPassiveValue(passive, "aqua_barrier_duration_seconds", 0.0);
+        int aquaBarrierDurationTicks = aquaBarrierDurationSeconds <= 0.0
+                ? PERSISTENT_AQUA_BARRIER_TICKS
+                : Math.max(TICKS_PER_SECOND, (int) Math.round(aquaBarrierDurationSeconds * TICKS_PER_SECOND));
         return new HydroPassive(
                 spellVamp,
                 swimSpeedBonus,
@@ -1315,19 +1373,21 @@ public class ClassPassiveManager {
     private CorruptusPassive loadCorruptusPassive() {
         ClassData.PassiveAbility passive = getPassiveAbility("corruptus");
         double resurrectionHealthFraction = getPassiveValue(passive, "dark_resurrection_health", 0.50);
+        double damageBonusPerStack = getPassiveValue(passive, "soul_harvest_damage_bonus_per_stack", 0.02);
+        double damageReductionPerStack = getPassiveValue(passive, "soul_harvest_damage_reduction_per_stack", 0.01);
         int maxStacks = Math.max(1, (int) Math.round(getPassiveValue(
                 passive,
                 "dark_resurrection_required_stacks",
-                CORRUPTUS_DARK_RESURRECTION_MAX_STACKS
+                CORRUPTUS_SOUL_HARVEST_MAX_STACKS
         )));
         int lockoutTicks = Math.max(TICKS_PER_SECOND, (int) Math.round(
                 getPassiveValue(
                         passive,
                         "dark_resurrection_lockout_seconds",
-                        CORRUPTUS_DARK_RESURRECTION_LOCKOUT_TICKS / (double) TICKS_PER_SECOND
+                        CORRUPTUS_SOUL_HARVEST_LOCKOUT_TICKS / (double) TICKS_PER_SECOND
                 ) * TICKS_PER_SECOND
         ));
-        return new CorruptusPassive(resurrectionHealthFraction, maxStacks, lockoutTicks);
+        return new CorruptusPassive(resurrectionHealthFraction, damageBonusPerStack, damageReductionPerStack, maxStacks, lockoutTicks);
     }
 
     private ClassData.PassiveAbility getPassiveAbility(String classId) {
@@ -1430,6 +1490,8 @@ public class ClassPassiveManager {
 
     private record CorruptusPassive(
             double resurrectionHealthFraction,
+            double damageBonusPerStack,
+            double damageReductionPerStack,
             int maxStacks,
             int lockoutTicks
     ) {}

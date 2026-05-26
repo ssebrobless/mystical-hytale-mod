@@ -45,11 +45,14 @@ public final class PassivePresentation {
             case "aqua_barrier_shield" -> "Aqua Barrier shield " + percent(effect.getValue()) + " max HP";
             case "aqua_barrier_cooldown_seconds" -> "Aqua Barrier cooldown "
                     + AbilityPresentation.formatDecimal(effect.getValue()) + "s";
-            case "aqua_barrier_duration_seconds" -> "Aqua Barrier duration "
-                    + AbilityPresentation.formatDecimal(effect.getValue()) + "s";
-            case "dark_resurrection_required_stacks" -> "Dark Resurrection requires "
+            case "aqua_barrier_duration_seconds" -> effect.getValue() <= 0
+                    ? "Aqua Barrier lasts until broken"
+                    : "Aqua Barrier duration " + AbilityPresentation.formatDecimal(effect.getValue()) + "s";
+            case "dark_resurrection_required_stacks" -> "Soul Harvest resurrection requires "
                     + AbilityPresentation.formatDecimal(effect.getValue()) + " stacks";
-            case "dark_resurrection_health" -> "Dark Resurrection restores to " + percent(effect.getValue()) + " max HP";
+            case "soul_harvest_damage_bonus_per_stack" -> "Infernal Aura damage +" + percent(effect.getValue()) + " per stack";
+            case "soul_harvest_damage_reduction_per_stack" -> "Infernal Aura damage taken -" + percent(effect.getValue()) + " per stack";
+            case "dark_resurrection_health" -> "Soul Harvest resurrection restores to " + percent(effect.getValue()) + " max HP";
             case "dark_resurrection_lockout_seconds" -> "Corruptus passive lockout "
                     + AbilityPresentation.formatDecimal(effect.getValue()) + "s";
             case "conditional_cost_reduction" -> humanizeCondition(effect.getCondition())

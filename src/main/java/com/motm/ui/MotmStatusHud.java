@@ -156,13 +156,13 @@ public class MotmStatusHud extends CustomUIHud {
                 ));
             }
             case "aero" -> {
-                entries.add(new TrackerEntry("Skybound", 0.0, false));
-                entries.add(new TrackerEntry("Tempo Surge", 0.0, false));
+                entries.add(new TrackerEntry("Wind Walker", 0.0, false));
             }
             case "corruptus" -> {
                 int stacks = passiveManager.getCorruptusDarkResurrectionStacks(playerId);
+                int maxStacks = passiveManager.getCorruptusSoulHarvestMaxStacks();
                 double lockout = passiveManager.getCorruptusPassiveLockoutSecondsRemaining(playerId);
-                entries.add(new TrackerEntry("Dark Resurrection " + stacks + "/3", lockout, false));
+                entries.add(new TrackerEntry("Soul Harvest " + stacks + "/" + maxStacks, lockout, stacks > 0 && lockout <= 0.0));
             }
             default -> {
             }
@@ -311,7 +311,7 @@ public class MotmStatusHud extends CustomUIHud {
             case "aero" -> {
                 buffs.add(new HudStatusEntry(
                         "Aero",
-                        "Tempo Surge",
+                        "Wind Walker",
                         StatusTone.PASSIVE,
                         StatusIcon.SPEED,
                         1.0,
@@ -321,14 +321,15 @@ public class MotmStatusHud extends CustomUIHud {
             }
             case "corruptus" -> {
                 int stacks = passiveManager.getCorruptusDarkResurrectionStacks(playerId);
+                int maxStacks = passiveManager.getCorruptusSoulHarvestMaxStacks();
                 double lockout = passiveManager.getCorruptusPassiveLockoutSecondsRemaining(playerId);
                 buffs.add(new HudStatusEntry(
                         "Corruptus",
-                        lockout > 0.0 ? "Resurrection Lockout" : "Dark Resurrection",
+                        lockout > 0.0 ? "Soul Lockout" : "Soul Harvest",
                         lockout > 0.0 ? StatusTone.DEBUFF : StatusTone.PASSIVE,
                         StatusIcon.MAGIC,
-                        lockout > 0.0 ? 0.0 : Math.min(1.0, stacks / 3.0),
-                        lockout > 0.0 ? "CD" : stacks + "/3",
+                        lockout > 0.0 ? 0.0 : Math.min(1.0, stacks / (double) Math.max(1, maxStacks)),
+                        lockout > 0.0 ? "CD" : stacks + "/" + maxStacks,
                         84
                 ));
             }

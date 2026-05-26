@@ -34,14 +34,24 @@
     "mana_regen": 0.15
   },
   "passive_ability": {
-    "id": "corruptus_passive_dark_resurrection",
-    "name": "Dark Resurrection",
-    "description": "Hostile kills build up to 3 Dark Resurrection stacks. At 3 stacks, lethal damage heals you to half HP instead of killing you, clears the stacks, and starts a 10 minute lockout that prevents all Corruptus passive stack gain. Corruptus abilities use cooldowns instead of Souls.",
+    "id": "corruptus_passive_soul_harvest",
+    "name": "Soul Harvest",
+    "description": "Hostile kills build up to 5 Soul Harvest stacks. Each stack fuels Infernal Aura, granting 2% increased damage and 1% damage reduction per stack. At 5 stacks, lethal damage heals you to half HP instead of killing you, clears the stacks, and starts a 10 minute lockout that prevents all Corruptus passive stack gain. Corruptus abilities use cooldowns instead of Souls.",
     "effects": [
       {
         "type": "dark_resurrection_required_stacks",
-        "value": 3.0,
+        "value": 5.0,
         "value_type": "count"
+      },
+      {
+        "type": "soul_harvest_damage_bonus_per_stack",
+        "value": 0.02,
+        "value_type": "percent_modifier"
+      },
+      {
+        "type": "soul_harvest_damage_reduction_per_stack",
+        "value": 0.01,
+        "value_type": "percent_modifier"
       },
       {
         "type": "dark_resurrection_health",
