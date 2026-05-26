@@ -36,7 +36,11 @@ public class MotmCommandBase extends CommandBase {
                 return;
             }
 
-            Player sender = context.senderAs(Player.class);
+            Player sender = mod.getRuntimePlayer(context.senderAsPlayerRef());
+            if (sender == null) {
+                context.sendMessage(Message.raw("[MOTM] Runtime player context is unavailable."));
+                return;
+            }
             String input = context.getInputString();
             String[] args = parseArgs(input);
 

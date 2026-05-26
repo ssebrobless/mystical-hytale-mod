@@ -334,7 +334,7 @@ public class ResourceManager {
     }
 
     /**
-     * Called when a Corruptus player kills a mob — gains souls.
+     * Called when a Corruptus player kills a mob - gains souls.
      */
     public void onMobKilled(String playerId, String playerClass) {
         if (!areAbilityResourceCostsEnabled()) {

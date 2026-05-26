@@ -3,9 +3,9 @@ package com.motm.manager;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.math.vector.Rotation3f;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
@@ -424,7 +424,7 @@ public class GameplayPlaybackManager {
                     && fractionalY < STOMP_LAND_TOLERANCE_BLOCKS
                     && dy <= 0.0;
             if (landed) {
-                fireArmedStomp(runtimePlayer, armed, transform.getTransform().getPosition().clone());
+                fireArmedStomp(runtimePlayer, armed, new Vector3d(transform.getTransform().getPosition()));
                 armedStompByPlayer.remove(playerId, armed);
                 continue;
             }
@@ -506,18 +506,18 @@ public class GameplayPlaybackManager {
 
         List<Vector3d> positions = buildAreaVisualPositions(center, ability);
         if (positions.isEmpty()) {
-            positions = List.of(center.clone());
+            positions = List.of(new Vector3d(center));
         }
 
         String effectId = "MOTM_Terra_Quake_Impact";
         float despawnSeconds = 1.0f;
         int spawned = 0;
         String roleId = HytaleAssetResolver.resolveFieldRoleId("terra", "quake", ability);
-        for (Vector3d position : isQuakeGroundImpactAbility(ability) ? List.of(center.clone()) : positions) {
+        for (Vector3d position : isQuakeGroundImpactAbility(ability) ? List.of(new Vector3d(center)) : positions) {
             NPCEntity proxy = new NPCEntity(world);
             proxy.setRoleName(roleId);
             proxy.setDespawnTime(despawnSeconds);
-            world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
+            world.spawnEntity(proxy, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
 
             Ref<EntityStore> proxyRef = proxy.getReference();
             if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
@@ -743,7 +743,7 @@ public class GameplayPlaybackManager {
 
     private boolean restoreTemporarySelection(TemporaryTerrainSelection selection, String context) {
         try {
-            selection.originalSelection().place(null, selection.world(), Vector3i.ZERO, BlockMask.EMPTY);
+            selection.originalSelection().place(null, selection.world(), new Vector3i(0, 0, 0), BlockMask.EMPTY);
             LOG.info("[MOTM] Temporary Terra terrain restored: reason=" + selection.reason()
                     + " anchor=" + selection.anchor()
                     + " context=" + context);
@@ -821,7 +821,7 @@ public class GameplayPlaybackManager {
             return "[MOTM] Dev forced Stomp landing failed: player position unavailable.";
         }
 
-        Vector3d landingPosition = transform.getTransform().getPosition().clone();
+        Vector3d landingPosition = new Vector3d(transform.getTransform().getPosition());
         LOG.info("[MOTM] Dev forced Stomp landing: player=" + armed.player().getPlayerName()
                 + " pos=" + formatVector(landingPosition));
         fireArmedStomp(runtimePlayer, armed, landingPosition);
@@ -1056,7 +1056,7 @@ public class GameplayPlaybackManager {
                     player.getPlayerClass(),
                     style.getId(),
                     ability,
-                    origin.clone(),
+                    new Vector3d(origin),
                     projectileDirection,
                     speedPerTick,
                     maxDistance,
@@ -1253,7 +1253,7 @@ public class GameplayPlaybackManager {
             thickness = Math.max(1.0, radius * 0.8);
             summary = humanize(terrainEffect.isBlank() ? abilityId : terrainEffect) + " trail";
         } else if (shouldCreatePersonalAuraField(ability)) {
-            centers.add(transform.getTransform().getPosition().clone());
+            centers.add(new Vector3d(transform.getTransform().getPosition()));
             radius = resolveAuraRadius(ability);
             halfWidth = radius;
             thickness = Math.max(1.1, radius * 0.9);
@@ -1480,7 +1480,7 @@ public class GameplayPlaybackManager {
         }
 
         try {
-            selection.originalSelection().place(null, selection.world(), Vector3i.ZERO, BlockMask.EMPTY);
+            selection.originalSelection().place(null, selection.world(), new Vector3i(0, 0, 0), BlockMask.EMPTY);
             LOG.info("[MOTM] Temporary Terra terrain restored: reason=" + selection.reason()
                     + " anchor=" + selection.anchor());
         } catch (Throwable e) {
@@ -1748,7 +1748,7 @@ public class GameplayPlaybackManager {
             return true;
         }
         if (trail.lastPosition == null) {
-            trail.lastPosition = position.clone();
+            trail.lastPosition = new Vector3d(position);
         }
 
         int blockTypeId = resolveRuntimeBlockTypeId(trail.blockIds);
@@ -1771,7 +1771,7 @@ public class GameplayPlaybackManager {
         int placed = 0;
         for (int index = 1; index <= stamps; index++) {
             double factor = index / (double) (stamps + 1);
-            Vector3d trailCenter = trail.lastPosition.clone().addScaled(delta, factor);
+            Vector3d trailCenter = new Vector3d(trail.lastPosition).fma(factor, delta);
             Vector3i anchor = surfaceOverlayAnchor(trailCenter);
             if (sameBlock(trail.lastAnchor, anchor)) {
                 continue;
@@ -1779,19 +1779,19 @@ public class GameplayPlaybackManager {
 
             BlockSelection selection = baseSelection(anchor);
             Set<String> protectedKeys = new LinkedHashSet<>();
-            selection.addBlockAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ(), blockTypeId, 0, 0, 0);
+            selection.addBlockAtWorldPos(anchor.x, anchor.y, anchor.z, blockTypeId, 0, 0, 0);
             protectedKeys.add(blockKey(anchor));
-            selection.addBlockAtWorldPos(anchor.getX() + right.getX(), anchor.getY(), anchor.getZ() + right.getZ(), blockTypeId, 0, 0, 0);
-            protectedKeys.add(blockKey(anchor.getX() + right.getX(), anchor.getY(), anchor.getZ() + right.getZ()));
-            selection.addBlockAtWorldPos(anchor.getX() - right.getX(), anchor.getY(), anchor.getZ() - right.getZ(), blockTypeId, 0, 0, 0);
-            protectedKeys.add(blockKey(anchor.getX() - right.getX(), anchor.getY(), anchor.getZ() - right.getZ()));
+            selection.addBlockAtWorldPos(anchor.x + right.x, anchor.y, anchor.z + right.z, blockTypeId, 0, 0, 0);
+            protectedKeys.add(blockKey(anchor.x + right.x, anchor.y, anchor.z + right.z));
+            selection.addBlockAtWorldPos(anchor.x - right.x, anchor.y, anchor.z - right.z, blockTypeId, 0, 0, 0);
+            protectedKeys.add(blockKey(anchor.x - right.x, anchor.y, anchor.z - right.z));
             placeTemporarySelection(trail.world, trail.reason, anchor, selection,
                     Math.min(trail.expireAtMillis, now + 4500L),
                     "3 surface trail flowers on movement path", protectedKeys);
             trail.lastAnchor = anchor;
             placed++;
         }
-        trail.lastPosition = position.clone();
+        trail.lastPosition = new Vector3d(position);
         trail.nextPlaceAtMillis = now + (placed > 0 ? 180L : 260L);
         return false;
     }
@@ -1813,12 +1813,12 @@ public class GameplayPlaybackManager {
         }
 
         Vector3i block = new Vector3i(
-                column.anchor.getX(),
-                column.anchor.getY() + column.placedHeight,
-                column.anchor.getZ()
+                column.anchor.x,
+                column.anchor.y + column.placedHeight,
+                column.anchor.z
         );
         BlockSelection selection = baseSelection(block);
-        selection.addBlockAtWorldPos(block.getX(), block.getY(), block.getZ(), column.blockTypeId, 0, 0, 0);
+        selection.addBlockAtWorldPos(block.x, block.y, block.z, column.blockTypeId, 0, 0, 0);
         placeTemporarySelection(column.world, column.reason, block, selection, column.expireAtMillis,
                 "pillar stage " + (column.placedHeight + 1) + "/" + column.height,
                 Set.of(blockKey(block)));
@@ -1879,7 +1879,7 @@ public class GameplayPlaybackManager {
                 reason == null || reason.isBlank() ? "player_anchor" : reason,
                 player.getPlayerId(),
                 ownerRef,
-                anchor.clone(),
+                new Vector3d(anchor),
                 expireAtMillis,
                 completionEffectId
         ));
@@ -1973,10 +1973,10 @@ public class GameplayPlaybackManager {
                 : System.currentTimeMillis()
                 + (long) (Math.max(2.0, ability.getDurationSeconds() > 0 ? ability.getDurationSeconds() : 4.0) * 1000);
         Vector3d center = context != null && context.targetBlock() != null
-                ? new Vector3d(context.targetBlock().getX() + 0.5,
-                context.targetBlock().getY() + 1.0,
-                context.targetBlock().getZ() + 0.5)
-                : origin.clone().addScaled(new Vector3d(forward.x, 0.0, forward.z), 3.5);
+                ? new Vector3d(context.targetBlock().x + 0.5,
+                context.targetBlock().y + 1.0,
+                context.targetBlock().z + 0.5)
+                : new Vector3d(origin).fma(3.5, new Vector3d(forward.x, 0.0, forward.z));
 
         return switch (reason) {
             case "obsidian_skin" -> "";
@@ -2058,9 +2058,9 @@ public class GameplayPlaybackManager {
             int offset = x - half;
             for (int y = 0; y < height; y++) {
                 selection.addBlockAtWorldPos(
-                        anchor.getX() + (rightStep.getX() * offset),
-                        anchor.getY() + y,
-                        anchor.getZ() + (rightStep.getZ() * offset),
+                        anchor.x + (rightStep.x * offset),
+                        anchor.y + y,
+                        anchor.z + (rightStep.z * offset),
                         blockTypeId, 0, 0, 0);
             }
         }
@@ -2092,9 +2092,9 @@ public class GameplayPlaybackManager {
             for (int y = 0; y < 3; y++) {
                 int blockTypeId = ((x + y) % 2 == 0) ? primaryBlockTypeId : secondaryBlockTypeId;
                 selection.addBlockAtWorldPos(
-                        anchor.getX() + (rightStep.getX() * offset),
-                        anchor.getY() + y,
-                        anchor.getZ() + (rightStep.getZ() * offset),
+                        anchor.x + (rightStep.x * offset),
+                        anchor.y + y,
+                        anchor.z + (rightStep.z * offset),
                         blockTypeId, 0, 0, 0);
             }
         }
@@ -2109,7 +2109,7 @@ public class GameplayPlaybackManager {
 
     private Vector3d resolveIronWallForward(Vector3d forward) {
         Vector3i step = horizontalStep(forward);
-        return new Vector3d(step.getX(), 0.0, step.getZ());
+        return new Vector3d(step.x, 0.0, step.z);
     }
 
     private Vector3d resolveIronWallCenter(Vector3d origin, Vector3d forward) {
@@ -2137,10 +2137,10 @@ public class GameplayPlaybackManager {
             LOG.warning("[MOTM] Caster-centered ability ignored implausible player-position jump: playerId=" + playerId
                     + " previous=" + formatVector(previous.position())
                     + " current=" + formatVector(origin));
-            return previous.position().clone();
+            return new Vector3d(previous.position());
         }
 
-        recentCasterCenteredOriginByPlayer.put(playerId, new RecentPosition(origin.clone(), now));
+        recentCasterCenteredOriginByPlayer.put(playerId, new RecentPosition(new Vector3d(origin), now));
         return origin;
     }
 
@@ -2157,10 +2157,10 @@ public class GameplayPlaybackManager {
             LOG.warning("[MOTM] Iron Wall ignored implausible player-position jump: playerId=" + playerId
                     + " previous=" + formatVector(previous.position())
                     + " current=" + formatVector(origin));
-            return previous.position().clone();
+            return new Vector3d(previous.position());
         }
 
-        recentIronWallOriginByPlayer.put(playerId, new RecentPosition(origin.clone(), now));
+        recentIronWallOriginByPlayer.put(playerId, new RecentPosition(new Vector3d(origin), now));
         return origin;
     }
 
@@ -2196,8 +2196,9 @@ public class GameplayPlaybackManager {
             if (npc == null) {
                 continue;
             }
-            Vector3d destination = targetPosition.clone().addScaled(pushDirection,
-                    ability.getKnockbackForce() > 0 ? Math.min(ability.getKnockbackForce(), 4.0) : 3.0);
+            Vector3d destination = new Vector3d(targetPosition).fma(
+                    ability.getKnockbackForce() > 0 ? Math.min(ability.getKnockbackForce(), 4.0) : 3.0,
+                    pushDirection);
             npc.moveTo(targetRef, destination.x, destination.y, destination.z, store);
             pushed++;
         }
@@ -2240,10 +2241,10 @@ public class GameplayPlaybackManager {
                 if (dist > r + 0.25) {
                     continue;
                 }
-                int worldX = anchor.getX() + x;
-                int worldZ = anchor.getZ() + z;
-                selection.addBlockAtWorldPos(worldX, anchor.getY(), worldZ, blockTypeId, 0, 0, 0);
-                protectedKeys.add(blockKey(worldX, anchor.getY(), worldZ));
+                int worldX = anchor.x + x;
+                int worldZ = anchor.z + z;
+                selection.addBlockAtWorldPos(worldX, anchor.y, worldZ, blockTypeId, 0, 0, 0);
+                protectedKeys.add(blockKey(worldX, anchor.y, worldZ));
             }
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
@@ -2272,7 +2273,7 @@ public class GameplayPlaybackManager {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 for (int z = 0; z < depth; z++) {
-                    selection.addBlockAtWorldPos(anchor.getX() + x, anchor.getY() + y, anchor.getZ() + z, blockTypeId, 0, 0, 0);
+                    selection.addBlockAtWorldPos(anchor.x + x, anchor.y + y, anchor.z + z, blockTypeId, 0, 0, 0);
                 }
             }
         }
@@ -2293,11 +2294,11 @@ public class GameplayPlaybackManager {
                 && despawnLapidaryGem(gem));
 
         double gemHealth = Math.max(1.0, resolvePlayerMaxHealth(player.getPlayerId()) * Math.max(0.10, ability.getShieldPercent() / 100.0));
-        Vector3d proxyPosition = center.clone().add(1.0, 2.35, 1.0);
+        Vector3d proxyPosition = new Vector3d(center).add(1.0, 2.35, 1.0);
         NPCEntity proxy = new NPCEntity(world);
         proxy.setRoleName("Spark_Living");
         proxy.setDespawnTime((float) Math.max(1.0, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5));
-        world.spawnEntity(proxy, proxyPosition, new Vector3f(0f, 0f, 0f));
+        world.spawnEntity(proxy, proxyPosition, new Rotation3f(0f, 0f, 0f));
 
         Ref<EntityStore> proxyRef = proxy.getReference();
         if (proxyRef == null || !proxyRef.isValid() || proxyRef.getStore() == null) {
@@ -2312,7 +2313,7 @@ public class GameplayPlaybackManager {
         activeLapidaryGems.add(new ActiveLapidaryGem(
                 player.getPlayerId(),
                 proxyRef,
-                center.clone(),
+                new Vector3d(center),
                 gemHealth,
                 gemHealth,
                 expireAtMillis,
@@ -2399,9 +2400,9 @@ public class GameplayPlaybackManager {
         Set<String> protectedKeys = new LinkedHashSet<>();
         int h = Math.max(1, height);
         for (int y = 0; y < h; y++) {
-            int worldY = anchor.getY() + y;
-            selection.addBlockAtWorldPos(anchor.getX(), worldY, anchor.getZ(), blockTypeId, 0, 0, 0);
-            protectedKeys.add(blockKey(anchor.getX(), worldY, anchor.getZ()));
+            int worldY = anchor.y + y;
+            selection.addBlockAtWorldPos(anchor.x, worldY, anchor.z, blockTypeId, 0, 0, 0);
+            protectedKeys.add(blockKey(anchor.x, worldY, anchor.z));
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
                 selection.getBlockCount() + " surface column blocks", protectedKeys);
@@ -2477,10 +2478,10 @@ public class GameplayPlaybackManager {
                 if (dist < ring - 0.4 || dist > ring + 0.4) {
                     continue;
                 }
-                int worldX = anchor.getX() + x;
-                int worldZ = anchor.getZ() + z;
-                selection.addBlockAtWorldPos(worldX, anchor.getY(), worldZ, blockTypeId, 0, 0, 0);
-                protectedKeys.add(blockKey(worldX, anchor.getY(), worldZ));
+                int worldX = anchor.x + x;
+                int worldZ = anchor.z + z;
+                selection.addBlockAtWorldPos(worldX, anchor.y, worldZ, blockTypeId, 0, 0, 0);
+                protectedKeys.add(blockKey(worldX, anchor.y, worldZ));
             }
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
@@ -2509,9 +2510,9 @@ public class GameplayPlaybackManager {
             back.normalize();
         }
         for (int i = 1; i <= 4; i++) {
-            Vector3d pos = origin.clone().addScaled(back, i);
+            Vector3d pos = new Vector3d(origin).fma(i, back);
             Vector3i block = surfaceOverlayAnchor(pos);
-            selection.addBlockAtWorldPos(block.getX(), block.getY(), block.getZ(), blockTypeId, 0, 0, 0);
+            selection.addBlockAtWorldPos(block.x, block.y, block.z, blockTypeId, 0, 0, 0);
             protectedKeys.add(blockKey(block));
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
@@ -2540,9 +2541,9 @@ public class GameplayPlaybackManager {
                         continue;
                     }
                     selection.addBlockAtWorldPos(
-                            anchor.getX() + x,
-                            anchor.getY() + y,
-                            anchor.getZ() + z,
+                            anchor.x + x,
+                            anchor.y + y,
+                            anchor.z + z,
                             blockTypeId,
                             0,
                             0,
@@ -2578,7 +2579,7 @@ public class GameplayPlaybackManager {
                 if (dist > r + 0.2) {
                     continue;
                 }
-                selection.addFluidAtWorldPos(anchor.getX() + x, anchor.getY(), anchor.getZ() + z, fluidTypeId, fluidLevel);
+                selection.addFluidAtWorldPos(anchor.x + x, anchor.y, anchor.z + z, fluidTypeId, fluidLevel);
             }
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
@@ -2618,7 +2619,7 @@ public class GameplayPlaybackManager {
             return "";
         }
         try {
-            BlockSelection original = selection.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            BlockSelection original = selection.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
             Set<String> protectedKeys = protectedBlockKeys == null || protectedBlockKeys.isEmpty()
                     ? Set.of()
                     : Set.copyOf(protectedBlockKeys);
@@ -2636,7 +2637,7 @@ public class GameplayPlaybackManager {
                     + " summary=" + summary);
             mod.recordServerTruth("temporary_selection_placed", null, MotmObservability.mapOf(
                     "reason", reason,
-                    "anchor", "(" + anchor.getX() + "," + anchor.getY() + "," + anchor.getZ() + ")",
+                    "anchor", "(" + anchor.x + "," + anchor.y + "," + anchor.z + ")",
                     "blockCount", selection.getBlockCount(),
                     "fluidCount", selection.getFluidCount(),
                     "expireAtMillis", expireAtMillis,
@@ -2656,7 +2657,7 @@ public class GameplayPlaybackManager {
     }
 
     private static String blockKey(Vector3i block) {
-        return block == null ? "" : blockKey(block.getX(), block.getY(), block.getZ());
+        return block == null ? "" : blockKey(block.x, block.y, block.z);
     }
 
     private static String blockKey(int x, int y, int z) {
@@ -2665,8 +2666,8 @@ public class GameplayPlaybackManager {
 
     private BlockSelection baseSelection(Vector3i anchor) {
         BlockSelection selection = new BlockSelection();
-        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
-        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setPosition(anchor.x, anchor.y, anchor.z);
+        selection.setAnchorAtWorldPos(anchor.x, anchor.y, anchor.z);
         return selection;
     }
 
@@ -2684,7 +2685,7 @@ public class GameplayPlaybackManager {
 
     private Vector3i surfaceOverlayAnchor(Vector3d center) {
         Vector3i anchor = surfaceDecorationAnchor(center);
-        return new Vector3i(anchor.getX(), anchor.getY() + 1, anchor.getZ());
+        return new Vector3i(anchor.x, anchor.y + 1, anchor.z);
     }
 
     private boolean sameBlock(Vector3i first, Vector3i second) {
@@ -2894,7 +2895,7 @@ public class GameplayPlaybackManager {
         int count = Math.max(2, nodes);
         for (int index = 0; index < count; index++) {
             double factor = count == 1 ? 1.0 : index / (double) (count - 1);
-            centers.add(start.clone().addScaled(segment, factor));
+            centers.add(new Vector3d(start).fma(factor, segment));
         }
         return List.copyOf(centers);
     }
@@ -2935,10 +2936,10 @@ public class GameplayPlaybackManager {
             return false;
         }
 
-        Vector3d from = projectile.position().clone();
+        Vector3d from = new Vector3d(projectile.position());
         Vector3d stepDirection = normalize(projectile.direction());
         double stepDistance = Math.min(projectile.speedPerTick(), MAX_PROJECTILE_STEP_DISTANCE);
-        Vector3d to = from.clone().addScaled(stepDirection, stepDistance);
+        Vector3d to = new Vector3d(from).fma(stepDistance, stepDirection);
 
         projectile.position().x = to.x;
         projectile.position().y = to.y;
@@ -3080,7 +3081,9 @@ public class GameplayPlaybackManager {
                 continue;
             }
             toMarker.normalize();
-            Vector3d destination = targetPosition.clone().addScaled(toMarker, Math.min(2.25, distance(targetPosition, impactPosition)));
+            Vector3d destination = new Vector3d(targetPosition).fma(
+                    Math.min(2.25, distance(targetPosition, impactPosition)),
+                    toMarker);
             npc.moveTo(targetRef, destination.x, destination.y, destination.z, store);
             applyTargetToken("disoriented", targetRef, store, projectile.ownerRef(), player.getPlayerId(), projectile.ability());
             applied++;
@@ -3161,7 +3164,7 @@ public class GameplayPlaybackManager {
             return;
         }
 
-        field.center = ownerPosition.clone();
+        field.center = new Vector3d(ownerPosition);
     }
 
     private Ref<EntityStore> resolveProjectileHit(ActiveProjectile projectile,
@@ -3197,7 +3200,7 @@ public class GameplayPlaybackManager {
                 Vector3d targetPosition = transform.getTransform().getPosition();
                 double normalizedProjection = dot(subtract(targetPosition, from), segment) / segmentLengthSquared;
                 double clampedProjection = clamp(normalizedProjection, 0.0, 1.0);
-                Vector3d nearestPoint = from.clone().addScaled(segment, clampedProjection);
+                Vector3d nearestPoint = new Vector3d(from).fma(clampedProjection, segment);
                 double distanceToSegment = distance(nearestPoint, targetPosition);
                 if (distanceToSegment > projectile.collisionRadius()) {
                     continue;
@@ -3504,7 +3507,7 @@ public class GameplayPlaybackManager {
                 Vector3d targetPosition = transform.getTransform().getPosition();
                 double normalizedProjection = dot(subtract(targetPosition, from), segment) / segmentLengthSquared;
                 double clampedProjection = clamp(normalizedProjection, 0.0, 1.0);
-                Vector3d nearestPoint = from.clone().addScaled(segment, clampedProjection);
+                Vector3d nearestPoint = new Vector3d(from).fma(clampedProjection, segment);
                 if (distance(nearestPoint, targetPosition) <= projectile.collisionRadius()) {
                     targets.add(ref);
                 }
@@ -3792,7 +3795,7 @@ public class GameplayPlaybackManager {
         }
         Player runtimePlayer = mod.getRuntimePlayer(field.ownerPlayerId());
         if (runtimePlayer != null) {
-            Vector3d groundedCenter = field.center().clone();
+            Vector3d groundedCenter = new Vector3d(field.center());
             groundedCenter.y = groundedCenter.y - 1.0;
             spawnQuakeImpactRing(runtimePlayer, field.ability(), groundedCenter);
             LOG.info("[MOTM] Sinkhole surface marker placed: quake impact proxy only center=" + groundedCenter);
@@ -4279,8 +4282,8 @@ public class GameplayPlaybackManager {
 
         Vector3d relative = subtract(targetPosition, field.center());
         double pushSign = dot(relative, field.forwardDirection()) >= 0 ? 1.0 : -1.0;
-        Vector3d destination = targetPosition.clone()
-                .addScaled(field.forwardDirection(), pushSign * 1.8)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(pushSign * 1.8, field.forwardDirection())
                 .add(0.0, 0.2, 0.0);
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
@@ -4387,7 +4390,7 @@ public class GameplayPlaybackManager {
         NPCEntity proxy = new NPCEntity(world);
         proxy.setRoleName(roleId);
         proxy.setDespawnTime((float) Math.max(0.6, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5));
-        world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
+        world.spawnEntity(proxy, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
 
         Ref<EntityStore> proxyRef = proxy.getReference();
         if (proxyRef == null || !proxyRef.isValid() || proxyRef.getStore() == null) {
@@ -4465,7 +4468,7 @@ public class GameplayPlaybackManager {
             NPCEntity proxy = new NPCEntity(world);
             proxy.setRoleName(roleId);
             proxy.setDespawnTime(despawnTimeSeconds);
-            world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
+            world.spawnEntity(proxy, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
 
             Ref<EntityStore> proxyRef = proxy.getReference();
             if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
@@ -4631,7 +4634,7 @@ public class GameplayPlaybackManager {
         }
 
         List<Vector3d> positions = new ArrayList<>();
-        positions.add(center.clone());
+        positions.add(new Vector3d(center));
         String castType = lower(ability.getCastType());
         if ("barrier".equals(castType) && lineDirection != null && lineDirection.isFinite()) {
             double span = Math.max(2.0, Math.min(Math.max(halfWidth, 0.0), 7.0));
@@ -4640,7 +4643,7 @@ public class GameplayPlaybackManager {
                 if (Math.abs(offset) < 0.3) {
                     continue;
                 }
-                positions.add(center.clone().addScaled(normalized, offset));
+                positions.add(new Vector3d(center).fma(offset, normalized));
             }
             return positions;
         }
@@ -4658,22 +4661,22 @@ public class GameplayPlaybackManager {
         }
 
         List<Vector3d> positions = new ArrayList<>();
-        positions.add(center.clone());
+        positions.add(new Vector3d(center));
         if (isQuakeGroundImpactAbility(ability)) {
             return List.copyOf(positions);
         }
         double radius = ability.getRadius() > 0 ? ability.getRadius() : DEFAULT_AREA_RADIUS;
         double ringRadius = Math.max(1.8, Math.min(radius * 0.62, 5.5));
-        positions.add(center.clone().add(ringRadius, 0.0, 0.0));
-        positions.add(center.clone().add(-ringRadius, 0.0, 0.0));
-        positions.add(center.clone().add(0.0, 0.0, ringRadius));
-        positions.add(center.clone().add(0.0, 0.0, -ringRadius));
+        positions.add(new Vector3d(center).add(ringRadius, 0.0, 0.0));
+        positions.add(new Vector3d(center).add(-ringRadius, 0.0, 0.0));
+        positions.add(new Vector3d(center).add(0.0, 0.0, ringRadius));
+        positions.add(new Vector3d(center).add(0.0, 0.0, -ringRadius));
         if (radius >= 4.5) {
             double diagonal = ringRadius * 0.72;
-            positions.add(center.clone().add(diagonal, 0.0, diagonal));
-            positions.add(center.clone().add(-diagonal, 0.0, diagonal));
-            positions.add(center.clone().add(diagonal, 0.0, -diagonal));
-            positions.add(center.clone().add(-diagonal, 0.0, -diagonal));
+            positions.add(new Vector3d(center).add(diagonal, 0.0, diagonal));
+            positions.add(new Vector3d(center).add(-diagonal, 0.0, diagonal));
+            positions.add(new Vector3d(center).add(diagonal, 0.0, -diagonal));
+            positions.add(new Vector3d(center).add(-diagonal, 0.0, -diagonal));
         }
         return positions;
     }
@@ -4701,7 +4704,7 @@ public class GameplayPlaybackManager {
         if (direction == null || !direction.isFinite()) {
             direction = new Vector3d(0.0, 0.0, 1.0);
         } else {
-            direction = direction.clone();
+            direction = new Vector3d(direction);
         }
 
         double horizontalDistance = resolveHorizontalMovement(ability, castType);
@@ -4730,9 +4733,9 @@ public class GameplayPlaybackManager {
             horizontalDirection.normalize();
         }
 
-        Vector3d start = currentTransform.getPosition().clone();
-        Vector3d target = start.clone()
-                .addScaled(horizontalDirection, horizontalDistance)
+        Vector3d start = new Vector3d(currentTransform.getPosition());
+        Vector3d target = new Vector3d(start)
+                .fma(horizontalDistance, horizontalDirection)
                 .add(0.0, verticalDistance, 0.0);
         runtimePlayer.moveTo(playerRef, target.x, target.y, target.z, store);
 
@@ -4741,7 +4744,7 @@ public class GameplayPlaybackManager {
                 horizontalDistance,
                 verticalDistance,
                 start,
-                target.clone(),
+                new Vector3d(target),
                 buildMovementSummary(castType, horizontalDistance, verticalDistance)
         );
     }
@@ -5065,7 +5068,7 @@ public class GameplayPlaybackManager {
                 ownerRef,
                 targetRef,
                 ability,
-                targetAnchor != null ? targetAnchor.clone() : null,
+                targetAnchor != null ? new Vector3d(targetAnchor) : null,
                 now + (long) (durationSeconds * 1000),
                 now + LINE_CONTROL_PULSE_INTERVAL_MS
         ));
@@ -5287,7 +5290,7 @@ public class GameplayPlaybackManager {
         NPCEntity summon = new NPCEntity(world);
         summon.setRoleName(modelId);
         summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
-        world.spawnEntity(summon, spawnPosition, new Vector3f(0f, 0f, 0f));
+        world.spawnEntity(summon, spawnPosition, new Rotation3f(0f, 0f, 0f));
 
         Ref<EntityStore> summonRef = summon.getReference();
         if (summonRef == null || !summonRef.isValid()) {
@@ -5507,7 +5510,7 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d direction = normalize(subtract(ownerPosition, summonPosition));
-        Vector3d destination = ownerPosition.clone().addScaled(direction, -2.0);
+        Vector3d destination = new Vector3d(ownerPosition).fma(-2.0, direction);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
     }
 
@@ -5529,7 +5532,7 @@ public class GameplayPlaybackManager {
         Vector3d direction = normalize(subtract(targetPosition, summonPosition));
         double distance = distance(summonPosition, targetPosition);
         double travel = Math.max(0.4, Math.min(4.0, distance - desiredRange));
-        Vector3d destination = summonPosition.clone().addScaled(direction, travel);
+        Vector3d destination = new Vector3d(summonPosition).fma(travel, direction);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
     }
 
@@ -5551,7 +5554,7 @@ public class GameplayPlaybackManager {
         Vector3d direction = normalize(subtract(summonPosition, targetPosition));
         double distance = distance(summonPosition, targetPosition);
         double retreat = Math.max(0.5, Math.min(3.4, desiredDistance - distance));
-        Vector3d destination = summonPosition.clone().addScaled(direction, retreat);
+        Vector3d destination = new Vector3d(summonPosition).fma(retreat, direction);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
     }
 
@@ -5632,7 +5635,7 @@ public class GameplayPlaybackManager {
         Vector3d approach = ownerPosition != null
                 ? normalize(subtract(targetPosition, ownerPosition))
                 : new Vector3d(0.0, 0.0, 1.0);
-        Vector3d destination = targetPosition.clone().addScaled(approach, -1.15);
+        Vector3d destination = new Vector3d(targetPosition).fma(-1.15, approach);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
     }
 
@@ -6069,7 +6072,7 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d previous = form.lastOwnerPosition();
-        form.lastOwnerPosition = origin.clone();
+        form.lastOwnerPosition = new Vector3d(origin);
         if (previous == null) {
             return;
         }
@@ -6254,7 +6257,7 @@ public class GameplayPlaybackManager {
                 Vector3d targetPosition = transform.getTransform().getPosition();
                 double normalizedProjection = dot(subtract(targetPosition, from), segment) / segmentLengthSquared;
                 double clampedProjection = clamp(normalizedProjection, 0.0, 1.0);
-                Vector3d nearestPoint = from.clone().addScaled(segment, clampedProjection);
+                Vector3d nearestPoint = new Vector3d(from).fma(clampedProjection, segment);
                 double candidateDistance = distance(nearestPoint, targetPosition);
                 if (candidateDistance <= radius) {
                     candidates.add(new SegmentTargetCandidate(ref, distance(from, nearestPoint)));
@@ -7380,7 +7383,7 @@ public class GameplayPlaybackManager {
                                        double range,
                                        AbilityData ability) {
         if (isCasterCenteredAreaAbility(ability)) {
-            return origin.clone();
+            return new Vector3d(origin);
         }
         if (context != null && context.targetBlock() != null) {
             Vector3i block = context.targetBlock();
@@ -7412,7 +7415,7 @@ public class GameplayPlaybackManager {
                     || gem.ref == null || !gem.ref.isValid() || !belongsToCurrentStore(gem.ref, store)) {
                 continue;
             }
-            return gem.center.clone();
+            return new Vector3d(gem.center);
         }
         LOG.info("[MOTM][terra-audit] event=gem.anchor.missing playerId=" + safe(ownerPlayerId)
                 + " abilityId=" + safe(ability.getId()));
@@ -7436,10 +7439,10 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d forward = getDirection(playerRef, store);
-        Vector3d raised = origin.clone().add(0.0, 1.15, 0.0);
+        Vector3d raised = new Vector3d(origin).add(0.0, 1.15, 0.0);
         if (forward != null) {
             Vector3d horizontalForward = normalizeHorizontal(forward);
-            raised.addScaled(horizontalForward, 0.9);
+            raised.fma(0.9, horizontalForward);
         }
         return raised;
     }
@@ -7478,7 +7481,7 @@ public class GameplayPlaybackManager {
             Vector3d targetPosition = getPosition(context.explicitTargetRef(), store);
             if (targetPosition != null) {
                 Vector3d aimPoint = isMagmaSlingAbility(ability)
-                        ? targetPosition.clone().add(0.0, 1.0, 0.0)
+                        ? new Vector3d(targetPosition).add(0.0, 1.0, 0.0)
                         : targetPosition;
                 return normalize(subtract(aimPoint, origin));
             }
@@ -7523,7 +7526,7 @@ public class GameplayPlaybackManager {
             return null;
         }
 
-        Vector3d direction = transform.getTransform().getDirection().clone();
+        Vector3d direction = new Vector3d(transform.getTransform().getDirection());
         if (!direction.isFinite()) {
             return new Vector3d(0.0, 0.0, 1.0);
         }
@@ -8194,7 +8197,7 @@ public class GameplayPlaybackManager {
                 return false;
             }
             try {
-                selection.originalSelection().place(null, selection.world(), Vector3i.ZERO, BlockMask.EMPTY);
+                selection.originalSelection().place(null, selection.world(), new Vector3i(0, 0, 0), BlockMask.EMPTY);
                 LOG.info("[MOTM] Temporary Terra terrain restored before replacement: reason=" + selection.reason()
                         + " anchor=" + selection.anchor());
             } catch (Throwable e) {
@@ -8389,8 +8392,8 @@ public class GameplayPlaybackManager {
                 ? Math.min(ability.getKnockbackForce(), 5.0)
                 : 2.5;
         double lift = ability != null && ability.isKnockup() ? Math.max(0.6, ability.getLaunchHeight()) : 0.0;
-        Vector3d destination = targetPosition.clone()
-                .addScaled(direction, push)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(push, direction)
                 .add(0.0, lift, 0.0);
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
@@ -8407,7 +8410,7 @@ public class GameplayPlaybackManager {
                                                 Store<EntityStore> store) {
         if (context != null && context.targetBlock() != null) {
             Vector3i block = context.targetBlock();
-            return new Vector3d(block.getX() + 0.5, block.getY(), block.getZ() + 0.5);
+            return new Vector3d(block.x + 0.5, block.y, block.z + 0.5);
         }
         return getPosition(fallbackRef, store);
     }
@@ -8455,8 +8458,8 @@ public class GameplayPlaybackManager {
 
         double push = ability.getKnockbackForce() > 0 ? Math.min(ability.getKnockbackForce(), 5.0) : 2.5;
         double lift = ability.isKnockup() ? Math.max(0.6, ability.getLaunchHeight()) : 0.0;
-        Vector3d destination = targetPosition.clone()
-                .addScaled(direction, push)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(push, direction)
                 .add(0.0, lift, 0.0);
         boolean wallImpact = isSolidTerrainImpact(store, destination, direction);
 
@@ -8555,8 +8558,8 @@ public class GameplayPlaybackManager {
             return false;
         }
 
-        Vector3d destination = targetPosition.clone()
-                .addScaled(direction, dragStep)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(dragStep, direction)
                 .add(0.0, 0.15, 0.0);
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
@@ -8577,7 +8580,7 @@ public class GameplayPlaybackManager {
 
         World world = store.getExternalData().getWorld();
         double probeDistance = 0.9;
-        Vector3d ahead = destination.clone().addScaled(direction, probeDistance);
+        Vector3d ahead = new Vector3d(destination).fma(probeDistance, direction);
         return isSolidBlock(world, destination) || isSolidBlock(world, ahead);
     }
 
@@ -8647,8 +8650,8 @@ public class GameplayPlaybackManager {
             return false;
         }
 
-        Vector3d destination = targetPosition.clone()
-                .addScaled(direction, step)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(step, direction)
                 .add(0.0, verticalLift, 0.0);
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
@@ -9251,7 +9254,7 @@ public class GameplayPlaybackManager {
             this.weaponRiderToken = weaponRiderToken;
             this.locomotionTriggerDistance = locomotionTriggerDistance;
             this.collisionRadius = collisionRadius;
-            this.lastOwnerPosition = lastOwnerPosition != null ? lastOwnerPosition.clone() : null;
+            this.lastOwnerPosition = lastOwnerPosition != null ? new Vector3d(lastOwnerPosition) : null;
             this.summary = summary;
         }
 

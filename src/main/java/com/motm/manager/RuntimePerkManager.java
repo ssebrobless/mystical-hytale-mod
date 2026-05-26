@@ -2,8 +2,8 @@ package com.motm.manager;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.math.vector.Rotation3f;
+import org.joml.Vector3d;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
@@ -656,7 +656,7 @@ public class RuntimePerkManager {
         ghost.setRoleName(GHOST_ROLE_ID);
         ghost.setDespawnTime(60.0f);
         Vector3d spawn = new Vector3d(ownerPosition.x + 1.5, ownerPosition.y + 1.0, ownerPosition.z);
-        world.spawnEntity(ghost, spawn, new Vector3f(0f, 0f, 0f));
+        world.spawnEntity(ghost, spawn, new Rotation3f(0f, 0f, 0f));
         Ref<EntityStore> ghostRef = ghost.getReference();
         if (ghostRef == null || !ghostRef.isValid()) {
             return null;

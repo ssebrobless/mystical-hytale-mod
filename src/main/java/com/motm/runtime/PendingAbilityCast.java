@@ -1,7 +1,7 @@
 package com.motm.runtime;
 
 import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.math.vector.Vector3i;
+import org.joml.Vector3i;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 public record PendingAbilityCast(

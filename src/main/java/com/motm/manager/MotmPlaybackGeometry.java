@@ -1,7 +1,7 @@
 package com.motm.manager;
 
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3i;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
 
 final class MotmPlaybackGeometry {
 
@@ -31,9 +31,9 @@ final class MotmPlaybackGeometry {
     static boolean sameBlock(Vector3i first, Vector3i second) {
         return first != null
                 && second != null
-                && first.getX() == second.getX()
-                && first.getY() == second.getY()
-                && first.getZ() == second.getZ();
+                && first.x == second.x
+                && first.y == second.y
+                && first.z == second.z;
     }
 
     static Vector3d normalizeHorizontal(Vector3d vector) {
@@ -54,7 +54,7 @@ final class MotmPlaybackGeometry {
     }
 
     static Vector3i horizontalStep(Vector3d direction) {
-        Vector3d step = direction != null ? direction.clone() : new Vector3d(1.0, 0.0, 0.0);
+        Vector3d step = direction != null ? new Vector3d(direction) : new Vector3d(1.0, 0.0, 0.0);
         step.y = 0.0;
         if (!step.isFinite() || step.length() < 0.001) {
             step = new Vector3d(1.0, 0.0, 0.0);
@@ -72,7 +72,7 @@ final class MotmPlaybackGeometry {
     }
 
     static Vector3d normalize(Vector3d vector) {
-        Vector3d normalized = vector.clone();
+        Vector3d normalized = new Vector3d(vector);
         if (normalized.length() < 0.0001) {
             return new Vector3d(0.0, 0.0, 1.0);
         }

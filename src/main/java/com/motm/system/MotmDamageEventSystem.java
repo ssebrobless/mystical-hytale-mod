@@ -180,7 +180,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
             );
         }
         if (response != null && !response.isBlank()) {
-            runtimePlayer.sendMessage(Message.raw(response));
+            mod.sendPlayerMessage(runtimePlayer, Message.raw(response));
         }
     }
 

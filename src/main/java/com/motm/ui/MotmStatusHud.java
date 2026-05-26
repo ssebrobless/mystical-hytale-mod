@@ -33,7 +33,7 @@ public class MotmStatusHud extends CustomUIHud {
     private final MenteesMod mod;
 
     public MotmStatusHud(PlayerRef playerRef, MenteesMod mod) {
-        super(playerRef);
+        super(playerRef, "motm_status_hud");
         this.mod = mod;
     }
 

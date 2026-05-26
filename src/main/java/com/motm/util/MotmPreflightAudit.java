@@ -746,7 +746,7 @@ public final class MotmPreflightAudit {
         private String toDetailedText() {
             StringBuilder sb = new StringBuilder();
             sb.append("MOTM PREFLIGHT AUDIT\n");
-            sb.append("════════════════════\n");
+            sb.append("====================\n");
             sb.append("Classes   : ").append(classCount).append("\n");
             sb.append("Styles    : ").append(styleCount).append("\n");
             sb.append("Abilities : ").append(abilityCount).append("\n");
@@ -764,7 +764,7 @@ public final class MotmPreflightAudit {
 
         private void appendSection(StringBuilder sb, String title, List<Finding> findings) {
             sb.append("\n").append(title).append("\n");
-            sb.append("────────").append("\n");
+            sb.append("--------").append("\n");
             if (findings.isEmpty()) {
                 sb.append("(none)\n");
                 return;

@@ -2,8 +2,8 @@ package com.motm.manager;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3i;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
 import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementMa
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.PersistentDynamicLight;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.BreathingComponent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
@@ -451,7 +452,7 @@ public class ClassPassiveManager {
                 String shieldState = terraShieldPrimedPlayers.contains(player.getPlayerId())
                         ? "shield primed"
                         : "shield in " + Math.max(0.0, (terraPassive.stationaryTicksRequired() - stationaryTicks) / (double) TICKS_PER_SECOND) + "s";
-                yield "Earthen Resilience: " + formatDecimal(stationarySeconds) + "s still · " + shieldState;
+                yield "Earthen Resilience: " + formatDecimal(stationarySeconds) + "s still - " + shieldState;
             }
             case "hydro" -> {
                 yield "Tidal Flow: spell-vamp, swim speed, and underwater sustain active";
@@ -459,7 +460,7 @@ public class ClassPassiveManager {
             case "aero" -> {
                 int charge = stormChargeByPlayer.getOrDefault(player.getPlayerId(), 0);
                 String mode = charge >= aeroPassive.maxCharge() ? "charged" : "building";
-                yield "Storm Surge: " + charge + "/" + aeroPassive.maxCharge() + " storm charge · " + mode;
+                yield "Storm Surge: " + charge + "/" + aeroPassive.maxCharge() + " storm charge - " + mode;
             }
             case "corruptus" -> {
                 yield "Soul Harvest: resource spending disabled; Corruptus abilities cast on cooldowns";
@@ -526,7 +527,7 @@ public class ClassPassiveManager {
         Vector3d previousPosition = lastPositionsByPlayer.get(playerId);
         boolean moved = hasMoved(previousPosition, position);
 
-        lastPositionsByPlayer.put(playerId, position.clone());
+        lastPositionsByPlayer.put(playerId, new Vector3d(position));
         if (moved) {
             stationaryTicksByPlayer.put(playerId, 0);
             terraShieldPrimedPlayers.remove(playerId);
@@ -558,7 +559,7 @@ public class ClassPassiveManager {
 
         Vector3d position = getPosition(playerRef, store);
         if (position != null) {
-            lastPositionsByPlayer.put(playerId, position.clone());
+            lastPositionsByPlayer.put(playerId, new Vector3d(position));
         }
     }
 
@@ -570,7 +571,7 @@ public class ClassPassiveManager {
 
         Vector3d position = getPosition(playerRef, playerRef.getStore());
         if (position != null) {
-            lastPositionsByPlayer.put(playerId, position.clone());
+            lastPositionsByPlayer.put(playerId, new Vector3d(position));
         }
     }
 
@@ -842,7 +843,7 @@ public class ClassPassiveManager {
             return BlockMaterial.Empty;
         }
 
-        long chunkIndex = ChunkUtil.indexChunkFromBlock(targetBlock.getX(), targetBlock.getZ());
+        long chunkIndex = ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z);
         WorldChunk chunk = world.getChunkIfLoaded(chunkIndex);
         if (chunk == null) {
             chunk = world.getChunkIfInMemory(chunkIndex);
@@ -851,9 +852,9 @@ public class ClassPassiveManager {
             return BlockMaterial.Empty;
         }
 
-        int localX = ChunkUtil.localCoordinate(targetBlock.getX());
-        int localZ = ChunkUtil.localCoordinate(targetBlock.getZ());
-        int y = targetBlock.getY();
+        int localX = ChunkUtil.localCoordinate(targetBlock.x);
+        int localZ = ChunkUtil.localCoordinate(targetBlock.z);
+        int y = targetBlock.y;
         var blockType = chunk.getBlockType(localX, y, localZ);
         if (blockType == null) {
             return BlockMaterial.Empty;
@@ -954,10 +955,8 @@ public class ClassPassiveManager {
     private boolean canBreatheAtCurrentHeight(Player runtimePlayer,
                                               Ref<EntityStore> entityRef,
                                               Store<EntityStore> store) {
-        long packed = Player.getPackedMaterialAndFluidAtBreathingHeight(entityRef, store);
-        BlockMaterial material = BlockMaterial.fromValue((int) (packed >>> 32));
-        int fluidId = (int) packed;
-        return runtimePlayer.canBreathe(entityRef, material, fluidId, store);
+        BreathingComponent breathing = store.getComponent(entityRef, BreathingComponent.getComponentType());
+        return breathing == null || !breathing.isSuffocating();
     }
 
     private void maximizeOxygen(Ref<EntityStore> entityRef, Store<EntityStore> store) {

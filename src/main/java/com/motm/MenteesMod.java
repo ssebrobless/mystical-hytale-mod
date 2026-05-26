@@ -72,9 +72,9 @@ import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.math.vector.Rotation3f;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
 import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.protocol.BenchType;
 import com.hypixel.hytale.protocol.GameMode;
@@ -82,7 +82,9 @@ import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.MouseButtonState;
 import com.hypixel.hytale.protocol.MouseButtonType;
 import com.hypixel.hytale.protocol.Packet;
+import com.hypixel.hytale.protocol.packets.interface_.ChatType;
 import com.hypixel.hytale.protocol.packets.interface_.HudComponent;
+import com.hypixel.hytale.protocol.packets.interface_.ServerMessage;
 import com.hypixel.hytale.registry.Registration;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -345,7 +347,7 @@ public class MenteesMod extends JavaPlugin {
         dataLoader = new DataLoader(operationalDataDir);
         dataLoader.loadAll();
 
-        // Initialize managers (order matters — dependencies)
+        // Initialize managers (order matters - dependencies)
         synergyEngine = new SynergyEngine(dataLoader);
         playerStatModifierManager = new PlayerStatModifierManager(this);
         perkManager = new PerkManager(dataLoader, playerStatModifierManager);
@@ -682,10 +684,10 @@ public class MenteesMod extends JavaPlugin {
             LOG.info("[MOTM] " + playerName + " has pending Tier " + tier + " perk selection");
         }
 
-        // First join — prompt class selection
+        // First join - prompt class selection
         if (player.isFirstJoin()) {
             // TODO: Open class selection UI via Hytale's UI system
-            LOG.info("[MOTM] " + playerName + " is a new player — showing class selection");
+            LOG.info("[MOTM] " + playerName + " is a new player - showing class selection");
         }
         if (!player.isStartupSelectionComplete()) {
             startupSelectionProtectedPlayers.add(playerId);
@@ -1367,7 +1369,7 @@ public class MenteesMod extends JavaPlugin {
             return false;
         }
         LOG.info("[MOTM] Granted spellbook item: " + DEFAULT_SPELLBOOK_ITEM_ID);
-        player.sendMessage(Message.raw(
+        sendPlayerMessage(player, Message.raw(
                 "[MOTM] A Mentees spellbook has been placed in your inventory. "
                         + "Cast with Left Click / Right Click / Use while equipped. "
                         + "Ability 1 / 2 / 3 still work as alternate bindings. "
@@ -1411,7 +1413,7 @@ public class MenteesMod extends JavaPlugin {
             MotmInventoryOps.grant(player, new ItemStack(DEFAULT_SPELLBOOK_ITEM_ID), LOG, "normalizeLegacySpellbookItem");
         }
 
-        player.sendMessage(Message.raw(
+        sendPlayerMessage(player, Message.raw(
                 "[MOTM] Your legacy spellbook has been updated to the new casting focus. "
                         + "Cast with Left Click / Right Click / Use while equipped."
         ));
@@ -1438,7 +1440,7 @@ public class MenteesMod extends JavaPlugin {
         if (!MotmInventoryOps.grant(player, new ItemStack(DEFAULT_DEV_GRIMOIRE_ITEM_ID), LOG, "ensureDevBookItem")) {
             return false;
         }
-        player.sendMessage(Message.raw(
+        sendPlayerMessage(player, Message.raw(
                 "[MOTM] A Dev Spellbook has been placed in your inventory. "
                         + "Use to open it, then Ability 1 / 2 / 3 to navigate."
         ));
@@ -1753,13 +1755,13 @@ public class MenteesMod extends JavaPlugin {
         String normalizedMode = normalizeStyleTestMobMode(mode);
         boolean closeGroundedTarget = "close".equals(normalizedMode) || "stationary".equals(normalizedMode);
         Vector3d groundPosition = closeGroundedTarget
-                ? basePosition.clone().addScaled(horizontalForward, 1.6)
-                : basePosition.clone()
-                        .addScaled(horizontalForward, 5.0)
-                        .addScaled(right, -8.0);
-        Vector3d floatingPosition = basePosition.clone()
-                .addScaled(horizontalForward, 5.0)
-                .addScaled(right, -5.0);
+                ? new Vector3d(basePosition).fma(1.6, horizontalForward)
+                : new Vector3d(basePosition)
+                        .fma(5.0, horizontalForward)
+                        .fma(-8.0, right);
+        Vector3d floatingPosition = new Vector3d(basePosition)
+                .fma(5.0, horizontalForward)
+                .fma(-5.0, right);
         floatingPosition.y += 3.0;
 
         World world = runtimePlayer.getWorld();
@@ -1770,20 +1772,20 @@ public class MenteesMod extends JavaPlugin {
         int cleared = clearTrackedStyleTestTargets(playerId);
         List<Ref<EntityStore>> targets = new ArrayList<>();
         if ("cluster".equals(normalizedMode)) {
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 4.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 4.0).addScaled(right, 3.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 4.0).addScaled(right, -3.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 7.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 2.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(4.0, horizontalForward), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(4.0, horizontalForward).fma(3.0, right), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(4.0, horizontalForward).fma(-3.0, right), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(7.0, horizontalForward), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(2.0, horizontalForward), "Test_Dummy_Stationary");
         } else if ("line".equals(normalizedMode)) {
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 4.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 8.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 12.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(4.0, horizontalForward), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(8.0, horizontalForward), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(12.0, horizontalForward), "Test_Dummy_Stationary");
         } else if ("surround".equals(normalizedMode)) {
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, 3.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(horizontalForward, -3.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(right, 3.0), "Test_Dummy_Stationary");
-            addStyleTestNpc(targets, world, basePosition.clone().addScaled(right, -3.0), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(3.0, horizontalForward), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(-3.0, horizontalForward), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(3.0, right), "Test_Dummy_Stationary");
+            addStyleTestNpc(targets, world, new Vector3d(basePosition).fma(-3.0, right), "Test_Dummy_Stationary");
         } else {
             addStyleTestNpc(targets, world, groundPosition, "Test_Dummy_Stationary");
             if (!"stationary".equals(normalizedMode)) {
@@ -1871,7 +1873,7 @@ public class MenteesMod extends JavaPlugin {
         }
 
         try {
-            scrub.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            scrub.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
             String summary = "scrubbed center=(" + centerX + "," + floorY + "," + centerZ + ")"
                     + " radius=" + radius
                     + " floorBlocks=" + floorBlocks
@@ -2053,7 +2055,7 @@ public class MenteesMod extends JavaPlugin {
             NPCEntity npc = new NPCEntity(world);
             npc.setRoleName(roleName);
             npc.setDespawnTime(240.0f);
-            world.spawnEntity(npc, position.clone(), new Vector3f(0f, 0f, 0f));
+            world.spawnEntity(npc, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
 
             Ref<EntityStore> ref = npc.getReference();
             if (ref == null || !ref.isValid() || ref.getStore() == null) {
@@ -2088,7 +2090,9 @@ public class MenteesMod extends JavaPlugin {
         String traceId = currentOrNewClientIntentTraceId();
         String previousTraceId = enterObservabilityTrace(traceId);
         try {
-            player.getHudManager().setCustomHud(playerRef, hud);
+            player.getHudManager().removeCustomHud(playerRef, hud.getKey());
+            player.getHudManager().addCustomHud(playerRef, hud);
+            hud.show();
             recordClientIntent("custom_hud_set", traceId, MotmObservability.mapOf(
                     "playerId", playerId,
                     "username", playerRef.getUsername(),
@@ -2116,6 +2120,17 @@ public class MenteesMod extends JavaPlugin {
             }
         } finally {
             restoreObservabilityTrace(previousTraceId);
+        }
+    }
+
+    public void sendPlayerMessage(Player player, Message message) {
+        if (player == null || message == null || player.getPlayerConnection() == null) {
+            return;
+        }
+        try {
+            player.getPlayerConnection().write(new ServerMessage(ChatType.Chat, message.getFormattedMessage()));
+        } catch (Exception e) {
+            LOG.warning("[MOTM] Failed to send player message: " + e.getMessage());
         }
     }
 
@@ -2274,7 +2289,7 @@ public class MenteesMod extends JavaPlugin {
 
     private void ensureFreeCastInvulnerability(Player player) {
         if (!setRuntimeInvulnerability(player, true) && player != null) {
-            player.sendMessage(Message.raw("[MOTM] Test Protection warning: native invulnerability did not attach. "
+            sendPlayerMessage(player, Message.raw("[MOTM] Test Protection warning: native invulnerability did not attach. "
                     + "Free-cast is still on, but arena mobs may still hit you."));
         }
     }
@@ -2395,7 +2410,7 @@ public class MenteesMod extends JavaPlugin {
             if ((request.notifyFailures() || isDevToolsEnabled())
                     && failureMessage != null
                     && !failureMessage.isBlank()) {
-                player.sendMessage(Message.raw(failureMessage));
+                sendPlayerMessage(player, Message.raw(failureMessage));
             }
         }
     }
@@ -2457,7 +2472,7 @@ public class MenteesMod extends JavaPlugin {
                     "result", result,
                     "trackedCount", countTrackedStyleTestTargets(playerId)
             ));
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             runtimeTasks.styleTestMobSpawns().remove(playerId);
         }
     }
@@ -2479,7 +2494,7 @@ public class MenteesMod extends JavaPlugin {
                     "result", result,
                     "trackedCount", countTrackedStyleTestTargets(playerId)
             ));
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             runtimeTasks.styleTestMobClears().remove(playerId);
         }
     }
@@ -2513,7 +2528,7 @@ public class MenteesMod extends JavaPlugin {
                     + " | visuals=" + visualResult
                     + " | arena=" + arenaResult;
             LOG.info(summary + " playerId=" + playerId);
-            player.sendMessage(Message.raw(summary));
+            sendPlayerMessage(player, Message.raw(summary));
         }
     }
 
@@ -2534,7 +2549,7 @@ public class MenteesMod extends JavaPlugin {
                     "result", result,
                     "trackedCount", countTrackedStyleTestTargets(playerId)
             ));
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             runtimeTasks.styleTestMobCounts().remove(playerId);
         }
     }
@@ -2552,7 +2567,7 @@ public class MenteesMod extends JavaPlugin {
             }
 
             String result = applyDevGameModeChange(player, entry.getValue());
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             runtimeTasks.devGameModeChanges().remove(playerId);
         }
     }
@@ -2611,7 +2626,7 @@ public class MenteesMod extends JavaPlugin {
                     "proofId", proofId,
                     "result", result
             ));
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
         }
     }
 
@@ -2638,7 +2653,7 @@ public class MenteesMod extends JavaPlugin {
                 runtimeTasks.devRelocations().remove(playerId);
             }
             LOG.info(result);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
         }
     }
 
@@ -2675,7 +2690,7 @@ public class MenteesMod extends JavaPlugin {
                 runtimeTasks.daylightRequests().remove(playerId);
             }
             LOG.info(result);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
         }
     }
 
@@ -2692,7 +2707,7 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
             try {
-                proof.originalSelection().place(null, proof.world(), Vector3i.ZERO, BlockMask.EMPTY);
+                proof.originalSelection().place(null, proof.world(), new Vector3i(0, 0, 0), BlockMask.EMPTY);
                 LOG.info("[MOTM] Proof cleanup restored selection: proofId=" + proof.proofId()
                         + " anchor=" + proof.anchor());
             } catch (Throwable e) {
@@ -2892,18 +2907,18 @@ public class MenteesMod extends JavaPlugin {
         }
 
         Vector3i baseAnchor = proofAnchor(base, forward, 4.0);
-        Vector3i anchor = new Vector3i(baseAnchor.getX(), baseAnchor.getY() + yOffset, baseAnchor.getZ());
+        Vector3i anchor = new Vector3i(baseAnchor.x, baseAnchor.y + yOffset, baseAnchor.z);
         BlockSelection selection = new BlockSelection();
-        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
-        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setPosition(anchor.x, anchor.y, anchor.z);
+        selection.setAnchorAtWorldPos(anchor.x, anchor.y, anchor.z);
         Vector3i rightStep = proofHorizontalRightStep(forward);
         int half = width / 2;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int offset = x - half;
-                int wx = anchor.getX() + (rightStep.getX() * offset);
-                int wy = anchor.getY() + y;
-                int wz = anchor.getZ() + (rightStep.getZ() * offset);
+                int wx = anchor.x + (rightStep.x * offset);
+                int wy = anchor.y + y;
+                int wz = anchor.z + (rightStep.z * offset);
                 selection.addBlockAtWorldPos(wx, wy, wz, blockTypeId, 0, 0, 0);
             }
         }
@@ -2947,8 +2962,8 @@ public class MenteesMod extends JavaPlugin {
 
         Vector3i anchor = proofAnchor(base, forward, 5.0);
         BlockSelection selection = new BlockSelection();
-        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
-        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setPosition(anchor.x, anchor.y, anchor.z);
+        selection.setAnchorAtWorldPos(anchor.x, anchor.y, anchor.z);
         byte fluidLevel = (byte) Math.max(1, fluid.getMaxFluidLevel());
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
@@ -2956,7 +2971,7 @@ public class MenteesMod extends JavaPlugin {
                 if (dist > radius + 0.2) {
                     continue;
                 }
-                selection.addFluidAtWorldPos(anchor.getX() + x, anchor.getY(), anchor.getZ() + z, fluidTypeId, fluidLevel);
+                selection.addFluidAtWorldPos(anchor.x + x, anchor.y, anchor.z + z, fluidTypeId, fluidLevel);
             }
         }
         return placeTemporarySelection(proofId, world, anchor, selection, 4000L,
@@ -3009,7 +3024,7 @@ public class MenteesMod extends JavaPlugin {
                                            long lifetimeMillis,
                                            String summary) {
         try {
-            BlockSelection original = selection.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            BlockSelection original = selection.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
             activeProofSelections.add(new TemporaryProofSelection(
                     proofId,
                     world,
@@ -3042,11 +3057,11 @@ public class MenteesMod extends JavaPlugin {
         if (world == null || base == null || forward == null) {
             return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
         }
-        Vector3d position = base.clone().addScaled(forward, distanceAhead);
+        Vector3d position = new Vector3d(base).fma(distanceAhead, forward);
         NPCEntity proxy = new NPCEntity(world);
         proxy.setRoleName(roleId);
         proxy.setDespawnTime(4.5f);
-        world.spawnEntity(proxy, position, new Vector3f(0f, 0f, 0f));
+        world.spawnEntity(proxy, position, new Rotation3f(0f, 0f, 0f));
 
         Ref<EntityStore> ref = proxy.getReference();
         boolean effectApplied = applyProofEffectToRef(ref, effectId);
@@ -3081,13 +3096,13 @@ public class MenteesMod extends JavaPlugin {
         if (transform == null || transform.getPosition() == null) {
             return "[MOTM] Proof " + proofId + " FAIL: missing TransformComponent.";
         }
-        Vector3d start = transform.getPosition().clone();
-        Vector3d destination = start.clone().addScaled(forward, distance);
+        Vector3d start = new Vector3d(transform.getPosition());
+        Vector3d destination = new Vector3d(start).fma(distance, forward);
         if (surfaceRecovery) {
             destination.y = Math.max(start.y, destination.y);
         }
         transform.teleportPosition(destination);
-        Vector3d observed = transform.getPosition() != null ? transform.getPosition().clone() : null;
+        Vector3d observed = transform.getPosition() != null ? new Vector3d(transform.getPosition()) : null;
         double observedDisplacement = observed != null ? distance(start, observed) : 0.0;
         double destinationError = observed != null ? distance(observed, destination) : Double.POSITIVE_INFINITY;
         boolean moved = observedDisplacement >= Math.min(0.75, Math.max(0.1, distance * 0.25));
@@ -3112,7 +3127,7 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private Vector3i proofAnchor(Vector3d base, Vector3d forward, double distanceAhead) {
-        Vector3d anchor = base.clone().addScaled(forward, distanceAhead);
+        Vector3d anchor = new Vector3d(base).fma(distanceAhead, forward);
         return new Vector3i(
                 (int) Math.floor(anchor.x),
                 (int) Math.floor(base.y),
@@ -3142,7 +3157,7 @@ public class MenteesMod extends JavaPlugin {
             }
 
             if (test.nextAbilityIndex() >= test.abilityIds().size()) {
-                player.sendMessage(Message.raw("[MOTM] Live style test complete: "
+                sendPlayerMessage(player, Message.raw("[MOTM] Live style test complete: "
                         + humanize(test.classId()) + " > " + test.styleName() + "."));
                 activeStyleTests.remove(test.playerId());
                 continue;
@@ -3150,7 +3165,7 @@ public class MenteesMod extends JavaPlugin {
 
             AbilityData ability = styleManager.findAbility(playerData, test.abilityIds().get(test.nextAbilityIndex()));
             if (ability == null) {
-                player.sendMessage(Message.raw("[MOTM] Live style test skipped a missing ability at step "
+                sendPlayerMessage(player, Message.raw("[MOTM] Live style test skipped a missing ability at step "
                         + (test.nextAbilityIndex() + 1) + "."));
                 activeStyleTests.put(test.playerId(), test.advance(now + 1200L));
                 continue;
@@ -3158,7 +3173,7 @@ public class MenteesMod extends JavaPlugin {
 
             Ref<EntityStore> targetRef = findNearestStyleTestNpc(currentStore, player, 28.0);
             Vector3i targetBlock = resolveStyleTestTargetBlock(currentStore, player, targetRef);
-            player.sendMessage(Message.raw("[MOTM] Live test step "
+            sendPlayerMessage(player, Message.raw("[MOTM] Live test step "
                     + (test.nextAbilityIndex() + 1) + "/" + test.abilityIds().size()
                     + ": " + ability.getName()));
 
@@ -3184,7 +3199,7 @@ public class MenteesMod extends JavaPlugin {
                     + " granted=" + granted
                     + " nowHasSpellbook=" + playerHasSpellbook(player));
             if (!granted && playerHasSpellbook(player)) {
-                player.sendMessage(Message.raw("[MOTM] You already have a spellbook in your inventory."));
+                sendPlayerMessage(player, Message.raw("[MOTM] You already have a spellbook in your inventory."));
             }
             runtimeTasks.spellbookGrants().remove(playerId);
         }
@@ -3203,7 +3218,7 @@ public class MenteesMod extends JavaPlugin {
 
             boolean granted = ensureDevBookItem(player);
             if (!granted && playerHasDevBook(player)) {
-                player.sendMessage(Message.raw("[MOTM] You already have a Dev Spellbook in your inventory."));
+                sendPlayerMessage(player, Message.raw("[MOTM] You already have a Dev Spellbook in your inventory."));
             }
             runtimeTasks.devBookGrants().remove(playerId);
         }
@@ -3221,7 +3236,7 @@ public class MenteesMod extends JavaPlugin {
             }
 
             String result = grantTerraReviewKit(player);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             runtimeTasks.terraReviewKitGrants().remove(playerId);
         }
     }
@@ -3238,7 +3253,7 @@ public class MenteesMod extends JavaPlugin {
             }
 
             String result = cleanTerraReviewInventory(player);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             runtimeTasks.terraReviewInventoryCleans().remove(playerId);
         }
     }
@@ -3453,7 +3468,7 @@ public class MenteesMod extends JavaPlugin {
             return;
         }
         if (notify) {
-            player.sendMessage(Message.raw(
+            sendPlayerMessage(player, Message.raw(
                     "[MOTM] Your Hydro waterskin is now "
                             + resourceManager.getWaterContainerInfo(playerData.getPlayerId())
                             + ". Waterskins are no longer a casting cost, but they remain available for future Hydro utility tests."
@@ -3691,31 +3706,31 @@ public class MenteesMod extends JavaPlugin {
             return new EcoFriendlyTreeResult(false, "no tree/sapling block resolved");
         }
 
-        Vector3i anchor = new Vector3i(grassBlock.getX(), grassBlock.getY() + 1, grassBlock.getZ());
+        Vector3i anchor = new Vector3i(grassBlock.x, grassBlock.y + 1, grassBlock.z);
         BlockSelection tree = new BlockSelection();
-        tree.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
-        tree.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        tree.setPosition(anchor.x, anchor.y, anchor.z);
+        tree.setAnchorAtWorldPos(anchor.x, anchor.y, anchor.z);
         if (leaves.blockTypeId() != BlockType.UNKNOWN_ID && leaves.blockTypeId() != BlockType.EMPTY_ID
                 && !trunk.blockId().equals(leaves.blockId())) {
             for (int y = 0; y < 4; y++) {
-                tree.addBlockAtWorldPos(anchor.getX(), anchor.getY() + y, anchor.getZ(), trunk.blockTypeId(), 0, 0, 0);
+                tree.addBlockAtWorldPos(anchor.x, anchor.y + y, anchor.z, trunk.blockTypeId(), 0, 0, 0);
             }
             for (int x = -2; x <= 2; x++) {
                 for (int z = -2; z <= 2; z++) {
                     int manhattan = Math.abs(x) + Math.abs(z);
                     if (manhattan <= 3) {
-                        tree.addBlockAtWorldPos(anchor.getX() + x, anchor.getY() + 4, anchor.getZ() + z,
+                        tree.addBlockAtWorldPos(anchor.x + x, anchor.y + 4, anchor.z + z,
                                 leaves.blockTypeId(), 0, 0, 0);
                     }
                     if (manhattan <= 2) {
-                        tree.addBlockAtWorldPos(anchor.getX() + x, anchor.getY() + 5, anchor.getZ() + z,
+                        tree.addBlockAtWorldPos(anchor.x + x, anchor.y + 5, anchor.z + z,
                                 leaves.blockTypeId(), 0, 0, 0);
                     }
                 }
             }
-            tree.addBlockAtWorldPos(anchor.getX(), anchor.getY() + 6, anchor.getZ(), leaves.blockTypeId(), 0, 0, 0);
+            tree.addBlockAtWorldPos(anchor.x, anchor.y + 6, anchor.z, leaves.blockTypeId(), 0, 0, 0);
         } else {
-            tree.addBlockAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ(), trunk.blockTypeId(), 0, 0, 0);
+            tree.addBlockAtWorldPos(anchor.x, anchor.y, anchor.z, trunk.blockTypeId(), 0, 0, 0);
         }
 
         String placement = placeTemporarySelection("perk-eco-friendly-tree", world, anchor, tree, 30000L,
@@ -3732,7 +3747,7 @@ public class MenteesMod extends JavaPlugin {
             return false;
         }
         try {
-            BlockType blockType = world.getBlockType(block.getX(), block.getY(), block.getZ());
+            BlockType blockType = world.getBlockType(block.x, block.y, block.z);
             String blockId = blockType != null ? blockType.getId() : "";
             String normalized = blockId.toLowerCase(Locale.ROOT);
             return normalized.contains("grass") || normalized.contains("soil");
@@ -3754,9 +3769,9 @@ public class MenteesMod extends JavaPlugin {
                     }
                     try {
                         BlockType blockType = world.getBlockType(
-                                grassBlock.getX() + x,
-                                grassBlock.getY() + y,
-                                grassBlock.getZ() + z
+                                grassBlock.x + x,
+                                grassBlock.y + y,
+                                grassBlock.z + z
                         );
                         String id = blockType != null ? blockType.getId() : BlockType.EMPTY_KEY;
                         if (blockType != null && !blockType.isUnknown() && !BlockType.EMPTY_KEY.equals(id)) {
@@ -3777,7 +3792,7 @@ public class MenteesMod extends JavaPlugin {
             return 0;
         }
         Store<EntityStore> store = player.getReference().getStore();
-        Vector3d center = new Vector3d(origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5);
+        Vector3d center = new Vector3d(origin.x + 0.5, origin.y, origin.z + 0.5);
         final int[] pushed = {0};
         store.forEachChunk((chunk, commandBuffer) -> {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
@@ -4115,7 +4130,7 @@ public class MenteesMod extends JavaPlugin {
             return "[MOTM] Dev relocate failed: TransformComponent missing.";
         }
 
-        Vector3d start = transform.getTransform().getPosition().clone();
+        Vector3d start = new Vector3d(transform.getTransform().getPosition());
         String normalizedTarget = target == null ? "up" : target.toLowerCase(Locale.ROOT);
         Vector3d destination = switch (normalizedTarget) {
             case "flatlands" -> new Vector3d(start.x + 96.0, Math.max(start.y + 40.0, 160.0), start.z + 96.0);
@@ -4192,7 +4207,7 @@ public class MenteesMod extends JavaPlugin {
             }
         }
         try {
-            platform.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            platform.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
             LOG.info("[MOTM] Dev relocate platform placed: target=" + target
                     + " center=(" + centerX + "," + floorY + "," + centerZ + ")"
                     + " blocks=" + platform.getBlockCount()
@@ -4716,7 +4731,7 @@ public class MenteesMod extends JavaPlugin {
             return new Vector3d(0.0, 0.0, 1.0);
         }
 
-        Vector3d direction = transform.getTransform().getDirection().clone();
+        Vector3d direction = new Vector3d(transform.getTransform().getDirection());
         if (!direction.isFinite() || direction.length() < 0.001) {
             return new Vector3d(0.0, 0.0, 1.0);
         }
@@ -4908,7 +4923,7 @@ public class MenteesMod extends JavaPlugin {
                 }
 
                 if (response != null && !response.isBlank()) {
-                    player.sendMessage(Message.raw(response));
+                    sendPlayerMessage(player, Message.raw(response));
                 }
                 return;
             }
@@ -4932,7 +4947,7 @@ public class MenteesMod extends JavaPlugin {
             if (playerData.getPlayerClass() == null
                     || playerData.getSelectedStyles() == null
                     || playerData.getSelectedStyles().isEmpty()) {
-                player.sendMessage(Message.raw("[MOTM] Select a style first with /motm style <styleId>."));
+                sendPlayerMessage(player, Message.raw("[MOTM] Select a style first with /motm style <styleId>."));
                 return;
             }
 
@@ -4945,7 +4960,7 @@ public class MenteesMod extends JavaPlugin {
                     event.getTargetBlock()
             );
             if (response != null && !response.isBlank()) {
-                player.sendMessage(Message.raw(response));
+                sendPlayerMessage(player, Message.raw(response));
             }
         } catch (Exception e) {
             LOG.severe("[MOTM] PlayerInteract handling failed safely: " + e.getMessage());
@@ -4986,7 +5001,7 @@ public class MenteesMod extends JavaPlugin {
         event.setCancelled(true);
 
         if (currentWater >= maxWater) {
-            player.sendMessage(Message.raw(
+            sendPlayerMessage(player, Message.raw(
                     "[MOTM] " + resourceManager.getWaterContainerInfo(playerId)
                             + " is already full (" + currentWater + "/" + maxWater + ")."
             ));
@@ -4997,7 +5012,7 @@ public class MenteesMod extends JavaPlugin {
         resourceManager.syncToPersistentState(playerData);
         playerDataManager.savePlayerData(playerData);
         refreshStatusHud(playerId);
-        player.sendMessage(Message.raw(
+        sendPlayerMessage(player, Message.raw(
                 "[MOTM] Refilled " + resourceManager.getWaterContainerInfo(playerId)
                         + " from the water source."
         ));
@@ -5014,17 +5029,17 @@ public class MenteesMod extends JavaPlugin {
             return false;
         }
 
-        WorldChunk chunk = world.getChunkIfLoaded(ChunkUtil.indexChunkFromBlock(targetBlock.getX(), targetBlock.getZ()));
+        WorldChunk chunk = world.getChunkIfLoaded(ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z));
         if (chunk == null) {
-            chunk = world.getChunkIfInMemory(ChunkUtil.indexChunkFromBlock(targetBlock.getX(), targetBlock.getZ()));
+            chunk = world.getChunkIfInMemory(ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z));
         }
         if (chunk == null) {
             return false;
         }
 
-        int localX = ChunkUtil.localCoordinate(targetBlock.getX());
-        int localZ = ChunkUtil.localCoordinate(targetBlock.getZ());
-        int y = targetBlock.getY();
+        int localX = ChunkUtil.localCoordinate(targetBlock.x);
+        int localZ = ChunkUtil.localCoordinate(targetBlock.z);
+        int y = targetBlock.y;
         var blockType = chunk.getBlockType(localX, y, localZ);
         String blockId = blockType != null ? blockType.getId() : null;
         if (blockId != null) {
@@ -5037,7 +5052,7 @@ public class MenteesMod extends JavaPlugin {
             }
         }
 
-        return world.getFluidId(targetBlock.getX(), y, targetBlock.getZ()) != 0;
+        return world.getFluidId(targetBlock.x, y, targetBlock.z) != 0;
     }
 
     private void handlePlayerMouseButton(PlayerMouseButtonEvent event) {
@@ -5090,11 +5105,11 @@ public class MenteesMod extends JavaPlugin {
                             playerData,
                             slot,
                             "mouse:" + event.getMouseButton().mouseButtonType,
-                            event.getTargetEntity() != null ? event.getTargetEntity().getReference() : null,
+                            event.getTargetEntityRef(),
                             null
                     );
                     if (response != null && !response.isBlank()) {
-                        player.sendMessage(Message.raw(response));
+                        sendPlayerMessage(player, Message.raw(response));
                     }
                 }
                 return;
@@ -5112,18 +5127,18 @@ public class MenteesMod extends JavaPlugin {
                 return;
             }
 
-            if (event.getTargetEntity() == null || event.getTargetEntity().getReference() == null) {
+            if (event.getTargetEntityRef() == null) {
                 return;
             }
 
             String response = gameplayPlaybackManager.handleWeaponFollowUpHit(
                     player,
                     playerData,
-                    event.getTargetEntity().getReference(),
+                    event.getTargetEntityRef(),
                     itemId
             );
             if (response != null && !response.isBlank()) {
-                player.sendMessage(Message.raw(response));
+                sendPlayerMessage(player, Message.raw(response));
             }
         } catch (Exception e) {
             LOG.severe("[MOTM] PlayerMouseButton handling failed safely: " + e.getMessage());
@@ -5156,7 +5171,7 @@ public class MenteesMod extends JavaPlugin {
                 null
         );
         if (response != null && !response.isBlank()) {
-            runtimePlayer.sendMessage(com.hypixel.hytale.server.core.Message.raw(response));
+            sendPlayerMessage(runtimePlayer, com.hypixel.hytale.server.core.Message.raw(response));
         }
     }
 
@@ -5294,7 +5309,7 @@ public class MenteesMod extends JavaPlugin {
         String alloyResponse = gameplayPlaybackManager.handleAlloyToolUse(terraMiner, playerData, itemId);
         if (alloyResponse != null && !alloyResponse.isBlank()) {
             LOG.info(alloyResponse + " playerId=" + playerId);
-            terraMiner.sendMessage(Message.raw(alloyResponse));
+            sendPlayerMessage(terraMiner, Message.raw(alloyResponse));
         }
     }
 
@@ -5306,9 +5321,9 @@ public class MenteesMod extends JavaPlugin {
         String eventItemId = event.getItemInHand() != null ? event.getItemInHand().getItemId() : null;
 
         Vector3i targetBlock = event.getTargetBlock();
-        double targetX = targetBlock.getX() + 0.5;
-        double targetY = targetBlock.getY() + 0.5;
-        double targetZ = targetBlock.getZ() + 0.5;
+        double targetX = targetBlock.x + 0.5;
+        double targetY = targetBlock.y + 0.5;
+        double targetZ = targetBlock.z + 0.5;
 
         Player bestMatch = null;
         double bestDistance = Double.MAX_VALUE;

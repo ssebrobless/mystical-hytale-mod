@@ -49,14 +49,14 @@ public class ElementalReactionManager {
     public ReactionResult applyMark(String entityId, ElementalMark newMark) {
         List<ElementalMark> marks = activeMarks.computeIfAbsent(entityId, k -> new ArrayList<>());
 
-        // Check cooldown — can't reapply same mark type too quickly
+        // Check cooldown - can't reapply same mark type too quickly
         for (ElementalMark existing : marks) {
             if (existing.getType() == newMark.getType() && existing.isOnCooldown()) {
                 return null; // Same mark type still on cooldown
             }
         }
 
-        // Handle exception marks (grounded/flying) — they don't trigger reactions
+        // Handle exception marks (grounded/flying) - they don't trigger reactions
         if (newMark.isExceptionMark()) {
             handleExceptionMark(entityId, marks, newMark);
             return null;
@@ -68,7 +68,7 @@ public class ElementalReactionManager {
             return reaction;
         }
 
-        // No reaction — just apply the mark
+        // No reaction - just apply the mark
         // Remove existing mark of same type (refresh)
         marks.removeIf(m -> m.getType() == newMark.getType());
         marks.add(newMark);
@@ -83,7 +83,7 @@ public class ElementalReactionManager {
             if (existing.isExpired() || existing.isExceptionMark()) continue;
             if (existing.getAppliedByElement().equals(newMark.getAppliedByElement())) continue;
 
-            // Two different elements present — check for a matching reaction
+            // Two different elements present - check for a matching reaction
             List<ElementalReaction> reactions = dataLoader.getElementalReactions();
             for (ElementalReaction reaction : reactions) {
                 if (reaction.matches(existing.getAppliedByElement(), newMark.getAppliedByElement())) {
@@ -96,7 +96,7 @@ public class ElementalReactionManager {
     }
 
     /**
-     * Trigger a reaction — consume marks, apply bonus damage and effects.
+     * Trigger a reaction - consume marks, apply bonus damage and effects.
      */
     private ReactionResult triggerReaction(String entityId, ElementalMark existingMark,
                                            ElementalMark newMark, ElementalReaction reaction) {
@@ -198,7 +198,7 @@ public class ElementalReactionManager {
     }
 
     /**
-     * Tick all marks — decrement durations and cooldowns, remove expired.
+     * Tick all marks - decrement durations and cooldowns, remove expired.
      */
     public void tickAll() {
         for (var entry : new ArrayList<>(activeMarks.entrySet())) {

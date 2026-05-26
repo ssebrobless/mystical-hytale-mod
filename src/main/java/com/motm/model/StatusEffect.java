@@ -20,7 +20,7 @@ public class StatusEffect {
         DISORIENTED,    // Reduced accuracy, attack slow, 2 ticks
         GROUNDED,       // Cannot use mobility abilities, 2 ticks
         FLYING,         // Immune to grounded, mobility bonus, 5 ticks
-        SHOCKED,        // Lightning mark — bonus damage from lightning, 3 ticks
+        SHOCKED,        // Lightning mark - bonus damage from lightning, 3 ticks
         SHIELD,         // Absorbs damage, variable duration
         EVASION,        // +50% dodge chance, 2 ticks
         DEFENSE_BUFF,   // +20% damage reduction, 3 ticks
