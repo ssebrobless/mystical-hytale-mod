@@ -79,7 +79,7 @@ For a remote Windows agent, the intended first instruction can be this simple:
 Pull the latest code, run powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-agent-workstation.ps1, inspect any printed diagnostics if it fails, and only then proceed to the observability harness.
 ```
 
-Direct wrapper usage is also supported after Java and Hytale are resolved:
+Direct Gradle Wrapper usage is also supported after Java and Hytale are resolved:
 
 ```powershell
 ./gradlew -Dorg.gradle.java.installations.paths=".tools/jdk-25" -Pmotm_build_channel=internal build installMod

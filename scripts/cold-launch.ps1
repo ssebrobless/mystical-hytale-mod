@@ -6,8 +6,8 @@ param(
     [switch]$LaunchAndLoad,
     [switch]$Setup,
     [switch]$EnsureFlatlands,
-    [ValidateSet("Direct", "Launcher", "Auto")]
-    [string]$LaunchStrategy = "Direct"
+    [ValidateSet("Launcher", "Auto", "Direct")]
+    [string]$LaunchStrategy = "Launcher"
 )
 
 $ErrorActionPreference = "Stop"

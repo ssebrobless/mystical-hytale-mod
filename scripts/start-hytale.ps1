@@ -1,7 +1,7 @@
 param(
     [string]$WorldName = "MOTM Creative Test",
-    [ValidateSet("Direct", "Launcher", "Auto")]
-    [string]$Strategy = "Direct",
+    [ValidateSet("Launcher", "Auto", "Direct")]
+    [string]$Strategy = "Launcher",
     [int]$LauncherReadyTimeoutSec = 60,
     [int]$WorldLoadTimeoutSec = 180,
     [string]$PlayerName = "CodexHarness",
@@ -139,14 +139,18 @@ function Focus-ProcessWindow($Process) {
     Start-Sleep -Milliseconds 400
 }
 
+function Get-LauncherWindow([int]$TimeoutSec) {
+    Wait-ForAnyWindow {
+        param($p)
+        $p.ProcessName -like "*hytale*launcher*" -or $p.MainWindowTitle -like "*Hytale Launcher*"
+    } $TimeoutSec
+}
+
 function Start-LauncherAndPressEnter($LauncherPath) {
     if (-not $LauncherPath) { throw "Launcher path not found." }
     Write-Step "Starting launcher: $LauncherPath"
     Start-Process -FilePath $LauncherPath | Out-Null
-    $launcherWindow = Wait-ForAnyWindow {
-        param($p)
-        $p.ProcessName -like "*hytale*launcher*" -or $p.MainWindowTitle -like "*Hytale Launcher*"
-    } $LauncherReadyTimeoutSec
+    $launcherWindow = Get-LauncherWindow $LauncherReadyTimeoutSec
     if (-not $launcherWindow) {
         throw "Launcher window did not appear within $LauncherReadyTimeoutSec seconds."
     }
@@ -159,13 +163,25 @@ function Start-LauncherAndPressEnter($LauncherPath) {
 }
 
 function Click-LauncherPlayButton($LauncherWindow) {
+    if (-not $LauncherWindow -or $LauncherWindow.MainWindowHandle -eq 0 -or -not (Get-Process -Id $LauncherWindow.Id -ErrorAction SilentlyContinue)) {
+        $LauncherWindow = Get-LauncherWindow 8
+    }
     if (-not $LauncherWindow -or $LauncherWindow.MainWindowHandle -eq 0) {
         throw "Cannot click Play; launcher window handle is missing."
     }
+    $LauncherWindow.Refresh()
     Focus-ProcessWindow $LauncherWindow
     $rect = [HytaleHarness.Win32+RECT]::new()
     if (-not [HytaleHarness.Win32]::GetWindowRect($LauncherWindow.MainWindowHandle, [ref]$rect)) {
-        throw "GetWindowRect failed for launcher window."
+        $LauncherWindow = Get-LauncherWindow 8
+        if (-not $LauncherWindow -or $LauncherWindow.MainWindowHandle -eq 0) {
+            throw "GetWindowRect failed and no replacement launcher window was found."
+        }
+        $LauncherWindow.Refresh()
+        Focus-ProcessWindow $LauncherWindow
+        if (-not [HytaleHarness.Win32]::GetWindowRect($LauncherWindow.MainWindowHandle, [ref]$rect)) {
+            throw "GetWindowRect failed for launcher window."
+        }
     }
     $width = $rect.Right - $rect.Left
     $height = $rect.Bottom - $rect.Top

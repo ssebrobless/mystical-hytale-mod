@@ -14,7 +14,7 @@ This is the manual-plus-agent lane for verifying MOTM gameplay. Use it when the 
 
 ## Launch Boundary
 
-Direct world launch is not reliable on this machine because Hytale offline direct launch requires `HYTALE_OFFLINE_TOKEN`. Start Hytale through the official launcher, enter `MOTM Creative Test`, and then let Codex use the dev-command bridge.
+Direct world launch is not reliable on this machine because Hytale offline direct launch requires `HYTALE_OFFLINE_TOKEN`. `scripts/start-hytale.ps1` and `scripts/cold-launch.ps1` therefore default to the official launcher/auth path. If world menu navigation misses, start Hytale through the official launcher, enter `MOTM Creative Test`, and then let Codex use the dev-command bridge.
 
 Before launching or loading a world, clear stale clients so the harness cannot drive a crash dialog or older client window:
 

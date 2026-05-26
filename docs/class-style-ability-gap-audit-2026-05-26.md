@@ -155,6 +155,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-normal-control-p
   -ControlMode PrimarySecondaryUse
 ```
 
+Launch note: use the official launcher/auth path before running this probe.
+`scripts/cold-launch.ps1` and `scripts/start-hytale.ps1` now default to
+`Launcher`; direct client launch is reserved for a future explicitly supported
+offline-token path because the current direct route fails with Hytale's
+`Offline mode requires an offline token` client error.
+
 Control modes:
 
 | Mode | Slot 1 | Slot 2 | Slot 3 |
