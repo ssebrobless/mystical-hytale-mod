@@ -138,11 +138,39 @@ normal spellbook/hotbar controls, hostile ability friendly-safety, and the
 abilities whose concept depends on crosshair accuracy, projectile trajectory,
 movement path, dash, leap, tunnel, swim, summon AI, or player-positioned fields.
 
+## Normal-Control Probe
+
+`scripts/run-normal-control-probe.ps1` is the first purpose-built next-layer
+runner. It sets a class/style, selects the spellbook hotbar slot, sends actual
+player input for slots 1-3, collects MOTM observability evidence, and then
+requires the expected ability id to appear after the matching input marker.
+
+Example:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-normal-control-probe.ps1 `
+  -WorldName "MOTM Creative Test" `
+  -ClassId terra `
+  -StyleId quake `
+  -ControlMode PrimarySecondaryUse
+```
+
+Control modes:
+
+| Mode | Slot 1 | Slot 2 | Slot 3 |
+|---|---|---|---|
+| `PrimarySecondaryUse` | Left click | Right click | Ability 3 / use key |
+| `AbilityKeys` | Ability 1 key | Ability 2 key | Ability 3 key |
+
+Use this probe before calling any style complete through normal player controls.
+If the probe fails, the failure is either the custom spellbook interaction
+contract, the current keybind/action mapping, or the ability's normal route, not
+the generic `/motm dev test ability` route.
+
 ## Immediate Implementation Order
 
-1. Add a normal-control probe that selects the spellbook and activates slots 1-3
-   through actual player input, then requires `ability_cast_end` and packet
-   evidence for the selected ability.
+1. Run `scripts/run-normal-control-probe.ps1` class-by-class and style-by-style
+   until every slot has normal input evidence.
 2. Add target-position/aim probes for crosshair-sensitive projectiles and
    ground-target abilities; compare player facing, intended target position, and
    impact/field origin.

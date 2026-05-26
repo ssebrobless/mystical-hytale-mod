@@ -1,0 +1,244 @@
+param(
+    [string]$WorldName = "MOTM Creative Test",
+    [ValidateSet("terra", "hydro", "aero", "corruptus")]
+    [string]$ClassId = "terra",
+    [string]$StyleId = "quake",
+    [string]$RunId = "",
+    [ValidateSet("PrimarySecondaryUse", "AbilityKeys")]
+    [string]$ControlMode = "PrimarySecondaryUse",
+    [int]$SpellbookHotbarSlot = 1,
+    [int]$DelayMilliseconds = 1500,
+    [switch]$SkipCollect
+)
+
+$ErrorActionPreference = "Stop"
+
+$repoRoot = Split-Path -Parent $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($RunId)) {
+    $RunId = "normal-control-" + (Get-Date -Format "yyyy-MM-ddTHH-mm-ss")
+}
+$outDir = Join-Path $repoRoot (Join-Path "audits\agent-observability" $RunId)
+New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+$report = New-Object System.Collections.Generic.List[string]
+
+function Add-Line([string]$Line) {
+    $script:report.Add($Line)
+}
+
+function Resolve-PowerShellExecutable {
+    $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($pwsh) { return $pwsh.Source }
+    $powershell = Get-Command powershell -ErrorAction SilentlyContinue
+    if ($powershell) { return $powershell.Source }
+    throw "Could not locate pwsh or powershell."
+}
+
+function Invoke-ObservedCommand {
+    param(
+        [string]$Command,
+        [int]$TimeoutMilliseconds = 8000,
+        [int]$Delay = 450
+    )
+
+    $traceId = "normal-control-" + ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
+    Add-Line("- Command: `/motm $($Command -replace '^\s*motm\s+', '')` traceId=$traceId")
+    & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "send-dev-command.ps1") `
+        -Command $Command `
+        -WorldName $WorldName `
+        -TimeoutMilliseconds $TimeoutMilliseconds `
+        -RunDir $outDir `
+        -TraceId $traceId `
+        -ScenarioId "normal-control-$ClassId-$StyleId" 2>&1 |
+        Tee-Object -FilePath (Join-Path $outDir ("command-" + ($traceId -replace '[^A-Za-z0-9_.-]', '-') + ".log"))
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command failed: /motm $Command"
+    }
+    if ($Delay -gt 0) {
+        Start-Sleep -Milliseconds $Delay
+    }
+}
+
+function Invoke-InputAction {
+    param(
+        [string]$Action,
+        [string]$Label
+    )
+
+    Add-Line("- Input: $Label via scripts/send-input.ps1 -Action $Action")
+    & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "send-input.ps1") `
+        -Action $Action `
+        -DelayMilliseconds 250 2>&1 |
+        Tee-Object -FilePath (Join-Path $outDir ("input-" + $Label + ".log"))
+    if ($LASTEXITCODE -ne 0) {
+        throw "Input action failed: $Action"
+    }
+    Start-Sleep -Milliseconds $DelayMilliseconds
+}
+
+function Read-JsonlObjects {
+    param([string]$Path)
+
+    $items = New-Object System.Collections.Generic.List[object]
+    if (-not (Test-Path -LiteralPath $Path)) { return $items }
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        try {
+            $items.Add(($line | ConvertFrom-Json -ErrorAction Stop))
+        } catch {
+            $items.Add([PSCustomObject]@{ parseError = $_.Exception.Message; rawLine = $line })
+        }
+    }
+    return $items
+}
+
+function Get-StyleDefinition {
+    $path = Join-Path $repoRoot "src\main\resources\data\styles\${ClassId}_styles.json"
+    if (-not (Test-Path -LiteralPath $path)) {
+        throw "Style file not found: $path"
+    }
+    $doc = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    $style = $doc.styles | Where-Object { [string]$_.id -eq $StyleId } | Select-Object -First 1
+    if (-not $style) {
+        throw "Style not found: $ClassId/$StyleId"
+    }
+    return $style
+}
+
+function Get-SlotActions {
+    if ($ControlMode -eq "AbilityKeys") {
+        return @(
+            [PSCustomObject]@{ slot = 1; action = "Ability1"; label = "slot-1-ability-key" },
+            [PSCustomObject]@{ slot = 2; action = "Ability2"; label = "slot-2-ability-key" },
+            [PSCustomObject]@{ slot = 3; action = "Ability3"; label = "slot-3-ability-key" }
+        )
+    }
+    return @(
+        [PSCustomObject]@{ slot = 1; action = "LeftClick"; label = "slot-1-primary-left-click" },
+        [PSCustomObject]@{ slot = 2; action = "RightClick"; label = "slot-2-secondary-right-click" },
+        [PSCustomObject]@{ slot = 3; action = "Ability3"; label = "slot-3-use-key" }
+    )
+}
+
+function Assert-NormalControlEvidence {
+    param($Expected)
+
+    $rawDir = Join-Path $outDir "raw\motm-observability"
+    $causalityEvents = Read-JsonlObjects (Join-Path $rawDir "causality.jsonl")
+    $slotMarkers = @($causalityEvents | Where-Object {
+        -not $_.parseError -and [string]$_.type -eq "marker" -and [string]$_.data.label -match "^normal-control-slot-"
+    } | Sort-Object epochMillis)
+    $abilityEnds = @($causalityEvents | Where-Object {
+        -not $_.parseError -and [string]$_.type -eq "ability_cast_end"
+    } | Sort-Object epochMillis)
+
+    $failures = New-Object System.Collections.Generic.List[string]
+    foreach ($expectedSlot in $Expected) {
+        $marker = $slotMarkers | Where-Object { [string]$_.data.label -eq "normal-control-slot-$($expectedSlot.slot)-before" } | Select-Object -First 1
+        if (-not $marker) {
+            $failures.Add("slot $($expectedSlot.slot) missing before marker")
+            continue
+        }
+        $nextMarker = $slotMarkers | Where-Object { [Int64]$_.epochMillis -gt [Int64]$marker.epochMillis } | Select-Object -First 1
+        $windowEnd = if ($nextMarker) { [Int64]$nextMarker.epochMillis } else { [Int64]$marker.epochMillis + 12000L }
+        $match = $abilityEnds | Where-Object {
+            [Int64]$_.epochMillis -ge [Int64]$marker.epochMillis -and
+            [Int64]$_.epochMillis -le $windowEnd -and
+            [string]$_.data.abilityId -eq [string]$expectedSlot.ability
+        } | Select-Object -First 1
+        if (-not $match) {
+            $failures.Add("slot $($expectedSlot.slot) expected $($expectedSlot.ability) but no matching ability_cast_end appeared after input")
+        }
+    }
+    return $failures
+}
+
+$script:PowerShellExe = Resolve-PowerShellExecutable
+$style = Get-StyleDefinition
+$abilities = @($style.abilities | ForEach-Object { [string]$_.id })
+if ($abilities.Count -lt 3) {
+    throw "$ClassId/$StyleId has fewer than 3 abilities."
+}
+$slotActions = Get-SlotActions
+$expected = @($slotActions | ForEach-Object {
+    [PSCustomObject]@{
+        slot = $_.slot
+        action = $_.action
+        label = $_.label
+        ability = $abilities[$_.slot - 1]
+    }
+})
+
+$status = "FAIL"
+try {
+    Add-Line("# Normal Control Probe")
+    Add-Line("")
+    Add-Line("- RunId: $RunId")
+    Add-Line("- World: $WorldName")
+    Add-Line("- Class/style: $ClassId/$StyleId")
+    Add-Line("- Control mode: $ControlMode")
+    Add-Line("- Expected slots: " + (($expected | ForEach-Object { "$($_.slot)=$($_.ability)" }) -join ", "))
+    Add-Line("")
+
+    Invoke-ObservedCommand "motm dev observe start $RunId normal-control-$ClassId-$StyleId" -TimeoutMilliseconds 9000
+    Invoke-ObservedCommand "motm dev freecast on"
+    Invoke-ObservedCommand "motm dev class set $ClassId" -Delay 900
+    Invoke-ObservedCommand "motm dev styles clear" -Delay 700
+    Invoke-ObservedCommand "motm style $StyleId" -Delay 1200
+    Invoke-ObservedCommand "motm dev test mobs clear" -Delay 600
+    Invoke-ObservedCommand "motm dev test mobs close" -TimeoutMilliseconds 9000 -Delay 1200
+    Invoke-ObservedCommand "motm dev observe snapshot normal-control-ready"
+
+    & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "send-input.ps1") `
+        -Action Key `
+        -Keys ([string]$SpellbookHotbarSlot) `
+        -DelayMilliseconds 450 2>&1 |
+        Tee-Object -FilePath (Join-Path $outDir "input-select-spellbook.log")
+
+    foreach ($slot in $expected) {
+        Invoke-ObservedCommand "motm dev observe marker normal-control-slot-$($slot.slot)-before" -Delay 150
+        Invoke-InputAction $slot.action $slot.label
+        Invoke-ObservedCommand "motm dev observe snapshot normal-control-slot-$($slot.slot)-after" -Delay 250
+    }
+
+    Invoke-ObservedCommand "motm dev observe marker normal-control-end"
+    Invoke-ObservedCommand "motm dev observe snapshot normal-control-final"
+    Invoke-ObservedCommand "motm dev observe stop normal-control-complete"
+
+    if (-not $SkipCollect) {
+        & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "collect-observability-evidence.ps1") `
+            -WorldName $WorldName `
+            -RunId $RunId `
+            -OutDir $outDir 2>&1 |
+            Tee-Object -FilePath (Join-Path $outDir "collect-observability-evidence.log")
+        if ($LASTEXITCODE -ne 0) {
+            throw "Evidence collection failed with exit code $LASTEXITCODE."
+        }
+        $failures = Assert-NormalControlEvidence $expected
+        if ($failures.Count -gt 0) {
+            Add-Line("")
+            Add-Line("## Failures")
+            foreach ($failure in $failures) {
+                Add-Line("- $failure")
+            }
+            throw "Normal control probe failed: $($failures -join '; ')"
+        }
+    }
+
+    Add-Line("")
+    Add-Line("## Summary")
+    Add-Line("")
+    Add-Line("PASS")
+    $status = "PASS"
+} catch {
+    Add-Line("")
+    Add-Line("## Summary")
+    Add-Line("")
+    Add-Line("FAIL")
+    Add-Line("")
+    Add-Line("Error: $($_.Exception.Message)")
+    throw
+} finally {
+    $reportPath = Join-Path $outDir "normal-control-report.md"
+    $report | Set-Content -LiteralPath $reportPath -Encoding UTF8
+    Write-Host "[run-normal-control-probe] $status report: $reportPath"
+}

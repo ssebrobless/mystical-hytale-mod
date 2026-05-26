@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Mine", "Command", "Jump", "Stomp", "ThirdPerson", "Forward", "Back", "StrafeLeft", "StrafeRight", "ForwardJump", "FaceLeft", "FaceRight")]
+    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Mine", "Command", "Jump", "Stomp", "ThirdPerson", "Forward", "Back", "StrafeLeft", "StrafeRight", "ForwardJump", "FaceLeft", "FaceRight", "Ability1", "Ability2", "Ability3")]
     [string]$Action = "Key",
     [string]$Keys,
     [string]$Text,
@@ -248,6 +248,18 @@ switch ($Action) {
     }
     "FaceRight" {
         Send-MouseNudge ([Math]::Abs($MouseDelta))
+    }
+    "Ability1" {
+        Press-Key ([byte]0x51) 90
+        Start-Sleep -Milliseconds $DelayMilliseconds
+    }
+    "Ability2" {
+        Press-Key ([byte]0x45) 90
+        Start-Sleep -Milliseconds $DelayMilliseconds
+    }
+    "Ability3" {
+        Press-Key ([byte]0x52) 90
+        Start-Sleep -Milliseconds $DelayMilliseconds
     }
 }
 
