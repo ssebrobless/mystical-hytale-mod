@@ -109,10 +109,49 @@ trajectory feel, movement-path behavior, ally/caster safety, summon AI quality,
 or normal-control input timing. Those still require purpose-built probes or live
 manual review, not generic stationary/cluster casts.
 
+## Concept Verification Layer Audit - 2026-05-26
+
+`scripts/audit-concept-verification-layers.ps1` now reads the raw observability
+JSONL from the full style sweeps and classifies each ability against the next
+verification layers.
+
+```
+120 abilities
+  |-- runtime cast evidence:       120 PASS / 0 FAIL
+  |-- mechanical concept signal:   110 PASS / 10 REVIEW
+  |-- visual/proxy signal:         120 PASS / 0 FAIL
+  |-- safety proof:                 55 PASS / 65 UNKNOWN
+  |-- normal-control proof:          0 PASS / 120 UNKNOWN
+  `-- aim/movement proof:           32 PASS / 88 REVIEW
+```
+
+Evidence:
+
+| Report | Meaning |
+|---|---|
+| `audits/concept-verification-layers/concept-layers-20260526-final/report.md` | Full 120-ability layer matrix, including the next probe queue. |
+| `audits/concept-verification-layers/concept-layers-20260526-final/concept-verification-layers.csv` | Machine-readable per-ability gate status. |
+
+Current interpretation: the mod has broad runtime coverage, but the next
+work is not another generic sweep. The next work is purpose-built proof for
+normal spellbook/hotbar controls, hostile ability friendly-safety, and the
+abilities whose concept depends on crosshair accuracy, projectile trajectory,
+movement path, dash, leap, tunnel, swim, summon AI, or player-positioned fields.
+
 ## Immediate Implementation Order
 
-1. Add purpose-built movement/control probes for Frolick, Tunnel, Burrow, Sandstorm/Dust Devil, Gem object control, Aero vertical movement, Hydro swim lanes, and Corruptus summons/transforms.
-2. Add target-position/aim probes for crosshair-sensitive projectiles and ground-target abilities.
-3. Add ally/caster/summon safety probes for every AoE, field, DoT, root, slow, burn, knockback, and temporary terrain ability.
-4. Add visual/proxy probes that expose the chosen asset/effect ids, colors, block/material ids, proxy counts, and cleanup counts per ability.
-5. Keep every style's result tied to a run id; do not mark visual quality PASS without either user confirmation or a purpose-built visual/proxy proof.
+1. Add a normal-control probe that selects the spellbook and activates slots 1-3
+   through actual player input, then requires `ability_cast_end` and packet
+   evidence for the selected ability.
+2. Add target-position/aim probes for crosshair-sensitive projectiles and
+   ground-target abilities; compare player facing, intended target position, and
+   impact/field origin.
+3. Add movement/path probes for Frolick, Tunnel, Burrow, Sandstorm/Dust Devil,
+   Gem object control, Aero vertical movement, Hydro swim lanes, and Corruptus
+   summons/transforms.
+4. Add ally/caster/summon safety probes for every AoE, field, DoT, root, slow,
+   burn, knockback, and temporary terrain ability.
+5. Add visual/proxy probes that expose the chosen asset/effect ids, colors,
+   block/material ids, proxy counts, and cleanup counts per ability.
+6. Keep every style's result tied to a run id; do not mark visual quality PASS
+   without either user confirmation or a purpose-built visual/proxy proof.
