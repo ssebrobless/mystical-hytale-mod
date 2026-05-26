@@ -175,17 +175,31 @@ the generic `/motm dev test ability` route.
 
 ## Immediate Implementation Order
 
-1. Run `scripts/run-normal-control-probe.ps1` class-by-class and style-by-style
-   until every slot has normal input evidence.
-2. Add target-position/aim probes for crosshair-sensitive projectiles and
+1. Run `scripts/run-concept-verification-layers.ps1` for primitive proof and
+   normal-control evidence. Start narrow, for example:
+
+   ```
+   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-concept-verification-layers.ps1 `
+     -WorldName "MOTM Creative Test" `
+     -Classes terra `
+     -Styles quake `
+     -Layers PrimitiveProofs,NormalControl `
+     -ControlMode PrimarySecondaryUse `
+     -SkipBuild
+   ```
+
+   Then widen to all styles once the narrow run is green.
+2. Run `scripts/run-normal-control-probe.ps1` class-by-class and style-by-style
+   when a single style needs isolated normal input evidence.
+3. Add target-position/aim probes for crosshair-sensitive projectiles and
    ground-target abilities; compare player facing, intended target position, and
    impact/field origin.
-3. Add movement/path probes for Frolick, Tunnel, Burrow, Sandstorm/Dust Devil,
+4. Add movement/path probes for Frolick, Tunnel, Burrow, Sandstorm/Dust Devil,
    Gem object control, Aero vertical movement, Hydro swim lanes, and Corruptus
    summons/transforms.
-4. Add ally/caster/summon safety probes for every AoE, field, DoT, root, slow,
+5. Add ally/caster/summon safety probes for every AoE, field, DoT, root, slow,
    burn, knockback, and temporary terrain ability.
-5. Add visual/proxy probes that expose the chosen asset/effect ids, colors,
+6. Add visual/proxy probes that expose the chosen asset/effect ids, colors,
    block/material ids, proxy counts, and cleanup counts per ability.
 6. Keep every style's result tied to a run id; do not mark visual quality PASS
    without either user confirmation or a purpose-built visual/proxy proof.
