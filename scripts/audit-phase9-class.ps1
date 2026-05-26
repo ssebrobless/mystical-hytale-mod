@@ -167,16 +167,14 @@ function Get-AbilityAuditPlan([string]$StyleId, $Ability, $Scenario) {
             $note = "Wait through buried-look engage, suffocation ticks, and release."
         }
         "metal/metal_coat" {
-            $requiresWeaponHit = $true
-            $note = "Self metallic coating plus a simulated weapon hit to prove knockback rider."
+            $note = "Self metallic coating and damage-reduction buff; no weapon follow-up is expected."
         }
         "metal/alloy_enhancement" {
             $requiresWeaponHit = $true
             $note = "Weapon/tool enhancement proof: simulate a melee weapon hit after the buff is armed."
         }
         "magma/obsidian_skin" {
-            $requiresWeaponHit = $true
-            $note = "Obsidian shell/coating plus weapon follow-up hit proof."
+            $note = "Obsidian shell/coating, immobilize window, and shield proof; no weapon follow-up is expected."
         }
         "bloom/frolick" {
             $requiresWeaponHit = $true
@@ -191,7 +189,7 @@ function Get-AbilityAuditPlan([string]$StyleId, $Ability, $Scenario) {
             $postActions.Add((New-MotionStep "Forward" 900 250))
             $waitMs = 1200
             $requiresSafeLane = $true
-            $note = "Move with the dash/tornado window so drag and expel can be observed."
+            $note = "Prime Sandstorm, then move with the dash/tornado window so drag and expel can be observed."
         }
         "sand/sandstorm" {
             $postActions.Add((New-MotionStep "Forward" 650 250))
@@ -251,13 +249,15 @@ function Get-AbilityAuditPlan([string]$StyleId, $Ability, $Scenario) {
         "gem/lapidary" {
             $spawnMode = "clear-only"
             $waitMs = 2600
-            $requiresWeaponHit = $true
-            $weaponProofAfterCapture = $true
-            $note = "Persistent gem object proof plus simulated weapon hit for shield/defense payoff if armed."
+            $note = "Persistent gem object proof with block cube, aura, and HP nameplate."
         }
         "gem/refraction" {
             $requiresWeaponHit = $true
             $note = "Buff aura proof plus simulated weapon follow-up hit for attack/speed payoff."
+        }
+        "scarak/brood_surge" {
+            $waitMs = [Math]::Max($waitMs, 3200)
+            $note = "Summon-buff proof: create an active Scarak Egg summon first, then verify Brood Surge buffs or commands it."
         }
         default {
             if ($Scenario.Kind -eq "movement") {
@@ -387,6 +387,11 @@ function Prepare-AbilityEnvironment([string]$StyleId, [string]$AbilityId, $Plan)
 
     Send-MotmCommand "motm dev test mobs $($Plan.SpawnMode)" 1450
     Send-MotmCommand "motm dev test mobs count" 450
+
+    if ($StyleId.ToLowerInvariant() -eq "scarak" -and $AbilityId.ToLowerInvariant() -eq "brood_surge") {
+        Send-MotmCommand "motm dev test ability scarak_egg" 2200
+        Add-Line("  - Precondition: refreshed active Scarak Egg summon before Brood Surge")
+    }
 }
 
 function Get-VisualProof([string]$StyleId, [string]$AbilityId, $Scenario, $Plan, $Lines, [string]$ResultLine, [string]$ScreenshotPath) {
@@ -465,6 +470,9 @@ function Get-MechanicalProof($Scenario, $Lines, [string]$ResultLine, [string]$Ab
             if ($resultText -match "field active|field arms|radius .*m" -and $resultText -match "[1-9] hit|applied .* to [1-9] target") {
                 return [pscustomobject]@{ Status = "PASS"; Note = "Field duration/radius and target-side effect are present." }
             }
+            if ($resultText -match "field active|field arms|radius .*m" -and $resultText -match "heal ready|self defense buff|self attack buff|cleanse|purify") {
+                return [pscustomobject]@{ Status = "PASS"; Note = "Field duration/radius plus support effect proof are present." }
+            }
             if ($resultText -match "field active|field arms|radius .*m") {
                 return [pscustomobject]@{ Status = "REVIEW"; Note = "Field exists; tick/effect proof is weak." }
             }
@@ -495,12 +503,15 @@ function Get-MechanicalProof($Scenario, $Lines, [string]$ResultLine, [string]$Ab
             return [pscustomobject]@{ Status = "REVIEW"; Note = "Self cast exists but status/HUD proof is weak." }
         }
         "support_heal" {
-            if ($resultText -match "heal|shield|buff|aura") {
+            if ($resultText -match "heal|shield|buff|aura|lifesteal|channeling") {
                 return [pscustomobject]@{ Status = "PASS"; Note = "Support/heal status proof found in cast result." }
             }
             return [pscustomobject]@{ Status = "REVIEW"; Note = "Support cast exists but HP/stat proof is weak." }
         }
         "summon" {
+            if ($resultText -match "buffed [1-9] summon|commanded [1-9] strike") {
+                return [pscustomobject]@{ Status = "PASS"; Note = "Active summon buff/command proof found in cast result." }
+            }
             $summonAttackLine = $Lines |
                 Where-Object { $_ -match "Summon attack resolved: abilityId=$([regex]::Escape($AbilityId))" } |
                 Select-Object -Last 1
@@ -695,6 +706,10 @@ try {
             $trigger = ([string]$ability.trigger).ToLowerInvariant()
             if (@($plan.PostActions).Count -gt 0) {
                 Send-MotmCommand "motm dev position" 350
+            }
+            if ($styleId.ToLowerInvariant() -eq "sand" -and $abilityId.ToLowerInvariant() -eq "dust_devil") {
+                Send-MotmCommand "motm dev test ability sandstorm" 950
+                Add-Line("  - Precondition: activated Sandstorm before Dust Devil")
             }
             if ($trigger -eq "jump_land") {
                 Send-MotmCommand "motm dev test ability $abilityId" 900

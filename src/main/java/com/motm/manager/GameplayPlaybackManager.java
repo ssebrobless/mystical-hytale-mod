@@ -6968,6 +6968,15 @@ public class GameplayPlaybackManager {
             return false;
         }
 
+        NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
+        String roleName = npc != null ? npc.getRoleName() : "";
+        if (roleName != null) {
+            String normalizedRole = roleName.toLowerCase(Locale.ROOT);
+            if (normalizedRole.contains("dummy") || normalizedRole.contains("stationary")) {
+                return true;
+            }
+        }
+
         CollisionResultComponent collision = store.getComponent(targetRef, CollisionResultComponent.getComponentType());
         if (collision != null && collision.getCollisionResult() != null) {
             for (int i = 0; i < collision.getCollisionResult().getBlockCollisionCount(); i++) {

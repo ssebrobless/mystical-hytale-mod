@@ -29,18 +29,18 @@ This document records the current gameplay contract for the 20 shared perk choic
 | Neptune's Grace | When projected health drops below 10%, heals 40% max HP and starts a 25 second cooldown. |
 | Semiaquatic | Ramps swim movement speed up to +20% over 5 seconds while swimming. |
 | Big Lungs | Applies +10% max stamina and +10% max oxygen through native stat modifiers. |
-| Rainy Day | Data and runtime residual are recorded; current weather/rain exposure API still needs proof before regen is applied. |
+| Rainy Day | Uses Hytale weather resources/tracker to detect rain and applies periodic regen while raining; `/motm dev passive rainy-day auto` forces a rain proof when the weather API accepts the asset. |
 | Freezing Winds | Below 20% projected HP, slows nearby enemies by 50% for 5 seconds and applies a cold visual effect. |
 | Ignite | On successful hit, burns enemies in a 6 block radius for 1% caster max HP each second for 5 seconds, then starts cooldown. |
 | Desperation | Below 70% HP, outgoing native and MOTM damage is multiplied by 1.10. |
 | Haunting | On kill, spawns up to 3 temporary ghost allies for 60 seconds. Ghosts attack nearby hostile NPCs every 2 seconds. |
 | Vampirism | Heals the player for 10% of successful native or MOTM damage dealt to mobs. |
-| Terror | Data-defined residual; needs a proven native weapon ultimate-ready hook before it can stun on ultimate use. |
+| Terror | Uses the closest proven native hook: if the player hits with a native weapon while signature energy is full, nearby enemies are stunned for 3 seconds and the perk starts a 20 second cooldown. |
 | Heavyweight | Reduces incoming knockback by 15% and increases outgoing knockback by 4% when a native knockback component exists. |
-| Eco-friendly | Data-defined residual; needs a proven bare-hand grass block event with player mapping before tree growth can be safe. |
+| Eco-friendly | Bare-hand grass block damage in open space grows a temporary tree/sapling structure, pushes nearby NPCs, grants 5% damage reduction for 5 seconds, then uses a 15 second cooldown window. |
 | Mole Man | Adds +10% mining multiplier while Terra cave vision says the player is underground. |
-| Blacksmith | Data-defined residual; needs native crafted-armor event/item metadata proof. |
-| Toolsmith | Data-defined residual; needs native crafted-tool/weapon event/item metadata proof. |
+| Blacksmith | Player craft events mark eligible crafted armor; marked equipped pieces reduce incoming damage by 5% each, capped at the requested 20%. |
+| Toolsmith | Player craft events mark eligible crafted tools/weapons and raise max durability to 125%; the enhanced item can be used by others because the bonus is stored on the item metadata. |
 
 ## Verification Entry Points
 
@@ -64,4 +64,4 @@ audits/perk-runtime/<run-id>/report.md
 audits/perk-runtime/<run-id>/<proof-name>.log
 ```
 
-Movement, weather, crafting, and native-ultimate perks still need specific Hytale stimuli. The harness records those as residuals instead of pretending screenshots are proof.
+Movement perks still need real sprint/swim lane stimuli for high-confidence live proof. Eco-friendly and crafting perks now have native hooks, but the strongest final proof is still an in-world bare-hand grass punch and a real crafted armor/tool item because those are UI/world actions, not chat-only simulations.

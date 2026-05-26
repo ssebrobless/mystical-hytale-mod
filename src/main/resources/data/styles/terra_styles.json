@@ -11,7 +11,7 @@
           "id": "stomp",
           "name": "Stomp",
           "description": "Shockwave that damages and knocks back",
-          "damage_percent": 0,
+          "damage_percent": 8,
           "cooldown_seconds": 2,
           "cast_time_seconds": 0.25,
           "recovery_seconds": 0.18,

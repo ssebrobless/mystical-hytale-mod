@@ -38,6 +38,7 @@ import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementMa
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerCraftEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent;
@@ -86,6 +87,7 @@ import com.hypixel.hytale.registry.Registration;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.nio.file.Path;
@@ -127,6 +129,9 @@ public class MenteesMod extends JavaPlugin {
     private static final String DEFAULT_DEV_GRIMOIRE_ITEM_ID = "Recipe_Book_Magic_Void";
     private static final String HYDRO_CONTAINER_METADATA_KEY = "motm_hydro_container";
     private static final String HYDRO_CONTAINER_TIER_METADATA_KEY = "motm_hydro_container_tier";
+    private static final String BLACKSMITH_METADATA_KEY = "motm_blacksmith_armor";
+    private static final String TOOLSMITH_METADATA_KEY = "motm_toolsmith_durability";
+    private static final String CRAFTED_BY_METADATA_KEY = "motm_crafted_by";
     private static final String HYDRO_LIGHT_WATERSKIN_RECIPE_ID = "MOTM_Hydro_Waterskin_Light";
     private static final int HYDRO_LIGHT_WATERSKIN_INPUT_COUNT = 2;
     private static final String[] HYDRO_CONTAINER_ITEM_IDS = {
@@ -550,6 +555,7 @@ public class MenteesMod extends JavaPlugin {
                 onPlayerDisconnect(event.getPlayerRef().getUuid().toString())
         ));
         lifecycleRegistrations.add(getEventRegistry().registerGlobal(DamageBlockEvent.class, this::handleDamageBlock));
+        lifecycleRegistrations.add(getEventRegistry().registerGlobal(PlayerCraftEvent.class, this::handlePlayerCraft));
         lifecycleRegistrations.add(getEventRegistry().registerGlobal(PlayerInteractEvent.class, this::handlePlayerInteract));
         lifecycleRegistrations.add(getEventRegistry().registerGlobal(PlayerMouseButtonEvent.class, this::handlePlayerMouseButton));
         lifecycleRegistrations.add(getCommandRegistry().registerCommand(new MotmCommandBase(this)));
@@ -3524,6 +3530,282 @@ public class MenteesMod extends JavaPlugin {
         return metadata;
     }
 
+    private void handlePlayerCraft(PlayerCraftEvent event) {
+        try {
+            if (event == null || event.getPlayer() == null || event.getCraftedRecipe() == null) {
+                return;
+            }
+            Player player = event.getPlayer();
+            String playerId = getRuntimePlayerId(player);
+            PlayerData playerData = playerId != null ? playerDataManager.getOnlinePlayer(playerId) : null;
+            if (playerData == null || playerData.getSelectedPerks() == null) {
+                return;
+            }
+
+            MaterialQuantity primaryOutput = event.getCraftedRecipe().getPrimaryOutput();
+            ItemStack craftedStack = primaryOutput != null ? primaryOutput.toItemStack() : null;
+            String craftedItemId = craftedStack != null ? craftedStack.getItemId() : null;
+            if (craftedItemId == null || craftedItemId.isBlank()) {
+                return;
+            }
+
+            boolean hasBlacksmith = playerData.getSelectedPerks().contains("terra_t01_blacksmith");
+            boolean hasToolsmith = playerData.getSelectedPerks().contains("terra_t01_toolsmith");
+            if (!hasBlacksmith && !hasToolsmith) {
+                return;
+            }
+
+            ItemStack enhanced = enhanceCraftedPerkStack(craftedStack, playerId, hasBlacksmith, hasToolsmith);
+            if (enhanced == null || enhanced.equals(craftedStack)) {
+                LOG.info("[MOTM] Runtime perk crafting observed without eligible enhancement: item="
+                        + craftedItemId + " player=" + playerId);
+                return;
+            }
+
+            boolean replaced = replaceFirstMatchingCraftedStack(player, craftedItemId, enhanced);
+            LOG.info("[MOTM] Runtime perk crafting enhancement: player=" + playerId
+                    + " item=" + craftedItemId
+                    + " blacksmith=" + hasBlacksmith
+                    + " toolsmith=" + hasToolsmith
+                    + " replaced=" + replaced
+                    + " quantity=" + event.getQuantity());
+        } catch (Throwable e) {
+            LOG.log(java.util.logging.Level.WARNING, "[MOTM] Player craft perk hook failed safely.", e);
+        }
+    }
+
+    private ItemStack enhanceCraftedPerkStack(ItemStack stack, String playerId,
+                                             boolean hasBlacksmith, boolean hasToolsmith) {
+        if (stack == null || stack.getItem() == null) {
+            return null;
+        }
+        ItemStack enhanced = stack.withMetadata(CRAFTED_BY_METADATA_KEY, new BsonString(playerId));
+        boolean changed = false;
+        if (hasBlacksmith && stack.getItem().getArmor() != null) {
+            enhanced = enhanced.withMetadata(BLACKSMITH_METADATA_KEY, BsonBoolean.TRUE);
+            changed = true;
+        }
+        if (hasToolsmith && (stack.getItem().getTool() != null || stack.getItem().getWeapon() != null)) {
+            double maxDurability = Math.max(stack.getMaxDurability(), stack.getItem().getMaxDurability());
+            if (maxDurability > 0.0) {
+                enhanced = enhanced.withMaxDurability(maxDurability * 1.25)
+                        .withDurability(Math.max(stack.getDurability(), maxDurability * 1.25))
+                        .withMetadata(TOOLSMITH_METADATA_KEY, BsonBoolean.TRUE);
+                changed = true;
+            }
+        }
+        return changed ? enhanced : stack;
+    }
+
+    private boolean replaceFirstMatchingCraftedStack(Player player, String itemId, ItemStack enhancedStack) {
+        CombinedItemContainer inventory = getCombinedPlayerInventory(player);
+        if (inventory == null || itemId == null || enhancedStack == null) {
+            return false;
+        }
+        final boolean[] replaced = {false};
+        inventory.forEach((slot, stack) -> {
+            if (replaced[0] || stack == null || !itemId.equals(stack.getItemId())) {
+                return;
+            }
+            BsonDocument metadata = stack.getMetadata();
+            if (metadata != null
+                    && (metadata.containsKey(BLACKSMITH_METADATA_KEY) || metadata.containsKey(TOOLSMITH_METADATA_KEY))) {
+                return;
+            }
+            ItemStack replacement = enhancedStack.withQuantity(Math.max(1, stack.getQuantity()));
+            replaced[0] = inventory.setItemStackForSlot(slot, replacement) != null;
+        });
+        return replaced[0];
+    }
+
+    public double getBlacksmithArmorDamageReduction(String playerId) {
+        Player player = getRuntimePlayer(playerId);
+        if (player == null || player.getInventory() == null || player.getInventory().getArmor() == null) {
+            return 0.0;
+        }
+        final int[] enhancedPieces = {0};
+        player.getInventory().getArmor().forEach((slot, stack) -> {
+            if (hasBooleanMetadata(stack, BLACKSMITH_METADATA_KEY)) {
+                enhancedPieces[0]++;
+            }
+        });
+        double reduction = Math.min(0.20, enhancedPieces[0] * 0.05);
+        if (reduction > 0.0) {
+            LOG.info("[MOTM] Runtime perk armor: blacksmith craftedPieces=" + enhancedPieces[0]
+                    + " damageReduction=" + String.format(Locale.ROOT, "%.3f", reduction)
+                    + " player=" + playerId);
+        }
+        return reduction;
+    }
+
+    private boolean hasBooleanMetadata(ItemStack stack, String key) {
+        if (stack == null || stack.getMetadata() == null || key == null) {
+            return false;
+        }
+        BsonValue value = stack.getMetadata().get(key);
+        return value != null && value.isBoolean() && value.asBoolean().getValue();
+    }
+
+    public EcoFriendlyTreeResult applyEcoFriendlyTree(PlayerData playerData, Player player, DamageBlockEvent event) {
+        if (playerData == null || player == null || event == null || event.getTargetBlock() == null) {
+            return new EcoFriendlyTreeResult(false, "missing player/event/target");
+        }
+        ItemStack held = player.getInventory() != null ? player.getInventory().getItemInHand() : null;
+        if ((event.getItemInHand() != null && !event.getItemInHand().isEmpty())
+                || (held != null && !held.isEmpty())) {
+            return new EcoFriendlyTreeResult(false, "not bare-hand");
+        }
+
+        World world = player.getWorld();
+        Vector3i grassBlock = event.getTargetBlock();
+        if (world == null || !isGrassLikeBlock(world, grassBlock)) {
+            return new EcoFriendlyTreeResult(false, "target is not grass-like");
+        }
+        if (!isEcoFriendlyOpenSpace(world, grassBlock)) {
+            return new EcoFriendlyTreeResult(false, "open-space check failed above target");
+        }
+
+        BlockResolution trunk = resolveProofBlockId(
+                "Wood_Log_Oak",
+                "Wood_Oak_Log",
+                "Tree_Trunk_Oak",
+                "Wood_Sungwood_Log",
+                "Plant_Sapling_Oak"
+        );
+        BlockResolution leaves = resolveProofBlockId(
+                "Plant_Leaves_Oak",
+                "Leaves_Oak",
+                "Plant_Leaves_Ball_Oak",
+                "Plant_Leaves_Crystal",
+                "Plant_Sapling_Oak"
+        );
+        if (trunk.blockTypeId() == BlockType.UNKNOWN_ID || trunk.blockTypeId() == BlockType.EMPTY_ID) {
+            return new EcoFriendlyTreeResult(false, "no tree/sapling block resolved");
+        }
+
+        Vector3i anchor = new Vector3i(grassBlock.getX(), grassBlock.getY() + 1, grassBlock.getZ());
+        BlockSelection tree = new BlockSelection();
+        tree.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
+        tree.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        if (leaves.blockTypeId() != BlockType.UNKNOWN_ID && leaves.blockTypeId() != BlockType.EMPTY_ID
+                && !trunk.blockId().equals(leaves.blockId())) {
+            for (int y = 0; y < 4; y++) {
+                tree.addBlockAtWorldPos(anchor.getX(), anchor.getY() + y, anchor.getZ(), trunk.blockTypeId(), 0, 0, 0);
+            }
+            for (int x = -2; x <= 2; x++) {
+                for (int z = -2; z <= 2; z++) {
+                    int manhattan = Math.abs(x) + Math.abs(z);
+                    if (manhattan <= 3) {
+                        tree.addBlockAtWorldPos(anchor.getX() + x, anchor.getY() + 4, anchor.getZ() + z,
+                                leaves.blockTypeId(), 0, 0, 0);
+                    }
+                    if (manhattan <= 2) {
+                        tree.addBlockAtWorldPos(anchor.getX() + x, anchor.getY() + 5, anchor.getZ() + z,
+                                leaves.blockTypeId(), 0, 0, 0);
+                    }
+                }
+            }
+            tree.addBlockAtWorldPos(anchor.getX(), anchor.getY() + 6, anchor.getZ(), leaves.blockTypeId(), 0, 0, 0);
+        } else {
+            tree.addBlockAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ(), trunk.blockTypeId(), 0, 0, 0);
+        }
+
+        String placement = placeTemporarySelection("perk-eco-friendly-tree", world, anchor, tree, 30000L,
+                "trunk=" + trunk.blockId()
+                        + " leaves=" + leaves.blockId()
+                        + " blocks=" + tree.getBlockCount());
+        int pushed = pushNearbyNpcsAway(player, anchor, 5.0, 3.0);
+        return new EcoFriendlyTreeResult(placement.contains("PASS"),
+                placement + " pushedTargets=" + pushed);
+    }
+
+    private boolean isGrassLikeBlock(World world, Vector3i block) {
+        if (world == null || block == null) {
+            return false;
+        }
+        try {
+            BlockType blockType = world.getBlockType(block.getX(), block.getY(), block.getZ());
+            String blockId = blockType != null ? blockType.getId() : "";
+            String normalized = blockId.toLowerCase(Locale.ROOT);
+            return normalized.contains("grass") || normalized.contains("soil");
+        } catch (Throwable e) {
+            LOG.log(java.util.logging.Level.WARNING, "[MOTM] Eco-friendly grass check failed safely.", e);
+            return false;
+        }
+    }
+
+    private boolean isEcoFriendlyOpenSpace(World world, Vector3i grassBlock) {
+        if (world == null || grassBlock == null) {
+            return false;
+        }
+        for (int y = 1; y <= 7; y++) {
+            for (int x = -2; x <= 2; x++) {
+                for (int z = -2; z <= 2; z++) {
+                    if (Math.abs(x) + Math.abs(z) > 4) {
+                        continue;
+                    }
+                    try {
+                        BlockType blockType = world.getBlockType(
+                                grassBlock.getX() + x,
+                                grassBlock.getY() + y,
+                                grassBlock.getZ() + z
+                        );
+                        String id = blockType != null ? blockType.getId() : BlockType.EMPTY_KEY;
+                        if (blockType != null && !blockType.isUnknown() && !BlockType.EMPTY_KEY.equals(id)) {
+                            return false;
+                        }
+                    } catch (Throwable ignored) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private int pushNearbyNpcsAway(Player player, Vector3i origin, double radius, double distance) {
+        if (player == null || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null || origin == null) {
+            return 0;
+        }
+        Store<EntityStore> store = player.getReference().getStore();
+        Vector3d center = new Vector3d(origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5);
+        final int[] pushed = {0};
+        store.forEachChunk((chunk, commandBuffer) -> {
+            for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
+                Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
+                if (ref == null || !ref.isValid()) {
+                    continue;
+                }
+                NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
+                TransformComponent transform = chunk.getComponent(entityIndex, TransformComponent.getComponentType());
+                if (npc == null || npc.isDespawning() || transform == null
+                        || transform.getTransform() == null || transform.getTransform().getPosition() == null) {
+                    continue;
+                }
+                Vector3d position = transform.getTransform().getPosition();
+                double dx = position.x - center.x;
+                double dz = position.z - center.z;
+                double horizontalDistance = Math.sqrt((dx * dx) + (dz * dz));
+                if (horizontalDistance > radius) {
+                    continue;
+                }
+                double safeDistance = Math.max(0.1, horizontalDistance);
+                Vector3d destination = new Vector3d(
+                        position.x + (dx / safeDistance) * distance,
+                        position.y,
+                        position.z + (dz / safeDistance) * distance
+                );
+                transform.teleportPosition(destination);
+                pushed[0]++;
+            }
+        });
+        LOG.info("[MOTM] Eco-friendly tree push: pushedTargets=" + pushed[0]
+                + " radius=" + radius
+                + " distance=" + distance);
+        return pushed[0];
+    }
+
     private void setCraftingRecipeId(CraftingRecipe recipe, String recipeId) throws ReflectiveOperationException {
         Field idField = CraftingRecipe.class.getDeclaredField("id");
         idField.setAccessible(true);
@@ -4944,16 +5226,28 @@ public class MenteesMod extends JavaPlugin {
 
     private void handleDamageBlock(DamageBlockEvent event) {
         LOG.info("[MOTM] >>> handleDamageBlock ENTERED");
-        if (event == null || event.getItemInHand() == null || event.getTargetBlock() == null) {
+        if (event == null || event.getTargetBlock() == null) {
             return;
         }
 
+        Player blockActor = resolveRuntimePlayerForBlockDamage(event, false);
+        if (blockActor != null && runtimePerkManager != null) {
+            String actorId = getRuntimePlayerId(blockActor);
+            var actorData = actorId != null ? playerDataManager.getOnlinePlayer(actorId) : null;
+            if (runtimePerkManager.handleBareHandBlockPunch(actorData, blockActor, event)) {
+                return;
+            }
+        }
+
+        if (event.getItemInHand() == null) {
+            return;
+        }
         String itemId = event.getItemInHand().getItemId();
         if (!isPickaxeItemId(itemId)) {
             return;
         }
 
-        Player terraMiner = resolveTerraMinerForBlockDamage(event);
+        Player terraMiner = resolveRuntimePlayerForBlockDamage(event, true);
         if (terraMiner == null) {
             return;
         }
@@ -4984,15 +5278,12 @@ public class MenteesMod extends JavaPlugin {
         }
     }
 
-    private Player resolveTerraMinerForBlockDamage(DamageBlockEvent event) {
-        if (event == null || event.getTargetBlock() == null || event.getItemInHand() == null) {
+    private Player resolveRuntimePlayerForBlockDamage(DamageBlockEvent event, boolean requireTerraClass) {
+        if (event == null || event.getTargetBlock() == null) {
             return null;
         }
 
-        String eventItemId = event.getItemInHand().getItemId();
-        if (eventItemId == null || eventItemId.isBlank()) {
-            return null;
-        }
+        String eventItemId = event.getItemInHand() != null ? event.getItemInHand().getItemId() : null;
 
         Vector3i targetBlock = event.getTargetBlock();
         double targetX = targetBlock.getX() + 0.5;
@@ -5009,12 +5300,16 @@ public class MenteesMod extends JavaPlugin {
             }
 
             var playerData = playerDataManager.getOnlinePlayer(entry.getKey());
-            if (playerData == null || !"terra".equalsIgnoreCase(playerData.getPlayerClass())) {
+            if (playerData == null || (requireTerraClass && !"terra".equalsIgnoreCase(playerData.getPlayerClass()))) {
                 continue;
             }
 
             ItemStack itemInHand = candidate.getInventory().getItemInHand();
-            if (itemInHand == null || itemInHand.isEmpty() || !eventItemId.equalsIgnoreCase(itemInHand.getItemId())) {
+            if (eventItemId != null && !eventItemId.isBlank()
+                    && (itemInHand == null || itemInHand.isEmpty() || !eventItemId.equalsIgnoreCase(itemInHand.getItemId()))) {
+                continue;
+            }
+            if ((eventItemId == null || eventItemId.isBlank()) && itemInHand != null && !itemInHand.isEmpty()) {
                 continue;
             }
 
@@ -5585,6 +5880,11 @@ public class MenteesMod extends JavaPlugin {
             int level,
             String displayName,
             String levelColor
+    ) {}
+
+    public record EcoFriendlyTreeResult(
+            boolean success,
+            String summary
     ) {}
 
     @FunctionalInterface

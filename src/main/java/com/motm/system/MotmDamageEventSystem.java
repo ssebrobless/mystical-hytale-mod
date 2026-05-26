@@ -89,6 +89,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                         damage.getAmount()
                 ));
                 damage.setAmount(applyPlayerIncomingStatReduction(targetUuid.toString(), damage.getAmount()));
+                damage.setAmount(applyBlacksmithArmorReduction(targetUuid.toString(), damage.getAmount()));
                 if (mod.getRuntimePerkManager() != null) {
                     damage.setAmount(mod.getRuntimePerkManager().modifyIncomingDamage(
                             targetData,
@@ -112,6 +113,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                     damage.getAmount()
             ));
             damage.setAmount(applyPlayerIncomingStatReduction(targetUuid.toString(), damage.getAmount()));
+            damage.setAmount(applyBlacksmithArmorReduction(targetUuid.toString(), damage.getAmount()));
             if (mod.getRuntimePerkManager() != null) {
                 damage.setAmount(mod.getRuntimePerkManager().modifyIncomingDamage(
                         targetData,
@@ -168,6 +170,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                     damage,
                     damage.getAmount()
             ));
+            mod.getRuntimePerkManager().tryTriggerTerror(playerData, sourceRef, store, held);
             mod.getRuntimePerkManager().afterSuccessfulHit(
                     playerData,
                     sourceRef,
@@ -179,6 +182,23 @@ public class MotmDamageEventSystem extends DamageEventSystem {
         if (response != null && !response.isBlank()) {
             runtimePlayer.sendMessage(Message.raw(response));
         }
+    }
+
+    private float applyBlacksmithArmorReduction(String playerId, float amount) {
+        if (amount <= 0.0f || playerId == null) {
+            return amount;
+        }
+        double reduction = mod.getBlacksmithArmorDamageReduction(playerId);
+        if (!Double.isFinite(reduction) || reduction <= 0.0) {
+            return amount;
+        }
+        double clamped = Math.max(0.0, Math.min(0.95, reduction));
+        float adjusted = (float) (amount * (1.0 - clamped));
+        LOG.info("[MOTM] Runtime perk armor reduction applied: playerId=" + playerId
+                + " reduction=" + String.format(java.util.Locale.ROOT, "%.4f", clamped)
+                + " before=" + amount
+                + " after=" + adjusted);
+        return adjusted;
     }
 
     private float applyPlayerIncomingStatReduction(String playerId, float amount) {

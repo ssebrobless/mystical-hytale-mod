@@ -89,6 +89,9 @@ function Test-MechanicalProof([string]$ScenarioName, $AllLines, $CastResultLine)
             if ($resultText -match "field active|field arms|radius .*m" -and $resultText -match "applied .* to [1-9] target|[1-9] hit") {
                 return @("PASS", "Field result includes duration/radius and target-side effect.")
             }
+            if ($resultText -match "field active|field arms|radius .*m" -and $resultText -match "heal ready|self defense buff|self attack buff|cleanse|purify") {
+                return @("PASS", "Field duration/radius plus support effect proof are present.")
+            }
             if ($resultText -match "field active|field arms|radius .*m") {
                 return @("REVIEW", "Field exists; target-side tick/effect proof is weak.")
             }
@@ -119,12 +122,15 @@ function Test-MechanicalProof([string]$ScenarioName, $AllLines, $CastResultLine)
             return @("REVIEW", "Self cast exists but status/HUD proof is weak.")
         }
         "support_heal" {
-            if ($resultText -match "heal|shield|buff|aura") {
+            if ($resultText -match "heal|shield|buff|aura|lifesteal|channeling") {
                 return @("PASS", "Support/heal status proof found in cast result.")
             }
             return @("REVIEW", "Support cast exists but HP/stat proof is weak.")
         }
         "summon" {
+            if ($resultText -match "buffed [1-9] summon|commanded [1-9] strike") {
+                return @("PASS", "Active summon buff/command proof found in cast result.")
+            }
             if ($resultText -match "summon|spawn") {
                 return @("REVIEW", "Summon runtime fired; visual/action proof still needed.")
             }

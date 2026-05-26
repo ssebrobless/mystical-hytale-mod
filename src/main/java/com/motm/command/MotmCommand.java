@@ -978,6 +978,22 @@ public class MotmCommand {
                 LOG.info(result);
                 yield result;
             }
+            case "rainy-day", "rain" -> {
+                if (mod.getRuntimePerkManager() == null) {
+                    yield "[MOTM] Runtime perk manager unavailable.";
+                }
+                yield mod.getRuntimePerkManager().runRainyDayProof(
+                        player,
+                        resolvedPlayer,
+                        args.length >= 4 ? args[3] : "auto"
+                );
+            }
+            case "terror" -> {
+                if (mod.getRuntimePerkManager() == null) {
+                    yield "[MOTM] Runtime perk manager unavailable.";
+                }
+                yield mod.getRuntimePerkManager().runTerrorProof(player, resolvedPlayer);
+            }
             case "velocity" -> {
                 if (args.length < 5) {
                     yield "[MOTM] Usage: /motm dev passive velocity <x> <z>";
@@ -994,7 +1010,7 @@ public class MotmCommand {
     }
 
     private String getDevPassiveUsage() {
-        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|mob-kill|knockback|mining|projectile-speed|velocity>\n"
+        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|mob-kill|knockback|mining|projectile-speed|rainy-day|terror|velocity>\n"
                 + "Examples:\n"
                 + "  /motm dev passive status\n"
                 + "  /motm dev passive health 50\n"
@@ -1005,6 +1021,8 @@ public class MotmCommand {
                 + "  /motm dev passive knockback\n"
                 + "  /motm dev passive mining Iron_Pickaxe\n"
                 + "  /motm dev passive projectile-speed 1.0\n"
+                + "  /motm dev passive rainy-day auto\n"
+                + "  /motm dev passive terror\n"
                 + "  /motm dev passive velocity 1.0 0.0";
     }
 

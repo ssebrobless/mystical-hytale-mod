@@ -146,7 +146,9 @@ try {
         @{ Name = "ignite"; Perk = "corruptus_t01_ignite"; Commands = @("motm dev test mobs close", "motm dev passive outgoing-damage 100 ability"); Required = @("Runtime perk proc: ignite targets=[1-9]") },
         @{ Name = "haunting"; Perk = "corruptus_t01_haunting"; Commands = @("motm dev passive mob-kill"); Required = @("Runtime perk ghost spawned") },
         @{ Name = "sharpshooter"; Perk = "aero_t01_sharpshooter"; Commands = @("motm dev passive projectile-speed 1.0"); Required = @("Runtime perk projectile speed: sharpshooter", "adjusted=1.150") },
-        @{ Name = "mole-man"; Perk = "terra_t01_mole_man"; Commands = @("motm dev relocate cave", "motm dev passive status", "motm dev passive mining Tool_Pickaxe_Iron"); Required = @("terraCaveVision=true", "Runtime perk mining applied: perk=mole_man", "Dev passive mining multiplier=1.600") }
+        @{ Name = "mole-man"; Perk = "terra_t01_mole_man"; Commands = @("motm dev relocate cave", "motm dev passive status", "motm dev passive mining Tool_Pickaxe_Iron"); Required = @("terraCaveVision=true", "Runtime perk mining applied: perk=mole_man", "Dev passive mining multiplier=1.600") },
+        @{ Name = "rainy-day"; Perk = "hydro_t01_rainy_day"; Commands = @("motm dev passive health 50", "motm dev passive rainy-day auto"); Required = @("Dev passive rainy-day:.*forced=true", "Runtime perk regen: rainy_day active=true") },
+        @{ Name = "terror"; Perk = "corruptus_t01_terror"; Commands = @("motm dev test mobs close", "motm dev passive terror"); Required = @("Dev passive terror: targets=[1-9]") }
     )
 
     foreach ($proof in $proofs) {
@@ -163,9 +165,9 @@ try {
     Add-Line "## Untestable Without Specific World Stimulus"
     Add-Line ""
     Add-Line "- Accelerate, Bunny Hop, Big Strides, and Semiaquatic require live sprint/swim movement-state transitions; verify with `/motm dev perks set <perk>` plus movement lane/water-lane captures."
-    Add-Line "- Rainy Day requires a rain/weather API proof in a raining world."
-    Add-Line "- Eco-friendly, Blacksmith, and Toolsmith require native block-punch/crafting event coverage; they are data-defined and logged as residuals until those event hooks are proven."
-    Add-Line "- Terror requires native weapon ultimate-ready detection; no stable API hook has been proven yet."
+    Add-Line "- Eco-friendly requires a native bare-hand grass punch in open space; expected log: `Runtime perk proc: eco_friendly`."
+    Add-Line "- Blacksmith and Toolsmith require native crafting; expected log: `Runtime perk crafting enhancement` plus metadata/damage or durability proof."
+    Add-Line "- Terror is implemented on the closest available hook: native weapon hit while signature energy is full. If Hytale exposes a future explicit ultimate-use event, move the trigger there."
     Add-Line ""
 
     if ($passes -eq $total) {

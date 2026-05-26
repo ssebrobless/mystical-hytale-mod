@@ -11,6 +11,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
@@ -22,6 +23,8 @@ import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntitySta
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.builtin.weather.components.WeatherTracker;
+import com.hypixel.hytale.builtin.weather.resources.WeatherResource;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.motm.MenteesMod;
@@ -66,6 +69,7 @@ public class RuntimePerkManager {
     private static final String CORRUPTUS_DESPERATION = "corruptus_t01_desperation";
     private static final String CORRUPTUS_HAUNTING = "corruptus_t01_haunting";
     private static final String CORRUPTUS_VAMPIRISM = "corruptus_t01_vampirism";
+    private static final String CORRUPTUS_TERROR = "corruptus_t01_terror";
     private static final String TERRA_HEAVYWEIGHT = "terra_t01_heavyweight";
     private static final String TERRA_ECO_FRIENDLY = "terra_t01_eco_friendly";
     private static final String TERRA_MOLE_MAN = "terra_t01_mole_man";
@@ -75,8 +79,9 @@ public class RuntimePerkManager {
     private final Map<String, SprintState> sprintStateByPlayer = new HashMap<>();
     private final Map<String, SwimState> swimStateByPlayer = new HashMap<>();
     private final Map<String, List<GhostAlly>> ghostAlliesByPlayer = new HashMap<>();
-    private final Map<String, Double> temporaryDamageReductionByPlayer = new HashMap<>();
+    private final Map<String, TemporaryDamageReduction> temporaryDamageReductionByPlayer = new HashMap<>();
     private final Map<String, MovementSnapshot> movementSnapshots = new HashMap<>();
+    private final Map<String, Long> rainyDayLastRegenTickByPlayer = new HashMap<>();
     private final List<IgniteDot> activeIgnites = new ArrayList<>();
     private long tickCounter = 0L;
 
@@ -98,9 +103,8 @@ public class RuntimePerkManager {
         speedBonus += updateSprintPerks(player, runtimePlayer, playerRef, store);
         speedBonus += updateSwimPerks(player, runtimePlayer, playerRef, store);
 
-        if (hasPerk(player, HYDRO_RAINY_DAY)) {
-            LOG.fine("[MOTM] Runtime perk residual: rainy_day weather API probe pending; regen not applied yet player=" + playerId);
-        }
+        expireTemporaryDamageReductions();
+        applyRainyDay(player, runtimePlayer, playerRef, store, false);
 
         if (speedBonus > 0.0) {
             applyMovementBonus(playerId, runtimePlayer, speedBonus);
@@ -122,11 +126,16 @@ public class RuntimePerkManager {
                     + " after=" + adjusted + " player=" + target.getPlayerId());
         }
 
-        double reduction = temporaryDamageReductionByPlayer.getOrDefault(target.getPlayerId(), 0.0);
+        TemporaryDamageReduction temporaryReduction = temporaryDamageReductionByPlayer.get(target.getPlayerId());
+        double reduction = temporaryReduction != null && temporaryReduction.expireAtTick > tickCounter
+                ? temporaryReduction.reduction
+                : 0.0;
         if (reduction > 0.0) {
             adjusted *= (float) Math.max(0.0, 1.0 - reduction);
             LOG.info("[MOTM] Runtime perk damage: temporaryReduction=" + format(reduction)
                     + " after=" + adjusted + " player=" + target.getPlayerId());
+        } else if (temporaryReduction != null) {
+            temporaryDamageReductionByPlayer.remove(target.getPlayerId());
         }
 
         triggerLowHealthPerks(target, targetRef, store, adjusted);
@@ -219,6 +228,66 @@ public class RuntimePerkManager {
         }
     }
 
+    public int tryTriggerTerror(PlayerData attacker, Ref<EntityStore> attackerRef, Store<EntityStore> store,
+                                ItemStack heldItem) {
+        if (attacker == null || attackerRef == null || !attackerRef.isValid() || store == null
+                || !hasPerk(attacker, CORRUPTUS_TERROR) || onCooldown(attacker.getPlayerId(), CORRUPTUS_TERROR)
+                || !isNativeWeapon(heldItem) || !hasFullSignatureEnergy(attackerRef, store)) {
+            return 0;
+        }
+        Vector3d center = position(attackerRef, store);
+        if (center == null) {
+            return 0;
+        }
+        int targets = 0;
+        for (Ref<EntityStore> target : nearbyNpcs(store, center, 7.0)) {
+            String entityId = entityId(target, store);
+            if (entityId == null) {
+                continue;
+            }
+            mod.getStatusEffectManager().applyEffect(entityId,
+                    new StatusEffect(StatusEffect.Type.STUN, 3 * TICKS_PER_SECOND, 1.0,
+                            attacker.getPlayerId(), CORRUPTUS_TERROR));
+            applyEffectById(target, store, IGNITE_EFFECT_ID);
+            targets++;
+        }
+        setCooldown(attacker.getPlayerId(), CORRUPTUS_TERROR, 20L * TICKS_PER_SECOND);
+        LOG.info("[MOTM] Runtime perk proc: terror targets=" + targets
+                + " radius=7 cooldownSeconds=20 nativeUltimateProxy=signatureEnergyFullOnWeaponHit player="
+                + attacker.getPlayerId());
+        return targets;
+    }
+
+    public String runTerrorProof(PlayerData player, Player runtimePlayer) {
+        if (player == null || runtimePlayer == null) {
+            return "[MOTM] Dev passive terror failed: runtime player unavailable.";
+        }
+        Ref<EntityStore> ref = runtimePlayer.getReference();
+        Store<EntityStore> store = ref != null ? ref.getStore() : null;
+        if (ref == null || !ref.isValid() || store == null) {
+            return "[MOTM] Dev passive terror failed: player store unavailable.";
+        }
+        int targets = 0;
+        Vector3d center = position(ref, store);
+        if (center != null) {
+            for (Ref<EntityStore> target : nearbyNpcs(store, center, 7.0)) {
+                String entityId = entityId(target, store);
+                if (entityId == null) {
+                    continue;
+                }
+                mod.getStatusEffectManager().applyEffect(entityId,
+                        new StatusEffect(StatusEffect.Type.STUN, 3 * TICKS_PER_SECOND, 1.0,
+                                player.getPlayerId(), CORRUPTUS_TERROR));
+                applyEffectById(target, store, IGNITE_EFFECT_ID);
+                targets++;
+            }
+        }
+        String result = "[MOTM] Dev passive terror: targets=" + targets
+                + " nativeUltimateHook=signatureEnergyFullOnWeaponHit";
+        LOG.info(result);
+        return result;
+    }
+
     public void afterMobKilled(PlayerData killer, Player runtimePlayer, String mobEntityId) {
         if (killer == null || runtimePlayer == null || !hasPerk(killer, CORRUPTUS_HAUNTING)) {
             return;
@@ -241,9 +310,73 @@ public class RuntimePerkManager {
         if (player == null || runtimePlayer == null || !hasPerk(player, TERRA_ECO_FRIENDLY)) {
             return false;
         }
-        LOG.info("[MOTM] Runtime perk residual: eco_friendly needs bare-hand block event/player mapping before tree growth can be confirmed player="
-                + player.getPlayerId());
-        return false;
+        String playerId = player.getPlayerId();
+        if (onCooldown(playerId, TERRA_ECO_FRIENDLY)) {
+            LOG.info("[MOTM] Runtime perk eco-friendly skipped: cooldownActive=true player=" + playerId);
+            return true;
+        }
+
+        MenteesMod.EcoFriendlyTreeResult result = mod.applyEcoFriendlyTree(player, runtimePlayer, event);
+        LOG.info("[MOTM] Runtime perk eco-friendly tree proof: player=" + playerId
+                + " success=" + result.success()
+                + " summary=" + result.summary());
+        if (!result.success()) {
+            return false;
+        }
+        temporaryDamageReductionByPlayer.put(playerId,
+                new TemporaryDamageReduction(0.05, tickCounter + 5L * TICKS_PER_SECOND));
+        setCooldown(playerId, TERRA_ECO_FRIENDLY, 20L * TICKS_PER_SECOND);
+        LOG.info("[MOTM] Runtime perk proc: eco_friendly damageReduction=0.050 durationSeconds=5 cooldownSeconds=15 player="
+                + playerId);
+        return true;
+    }
+
+    public String runRainyDayProof(PlayerData player, Player runtimePlayer, String requestedWeatherId) {
+        if (player == null || runtimePlayer == null || !hasPerk(player, HYDRO_RAINY_DAY)) {
+            return "[MOTM] Dev passive rainy-day failed: Rainy Day perk is not selected.";
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
+        if (playerRef == null || !playerRef.isValid() || store == null) {
+            return "[MOTM] Dev passive rainy-day failed: runtime player store unavailable.";
+        }
+        String weatherId = resolveRainWeatherId(requestedWeatherId);
+        WeatherResource weatherResource = store.getResource(WeatherResource.getResourceType());
+        boolean forced = false;
+        if (weatherResource != null && weatherId != null && !weatherId.isBlank()) {
+            try {
+                weatherResource.setForcedWeather(weatherId);
+                forced = true;
+            } catch (Throwable e) {
+                LOG.warning("[MOTM] Rainy Day proof weather force failed safely: " + e.getMessage());
+            }
+        }
+        RainState rainState = resolveRainState(playerRef, store);
+        int forcedWeatherIndex = weatherIndexForId(weatherId);
+        if (forced && forcedWeatherIndex >= 0) {
+            WeatherTracker tracker = store.getComponent(playerRef, WeatherTracker.getComponentType());
+            try {
+                PlayerRef universePlayerRef = runtimePlayer.getPlayerRef();
+                if (tracker != null && universePlayerRef != null) {
+                    tracker.setWeatherIndex(universePlayerRef, forcedWeatherIndex);
+                    rainState = resolveRainState(playerRef, store);
+                }
+            } catch (Throwable e) {
+                LOG.warning("[MOTM] Rainy Day proof tracker update failed safely: " + e.getMessage());
+            }
+        }
+        if (!rainState.raining && forced && isRainWeatherId(weatherId)) {
+            rainState = new RainState(true, forcedWeatherIndex, weatherId);
+        }
+        double healed = applyRainyDay(player, runtimePlayer, playerRef, store, rainState, true);
+        String result = "[MOTM] Dev passive rainy-day: requestedWeather=" + requestedWeatherId
+                + " resolvedWeather=" + weatherId
+                + " forced=" + forced
+                + " raining=" + rainState.raining
+                + " trackerWeatherId=" + rainState.weatherId
+                + " heal=" + format(healed);
+        LOG.info(result);
+        return result;
     }
 
     public void clearForPlayer(String playerId) {
@@ -255,8 +388,13 @@ public class RuntimePerkManager {
         swimStateByPlayer.remove(playerId);
         temporaryDamageReductionByPlayer.remove(playerId);
         movementSnapshots.remove(playerId);
+        rainyDayLastRegenTickByPlayer.remove(playerId);
         ghostAlliesByPlayer.remove(playerId);
         activeIgnites.removeIf(dot -> playerId.equals(dot.ownerPlayerId));
+    }
+
+    private void expireTemporaryDamageReductions() {
+        temporaryDamageReductionByPlayer.entrySet().removeIf(entry -> entry.getValue().expireAtTick <= tickCounter);
     }
 
     private double updateSprintPerks(PlayerData player, Player runtimePlayer, Ref<EntityStore> playerRef, Store<EntityStore> store) {
@@ -322,6 +460,100 @@ public class RuntimePerkManager {
                     + " player=" + player.getPlayerId());
         }
         return bonus;
+    }
+
+    private double applyRainyDay(PlayerData player, Player runtimePlayer, Ref<EntityStore> playerRef,
+                                 Store<EntityStore> store, boolean forceNow) {
+        return applyRainyDay(player, runtimePlayer, playerRef, store, resolveRainState(playerRef, store), forceNow);
+    }
+
+    private double applyRainyDay(PlayerData player, Player runtimePlayer, Ref<EntityStore> playerRef,
+                                 Store<EntityStore> store, RainState rainState, boolean forceNow) {
+        if (player == null || runtimePlayer == null || !hasPerk(player, HYDRO_RAINY_DAY)) {
+            return 0.0;
+        }
+        if (!rainState.raining) {
+            return 0.0;
+        }
+        String playerId = player.getPlayerId();
+        long lastTick = rainyDayLastRegenTickByPlayer.getOrDefault(playerId, Long.MIN_VALUE);
+        if (!forceNow && tickCounter - lastTick < TICKS_PER_SECOND) {
+            return 0.0;
+        }
+        rainyDayLastRegenTickByPlayer.put(playerId, tickCounter);
+        double amount = Math.max(1.0, maxHealth(playerRef, store) * 0.01);
+        double healed = healEntity(playerRef, store, amount);
+        LOG.info("[MOTM] Runtime perk regen: rainy_day active=true weatherId=" + rainState.weatherId
+                + " weatherIndex=" + rainState.weatherIndex
+                + " heal=" + format(healed)
+                + " player=" + playerId);
+        return healed;
+    }
+
+    private RainState resolveRainState(Ref<EntityStore> playerRef, Store<EntityStore> store) {
+        if (playerRef == null || !playerRef.isValid()) {
+            return new RainState(false, -1, "");
+        }
+        Store<EntityStore> effectiveStore = playerRef.getStore() != null ? playerRef.getStore() : store;
+        if (effectiveStore == null) {
+            return new RainState(false, -1, "");
+        }
+        WeatherTracker tracker = effectiveStore.getComponent(playerRef, WeatherTracker.getComponentType());
+        int weatherIndex = tracker != null ? tracker.getWeatherIndex() : -1;
+        String weatherId = weatherIdForIndex(weatherIndex);
+        if ((weatherId == null || weatherId.isBlank()) && effectiveStore.getResource(WeatherResource.getResourceType()) != null) {
+            WeatherResource resource = effectiveStore.getResource(WeatherResource.getResourceType());
+            weatherIndex = resource.getForcedWeatherIndex();
+            weatherId = weatherIdForIndex(weatherIndex);
+        }
+        return new RainState(isRainWeatherId(weatherId), weatherIndex, weatherId == null ? "" : weatherId);
+    }
+
+    private String resolveRainWeatherId(String requestedWeatherId) {
+        if (requestedWeatherId != null && !requestedWeatherId.isBlank() && !"auto".equalsIgnoreCase(requestedWeatherId)) {
+            return requestedWeatherId.trim();
+        }
+        var assetMap = com.hypixel.hytale.server.core.asset.type.weather.config.Weather.getAssetMap();
+        int max = Math.max(0, assetMap.getNextIndex());
+        for (int i = 0; i < max; i++) {
+            var weather = assetMap.getAsset(i);
+            String id = weather != null ? weather.getId() : null;
+            if (isRainWeatherId(id)) {
+                return id;
+            }
+        }
+        return "Rain";
+    }
+
+    private int weatherIndexForId(String weatherId) {
+        if (weatherId == null || weatherId.isBlank()) {
+            return -1;
+        }
+        var assetMap = com.hypixel.hytale.server.core.asset.type.weather.config.Weather.getAssetMap();
+        int max = Math.max(0, assetMap.getNextIndex());
+        for (int i = 0; i < max; i++) {
+            var weather = assetMap.getAsset(i);
+            if (weather != null && weatherId.equals(weather.getId())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private String weatherIdForIndex(int weatherIndex) {
+        if (weatherIndex < 0) {
+            return "";
+        }
+        var weather = com.hypixel.hytale.server.core.asset.type.weather.config.Weather.getAssetMap().getAsset(weatherIndex);
+        return weather != null ? weather.getId() : "";
+    }
+
+    private boolean isRainWeatherId(String weatherId) {
+        if (weatherId == null || weatherId.isBlank()) {
+            return false;
+        }
+        String normalized = weatherId.toLowerCase(Locale.ROOT);
+        return normalized.contains("rain") || normalized.contains("storm") || normalized.contains("drizzle");
     }
 
     private void triggerLowHealthPerks(PlayerData target, Ref<EntityStore> targetRef, Store<EntityStore> store, float incomingDamage) {
@@ -506,6 +738,15 @@ public class RuntimePerkManager {
         return player != null && player.getSelectedPerks() != null && player.getSelectedPerks().contains(perkId);
     }
 
+    private boolean isNativeWeapon(ItemStack heldItem) {
+        return heldItem != null && heldItem.getItem() != null && heldItem.getItem().getWeapon() != null;
+    }
+
+    private boolean hasFullSignatureEnergy(Ref<EntityStore> ref, Store<EntityStore> store) {
+        EntityStatValue signature = statValue(ref, store, DefaultEntityStatTypes.getSignatureEnergy());
+        return signature != null && signature.getMax() > 0.0f && signature.get() >= signature.getMax() * 0.99f;
+    }
+
     private boolean onCooldown(String playerId, String key) {
         return cooldownUntilTickByPlayer.getOrDefault(playerId, Map.of()).getOrDefault(key, 0L) > tickCounter;
     }
@@ -572,11 +813,15 @@ public class RuntimePerkManager {
     }
 
     private EntityStatValue healthValue(Ref<EntityStore> ref, Store<EntityStore> store) {
+        return statValue(ref, store, DefaultEntityStatTypes.getHealth());
+    }
+
+    private EntityStatValue statValue(Ref<EntityStore> ref, Store<EntityStore> store, int statType) {
         if (ref == null || !ref.isValid() || store == null) {
             return null;
         }
         EntityStatMap statMap = store.getComponent(ref, EntityStatMap.getComponentType());
-        return statMap != null ? statMap.get(DefaultEntityStatTypes.getHealth()) : null;
+        return statMap != null ? statMap.get(statType) : null;
     }
 
     private void maximizeStat(Ref<EntityStore> ref, Store<EntityStore> store, int statType) {
@@ -679,6 +924,18 @@ public class RuntimePerkManager {
     private static final class SwimState {
         private long swimStartTick = -1L;
     }
+
+    private static final class TemporaryDamageReduction {
+        private final double reduction;
+        private final long expireAtTick;
+
+        private TemporaryDamageReduction(double reduction, long expireAtTick) {
+            this.reduction = reduction;
+            this.expireAtTick = expireAtTick;
+        }
+    }
+
+    private record RainState(boolean raining, int weatherIndex, String weatherId) {}
 
     private static final class IgniteDot {
         private final String ownerPlayerId;
