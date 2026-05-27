@@ -74,6 +74,7 @@ foreach ($entry in $abilities.GetEnumerator()) {
 
 $aftershock = Get-Ability $abilities "aftershock"
 Assert ([double]$aftershock.radius -eq 8.0) "Aftershock radius is 8"
+Assert ([double]$aftershock.damage_percent -eq 5.0) "Aftershock damage is 5 percent max HP"
 
 $ironWall = Get-Ability $abilities "iron_wall"
 Assert ([double]$ironWall.width -eq 3.0) "Iron Wall data width is 3"
@@ -88,6 +89,7 @@ Assert ($playback -match 'pillarHeight \* 90L\) \+ 600L') "Pillar Strike runtime
 
 $vines = Get-Ability $abilities "vines"
 Assert ([double]$vines.cooldown_seconds -eq 0.0) "Vines has no cooldown"
+Assert ([double]$vines.duration_seconds -eq 5.0) "Vines roots for 5 seconds"
 
 $sapling = Get-Ability $abilities "sapling"
 Assert ($sapling.cast_type -eq "projectile_line") "Sapling fires as a ground-marking projectile line"
@@ -99,6 +101,7 @@ $sandstorm = Get-Ability $abilities "sandstorm"
 Assert ([double]$sandstorm.duration_seconds -eq 10.0) "Sandstorm lasts 10 seconds"
 Assert ($sandstorm.toggleable -eq $true) "Sandstorm is toggleable"
 Assert ([double]$sandstorm.toggle_cooldown_seconds -eq 2.0) "Sandstorm has a 2s toggle cooldown"
+Assert ([double]$sandstorm.radius -eq 5.0) "Sandstorm radius is 5"
 Assert ($styleManager -match 'requiresActiveToggle\(ability,\s*"sandstorm"\)') "Dust Devil requires active Sandstorm"
 Assert ($styleManager -match 'consumeActiveToggle\(playerId,\s*consumedToggle\)') "Dust Devil consumes active Sandstorm"
 
@@ -111,12 +114,15 @@ Assert ($lapidary.terrain_effect -eq "crystal_gem") "Lapidary terrain effect is 
 
 $fracture = Get-Ability $abilities "fracture"
 Assert ($fracture.cast_type -eq "ground_burst") "Fracture is an expanding burst"
-Assert ([double]$fracture.radius -eq 5.0) "Fracture radius is 5"
+Assert ([double]$fracture.radius -eq 20.0) "Fracture radius is 20"
+Assert ([double]$fracture.height -eq 12.0) "Fracture height is 12"
+Assert ([double]$fracture.damage_percent -eq 40.0) "Fracture damage is 40 percent max HP"
 Assert ($fracture.terrain_effect -eq "crystal_fracture") "Fracture terrain effect is crystal_fracture"
 
 $refraction = Get-Ability $abilities "refraction"
 Assert ($refraction.cast_type -eq "support_zone") "Refraction is a support zone"
-Assert ([double]$refraction.radius -eq 5.0) "Refraction radius is 5"
+Assert ([double]$refraction.radius -eq 20.0) "Refraction radius is 20"
+Assert ([double]$refraction.height -eq 12.0) "Refraction height is 12"
 Assert ($refraction.terrain_effect -eq "crystal_refraction") "Refraction terrain effect is crystal_refraction"
 
 Assert ($playback -match '\[MOTM\]\[terra-audit\]') "Terra cast telemetry is present"
@@ -126,6 +132,14 @@ Assert ($playback -match '"fracture",\s*"refraction"\s*->') "Gem abilities have 
 Assert ($playback -match 'resolveActiveLapidaryGemCenter') "Gem abilities resolve the active Lapidary anchor"
 Assert ($playback -match '2,\s*2,\s*2,\s*expireAt') "Lapidary visual is a 2x2x2 cube"
 Assert ($playback -match 'MOTM_Proof_Coating_Obsidian') "Obsidian Skin queues the obsidian coating effect"
+Assert ($playback -match 'Plant_Flower_Tall_Red') "Nightshade uses the locked tall red flower marker"
+Assert ($playback -match 'Plant_Cactus_Ball_1') "Cacti Cluster uses the locked cactus ball marker"
+Assert ($playback -match 'Furniture_Ancient_Statue') "Gargoyle uses the ancient statue marker"
+Assert ($playback -match 'Furniture_Temple_Light_Statue') "Glare uses the temple light statue marker"
+Assert ($playback -match 'case "rubble_rouser" -> 4\.0') "Rubble Rouser splash radius is 4"
+Assert ($playback -match 'case "alloy_enhancement" -> 0\.30') "Alloy Enhancement native damage multiplier is 30 percent"
+Assert ($playback -match 'terrainEffect\.contains\("mudpit"\)[\s\S]*?applyTargetToken\("slow"[\s\S]*?applyTargetToken\("vulnerability"') "Mud Pit applies slow and vulnerability without root"
+Assert ($playback -match 'terrainEffect\.contains\("sandstorm"\)[\s\S]*?applyTargetToken\("slow"[\s\S]*?applyTargetToken\("vulnerability"') "Sandstorm applies slow and vulnerability"
 
 if ($script:Failed) {
     Write-Host "Terra implementation audit: FAIL" -ForegroundColor Red

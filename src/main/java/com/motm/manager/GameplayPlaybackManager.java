@@ -1474,15 +1474,15 @@ public class GameplayPlaybackManager {
             }
             case "rubble_rouser" -> {
                 if (applyEffectById(playerRef, store, "MOTM_Proof_Coating_Stone")) {
-                    parts.add("stone-arm coating");
+                    parts.add("full-body stone coating");
                 }
                 parts.add("next unarmed strike throws rubble");
                 logTerraAbilityEvent("rubble_rouser.armed", player, style, ability,
-                        "uses=1 splashRadius=2.8");
+                        "uses=1 splashRadius=4.0");
             }
             case "obsidian_skin" -> {
                 long nowMillis = System.currentTimeMillis();
-                long lavaExpireAt = nowMillis + 1_800L;
+                long lavaExpireAt = nowMillis + 1_500L;
                 long guardExpireAt = nowMillis + 7_500L;
                 magmaHazardProtectionUntilByPlayer.put(player.getPlayerId(), guardExpireAt);
                 String lavaShell = placeObsidianBlockShellSelection(
@@ -1567,11 +1567,18 @@ public class GameplayPlaybackManager {
                 if (applyEffectById(playerRef, store, "MOTM_Proof_Coating_Stone")) {
                     parts.add("stone coating");
                 }
+                String terrain = placeAbilityTerrainSelection(runtimePlayer, player, ability, context, abilityId);
+                if (!terrain.isBlank()) {
+                    parts.add(terrain);
+                }
+                startPlayerAnchor(player, playerRef, store, "gargoyle",
+                        System.currentTimeMillis() + (long) (Math.max(5.0, ability.getDurationSeconds()) * 1000),
+                        "");
+                parts.add("statue lock");
             }
             case "sandstorm" -> {
                 String terrain = placeAbilityTerrainSelection(runtimePlayer, player, ability, context, abilityId);
                 if (!terrain.isBlank()) {
-                    parts.add("sand surface ring");
                     parts.add(terrain);
                 }
             }
@@ -2325,14 +2332,17 @@ public class GameplayPlaybackManager {
                     "Plant_Roots_Leafy", "Plant_Roots_Cave", "Plant_Vine_Thick_Roots");
             case "sapling" -> placeSaplingMarkerSelection(world, reason, center, expireAt);
             case "nightshade" -> placeSurfaceColumnSelection(world, reason, center, 1, expireAt,
-                    "Plant_Flower_Common_Purple", "Plant_Flower_Common_Blue");
+                    "Plant_Flower_Tall_Red");
             case "frolick" -> {
                 boolean started = startMovingTerrainTrail(world, playerRef, reason, expireAt,
-                        "Plant_Flower_Common_Purple", "Plant_Flower_Common_Yellow", "Plant_Flower_Common_Blue");
+                        "Plant_Flower_Common_Poisoned2",
+                        "Plant_Flower_Common_White2",
+                        "Plant_Flower_Common_Yellow2",
+                        "Plant_Flower_Common_Violet");
                 yield started ? "moving flower trail" : "";
             }
-            case "cacti_cluster" -> placeSurfaceColumnSelection(world, reason, center, 2, expireAt,
-                    "Plant_Cactus_1", "Prototype_Cactus_Kit_Tall_Base", "Prototype_Cactus_One");
+            case "cacti_cluster" -> placeSurfaceColumnSelection(world, reason, center, 1, expireAt,
+                    "Plant_Cactus_Ball_1");
             case "lapidary" -> {
                 String placed = placeFloatingClusterSelection(world, reason, center,
                         2, 2, 2, expireAt,
@@ -2361,16 +2371,17 @@ public class GameplayPlaybackManager {
             case "glare" -> {
                 if (context != null && context.explicitTargetRef() != null) {
                     applyEffectById(context.explicitTargetRef(), store, "MOTM_Proof_Coating_Stone");
-                    String terrain = placeSurfacePatchSelection(world, reason, center, 1, expireAt,
-                            "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
-                    yield terrain.isBlank() ? "target stone coating" : "target stone coating + " + terrain;
+                    String terrain = placeSurfaceColumnSelection(world, reason, center, 1, expireAt,
+                            "Furniture_Temple_Light_Statue");
+                    yield terrain.isBlank() ? "target light-statue lock" : "target light-statue lock + " + terrain;
                 }
                 yield "";
             }
             case "debris" -> placeTrailSelection(world, reason, origin, forward, System.currentTimeMillis() + 2400L,
                     "Soil_Dirt", "Rock_Stone", "Rock_Stone_Brick");
-            case "sandstorm" -> placeRingBlockSelection(world, reason, origin, Math.max(2.0, ability.getRadius()),
-                    System.currentTimeMillis() + 2200L, "Soil_Sand", "Rock_Sandstone", "Rock_Sandstone_White");
+            case "gargoyle" -> placeSurfaceColumnSelection(world, reason, origin, 1, expireAt,
+                    "Furniture_Ancient_Statue");
+            case "sandstorm" -> "sandstorm particle volume";
             case "tunnel" -> placeTrailSelection(world, reason, origin, forward, System.currentTimeMillis() + 2400L,
                     "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
             default -> "";
@@ -3446,7 +3457,11 @@ public class GameplayPlaybackManager {
             terrain = placeSaplingMarkerSelection(world, "sapling", groundedImpact, expireAt);
         } else {
             terrain = placeSurfaceColumnSelection(world, "nightshade", groundedImpact, 1, expireAt,
-                    "Plant_Flower_Common_Purple", "Plant_Flower_Common_Blue");
+                    "Plant_Flower_Tall_Red");
+            spawnStaticMarkerGlow(world,
+                    new Vector3d(groundedImpact.x, groundedImpact.y + 0.75, groundedImpact.z),
+                    "MOTM_Proof_Coating_Poison",
+                    expireAt);
         }
 
         int lured = applyMarkerLure(projectile, player, store, groundedImpact);
@@ -3777,8 +3792,8 @@ public class GameplayPlaybackManager {
 
         World world = store.getExternalData() != null ? store.getExternalData().getWorld() : null;
         if (world != null) {
-            placeSurfaceColumnSelection(world, "cacti_cluster", impactPosition, 2, burstAt + 350L,
-                    "Plant_Cactus_1", "Prototype_Cactus_Kit_Tall_Base", "Prototype_Cactus_One");
+            placeSurfaceColumnSelection(world, "cacti_cluster", impactPosition, 1, burstAt + 350L,
+                    "Plant_Cactus_Ball_1");
         }
     }
 
@@ -4518,17 +4533,19 @@ public class GameplayPlaybackManager {
 
         if (terrainEffect.contains("sinkhole")) {
             applyTargetToken("root", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
         if (terrainEffect.contains("lingering_tremor") || terrainEffect.contains("seismic_shockwave")) {
             applyKnockbackFromPoint(targetRef, store, field.center(), field.ability());
+            applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
         if (terrainEffect.contains("mudpit")) {
-            applyTargetToken("root", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
@@ -4596,8 +4613,8 @@ public class GameplayPlaybackManager {
         }
 
         if (terrainEffect.contains("sandstorm")) {
-            applyTargetToken("blind", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
@@ -5316,7 +5333,7 @@ public class GameplayPlaybackManager {
             if (entityId == null || entityId.equals(player.getPlayerId())) {
                 continue;
             }
-            double damage = Math.max(1.0, resolveDamageAmount(player, ability) * 0.75);
+            double damage = Math.max(1.0, resolveDamageAmount(player, ability));
             damage *= resolveIncomingDamageMultiplier(entityId);
             damage = mod.getStatusEffectManager().absorbDamage(entityId, damage);
             if (damage > 0.0) {
@@ -5325,7 +5342,12 @@ public class GameplayPlaybackManager {
                 applyPostDamageClassPassives(player, playerRef, entityId, damage, false);
                 totalDamage += damage;
             }
-            applyKnockbackFromPoint(targetRef, store, playback.startPosition(), ability);
+            Vector3d knockbackOrigin = "dust_devil".equals(abilityId) ? playback.endPosition() : playback.startPosition();
+            applyKnockbackFromPoint(targetRef, store, knockbackOrigin, ability);
+            applyTargetToken("slow", targetRef, store, playerRef, player.getPlayerId(), ability);
+            if ("dust_devil".equals(abilityId)) {
+                applyTargetToken("vulnerability", targetRef, store, playerRef, player.getPlayerId(), ability);
+            }
             applyEffectById(targetRef, store, resolveImpactEffectId(player.getPlayerClass(), style != null ? style.getId() : currentStyleId(player), ability));
             targetsHit++;
         }
@@ -7356,7 +7378,7 @@ public class GameplayPlaybackManager {
 
     private double resolveFollowUpDamageMultiplierBonus(AbilityData ability) {
         return switch (lower(ability.getId())) {
-            case "alloy_enhancement" -> 0.35;
+            case "alloy_enhancement" -> 0.30;
             default -> 0.0;
         };
     }
@@ -7399,7 +7421,7 @@ public class GameplayPlaybackManager {
 
     private double resolveFollowUpSplashRadius(AbilityData ability) {
         return switch (lower(ability.getId())) {
-            case "rubble_rouser" -> 2.8;
+            case "rubble_rouser" -> 4.0;
             case "battle_cry" -> 2.5;
             case "overheat" -> 2.6;
             case "river_rapids" -> 2.8;
@@ -7410,7 +7432,7 @@ public class GameplayPlaybackManager {
 
     private double resolveFollowUpSplashDamageRatio(AbilityData ability) {
         return switch (lower(ability.getId())) {
-            case "rubble_rouser" -> 0.45;
+            case "rubble_rouser" -> 0.50;
             case "battle_cry" -> 0.35;
             case "overheat" -> 0.45;
             case "river_rapids" -> 0.30;
@@ -7421,7 +7443,6 @@ public class GameplayPlaybackManager {
 
     private String resolveFollowUpSecondaryRiderToken(AbilityData ability) {
         return switch (lower(ability.getId())) {
-            case "alloy_enhancement" -> "vulnerability";
             case "imbue_swiftness" -> "disoriented";
             case "refraction" -> "slow";
             case "frolick" -> "root";
@@ -7469,7 +7490,9 @@ public class GameplayPlaybackManager {
             }
 
             String splashEntityId = resolveEntityId(splashTarget, store);
-            double splashDamage = resolvedDamage * followUp.splashDamageRatio;
+            double splashDamage = "rubble_rouser".equals(lower(followUp.sourceAbilityId()))
+                    ? Math.max(1.0, resolveDamageAmount(player, followUp.sourceAbility()) * 0.50)
+                    : resolvedDamage * followUp.splashDamageRatio;
             if (splashEntityId != null) {
                 splashDamage *= resolveIncomingDamageMultiplier(splashEntityId);
                 splashDamage = mod.getStatusEffectManager().absorbDamage(splashEntityId, splashDamage);

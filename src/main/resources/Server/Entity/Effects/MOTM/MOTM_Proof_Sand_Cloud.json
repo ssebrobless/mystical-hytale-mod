@@ -6,12 +6,14 @@
     "EntityBottomTint": "#8a6b34",
     "Particles": [
       {
-        "SystemId": "Earth_Brazier_Glow"
+        "SystemId": "Sand_Storm"
       },
       {
-        "SystemId": "Block_Break_Grass_Earth"
+        "SystemId": "Block_Sprint_Sand"
+      },
+      {
+        "SystemId": "Block_Break_Sand"
       }
-    ],
-    "ModelVFXId": "Dagger_Dash"
+    ]
   }
 }
