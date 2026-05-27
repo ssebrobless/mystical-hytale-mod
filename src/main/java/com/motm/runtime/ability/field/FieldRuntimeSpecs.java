@@ -1,0 +1,193 @@
+package com.motm.runtime.ability.field;
+
+import com.motm.model.AbilityData;
+
+import java.util.List;
+import java.util.Set;
+
+public final class FieldRuntimeSpecs {
+
+    public static final double DEFAULT_AREA_RADIUS = 3.5;
+    public static final double DEFAULT_FIELD_THICKNESS = 1.35;
+    public static final double DEFAULT_FIELD_DAMAGE_RATIO = 0.28;
+    public static final long FIELD_PULSE_INTERVAL_MS = 900L;
+    public static final long FIELD_VISUAL_REFRESH_MS = 900L;
+
+    private static final Set<String> PERSISTENT_FIELD_CAST_TYPES = Set.of(
+            "ground_zone", "support_zone", "barrier", "ground_target");
+
+    private FieldRuntimeSpecs() {
+    }
+
+    public static boolean isPersistentField(AbilityData ability) {
+        if (ability == null) {
+            return false;
+        }
+        String castType = lower(ability.getCastType());
+        if (PERSISTENT_FIELD_CAST_TYPES.contains(castType)) {
+            return true;
+        }
+
+        if (!"ground_target".equals(castType)) {
+            return false;
+        }
+
+        String terrainEffect = lower(ability.getTerrainEffect());
+        String abilityId = lower(ability.getId());
+        return ability.getDurationSeconds() > 0.0
+                && (ability.getDelaySeconds() > 0.0
+                || terrainEffect.contains("sinkhole")
+                || terrainEffect.contains("hazard")
+                || "sinkhole".equals(abilityId));
+    }
+
+    public static boolean isIronWall(AbilityData ability) {
+        if (ability == null) {
+            return false;
+        }
+        return "iron_wall".equals(lower(ability.getId()))
+                || lower(ability.getTerrainEffect()).contains("iron_wall");
+    }
+
+    public static boolean isCasterCentered(AbilityData ability) {
+        return ability != null && "lava_pool".equals(lower(ability.getId()));
+    }
+
+    public static FieldTerrainRuntimeSpec terrainSpec(AbilityData ability) {
+        if (ability == null) {
+            return FieldTerrainRuntimeSpec.none();
+        }
+        String terrainEffect = lower(ability.getTerrainEffect());
+        if (terrainEffect.contains("iron_wall")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.IRON_WALL,
+                    "iron_wall",
+                    false,
+                    false,
+                    false,
+                    0,
+                    List.of("Metal_Iron"),
+                    List.of("Metal_Iron")
+            );
+        }
+        if (terrainEffect.contains("lava_pool")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.LAVA_POOL,
+                    "lava_pool",
+                    true,
+                    false,
+                    false,
+                    0,
+                    List.of("Fluid_Lava", "Lava", "lava"),
+                    List.of()
+            );
+        }
+        if (terrainEffect.contains("mudpit")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.MUDPIT,
+                    "mudpit",
+                    false,
+                    true,
+                    true,
+                    0,
+                    List.of("Fluid_Water", "Water", "water"),
+                    List.of()
+            );
+        }
+        if (terrainEffect.contains("stone_pillar")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.STONE_PILLAR,
+                    "stone_pillar",
+                    false,
+                    false,
+                    false,
+                    3,
+                    List.of("Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick"),
+                    List.of()
+            );
+        }
+        return FieldTerrainRuntimeSpec.none();
+    }
+
+    public static List<String> terrainRestoreReasons(AbilityData ability) {
+        FieldTerrainRuntimeSpec spec = terrainSpec(ability);
+        return spec.kind() == FieldTerrainRuntimeKind.NONE || spec.reason().isBlank()
+                ? List.of()
+                : List.of(spec.reason());
+    }
+
+    public static double radius(AbilityData ability) {
+        return ability != null && ability.getRadius() > 0 ? ability.getRadius() : DEFAULT_AREA_RADIUS;
+    }
+
+    public static double halfWidth(AbilityData ability, double radius) {
+        return ability != null && ability.getWidth() > 0 ? ability.getWidth() / 2.0 : Math.max(radius, 3.0);
+    }
+
+    public static double thickness(AbilityData ability, double radius) {
+        return ability != null && "barrier".equalsIgnoreCase(ability.getCastType())
+                ? DEFAULT_FIELD_THICKNESS
+                : Math.max(1.25, radius);
+    }
+
+    public static long delayMillis(AbilityData ability) {
+        return (long) (Math.max(0.0, ability != null ? ability.getDelaySeconds() : 0.0) * 1000);
+    }
+
+    public static long durationMillis(AbilityData ability) {
+        double durationSeconds = ability != null && ability.getDurationSeconds() > 0
+                ? ability.getDurationSeconds()
+                : 4.0;
+        return (long) (Math.max(1.5, durationSeconds) * 1000);
+    }
+
+    public static double pulseDamage(double baseDamage, AbilityData ability) {
+        if (baseDamage <= 0.0 || ability == null) {
+            return 0.0;
+        }
+
+        String terrainEffect = lower(ability.getTerrainEffect());
+        return switch (lower(ability.getCastType())) {
+            case "support_zone" -> 0.0;
+            case "barrier" -> baseDamage * 0.18;
+            default -> baseDamage * pulseDamageRatio(terrainEffect);
+        };
+    }
+
+    public static double pullLift(AbilityData ability) {
+        if (ability == null) {
+            return 0.0;
+        }
+        String travelType = lower(ability.getTravelType());
+        String terrainEffect = lower(ability.getTerrainEffect());
+        String abilityId = lower(ability.getId());
+        if (travelType.contains("funnel")
+                || travelType.contains("twister")
+                || terrainEffect.contains("funnel")
+                || terrainEffect.contains("tempest")
+                || abilityId.contains("tempest")) {
+            return 0.35;
+        }
+        return 0.0;
+    }
+
+    private static double pulseDamageRatio(String terrainEffect) {
+        if (terrainEffect.contains("sinkhole")) {
+            return 0.34;
+        }
+        if (terrainEffect.contains("falling_rocks")) {
+            return 0.36;
+        }
+        if (terrainEffect.contains("acid")) {
+            return 0.30;
+        }
+        if (terrainEffect.contains("smog")) {
+            return 0.22;
+        }
+        return DEFAULT_FIELD_DAMAGE_RATIO;
+    }
+
+    private static String lower(String value) {
+        return value == null ? "" : value.toLowerCase();
+    }
+}

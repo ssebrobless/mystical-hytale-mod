@@ -32,12 +32,23 @@
   HytaleCompleteAPI reference repo, including quality smells and refactor
   priorities
 - `scripts/run-agent-observability-baseline.ps1` - cross-platform agent verification slice that starts an in-mod observability run, drives MOTM dev commands, snapshots runtime state, and collects evidence
+- `scripts/validate-content-shape.ps1` - validates authored ability data and
+  scenario references, then writes generated content catalogs under
+  `build/reports/motm/content-shape/`
+- `scripts/check-architecture.ps1` - agent-facing architecture ratchets that
+  prevent new generic ability-id branches, new main-plugin mutable runtime
+  state, missing scenarios, and direct inventory mutation regressions
+- `scripts/scenarios/` - JSON scenario catalog for extending the observability
+  harness without hard-coding one-off command flows
 - `scripts/collect-observability-evidence.ps1` - copies raw client logs, server logs, telemetry, MOTM observability JSONL, settings, and build metadata into a run bundle with indexes
 - `scripts/query-observability-evidence.ps1` - lists runs, sources, events, and raw evidence windows for shell-based agents
 - `scripts/audit-no-resource.ps1` - verifies the no-resource casting model across all classes/styles/abilities
 - `docs/agent-driven-verification-observability.md` - architecture contract and completion checklist for the verification platform
 - `docs/runtime-architecture-refactor-checklist.md` - current runtime ownership map
   and refactor completion record
+- `docs/runtime-architecture-final-evidence-summary.md` - PR-facing evidence
+  ledger with run ids, scenario ids, evidence streams, and remaining
+  `PASS`/`FAIL`/`UNKNOWN` state for the architecture refactor
 
 ## Build And Install
 
@@ -82,6 +93,14 @@ Direct wrapper usage is also supported after Java and Hytale are resolved:
 
 ```powershell
 ./gradlew -Dorg.gradle.java.installations.paths=".tools/jdk-25" -Pmotm_build_channel=internal build installMod
+```
+
+Static agent rails can run without launching the game:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1
+pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1
+./gradlew validateContentShape checkArchitecture test
 ```
 
 ## Current Status
@@ -162,15 +181,19 @@ new `/motm dev` commands, proof ids, JSONL events, collector sources, and query
 modes are expected additions as long as raw evidence, manifests, provenance, and
 rerunnable commands remain intact.
 
+If a runtime command times out or the data directory cannot be resolved, inspect
+the command log named in `baseline-report.md`. The command bridge writes
+`dev-command-diagnostic.json` and `dev-command-diagnostic.md` into the run
+directory with the selected MOTM data path, inbox/outbox state, Hytale process
+summary, latest client log tail, and concrete recovery steps.
+
 Example targeted run:
 
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 `
   -WorldName Main `
   -RunId feature-check-20260525 `
-  -StyleId terra `
-  -Abilities terra_quake `
-  -Proofs terra_quake
+  -ScenarioId terra-projectile-magma-sling
 ```
 
 Older screenshot/log-tail testing plans remain as historical context or narrow
@@ -188,6 +211,10 @@ MenteesMod
 +-- lifecycle wiring and public compatibility facade
 +-- MotmRuntimeTasks for deferred tick work
 +-- MotmInventoryOps for inventory mutations
++-- MotmPlayerInventory for combined Hytale player inventory access
++-- SpellbookInventoryItems for spellbook/dev-book item identity
++-- HydroContainerItems / Bridge for Hydro waterskin inventory state
++-- TerraInventoryResourceBridge / Policy for Terra resource inventory spending
 +-- MotmDevCommandRouter / MotmCommandAuth for dev command surfaces
 +-- MotmProofCatalog for proof ids and help text
 +-- GameplayPlaybackManager, with shared geometry in MotmPlaybackGeometry
@@ -196,10 +223,80 @@ MenteesMod
 When adding a feature, extend the nearest owner first. New deferred runtime work
 belongs in `MotmRuntimeTasks`; new proof probes belong in `MotmProofCatalog` and
 the observability harness; new inventory mutation paths belong in
-`MotmInventoryOps`; new `/motm dev` routes belong behind `MotmDevCommandRouter`
-and `MotmCommandAuth`. Keep raw evidence contracts intact when changing or
+`MotmInventoryOps`; combined player inventory assembly belongs in
+`MotmPlayerInventory`; spellbook/dev-book item identity belongs in
+`SpellbookInventoryItems`; Hydro waterskin identity, tiering, inventory lookup,
+and sync belong in `HydroContainerItems` and `HydroInventoryBridge`; new Terra
+resource item/unit classification belongs in `TerraInventoryResourcePolicy`,
+while inventory counting/spending belongs in `TerraInventoryResourceBridge`; new `/motm dev` routes belong behind
+`MotmDevCommandRouter` and `MotmCommandAuth`. Keep raw evidence contracts intact when changing or
 adding harness commands, and keep `AGENTS.md` plus `CLAUDE.md` aligned whenever
 agent workflow expectations change.
+
+The next architecture rail is described in
+[`docs/agent-friendly-architecture-scaffolding.md`](docs/agent-friendly-architecture-scaffolding.md):
+new runtime work should consume normalized `AbilityShape` data, grow the
+appropriate `runtime.ability` family, add or update a scenario in
+`scripts/scenarios/`, and delete obsolete legacy paths once parity is proven.
+Compatibility facades are temporary and must not accumulate new behavior.
+Treat legacy support as an explicitly registered exception, not a default
+implementation strategy: user-data migrations and public command compatibility
+may stay while they have active consumers, but old internal behavior paths
+should be replaced, verified, and deleted in the same change whenever parity is
+proven. Do not keep legacy code for speculative fallback, merge comfort, or
+"maybe useful later" reasons. Any remaining compatibility exception belongs in
+[`docs/compatibility-register.md`](docs/compatibility-register.md) with an
+owner, consumer, and removal gate.
+
+The project intentionally favors fresh-slate replacement over carrying old
+internal shapes forward. Retain compatibility only for supported saved data,
+public command/API contracts, or harness/tool contracts with active consumers.
+When a new owner proves parity, migrate callers and delete the old path in the
+same PR. New Java code that mentions legacy or compatibility must be listed as
+an implementation boundary in
+[`docs/compatibility-register.md`](docs/compatibility-register.md), or
+`scripts/check-architecture.ps1` should fail and force the agent to either
+delete the old path or document the real compatibility exception.
+
+Old package layout, old manager responsibilities, duplicate data tables, and
+stale method shapes are not compatibility contracts. They should be removed once
+the replacement owner has tests or harness evidence. A PR that introduces a new
+path while leaving the old path alive should also name the active consumer,
+verification evidence, and removal gate; otherwise the correct cleanup is to
+delete the old code.
+
+Large rewrites are acceptable when they simplify the internal model. The project
+should optimize for one trusted current path, backed by automated checks and
+harness evidence, instead of keeping old implementations as speculative
+fallbacks.
+
+Compatibility means preserving supported behavior contracts, not preserving the
+old code that happened to implement them. If an internal subsystem can be
+replaced cleanly and parity can be proven by unit tests, static rails, or the
+observability harness, agents should take the fresh-slate route and delete the
+superseded path. A compatibility shim is only appropriate for named saved-data,
+public-command/API, or harness/tool consumers, and it must be delegation-only
+with a removal gate in
+[`docs/compatibility-register.md`](docs/compatibility-register.md).
+
+Treat deletion as part of the feature, not cleanup left for later. If a new
+owner is trusted enough to run, migrate the callers, run the evidence, and
+remove the obsolete owner in the same PR unless the compatibility register names
+the active external consumer that still blocks removal.
+
+Every feature/refactor pass should include a stale-path sweep: search for old
+callers, duplicated lookup tables, manager-local ability branches, compatibility
+comments, and neutral legacy names that the new owner replaces. A surviving old
+path is a failed deletion gate unless it is a delegation-only registered
+compatibility facade with an explicit removal condition.
+
+For agent-driven work, prefer the fresh-slate path whenever it leaves fewer
+concepts to understand. A larger rewrite that deletes obsolete internal
+architecture is better than a narrow adapter that keeps two behavior owners
+alive. If the old path is kept for more than delegation, the PR should be
+treated as incomplete until it either migrates that logic into the new owner or
+records a real compatibility exception in
+[`docs/compatibility-register.md`](docs/compatibility-register.md).
 
 Still in progress:
 

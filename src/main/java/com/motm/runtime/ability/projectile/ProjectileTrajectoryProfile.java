@@ -1,0 +1,30 @@
+package com.motm.runtime.ability.projectile;
+
+/**
+ * Data-only launch/aim profile for projectile abilities that need spatial
+ * offsets beyond the generic caster-center launch.
+ */
+public record ProjectileTrajectoryProfile(
+        double originVerticalOffset,
+        double originForwardOffset,
+        double explicitTargetVerticalOffset,
+        boolean preferLookDirectionWhenUntargeted,
+        double ownerSelfClearanceDistance
+) {
+
+    public static ProjectileTrajectoryProfile generic() {
+        return new ProjectileTrajectoryProfile(0.0, 0.0, 0.0, false, 0.0);
+    }
+
+    public static ProjectileTrajectoryProfile magmaSling() {
+        return new ProjectileTrajectoryProfile(1.15, 0.9, 1.0, true, 2.25);
+    }
+
+    public boolean offsetsOrigin() {
+        return originVerticalOffset != 0.0 || originForwardOffset != 0.0;
+    }
+
+    public boolean offsetsExplicitTarget() {
+        return explicitTargetVerticalOffset != 0.0;
+    }
+}

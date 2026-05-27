@@ -1,0 +1,32 @@
+{
+  "id": "hydro-summon-snow-imp",
+  "description": "Summon-family scenario for Snow Imp cast lifecycle and runtime summon evidence.",
+  "styleId": "snow",
+  "abilities": [
+    "snow_imp"
+  ],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker snow-imp-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker snow-imp-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "client-intent:entity_effect_add"
+  ]
+}
