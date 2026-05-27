@@ -47,10 +47,13 @@ function Get-LatestServerLog {
 
 function Send-MotmCommand([string]$Text) {
     Write-Host "[setup-test-world] /$Text"
-    $log = Get-LatestServerLog
-    $startOffset = $log.Length
-    & (Join-Path $PSScriptRoot "send-input.ps1") -Action Command -Text $Text -DelayMilliseconds 120
-    $null = Wait-LogPattern ("\[CommandManager\].*" + [regex]::Escape($Text)) $startOffset
+    & (Join-Path $PSScriptRoot "send-dev-command.ps1") `
+        -Command $Text `
+        -WorldName $WorldName `
+        -TimeoutMilliseconds ($TimeoutSeconds * 1000)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Dev command bridge failed: /$Text"
+    }
     Start-Sleep -Milliseconds $CommandDelayMilliseconds
 }
 
@@ -97,11 +100,10 @@ try {
         Send-MotmCommand "motm spellbook overview"
     }
 
-    $classLine = Wait-LogPattern "\[CommandManager\].*motm dev class set $ClassId" $startOffset
     $styleLine = Wait-LogPattern "\[MOTM\].*selected styles: \[$StyleId\]" $startOffset
     $mobLine = Wait-LogPattern "\[MOTM\] Style test mobs spawned: count=2" $startOffset
 
-    Add-ReportLine("- Class command: $classLine")
+    Add-ReportLine("- Class command: confirmed by dev-command bridge")
     Add-ReportLine("- Style command: $styleLine")
     Add-ReportLine("- Mob spawn: $mobLine")
 

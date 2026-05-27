@@ -29,6 +29,27 @@
           "Type": "motm_spellbook_use"
         }
       ]
+    },
+    "Ability1": {
+      "Interactions": [
+        {
+          "Type": "motm_spellbook_primary"
+        }
+      ]
+    },
+    "Ability2": {
+      "Interactions": [
+        {
+          "Type": "motm_spellbook_secondary"
+        }
+      ]
+    },
+    "Ability3": {
+      "Interactions": [
+        {
+          "Type": "motm_spellbook_use"
+        }
+      ]
     }
   },
   "MaxStack": 1,

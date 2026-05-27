@@ -9,6 +9,19 @@ version = project.mod_version
 
 def motmBuildChannel = (project.findProperty('motm_build_channel') ?: 'public').toString().toLowerCase()
 def motmInternalTestBuild = motmBuildChannel == 'internal'
+def normalizeServerVersionRange = { raw ->
+    def value = (raw ?: '*').toString().trim()
+    if (value == '' || value == '*') {
+        return '*'
+    }
+    if (value.startsWith('=') || value.startsWith('^') || value.startsWith('~') || value.endsWith('.x')) {
+        return value
+    }
+    if (value ==~ /\d+\.\d+\.\d+/) {
+        return "=${value}"
+    }
+    return value
+}
 def generatedBuildInfoDir = layout.buildDirectory.dir('generated/sources/motmBuildInfo/main/java')
 def motmModId = project.mod_id.toString()
 def resolveHytaleRootPath = {
@@ -106,6 +119,8 @@ compileJava {
 }
 
 processResources {
+    def serverVersionRange = normalizeServerVersionRange(project.findProperty('server_version'))
+    inputs.property('server_version_range', serverVersionRange)
     filesMatching('manifest.json') {
         expand(
             'mod_id': project.mod_id,
@@ -113,7 +128,7 @@ processResources {
             'mod_version': project.mod_version,
             'mod_group': project.mod_group,
             'mod_description': project.mod_description,
-            'server_version': project.findProperty('server_version') ?: '*'
+            'server_version': serverVersionRange
         )
     }
 }
