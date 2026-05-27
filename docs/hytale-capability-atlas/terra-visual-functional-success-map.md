@@ -98,7 +98,7 @@ The research supports a confident Terra implementation, with a primitive-first s
 
 | Ability | Functional Success | Visual Success | Ideal Implementation | Acceptance Gate |
 |---|---|---|---|---|
-| Iron Wall | 3x3 wall one block in front of player, faces player, pushes overlapped enemies, lasts 4s, cooldown after disappear | Real metal/iron blocks; no player coating | Temporary block wall + overlap push + delayed cooldown | Log wall center/facing/expiry/push count |
+| Iron Wall | grounded 3x4 wall one block in front of player, faces player, pushes overlapped enemies, lasts 4s, cooldown after disappear | Real mixed metal/iron blocks; no player coating; should look like it comes from the earth | Temporary block wall + overlap push + delayed cooldown | Log wall center/facing/expiry/push count |
 | Metal Coat | Defensive buff applies for duration without affecting movement negatively | Strong dark gray metal coating on player and optionally held item | EntityEffect/ModelVFX coating using known strong coating route | User confirms coating; log apply/remove |
 | Alloy Enhancement | First eligible melee/tool action starts binding; next 3 actions boosted; ends on 3 uses or item swap | Weapon/tool has metal coating and gray impact/swing frames | Active item binding + damage/durability hook + item/body coating | Log item id, charge 1-3, damage boost, cleanup |
 

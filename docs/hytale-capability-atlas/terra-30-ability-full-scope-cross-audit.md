@@ -139,6 +139,9 @@ facing the player.
 Function: wall blocks line/pathing, lasts 4 seconds, heals if intended, pushes
 enemies away if the spawn would overlap or they are too close. No body coating.
 
+Visual update: grounded 3x4 mixed-metal wall, connected to the ground so it reads
+as coming from the earth.
+
 State/cancel: cooldown begins when wall disappears; cleanup restores all blocks.
 
 Implementation route: player-forward vector placement, clamp near caster, save

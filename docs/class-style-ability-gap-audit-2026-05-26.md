@@ -30,7 +30,7 @@ Concept -> Hytale primitive -> Runtime owner -> Evidence
 | Quake | Stomp | PASS server evidence in `terra-quake-recheck-20260526f`: one ground impact marker at y=80.0, `targets=1`, damage/effects applied, final cleanup zero. Still needs final user visual taste pass. |
 | Quake | Aftershock | PASS server evidence in `terra-quake-recheck-20260526f`: field applied slow/disoriented and final cleanup zero. Still needs final user visual taste pass. |
 | Quake | Sinkhole | PASS server evidence in `terra-quake-recheck-20260526f`: one grounded impact marker at y=80.0 (`positions=1 applied=1`), target rooted/DOTed, final cleanup zero. Still needs final user visual taste pass. |
-| Metal | Iron Wall | User-approved except watch facing alignment; use 3x3 iron block wall and spawn-overlap push. |
+| Metal | Iron Wall | UPDATED concept: grounded 3x4 mixed-metal wall that rises from the earth, faces the player, and pushes spawn-overlap enemies away from the player. Needs fresh user visual taste pass after the 3x4 grounded update. |
 | Metal | Metal Coat | User-approved strong coating route; no class passive visuals should leak into Terra no-style state. |
 | Metal | Alloy Enhancement | User-approved mechanics after damage-number fix; visual coating plus impact frames. |
 | Stone | Rubble Rouser | PASS server evidence in `terra-stone-recheck-20260526f`: projectile launched and impacted a target without missing model/role errors. Needs final visual pass that it reads as rock/rubble. |

@@ -75,6 +75,12 @@ foreach ($entry in $abilities.GetEnumerator()) {
 $aftershock = Get-Ability $abilities "aftershock"
 Assert ([double]$aftershock.radius -eq 8.0) "Aftershock radius is 8"
 
+$ironWall = Get-Ability $abilities "iron_wall"
+Assert ([double]$ironWall.width -eq 3.0) "Iron Wall data width is 3"
+Assert ([double]$ironWall.height -eq 4.0) "Iron Wall data height is 4"
+Assert ($playback -match 'placeIronWallSelection\(runtimePlayer\.getWorld\(\),\s*"iron_wall",\s*center,\s*lineDirection,\s*Math\.max') "Iron Wall runtime uses data-driven height"
+Assert ($playback -match 'Vector3i anchor = surfaceDecorationAnchor\(center\);') "Iron Wall runtime is grounded to the surface"
+
 $pillar = Get-Ability $abilities "pillar_strike"
 Assert ([double]$pillar.height -eq 4.0) "Pillar Strike data height is 4"
 Assert ($playback -match 'pillarHeight\s*=\s*Math\.max\(1,\s*\(int\)\s*Math\.round\(ability\.getHeight\(\) > 0 \? ability\.getHeight\(\) : 4\.0\)\)') "Pillar Strike runtime uses a 4-block staged column by default"

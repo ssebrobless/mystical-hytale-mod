@@ -2240,6 +2240,7 @@ public class GameplayPlaybackManager {
         String terrainEffect = lower(ability.getTerrainEffect());
         if (terrainEffect.contains("iron_wall")) {
             return placeIronWallSelection(runtimePlayer.getWorld(), "iron_wall", center, lineDirection,
+                    Math.max(1, (int) Math.round(ability.getHeight() > 0 ? ability.getHeight() : 4.0)),
                     expireAtMillis);
         }
         if (terrainEffect.contains("lava_pool")) {
@@ -2409,9 +2410,10 @@ public class GameplayPlaybackManager {
                                           String reason,
                                           Vector3d center,
                                           Vector3d lineDirection,
+                                          int height,
                                           long expireAtMillis) {
         int primaryBlockTypeId = resolveRuntimeBlockTypeId("Metal_Iron");
-        int secondaryBlockTypeId = primaryBlockTypeId;
+        int secondaryBlockTypeId = resolveRuntimeBlockTypeId("Metal_Iron_Decorative", "Metal_Iron_Smooth", "Metal_Iron");
         if (world == null || center == null
                 || primaryBlockTypeId == BlockType.UNKNOWN_ID || primaryBlockTypeId == BlockType.EMPTY_ID) {
             return "";
@@ -2420,13 +2422,14 @@ public class GameplayPlaybackManager {
             secondaryBlockTypeId = primaryBlockTypeId;
         }
 
-        Vector3i anchor = surfaceOverlayAnchor(center);
+        Vector3i anchor = surfaceDecorationAnchor(center);
         restoreActiveTemporarySelections(world, reason);
         Vector3i rightStep = horizontalStep(lineDirection != null ? lineDirection : new Vector3d(1.0, 0.0, 0.0));
         BlockSelection selection = baseSelection(anchor);
+        int wallHeight = Math.max(1, height);
         for (int x = 0; x < 3; x++) {
             int offset = x - 1;
-            for (int y = 0; y < 3; y++) {
+            for (int y = 0; y < wallHeight; y++) {
                 int blockTypeId = ((x + y) % 2 == 0) ? primaryBlockTypeId : secondaryBlockTypeId;
                 selection.addBlockAtWorldPos(
                         anchor.x + (rightStep.x * offset),
@@ -2435,7 +2438,7 @@ public class GameplayPlaybackManager {
                         blockTypeId, 0, 0, 0);
             }
         }
-        String summary = "9 iron blocks";
+        String summary = selection.getBlockCount() + " grounded mixed iron blocks";
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis, summary);
     }
 

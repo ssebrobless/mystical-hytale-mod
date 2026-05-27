@@ -131,6 +131,7 @@ What it must do:
 - Wall lasts 4 seconds.
 - Cooldown should start when the wall disappears.
 - Enemies overlapped/too close at spawn are pushed away from the player/wall.
+- Visual is a grounded 3x4 mixed-metal wall that connects to the ground and reads as rising from the earth.
 - No body coating should occur from Iron Wall.
 
 How to achieve it:

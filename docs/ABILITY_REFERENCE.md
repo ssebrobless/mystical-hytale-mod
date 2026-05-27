@@ -62,7 +62,7 @@ Resource cost: none
 
 | Slot | Ability | Description | Cast / Target | Timing | Shape | Effect |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | **Iron Wall** (`iron_wall`) | Create barrier, heal 10% HP | barrier / line | cd 4s, dur 4s | range 7, width 3, height 3 | heal |
+| 1 | **Iron Wall** (`iron_wall`) | Create a grounded mixed-metal barricade, heal 10% HP, and push enemies caught at the spawn point away from the player | barrier / line | cd 4s, dur 4s | range 7, width 3, height 4 | heal |
 | 2 | **Metal Coat** (`metal_coat`) | Gain 20% damage reduction for 3 turns | self_buff / self | cd 6s, dur 6s | - | defense_buff |
 | 3 | **Alloy Enhancement** (`alloy_enhancement`) | Boost next attack by 35% | self_buff / self | dur 8s | - | damage_buff |
 

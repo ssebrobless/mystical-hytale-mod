@@ -74,7 +74,7 @@ Concept says "projectile made of material"
 
 | Style | Ability | Primary Route | Fallback If Risk Fails |
 | --- | --- | --- | --- |
-| Metal | Iron Wall | 3x3 temporary iron block wall placed one block in front of player-facing direction | inert model/proxy wall plus knockback zone |
+| Metal | Iron Wall | grounded 3x4 temporary mixed-metal block wall placed one block in front of player-facing direction, with spawn-overlap push | inert model/proxy wall plus knockback zone |
 | Metal | Metal Coat | stone-skin style model/VFX coating recolored dark gray | body tint plus metallic sparks only if VFX breaks |
 | Metal | Alloy Enhancement | same coating on held item/body plus dark impact/swing effect and three boosted uses | impact-frame-only visual if held-item coating cannot be isolated |
 | Magma | Lava Pool | floor-level friendly lava field centered on caster, with speed/damage immunity guards | lava circle particles plus invisible gameplay field |

@@ -133,7 +133,7 @@ Needed work: make Sinkhole test/visual more legible by logging victim id, ground
 
 | Ability | Intended result | Best primitive | Readiness |
 |---|---|---|---|
-| Iron Wall | 3x3 metal barricade one block in front, pushes enemies away | temporary block selection | READY |
+| Iron Wall | grounded 3x4 mixed-metal barricade one block in front, pushes enemies away | temporary block selection | READY |
 | Metal Coat | strong dark gray full-body coating, item can share coating | ModelVFX/EntityEffect coating | READY- |
 | Alloy Enhancement | next 3 melee/tool actions boosted; item coating; ends on charges or item swap | follow-up state + active item id + coating | READY- |
 
