@@ -80,7 +80,7 @@ Concept says "projectile made of material"
 | Magma | Lava Pool | floor-level friendly lava field centered on caster, with speed/damage immunity guards | lava circle particles plus invisible gameplay field |
 | Magma | Obsidian Skin | small guarded lava/obsidian shell, then dark purple-black coating | no real shell if client crash repeats; use blocky model shell proxy |
 | Magma | Magma Sling | real projectile or inert lava-blob model proxy, no health bar or AI | fire/lava particles with visible travel line |
-| Stone | Pillar Strike | stack one-by-one temporary stone pillar under target, then vertical launch | pillar model proxy if block placement under NPC is unstable |
+| Stone | Pillar Strike | stack one-by-one temporary 1x1x4 stone pillar under target, then vertical launch; remove 0.6s after full height | pillar model proxy if block placement under NPC is unstable |
 | Arbor/Bloom | placed plants | place on top of support block, never replace floor | model/prefab proxy at ground point |
 | Gem | Lapidary | controllable object with HP, ideally green 2x2x2 gem/block cube | model proxy with HUD/logged HP if block cube collision is awkward |
 

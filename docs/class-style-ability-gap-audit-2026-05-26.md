@@ -34,7 +34,7 @@ Concept -> Hytale primitive -> Runtime owner -> Evidence
 | Metal | Metal Coat | User-approved strong coating route; no class passive visuals should leak into Terra no-style state. |
 | Metal | Alloy Enhancement | User-approved mechanics after damage-number fix; visual coating plus impact frames. |
 | Stone | Rubble Rouser | PASS server evidence in `terra-stone-recheck-20260526f`: projectile launched and impacted a target without missing model/role errors. Needs final visual pass that it reads as rock/rubble. |
-| Stone | Pillar Strike | PASS server evidence in `terra-stone-recheck-20260526f`: stages 3 stone pillar blocks, hits/stuns 1 target, then restores all 3 blocks. Still needs final user visual taste pass. |
+| Stone | Pillar Strike | UPDATED concept: should stage 4 stone pillar blocks, hit/stun/launch target, then disappear 0.6s after reaching full height. Needs fresh user visual taste pass after the 4-block update. |
 | Stone | Rockslide | PASS server evidence in `terra-stone-recheck-20260526f`: dash 5m, ruptured-earth trail, 3 terrain nodes, hit/knockback/grounded on 1 target. Still needs final user visual taste pass. |
 | Arbor | Rooted | PASS server evidence in `terra-arbor-recheck-20260526d`: self root + player anchor + protected root terrain + restore, final cleanup zero. Still needs final manual confirmation that movement is visibly blocked. |
 | Arbor | Vines | PASS server evidence in `terra-arbor-recheck-20260526d`: 1 target hit, root/DOT applied, repeated `vines.hold` anchor logs. Still needs recast/death cleanup proof. |

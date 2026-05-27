@@ -196,7 +196,7 @@ rows are in `CODEX_CLASS_STYLE_ABILITY_REVIEW_MOCKUP_2026-05-22.md`.
 | Terra | Quake | Stomp, Aftershock, Sinkhole | Heavy earth control: jump-land cracks, lingering tremor, buried-look suffocation. |
 | Terra | Metal | Iron Wall, Metal Coat, Alloy Enhancement | Steel defense: solid barrier, armor plating, weapon/tool enhancement. |
 | Terra | Magma | Lava Pool, Obsidian Skin, Magma Sling | Molten area denial: lava fields/shells, burn ticks, lava projectile. |
-| Terra | Stone | Rubble Rouser, Pillar Strike, Rockslide | Heavy rubble: stone-coated arms, 1x1x3 pillar, falling/rolling rock pressure. |
+| Terra | Stone | Rubble Rouser, Pillar Strike, Rockslide | Heavy rubble: stone-coated arms, 1x1x4 pillar, falling/rolling rock pressure. |
 | Terra | Arbor | Rooted, Vines, Sapling | Living roots: self-root healing, entangling target, ground sapling lure object. |
 | Terra | Bloom | Nightshade, Frolick, Cacti Cluster | Toxic floral: flower lure/explosion, flower trail, cactus DoT/explosion. |
 | Terra | Self Petrification | Gargoyle, Glare, Tunnel | Statue/stone body: self stone form, petrifying gaze, block-like tunneling. |

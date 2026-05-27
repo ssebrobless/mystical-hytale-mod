@@ -267,7 +267,7 @@
           "target_type": "ground_target",
           "range": 14,
           "radius": 2.5,
-          "height": 3,
+          "height": 4,
           "delay_seconds": 0.7,
           "launch_height": 2,
           "knockup": true,

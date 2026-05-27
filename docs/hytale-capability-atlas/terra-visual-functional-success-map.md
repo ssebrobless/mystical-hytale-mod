@@ -115,7 +115,7 @@ The research supports a confident Terra implementation, with a primitive-first s
 | Ability | Functional Success | Visual Success | Ideal Implementation | Acceptance Gate |
 |---|---|---|---|---|
 | Rubble Rouser | Melee/unarmed stone-arm buff works and expires cleanly | Stone coating on arms if possible; fallback strong player/held-item stone coating | Coating + melee hit hook + impact frame VFX | Log buff start, hit, damage/knockback, remove |
-| Pillar Strike | Target hit/stunned/launched by target-centered pillar | 1x1x3 stone pillar stacks rapidly upward under target | Staged temporary block column + combat pulse | Log target anchor, stages 1-3, target launch |
+| Pillar Strike | Target hit/stunned/launched by target-centered pillar | 1x1x4 stone pillar stacks rapidly upward under target, then disappears 0.6s after full height | Staged temporary block column + combat pulse | Log target anchor, stages 1-4, target launch |
 | Rockslide | Forward stone/dust control hits enemies in path | Rock/dust wave, not generic invisible damage | Projectile/line sweep + stone debris trail | Log path, hits, debris visual cleanup |
 
 ### Arbor

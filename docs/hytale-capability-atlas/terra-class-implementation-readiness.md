@@ -158,7 +158,7 @@ Needed proofs before final code:
 | Ability | Intended result | Best primitive | Readiness |
 |---|---|---|---|
 | Rubble Rouser | arms coated like stone-block material; melee focus | coating + item/unarmed event proof | PARTIAL |
-| Pillar Strike | 1x1x3 stone pillar rapidly stacks under target, launches/stuns | staged temporary block column | PARTIAL |
+| Pillar Strike | 1x1x4 stone pillar rapidly stacks under target, launches/stuns, disappears 0.6s after full height | staged temporary block column | PARTIAL |
 | Rockslide | stone/dust forward control hit | projectile or trail/particle wave | PARTIAL |
 
 Needed work: use staged column selection for Pillar Strike with target-centered logs; prove whether item/body coating can isolate arms or approximate with full-body/held-item VFX.

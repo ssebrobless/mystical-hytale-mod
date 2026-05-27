@@ -181,7 +181,7 @@ Also repair user-observed Terra misses even if the heuristic did not flag them:
 | Style | Ability | Required Repair |
 | --- | --- | --- |
 | Stone | Rubble Rouser | unarmed/next-punch state, stone arms/body coating, AoE knockback |
-| Stone | Pillar Strike | 1x1x3 staged stone pillar under target, launch/stun |
+| Stone | Pillar Strike | 1x1x4 staged stone pillar under target, launch/stun, disappear 0.6s after full height |
 | Arbor | Rooted | actual root/immobile state, roots on top of surface, no breakable resource drops |
 | Arbor | Vines | one rooted target at a time, persistent target visual, cleanup on death/new target |
 | Arbor | Sapling | ground-impact sapling/lure, projectile follows crosshair |

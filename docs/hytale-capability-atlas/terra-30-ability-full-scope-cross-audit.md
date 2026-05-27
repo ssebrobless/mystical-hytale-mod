@@ -76,7 +76,7 @@ that must be reconciled with surgical edits when coding resumes.
 | Quake / Sinkhole | Data still includes `vertical_displace_blocks` | Use buried-look, not physical lowering |
 | Metal / Iron Wall | Data `target_type` still says `line`/`range` | Runtime should be player-forward with one block gap |
 | Magma / Lava Pool | Data says `ground_target` | Runtime should originate from caster body |
-| Stone / Pillar Strike | Data height is `5` | Concept wants 1x1x3 staged stone pillar |
+| Stone / Pillar Strike | Data height is `4` | Concept wants 1x1x4 staged stone pillar that disappears 0.6s after full height |
 | Arbor / Vines | Data cooldown is `4` | Concept wants no cooldown, one target at a time |
 | Arbor / Sapling | Data says summon treant | Concept wants ground marker sapling/lure object |
 | Gem / Lapidary | Data says self shield | Concept wants persistent recallable gem object |
@@ -247,7 +247,7 @@ Proof: target is hit/knocked, visual reads stone not metal/obsidian.
 
 ### 11. Stone / Pillar Strike
 
-Visual: 1x1x3 stone block pillar appears under target in rapid upward stages.
+Visual: 1x1x4 stone block pillar appears under target in rapid upward stages, then disappears 0.6s after reaching full height.
 
 Function: target at pillar location is damaged/launched/stunned. Allies/summons
 skipped.

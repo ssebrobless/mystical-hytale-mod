@@ -1532,12 +1532,13 @@ public class GameplayPlaybackManager {
             }
             case "pillar_strike" -> {
                 Vector3d center = resolveContextTargetOrBlockPosition(context, playerRef, store);
+                int pillarHeight = Math.max(1, (int) Math.round(ability.getHeight() > 0 ? ability.getHeight() : 4.0));
                 String terrain = placeStackingColumnSelection(
                         runtimePlayer.getWorld(),
                         "stone_pillar",
                         center,
-                        3,
-                        System.currentTimeMillis() + 3_200L,
+                        pillarHeight,
+                        System.currentTimeMillis() + (pillarHeight * 90L) + 600L,
                         "Rock_Stone_Brick_Pillar_Middle",
                         "Rock_Stone_Brick");
                 if (!terrain.isBlank()) {
@@ -2253,7 +2254,7 @@ public class GameplayPlaybackManager {
         }
         if (terrainEffect.contains("stone_pillar")) {
             return placeStackingColumnSelection(runtimePlayer.getWorld(), "stone_pillar", center,
-                    3,
+                    Math.max(1, (int) Math.round(ability.getHeight() > 0 ? ability.getHeight() : 4.0)),
                     expireAtMillis, "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
         }
         return "";

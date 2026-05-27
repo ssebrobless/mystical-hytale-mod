@@ -321,7 +321,7 @@ Proof gate:
 
 What it must do:
 
-- Spawn a 1x1x3 stone pillar at the target location.
+- Spawn a 1x1x4 stone pillar at the target location and remove it 0.6s after it reaches full height.
 - Pillar appears rapidly staged upward.
 - Target is launched/stunned/damaged as if pillar erupts beneath them.
 

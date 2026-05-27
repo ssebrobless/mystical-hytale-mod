@@ -85,7 +85,7 @@ Resource cost: none
 | Slot | Ability | Description | Cast / Target | Timing | Shape | Effect |
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | **Rubble Rouser** (`rubble_rouser`) | Coat your arms in stone; your next unarmed strike hurls rubble in an area | self_buff / self | cd 3s, dur 8s | follow-up strike | knockback |
-| 2 | **Pillar Strike** (`pillar_strike`) | Rapidly stack a 1x1x3 stone pillar at the target, stunning and launching enemies | ground_strike / ground_target | cd 5s | range 14, height 3 | stun+launch |
+| 2 | **Pillar Strike** (`pillar_strike`) | Rapidly stack a 1x1x4 stone pillar at the target, stunning and launching enemies | ground_strike / ground_target | cd 5s | range 14, height 4 | stun+launch |
 | 3 | **Rockslide** (`rockslide`) | Dash forward with rocks, dirt, and debris underfoot, pushing enemies you contact | dash / self | cd 6s | 5m path | knockback+slow |
 
 ### Arbor (`arbor`)

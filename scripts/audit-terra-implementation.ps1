@@ -76,8 +76,9 @@ $aftershock = Get-Ability $abilities "aftershock"
 Assert ([double]$aftershock.radius -eq 8.0) "Aftershock radius is 8"
 
 $pillar = Get-Ability $abilities "pillar_strike"
-Assert ([double]$pillar.height -eq 3.0) "Pillar Strike data height is 3"
-Assert ($playback -match 'placeStackingColumnSelection\(runtimePlayer\.getWorld\(\),\s*"stone_pillar",\s*center,\s*3,') "Pillar Strike runtime forces a 3-block staged column"
+Assert ([double]$pillar.height -eq 4.0) "Pillar Strike data height is 4"
+Assert ($playback -match 'pillarHeight\s*=\s*Math\.max\(1,\s*\(int\)\s*Math\.round\(ability\.getHeight\(\) > 0 \? ability\.getHeight\(\) : 4\.0\)\)') "Pillar Strike runtime uses a 4-block staged column by default"
+Assert ($playback -match 'pillarHeight \* 90L\) \+ 600L') "Pillar Strike runtime restores 0.6s after reaching full height"
 
 $vines = Get-Ability $abilities "vines"
 Assert ([double]$vines.cooldown_seconds -eq 0.0) "Vines has no cooldown"

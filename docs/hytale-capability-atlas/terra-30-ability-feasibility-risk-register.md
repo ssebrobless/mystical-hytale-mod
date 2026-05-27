@@ -302,19 +302,19 @@ Status: DATA-DRIFT, then READY.
 Can Hytale do it: yes. Temporary block columns are a strong fit.
 
 Expected complications:
-- current data height is 5, concept wants 3;
+- current concept wants 4 staged pillar blocks;
 - target anchor may place pillar offset or under invalid terrain;
 - staged placement must be fast enough to read without being slow/clunky;
 - pillar can trap target or leave blocks behind.
 
 Plan adjustment:
-- surgically align data/runtime to 1x1x3;
+- surgically align data/runtime to 1x1x4;
 - use staged column: bottom, middle, top over short intervals;
 - apply launch/stun at first or final stage;
 - restore original blocks after short duration.
 
 Proof before complete:
-- target gets lifted/stunned and 3-block pillar appears/restores.
+- target gets lifted/stunned and 4-block pillar appears/restores 0.6s after full height.
 
 ### 12. Stone / Rockslide
 
