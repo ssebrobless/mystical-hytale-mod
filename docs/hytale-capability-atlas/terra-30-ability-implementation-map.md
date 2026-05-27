@@ -422,13 +422,13 @@ What it must do:
 
 - Projectile marks a ground point.
 - It should not directly hurt enemies.
-- On ground impact, spawn tree sapling marker/taunt object.
+- On ground impact, spawn an emerald temple statue marker/taunt object with pink glow.
 
 How to achieve it:
 
 - Use projectile or line trace to determine ground impact.
-- Surface-place sapling block/proxy at impact point.
-- Start taunt/lure field from sapling.
+- Surface-place `Furniture_Temple_Emerald_Statue` at impact point.
+- Start taunt/lure field from the statue marker.
 - Ignore enemy collision or pass through enemies.
 
 Ideal route:
@@ -438,7 +438,7 @@ Ideal route:
 Proof gate:
 
 - Aiming through an enemy still places sapling on ground.
-- Sapling lures/taunts nearby enemies.
+- Emerald statue marker lures/taunts nearby enemies.
 - Cleanup restores marker.
 
 ## Style: Bloom

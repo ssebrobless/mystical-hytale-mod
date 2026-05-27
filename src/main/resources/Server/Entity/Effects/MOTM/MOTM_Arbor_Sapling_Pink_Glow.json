@@ -1,0 +1,17 @@
+{
+  "Duration": 18.0,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#ffc6ff",
+    "EntityBottomTint": "#d36bff",
+    "Particles": [
+      {
+        "SystemId": "Plant_Glow"
+      },
+      {
+        "SystemId": "Firework_Purple"
+      }
+    ],
+    "ModelVFXId": "PrototypeBlockPlaceSuccess"
+  }
+}

@@ -124,7 +124,7 @@ The research supports a confident Terra implementation, with a primitive-first s
 |---|---|---|---|---|
 | Rooted | Player gets healing/rooted state without block damage | Vines/roots on top of ground at legs/lower body | Surface decoration blocks + self status | Screenshot confirms above-ground; log cleanup |
 | Vines | Only one target at a time; old target releases; target death clears state | Vines/root visual on current target | Single-target state + EntityRemove cleanup + surface/root visual | Log old release, new engage, death cleanup |
-| Sapling | Projectile marks ground, not enemy damage; sapling taunt object appears | Existing sapling asset at impact point | Ground-impact projectile + surface sapling + taunt field | Log ground impact, sapling id, lure targets |
+| Sapling | Projectile marks ground, not enemy damage; emerald statue taunt object appears | `Furniture_Temple_Emerald_Statue` at impact point with pink glow | Ground-impact projectile + surface statue + taunt field | Log ground impact, marker id, lure targets |
 
 ### Bloom
 

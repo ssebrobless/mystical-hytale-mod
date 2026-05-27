@@ -162,6 +162,9 @@ public class GameplayPlaybackManager {
     private static final String SUMMON_ROLE_NAME = "motm_summon";
     private static final String PROJECTILE_VISUAL_ROLE_NAME = "motm_projectile";
     private static final String FIELD_VISUAL_ROLE_NAME = "motm_field";
+    private static final String EMPTY_VISUAL_ROLE_NAME = "Empty_Role";
+    private static final String SAPLING_MARKER_BLOCK_ID = "Furniture_Temple_Emerald_Statue";
+    private static final String SAPLING_MARKER_GLOW_EFFECT_ID = "MOTM_Arbor_Sapling_Pink_Glow";
     private static final long SUMMON_THINK_INTERVAL_MS = 450L;
     private static final long CHANNEL_PULSE_INTERVAL_MS = 700L;
     private static final long FORM_PULSE_INTERVAL_MS = 850L;
@@ -2320,8 +2323,7 @@ public class GameplayPlaybackManager {
             case "obsidian_skin" -> "";
             case "rooted" -> placeSurfacePatchSelection(world, reason, origin, 1, expireAt,
                     "Plant_Roots_Leafy", "Plant_Roots_Cave", "Plant_Vine_Thick_Roots");
-            case "sapling" -> placeSurfaceColumnSelection(world, reason, center, 1, expireAt,
-                    "Plant_Sapling_Oak", "Plant_Sapling_Crystal");
+            case "sapling" -> placeSaplingMarkerSelection(world, reason, center, expireAt);
             case "nightshade" -> placeSurfaceColumnSelection(world, reason, center, 1, expireAt,
                     "Plant_Flower_Common_Purple", "Plant_Flower_Common_Blue");
             case "frolick" -> {
@@ -2746,6 +2748,30 @@ public class GameplayPlaybackManager {
         }
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
                 selection.getBlockCount() + " surface column blocks", protectedKeys);
+    }
+
+    private String placeSaplingMarkerSelection(World world,
+                                               String reason,
+                                               Vector3d center,
+                                               long expireAtMillis) {
+        int blockTypeId = resolveRuntimeBlockTypeId(SAPLING_MARKER_BLOCK_ID, "Plant_Sapling_Oak");
+        if (world == null || center == null || blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            return "";
+        }
+
+        Vector3i anchor = surfaceOverlayAnchor(center);
+        BlockSelection selection = baseSelection(anchor);
+        selection.addBlockAtWorldPos(anchor.x, anchor.y, anchor.z, blockTypeId, 0, 0, 0);
+        Set<String> protectedKeys = Set.of(blockKey(anchor.x, anchor.y, anchor.z));
+        String terrain = placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
+                "1 emerald temple statue marker", protectedKeys);
+        if (!terrain.isBlank()) {
+            spawnStaticMarkerGlow(world,
+                    new Vector3d(anchor.x + 0.5, anchor.y + 0.65, anchor.z + 0.5),
+                    SAPLING_MARKER_GLOW_EFFECT_ID,
+                    expireAtMillis);
+        }
+        return terrain;
     }
 
     private String placeStackingColumnSelection(World world,
@@ -3417,8 +3443,7 @@ public class GameplayPlaybackManager {
         String abilityId = lower(projectile.ability().getId());
         String terrain;
         if ("sapling".equals(abilityId)) {
-            terrain = placeSurfaceColumnSelection(world, "sapling", groundedImpact, 1, expireAt,
-                    "Plant_Sapling_Oak", "Plant_Sapling_Crystal");
+            terrain = placeSaplingMarkerSelection(world, "sapling", groundedImpact, expireAt);
         } else {
             terrain = placeSurfaceColumnSelection(world, "nightshade", groundedImpact, 1, expireAt,
                     "Plant_Flower_Common_Purple", "Plant_Flower_Common_Blue");
@@ -4842,6 +4867,31 @@ public class GameplayPlaybackManager {
                     + " error=" + e.getMessage());
             return false;
         }
+    }
+
+    private void spawnStaticMarkerGlow(World world,
+                                       Vector3d position,
+                                       String effectId,
+                                       long expireAtMillis) {
+        if (world == null || position == null || effectId == null || effectId.isBlank()) {
+            return;
+        }
+
+        NPCEntity proxy = new NPCEntity(world);
+        proxy.setRoleName(EMPTY_VISUAL_ROLE_NAME);
+        proxy.setDespawnTime((float) Math.max(1.0, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.75));
+        world.spawnEntity(proxy, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
+
+        Ref<EntityStore> proxyRef = proxy.getReference();
+        if (proxyRef == null || !proxyRef.isValid() || proxyRef.getStore() == null) {
+            return;
+        }
+
+        visualProxyRefs.add(proxyRef);
+        boolean applied = applyEffectById(proxyRef, proxyRef.getStore(), effectId);
+        LOG.info("[MOTM] Static marker glow spawned: effect=" + effectId
+                + " position=" + formatVector(position)
+                + " applied=" + applied);
     }
 
     private ProjectileVisualRuntime spawnProjectileVisualProxy(Player runtimePlayer,
