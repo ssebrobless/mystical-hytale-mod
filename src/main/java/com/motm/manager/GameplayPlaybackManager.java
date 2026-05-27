@@ -594,7 +594,7 @@ public class GameplayPlaybackManager {
             positions = List.of(new Vector3d(center));
         }
 
-        String effectId = "MOTM_Terra_Quake_Impact";
+        String effectId = isSinkhole(ability) ? "MOTM_Terra_Sinkhole_Cracks" : "MOTM_Terra_Quake_Impact";
         float despawnSeconds = 1.0f;
         int spawned = 0;
         String roleId = HytaleAssetResolver.resolveFieldRoleId("terra", "quake", ability);
@@ -1950,8 +1950,31 @@ public class GameplayPlaybackManager {
         }
 
         setAnchorMovementFreeze(anchor.ownerRef(), currentStore, true);
+        snapPlayerToAnchor(anchor, currentStore);
         zeroVelocity(anchor.ownerRef(), currentStore);
         return false;
+    }
+
+    private void snapPlayerToAnchor(ActivePlayerAnchor anchor, Store<EntityStore> store) {
+        if (anchor == null || anchor.ownerRef() == null || !anchor.ownerRef().isValid()
+                || anchor.anchor() == null || store == null) {
+            return;
+        }
+        Vector3d current = getPosition(anchor.ownerRef(), store);
+        if (current == null || distance(current, anchor.anchor()) < 0.08) {
+            return;
+        }
+        Player runtimePlayer = mod.getRuntimePlayer(anchor.ownerPlayerId());
+        if (runtimePlayer == null) {
+            return;
+        }
+        try {
+            runtimePlayer.moveTo(anchor.ownerRef(), anchor.anchor().x, anchor.anchor().y, anchor.anchor().z, store);
+        } catch (Exception e) {
+            LOG.warning("[MOTM] Player anchor snap failed: reason=" + anchor.reason()
+                    + " playerId=" + anchor.ownerPlayerId()
+                    + " error=" + e.getMessage());
+        }
     }
 
     private boolean processActiveSelfEffect(ActiveSelfEffect effect,
@@ -4242,7 +4265,7 @@ public class GameplayPlaybackManager {
         Player runtimePlayer = mod.getRuntimePlayer(field.ownerPlayerId());
         if (runtimePlayer != null) {
             Vector3d groundedCenter = new Vector3d(field.center());
-            groundedCenter.y = groundedCenter.y - 1.65;
+            groundedCenter.y = groundedCenter.y - 2.15;
             spawnQuakeImpactRing(runtimePlayer, field.ability(), groundedCenter);
             LOG.info("[MOTM] Sinkhole surface marker placed: crack particles only center=" + groundedCenter
                     + " durationMillis=" + Math.max(900L, durationMillis)
@@ -7098,6 +7121,14 @@ public class GameplayPlaybackManager {
         return String.join(" | ", summaryParts);
     }
 
+    public synchronized boolean hasActiveWeaponFollowUp(String playerId, String abilityId) {
+        if (playerId == null || playerId.isBlank() || abilityId == null || abilityId.isBlank()) {
+            return false;
+        }
+        ActiveWeaponFollowUp followUp = activeWeaponFollowUpsByPlayer.get(playerId);
+        return followUp != null && abilityId.equalsIgnoreCase(followUp.sourceAbilityId());
+    }
+
     public synchronized String handleNativeWeaponDamage(Player runtimePlayer,
                                                         PlayerData player,
                                                         Ref<EntityStore> targetRef,
@@ -7974,7 +8005,9 @@ public class GameplayPlaybackManager {
         if (origin == null) {
             return null;
         }
-        if (!"magma_sling".equals(lower(ability != null ? ability.getId() : null))) {
+        boolean raisedProjectile = "magma_sling".equals(lower(ability != null ? ability.getId() : null))
+                || isGroundMarkerProjectile(ability);
+        if (!raisedProjectile) {
             return origin;
         }
 
@@ -8038,7 +8071,8 @@ public class GameplayPlaybackManager {
         if (context.targetBlock() != null) {
             Vector3i block = context.targetBlock();
             Vector3d targetPosition = new Vector3d(block.x + 0.5, block.y + 1.0, block.z + 0.5);
-            return normalize(subtract(targetPosition, origin));
+            Vector3d launchOrigin = resolveProjectileOrigin(playerRef, store, ability);
+            return normalize(subtract(targetPosition, launchOrigin != null ? launchOrigin : origin));
         }
 
         return getDirection(playerRef, store);
@@ -8752,6 +8786,8 @@ public class GameplayPlaybackManager {
                 LOG.warning("[MOTM] Temporary Terra terrain replacement restore failed: reason=" + selection.reason()
                         + " anchor=" + selection.anchor()
                         + " error=" + e.getMessage());
+            } finally {
+                activeTemporaryTerrainBlockKeys.removeAll(selection.protectedBlockKeys());
             }
             return true;
         });

@@ -5088,6 +5088,22 @@ public class MenteesMod extends JavaPlugin {
                         + " item=" + loggedItemId
                         + " recognizedSpellbook=" + isSpellbookItemId(loggedItemId));
             }
+            if ((itemId == null || itemId.isBlank())
+                    && event.getMouseButton().mouseButtonType == MouseButtonType.Left
+                    && event.getTargetEntityRef() != null
+                    && gameplayPlaybackManager != null
+                    && gameplayPlaybackManager.hasActiveWeaponFollowUp(playerData.getPlayerId(), "rubble_rouser")) {
+                String response = gameplayPlaybackManager.handleWeaponFollowUpHit(
+                        player,
+                        playerData,
+                        event.getTargetEntityRef(),
+                        "bare_hands"
+                );
+                if (response != null && !response.isBlank()) {
+                    sendPlayerMessage(player, Message.raw(response));
+                }
+                return;
+            }
             if (itemId == null || itemId.isBlank()) {
                 return;
             }

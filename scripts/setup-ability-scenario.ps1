@@ -47,7 +47,12 @@ function Invoke-Step([string]$Description, [scriptblock]$Action) {
 }
 
 function Send-MotmCommand([string]$Text, [int]$Delay = $DelayMilliseconds) {
-    & (Join-Path $PSScriptRoot "send-input.ps1") -Action Command -Text $Text -DelayMilliseconds $Delay | Out-Host
+    $command = $Text -replace '^\s*/?motm\s+', ''
+    $timeout = [Math]::Max(3500, $Delay + 2500)
+    & (Join-Path $PSScriptRoot "send-dev-command.ps1") -Command $command -TimeoutMilliseconds $timeout | Out-Host
+    if ($Delay -gt 0) {
+        Start-Sleep -Milliseconds $Delay
+    }
 }
 
 $scenario = Get-ScenarioKind $ability
