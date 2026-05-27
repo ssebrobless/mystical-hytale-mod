@@ -6,10 +6,10 @@
     "EntityBottomTint": "#d36bff",
     "Particles": [
       {
-        "SystemId": "Plant_Glow"
+        "SystemId": "E_Sphere"
       },
       {
-        "SystemId": "Firework_Purple"
+        "SystemId": "Impact_Poison"
       }
     ],
     "ModelVFXId": "PrototypeBlockPlaceSuccess"

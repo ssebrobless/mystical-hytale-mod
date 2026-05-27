@@ -100,8 +100,8 @@ public class StatusEffect {
      */
     public double getDamagePerTickPercent() {
         return switch (type) {
-            case BURN -> 0.03;  // 3% max HP
-            case DOT -> 0.05;   // 5% max HP
+            case BURN -> value > 0.0 ? value : 0.03;  // 3% max HP default
+            case DOT -> value > 0.0 ? value : 0.05;   // 5% max HP default
             default -> 0;
         };
     }

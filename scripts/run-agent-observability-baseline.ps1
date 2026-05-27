@@ -362,7 +362,7 @@ try {
     foreach ($ability in $Abilities) {
         Invoke-ObservedCommand "motm dev observe marker ability-$ability-before"
         Invoke-ObservedCommand "motm dev test ability $ability" -TimeoutMilliseconds 9000 -DelayMilliseconds 2200
-        if ($ability -eq "stomp") {
+        if ($ability -eq "stomp" -or $ability -eq "leap_frog") {
             Invoke-ObservedCommand "motm dev test stomp-land" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
         }
         Invoke-ObservedCommand "motm dev observe snapshot ability-$ability-after"

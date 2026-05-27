@@ -79,6 +79,12 @@ public final class HytaleAssetResolver {
     private static final String MODEL_FROST_SPIRIT = "Common/NPC/Elemental/Spirit_Frost/Models/Model.blockymodel";
     private static final String MODEL_THUNDER_SPIRIT = "Common/NPC/Elemental/Spirit_Thunder/Models/Model.blockymodel";
     private static final String MODEL_FROST_GOLEM = "Common/NPC/Elemental/Golem_Crystal/Models/Model.blockymodel";
+    private static final String MODEL_SNOWMAN = "Common/Items/Hypixel/Event_Decoration/Winter Holiday_Props/WinterHoliday_Snowman.blockymodel";
+    private static final String MODEL_YETI = "Common/NPC/Beast/Yeti/Models/Model.blockymodel";
+    private static final String MODEL_CROCODILE = "Common/NPC/Swimming_Beast/Crocodile/Models/Model.blockymodel";
+    private static final String MODEL_SNAPJAW = "Common/NPC/Swimming_Beast/Snapjaw/Models/Model.blockymodel";
+    private static final String MODEL_CALCITE_STALACTITE = "Common/Items/Rocks/Rock_Calcite_Stalactite_Large.blockymodel";
+    private static final String MODEL_IRON_CHAIN = "Common/Blocks/Decorative/Deco_Iron_Chains_Vertical.blockymodel";
     private static final String MODEL_FIRE_GOLEM = "Common/NPC/Elemental/Golem_Firesteel/Models/Model.blockymodel";
     private static final String MODEL_SCARAK = "Common/NPC/Beast/Scarak_Fighter/Models/Model.blockymodel";
     private static final String MODEL_SCARAK_BROODMOTHER = "Common/NPC/Beast/Scarak_Broodmother/Models/Model.blockymodel";
@@ -157,6 +163,10 @@ public final class HytaleAssetResolver {
                 && (("stone".equals(style) && "rubble_rouser".equals(abilityId))
                 || ("arbor".equals(style) && ("sapling".equals(abilityId) || "vines".equals(abilityId)))
                 || ("bloom".equals(style) && "nightshade".equals(abilityId)))) {
+            return ROLE_EMPTY;
+        }
+        if ("hydro".equals(lower(classId))
+                && ("stalactite_crash".equals(abilityId) || "anchor_haul".equals(abilityId))) {
             return ROLE_EMPTY;
         }
 
@@ -551,13 +561,23 @@ public final class HytaleAssetResolver {
         if ("terra".equals(lower(classId)) && "stone".equals(lower(styleId)) && "rubble_rouser".equals(abilityId)) {
             return MODEL_RUBBLE_PROJECTILE;
         }
+        if ("hydro".equals(lower(classId)) && "stalactite_crash".equals(abilityId)) {
+            return MODEL_CALCITE_STALACTITE;
+        }
+        if ("hydro".equals(lower(classId)) && "anchor_haul".equals(abilityId)) {
+            return MODEL_IRON_CHAIN;
+        }
 
         if (!summonName.isBlank()) {
             return switch (summonName) {
                 case "treant_sapling" -> MODEL_ROOT_SPIRIT;
                 case "snow_imp" -> MODEL_FROST_SPIRIT;
+                case "snowman_imp" -> MODEL_SNOWMAN;
                 case "frosty_golem" -> MODEL_FROST_GOLEM;
+                case "yeti_frosty" -> MODEL_YETI;
                 case "swamp_monster" -> MODEL_FROG;
+                case "crocodile_swamp_monster" -> MODEL_CROCODILE;
+                case "snapjaw_abyssal" -> MODEL_SNAPJAW;
                 case "skeleton_minion", "shadow_clone" -> MODEL_SHADOW_KNIGHT;
                 case "void_spawn" -> MODEL_VOID_SPAWN;
                 case "scarak_egg" -> MODEL_SCARAK;

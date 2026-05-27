@@ -83,7 +83,7 @@ public class GameplayPlaybackManager {
     private static final Set<String> TARGET_EFFECT_TOKENS = Set.of(
             "burn", "dot", "stun", "stun_if_wall", "slow", "slow_stack", "vulnerability",
             "freeze", "root", "blind", "deafen", "disoriented", "attack_slow",
-            "grounded", "shocked", "lightning", "knockback", "curse");
+            "grounded", "shocked", "lightning", "knockback", "curse", "toxic");
     private static final Set<String> CONCEPT_RUNTIME_RECONCILED_ABILITIES = Set.of(
             "stomp", "aftershock", "sinkhole",
             "iron_wall", "metal_coat", "alloy_enhancement",
@@ -141,16 +141,20 @@ public class GameplayPlaybackManager {
             "nightshade", "frolick", "cacti_cluster", "glare", "tunnel", "burrow",
             "mudpit", "debris", "sandstorm", "dust_devil", "lapidary", "fracture",
             "refraction", "stalactite_crash", "snowstorm", "waverider", "riptide",
-            "scald", "ice_cap", "ice_shelf", "river_rapids", "anchor_haul",
+            "piercing_rain", "rainbow", "geyser", "scald", "ice_cap", "glacier",
+            "ice_shelf", "tide_pool", "abyssal_assist", "river_rapids", "anchor_haul",
+            "snow_imp", "frosty", "swamp_monster", "bilge_dump", "oil_spill",
             "fireball", "life_drain", "consume", "hellfire", "infernal_ground",
             "triceratops_form", "shriek", "sonic_boom", "twister", "funnel_cloud",
             "mach_punch", "divebomb", "hang_time", "air_slash", "gale_cutter",
             "air_shot", "bullet_storm", "rip_current", "leap_frog");
     private static final Set<String> CONCEPT_FRIENDLY_SAFE_ABILITIES = Set.of(
-            "lava_pool", "mudpit", "rockslide", "frolick", "life_drain", "soul_scorch",
-            "smoke_bomb", "toxic_breath", "oil_spill");
+            "lava_pool", "mudpit", "rockslide", "frolick", "high_tide", "waverider",
+            "piercing_rain", "rainbow", "tide_pool", "rip_current", "leap_frog",
+            "river_rapids", "oil_spill", "life_drain", "soul_scorch",
+            "smoke_bomb", "toxic_breath");
     private static final Set<String> CONCEPT_SUMMON_OBJECT_ABILITIES = Set.of(
-            "sapling", "lapidary", "snow_imp", "frosty", "swamp_monster", "funnel_cloud",
+            "sapling", "lapidary", "snow_imp", "frosty", "swamp_monster", "abyssal_assist", "funnel_cloud",
             "raise_dead", "shadow_step", "void_spawn", "scarak_egg", "locust_queen");
     private static final double MAX_HORIZONTAL_MOVEMENT = 12.0;
     private static final double MAX_VERTICAL_MOVEMENT = 6.0;
@@ -246,7 +250,34 @@ public class GameplayPlaybackManager {
             return ability.getName() + " is blocked while you are grounded.";
         }
 
+        if ("abyssal_assist".equals(lower(ability.getId())) && !hasActiveOwnerField(playerId, "tide_pool")) {
+            return "Abyssal Assist requires Tide Pool to be active.";
+        }
+
         return "";
+    }
+
+    private boolean hasActiveOwnerField(String playerId, String abilityId) {
+        return findActiveOwnerField(playerId, abilityId) != null;
+    }
+
+    private ActiveField findActiveOwnerField(String playerId, String abilityId) {
+        if (playerId == null || playerId.isBlank() || abilityId == null || abilityId.isBlank()) {
+            return null;
+        }
+        String normalizedAbilityId = lower(abilityId);
+        long now = System.currentTimeMillis();
+        for (ActiveField field : activeFields) {
+            if (field == null || now >= field.expireAtMillis()) {
+                continue;
+            }
+            if (playerId.equals(field.ownerPlayerId())
+                    && field.ability() != null
+                    && normalizedAbilityId.equals(lower(field.ability().getId()))) {
+                return field;
+            }
+        }
+        return null;
     }
 
     private void logTerraAbilityEvent(String event,
@@ -424,18 +455,26 @@ public class GameplayPlaybackManager {
                 false
         ));
 
+        boolean leapFrog = "leap_frog".equals(lower(ability.getId()));
+        String abilityLabel = leapFrog ? "Leap Frog" : "Stomp";
+        if (leapFrog) {
+            int displaced = applyLeapFrogTakeoff(runtimePlayer, playerRef, store, player, ability);
+            LOG.info("[MOTM] Leap Frog takeoff boost applied: player=" + player.getPlayerName()
+                    + " displaced=" + displaced);
+        }
+
         logTerraAbilityEvent("stomp.armed", player, style, ability,
                 "startY=" + AbilityPresentation.formatDecimal(transform.getTransform().getPosition().y)
                         + " timeoutMs=" + STOMP_ARM_TIMEOUT_MILLIS);
-        LOG.info("[MOTM] Stomp armed: player=" + player.getPlayerName()
-                + " - next jump's landing will trigger the shockwave");
+        LOG.info("[MOTM] " + abilityLabel + " armed: player=" + player.getPlayerName()
+                + " - next landing will trigger the " + (leapFrog ? "frog displacement" : "shockwave"));
         String effectId = resolveEffectId(player.getPlayerClass(), currentStyleId(player), ability);
         applyEffectById(playerRef, store, effectId);
 
         return new ExecutionResult(
-                PlaybackResult.none("Stomp armed - jump and land to release."),
+                PlaybackResult.none(abilityLabel + " armed - jump and land to release."),
                 0, 0.0, 0, 0, false,
-                "Stomp armed (jump -> land to release the shockwave)");
+                abilityLabel + " armed (jump -> land to release)");
     }
 
     public synchronized void tick(Store<EntityStore> currentStore) {
@@ -483,7 +522,7 @@ public class GameplayPlaybackManager {
             String playerId = entry.getKey();
             ArmedStomp armed = entry.getValue();
             if (now >= armed.expireAtMillis()) {
-                LOG.info("[MOTM] Stomp arm expired: player=" + armed.player().getPlayerName());
+                LOG.info("[MOTM] " + armed.ability().getName() + " arm expired: player=" + armed.player().getPlayerName());
                 armedStompByPlayer.remove(playerId, armed);
                 continue;
             }
@@ -532,14 +571,20 @@ public class GameplayPlaybackManager {
     }
 
     private void fireArmedStomp(Player runtimePlayer, ArmedStomp armed, Vector3d landingPosition) {
-        LOG.info("[MOTM] Stomp fired at landing: player=" + armed.player().getPlayerName()
+        boolean leapFrog = "leap_frog".equals(lower(armed.ability().getId()));
+        String abilityLabel = leapFrog ? "Leap Frog" : "Stomp";
+        LOG.info("[MOTM] " + abilityLabel + " fired at landing: player=" + armed.player().getPlayerName()
                 + " pos=" + landingPosition);
         CastContext landingContext = CastContext.atPosition(landingPosition);
         AbilityData ability = armed.ability();
-        PlaybackResult playback = playAbility(runtimePlayer, armed.player(), armed.style(), ability);
-        CombatResolution combat = applyCombat(runtimePlayer, armed.player(), ability, landingContext);
-        EffectResolution effects = applyTargetEffects(runtimePlayer, armed.player(), ability, landingContext);
-        spawnQuakeImpactRing(runtimePlayer, ability, landingPosition);
+        PlaybackResult playback = leapFrog ? PlaybackResult.none("Leap Frog landing displacement") : playAbility(runtimePlayer, armed.player(), armed.style(), ability);
+        CombatResolution combat = leapFrog ? CombatResolution.none() : applyCombat(runtimePlayer, armed.player(), ability, landingContext);
+        EffectResolution effects = leapFrog
+                ? applyLeapFrogLanding(runtimePlayer, armed.player(), ability, landingPosition)
+                : applyTargetEffects(runtimePlayer, armed.player(), ability, landingContext);
+        if (!leapFrog) {
+            spawnQuakeImpactRing(runtimePlayer, ability, landingPosition);
+        }
         double lifestealHealing = applyLifesteal(runtimePlayer, armed.player(), combat.totalDamage());
 
         if (combat.totalDamage() > 0.0) {
@@ -551,13 +596,13 @@ public class GameplayPlaybackManager {
                     armed.player().getStatistics().getTotalHealingDone() + lifestealHealing);
         }
 
-        LOG.info("[MOTM] Stomp landing resolved: targets=" + combat.targetsHit()
+        LOG.info("[MOTM] " + abilityLabel + " landing resolved: targets=" + (leapFrog ? effects.targetsAffected() : combat.targetsHit())
                 + " damage=" + AbilityPresentation.formatDecimal(combat.totalDamage())
                 + " effects=" + effects.effectsApplied()
                 + (playback.effectApplied() ? " visual=applied" : " visual=missing"));
         logTerraAbilityEvent("cast.end", armed.player(), armed.style(), ability,
-                "summary=Stomp landing resolved"
-                        + " combatTargets=" + combat.targetsHit()
+                "summary=" + abilityLabel + " landing resolved"
+                        + " combatTargets=" + (leapFrog ? 0 : combat.targetsHit())
                         + " projectiles=0"
                         + " field=false"
                         + " terrain=false"
@@ -567,11 +612,11 @@ public class GameplayPlaybackManager {
                 "playerId", armed.player().getPlayerId(),
                 "styleId", safe(armed.style() != null ? armed.style().getId() : currentStyleId(armed.player())),
                 "abilityId", safe(ability.getId()),
-                "summary", "Stomp landing resolved: targets=" + combat.targetsHit()
+                "summary", abilityLabel + " landing resolved: targets=" + (leapFrog ? effects.targetsAffected() : combat.targetsHit())
                         + " damage=" + AbilityPresentation.formatDecimal(combat.totalDamage())
                         + " effects=" + effects.effectsApplied()
                         + (playback.effectApplied() ? " visual=applied" : " visual=missing"),
-                "combatTargets", combat.targetsHit(),
+                "combatTargets", leapFrog ? effects.targetsAffected() : combat.targetsHit(),
                 "totalDamage", combat.totalDamage(),
                 "projectiles", 0,
                 "fieldActivated", false,
@@ -580,6 +625,56 @@ public class GameplayPlaybackManager {
                 "summonsBuffed", 0,
                 "formApplied", false
         ));
+    }
+
+    private int applyLeapFrogTakeoff(Player runtimePlayer,
+                                     Ref<EntityStore> playerRef,
+                                     Store<EntityStore> store,
+                                     PlayerData player,
+                                     AbilityData ability) {
+        if (runtimePlayer == null || playerRef == null || !playerRef.isValid() || store == null || ability == null) {
+            return 0;
+        }
+
+        Vector3d start = getPosition(playerRef, store);
+        Vector3d direction = getDirection(playerRef, store);
+        if (start != null && direction != null) {
+            Vector3d horizontal = normalizeHorizontal(direction);
+            double forward = Math.max(2.5, Math.min(ability.getDashDistance() > 0 ? ability.getDashDistance() * 0.55 : 3.5, 4.5));
+            double upward = Math.max(1.2, ability.getLaunchHeight() > 0 ? ability.getLaunchHeight() : 2.0);
+            Vector3d target = new Vector3d(start)
+                    .fma(forward, horizontal)
+                    .add(0.0, upward, 0.0);
+            runtimePlayer.moveTo(playerRef, target.x, target.y, target.z, store);
+        }
+
+        applyStatusToOwner("flying", new ActiveField(player.getPlayerId(), playerRef, player.getPlayerClass(),
+                currentStyleId(player), ability, start, direction, direction, ability.getRadius(), ability.getRadius(),
+                1.0, System.currentTimeMillis() + 6_000L, System.currentTimeMillis(), System.currentTimeMillis(),
+                false, List.of(), null, 0L, mod.currentObservabilityTraceId()), player);
+
+        Vector3d takeoff = start != null ? start : getPosition(playerRef, store);
+        return launchTargetsFromPoint(playerRef, store, ability, takeoff, Math.max(2.25, ability.getRadius()), false);
+    }
+
+    private EffectResolution applyLeapFrogLanding(Player runtimePlayer,
+                                                  PlayerData player,
+                                                  AbilityData ability,
+                                                  Vector3d landingPosition) {
+        if (runtimePlayer == null || player == null || ability == null || landingPosition == null) {
+            return EffectResolution.none();
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef != null && playerRef.isValid() ? playerRef.getStore() : null;
+        if (playerRef == null || store == null) {
+            return EffectResolution.none();
+        }
+
+        int displaced = launchTargetsFromPoint(playerRef, store, ability, landingPosition, Math.max(2.5, ability.getRadius()), false);
+        if (displaced <= 0) {
+            return EffectResolution.none();
+        }
+        return new EffectResolution(displaced, displaced, "leap landing displaced " + displaced + " target" + (displaced == 1 ? "" : "s"));
     }
 
     private void spawnQuakeImpactRing(Player runtimePlayer, AbilityData ability, Vector3d center) {
@@ -744,6 +839,54 @@ public class GameplayPlaybackManager {
             removed++;
         }
         return removed;
+    }
+
+    private int pushAndDismissActiveIceShelf(String playerId,
+                                             Ref<EntityStore> playerRef,
+                                             Store<EntityStore> store,
+                                             AbilityData ability) {
+        if (playerId == null || playerRef == null || store == null || ability == null) {
+            return 0;
+        }
+
+        int displaced = 0;
+        for (int index = activeFields.size() - 1; index >= 0; index--) {
+            ActiveField field = activeFields.get(index);
+            if (!playerId.equals(field.ownerPlayerId())
+                    || field.ability() == null
+                    || !"ice_shelf".equals(lower(field.ability().getId()))) {
+                continue;
+            }
+
+            Vector3d start = field.center();
+            Vector3d forward = normalizeHorizontal(field.forwardDirection());
+            Vector3d end = start != null ? new Vector3d(start).fma(4.0, forward) : null;
+            if (start != null && end != null) {
+                for (Ref<EntityStore> targetRef : collectTargetsAlongSegment(store, start, end, Math.max(2.0, ability.getWidth()), 5)) {
+                    if (targetRef == null || !targetRef.isValid() || targetRef.equals(playerRef)) {
+                        continue;
+                    }
+                    NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
+                    Vector3d targetPosition = getPosition(targetRef, store);
+                    if (npc == null || targetPosition == null) {
+                        continue;
+                    }
+                    Vector3d destination = new Vector3d(targetPosition)
+                            .fma(4.0, forward)
+                            .add(0.0, 0.15, 0.0);
+                    npc.moveTo(targetRef, destination.x, destination.y, destination.z, store);
+                    applyTargetToken("slow", targetRef, store, playerRef, playerId, ability);
+                    displaced++;
+                }
+            }
+
+            restoreFieldTemporaryTerrain(field, store);
+            despawnFieldVisual(field);
+            activeFields.remove(index);
+        }
+        LOG.info("[MOTM] Ice Shelf recast resolved: playerId=" + playerId
+                + " displaced=" + displaced);
+        return displaced;
     }
 
     private int removePlayerAnchorsForPlayer(String playerId) {
@@ -1237,6 +1380,14 @@ public class GameplayPlaybackManager {
             return FieldRuntimeResult.none();
         }
 
+        if ("ice_shelf".equals(lower(ability.getId())) && hasActiveOwnerField(player.getPlayerId(), "ice_shelf")) {
+            int displaced = pushAndDismissActiveIceShelf(player.getPlayerId(), playerRef, store, ability);
+            return new FieldRuntimeResult(true,
+                    "ice shelf recast pushed 4m | displaced "
+                            + displaced
+                            + " target" + (displaced == 1 ? "" : "s"));
+        }
+
         Vector3d origin = getPosition(playerRef, store);
         Vector3d forward = getDirection(playerRef, store);
         if (origin == null || forward == null) {
@@ -1309,7 +1460,7 @@ public class GameplayPlaybackManager {
                 thickness,
                 activateAtMillis,
                 activateAtMillis + durationMillis,
-                false,
+                shouldPersistentFieldFollowOwner(ability),
                 visual
         );
 
@@ -1582,6 +1733,48 @@ public class GameplayPlaybackManager {
                     parts.add(terrain);
                 }
             }
+            case "stalactite_crash" -> {
+                Vector3d origin = getPosition(playerRef, store);
+                int hits = 0;
+                if (origin != null) {
+                    double damage = resolveDamageAmount(player, ability);
+                    for (Ref<EntityStore> targetRef : collectNearbyNpcTargets(store, origin, Math.max(12.0, resolveRange(ability)), 4)) {
+                        String targetEntityId = resolveEntityId(targetRef, store);
+                        double resolvedDamage = targetEntityId == null
+                                ? damage
+                                : mod.getStatusEffectManager().absorbDamage(
+                                targetEntityId,
+                                damage * resolveIncomingDamageMultiplier(targetEntityId));
+                        if (resolvedDamage > 0.0) {
+                            Damage fallingIce = new Damage(new Damage.EntitySource(playerRef), DamageCause.PROJECTILE, (float) resolvedDamage);
+                            DamageSystems.executeDamage(targetRef, store, fallingIce);
+                            applyPostDamageClassPassives(player, playerRef, targetEntityId, resolvedDamage, true);
+                            player.getStatistics().setTotalDamageDealt(player.getStatistics().getTotalDamageDealt() + resolvedDamage);
+                        }
+                        applyTargetToken("slow_stack", targetRef, store, playerRef, player.getPlayerId(), ability);
+                        applyEffectById(targetRef, store, resolveImpactEffectId(player.getPlayerClass(), style.getId(), ability));
+                        hits++;
+                    }
+                }
+                parts.add("auto stalactites " + hits + "/4 target(s)");
+            }
+            case "ice_cap" -> {
+                String terrain = placeAbilityTerrainSelection(runtimePlayer, player, ability, context, abilityId);
+                if (!terrain.isBlank()) {
+                    parts.add(terrain);
+                }
+                applyStatusToOwner("defense_buff", new ActiveField(player.getPlayerId(), playerRef, player.getPlayerClass(),
+                        style.getId(), ability, getPosition(playerRef, store), null, null, ability.getRadius(), ability.getRadius(),
+                        1.0, System.currentTimeMillis() + 5_000L, System.currentTimeMillis(), System.currentTimeMillis(),
+                        true, List.of(), null, 0L, mod.currentObservabilityTraceId()), player);
+            }
+            case "leap_frog" -> {
+                applyStatusToOwner("flying", new ActiveField(player.getPlayerId(), playerRef, player.getPlayerClass(),
+                        style.getId(), ability, getPosition(playerRef, store), null, null, ability.getRadius(), ability.getRadius(),
+                        1.0, System.currentTimeMillis() + 6_000L, System.currentTimeMillis(), System.currentTimeMillis(),
+                        false, List.of(), null, 0L, mod.currentObservabilityTraceId()), player);
+                parts.add("leap fall protection");
+            }
             case "tunnel" -> {
                 if (applyEffectById(playerRef, store, "MOTM_Proof_Coating_Stone")) {
                     parts.add("stone block form cue");
@@ -1602,6 +1795,13 @@ public class GameplayPlaybackManager {
         return parts.isEmpty()
                 ? AbilitySpecificRuntimeResult.none()
                 : new AbilitySpecificRuntimeResult(String.join(" | ", parts));
+    }
+
+    private boolean shouldPersistentFieldFollowOwner(AbilityData ability) {
+        String abilityId = lower(ability != null ? ability.getId() : null);
+        return "snowstorm".equals(abilityId)
+                || "piercing_rain".equals(abilityId)
+                || "rainbow".equals(abilityId);
     }
 
     private AbilitySpecificRuntimeResult applyConceptRuntimeProfile(PlayerData player,
@@ -1934,6 +2134,16 @@ public class GameplayPlaybackManager {
             restoreActiveTemporarySelections(world, "mudpit");
         } else if ("iron_wall".equals(abilityId) || terrainEffect.contains("iron_wall")) {
             restoreActiveTemporarySelections(world, "iron_wall");
+        } else if ("tide_pool".equals(abilityId) || terrainEffect.contains("tide_pool")) {
+            restoreActiveTemporarySelections(world, "tide_pool");
+        } else if ("oil_spill".equals(abilityId) || terrainEffect.contains("oil_spill")) {
+            restoreActiveTemporarySelections(world, "oil_spill");
+        } else if ("ice_cap".equals(abilityId) || terrainEffect.contains("ice_cap")) {
+            restoreActiveTemporarySelections(world, "ice_cap");
+        } else if ("glacier".equals(abilityId) || terrainEffect.contains("glacier")) {
+            restoreActiveTemporarySelections(world, "glacier");
+        } else if ("ice_shelf".equals(abilityId) || terrainEffect.contains("ice_shelf")) {
+            restoreActiveTemporarySelections(world, "ice_shelf");
         }
     }
 
@@ -2263,6 +2473,35 @@ public class GameplayPlaybackManager {
                     expireAtMillis, "Fluid_Water", "Water", "water");
             return fluid.isBlank() ? "" : fluid + " + brown debris visual";
         }
+        if (terrainEffect.contains("tide_pool")) {
+            restoreActiveTemporarySelections(runtimePlayer.getWorld(), "tide_pool");
+            return placeFluidCylinderSelection(runtimePlayer.getWorld(), "tide_pool", center, ability.getRadius(),
+                    Math.max(1, (int) Math.round(ability.getHeight() > 0 ? ability.getHeight() : 2.0)),
+                    expireAtMillis, "Fluid_Saltwater", "Fluid_Ocean_Water", "Fluid_Water", "Water", "water");
+        }
+        if (terrainEffect.contains("oil_spill")) {
+            restoreActiveTemporarySelections(runtimePlayer.getWorld(), "oil_spill");
+            return placeFluidDiscSelection(runtimePlayer.getWorld(), "oil_spill", center, ability.getRadius(),
+                    expireAtMillis, "Fluid_Tar", "Fluid_Oil", "Fluid_Swamp_Water", "Fluid_Water", "Water", "water");
+        }
+        if (terrainEffect.contains("ice_cap")) {
+            restoreActiveTemporarySelections(runtimePlayer.getWorld(), "ice_cap");
+            return placeIceCapTubeSelection(runtimePlayer.getWorld(), "ice_cap", center, expireAtMillis);
+        }
+        if (terrainEffect.contains("glacier")) {
+            restoreActiveTemporarySelections(runtimePlayer.getWorld(), "glacier");
+            return placeWallSelection(runtimePlayer.getWorld(), "glacier", center, lineDirection,
+                    Math.max(3, (int) Math.round(ability.getWidth() > 0 ? ability.getWidth() : 6.0)),
+                    Math.max(3, (int) Math.round(ability.getHeight() > 0 ? ability.getHeight() : 4.0)),
+                    expireAtMillis, "Rock_Ice", "Rock_Ice_Permafrost", "Rock_Ice_Icicles", "Water_Ice", "Ice", "Rock_Packed_Ice");
+        }
+        if (terrainEffect.contains("ice_shelf")) {
+            restoreActiveTemporarySelections(runtimePlayer.getWorld(), "ice_shelf");
+            return placeWallSelection(runtimePlayer.getWorld(), "ice_shelf", center, lineDirection,
+                    Math.max(2, (int) Math.round(ability.getWidth() > 0 ? ability.getWidth() : 2.0)),
+                    Math.max(3, (int) Math.round(ability.getHeight() > 0 ? ability.getHeight() : 3.0)),
+                    expireAtMillis, "Rock_Ice", "Rock_Ice_Permafrost", "Rock_Ice_Icicles", "Water_Ice", "Ice", "Rock_Packed_Ice");
+        }
         if (terrainEffect.contains("stone_pillar")) {
             return placeStackingColumnSelection(runtimePlayer.getWorld(), "stone_pillar", center,
                     Math.max(1, (int) Math.round(ability.getHeight() > 0 ? ability.getHeight() : 4.0)),
@@ -2382,6 +2621,7 @@ public class GameplayPlaybackManager {
             case "gargoyle" -> placeSurfaceColumnSelection(world, reason, origin, 1, expireAt,
                     "Furniture_Ancient_Statue");
             case "sandstorm" -> "sandstorm particle volume";
+            case "ice_cap" -> placeIceCapTubeSelection(world, reason, origin, expireAt);
             case "tunnel" -> placeTrailSelection(world, reason, origin, forward, System.currentTimeMillis() + 2400L,
                     "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
             default -> "";
@@ -2976,6 +3216,67 @@ public class GameplayPlaybackManager {
         return placeFluidDiscSelection(world, reason, grounded, radius, expireAtMillis, fluidIds);
     }
 
+    private String placeFluidCylinderSelection(World world,
+                                               String reason,
+                                               Vector3d center,
+                                               double radius,
+                                               int height,
+                                               long expireAtMillis,
+                                               String... fluidIds) {
+        int fluidTypeId = resolveRuntimeFluidTypeId(fluidIds);
+        Fluid fluid = fluidTypeId != Fluid.UNKNOWN_ID && fluidTypeId != Fluid.EMPTY_ID
+                ? Fluid.getAssetMap().getAsset(fluidTypeId)
+                : null;
+        if (world == null || center == null || fluid == null || fluid.isUnknown()) {
+            return "";
+        }
+
+        Vector3i anchor = fluidGroundAnchor(center);
+        BlockSelection selection = baseSelection(anchor);
+        int r = Math.max(1, (int) Math.round(radius));
+        int h = Math.max(1, Math.min(4, height));
+        byte fluidLevel = (byte) Math.max(1, fluid.getMaxFluidLevel());
+        for (int y = 0; y < h; y++) {
+            for (int x = -r; x <= r; x++) {
+                for (int z = -r; z <= r; z++) {
+                    double dist = Math.sqrt((x * x) + (z * z));
+                    if (dist > r + 0.2) {
+                        continue;
+                    }
+                    selection.addFluidAtWorldPos(anchor.x + x, anchor.y + y, anchor.z + z, fluidTypeId, fluidLevel);
+                }
+            }
+        }
+        return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
+                selection.getFluidCount() + " fluid cylinder cells");
+    }
+
+    private String placeIceCapTubeSelection(World world,
+                                            String reason,
+                                            Vector3d center,
+                                            long expireAtMillis) {
+        int blockTypeId = resolveRuntimeBlockTypeId("Rock_Ice", "Rock_Ice_Permafrost", "Rock_Ice_Icicles", "Water_Ice", "Ice", "Rock_Packed_Ice");
+        if (world == null || center == null || blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            return "";
+        }
+
+        Vector3i anchor = surfaceDecorationAnchor(center);
+        BlockSelection selection = baseSelection(anchor);
+        Set<String> protectedKeys = new LinkedHashSet<>();
+        int[][] sides = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int[] side : sides) {
+            for (int y = 0; y < 3; y++) {
+                int worldX = anchor.x + side[0];
+                int worldY = anchor.y + y;
+                int worldZ = anchor.z + side[1];
+                selection.addBlockAtWorldPos(worldX, worldY, worldZ, blockTypeId, 0, 0, 0);
+                protectedKeys.add(blockKey(worldX, worldY, worldZ));
+            }
+        }
+        return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
+                selection.getBlockCount() + " side ice tube blocks", protectedKeys);
+    }
+
     private String placeTemporarySelection(World world,
                                            String reason,
                                            Vector3i anchor,
@@ -3100,12 +3401,12 @@ public class GameplayPlaybackManager {
     private int resolveRuntimeBlockTypeId(String... blockIds) {
         for (String blockId : blockIds) {
             try {
-                int id = BlockType.getBlockIdOrUnknown(blockId, "MOTM Terra runtime terrain");
+                int id = BlockType.getBlockIdOrUnknown(blockId, "MOTM runtime terrain");
                 if (id != BlockType.UNKNOWN_ID && id != BlockType.EMPTY_ID) {
                     return id;
                 }
             } catch (Throwable e) {
-                LOG.warning("[MOTM] Terra runtime block candidate skipped: id=" + blockId
+                LOG.warning("[MOTM] Runtime block candidate skipped: id=" + blockId
                         + " error=" + e.getMessage());
             }
         }
@@ -3174,6 +3475,8 @@ public class GameplayPlaybackManager {
         String terrainEffect = lower(ability.getTerrainEffect());
         return terrainEffect.contains("ember_trail")
                 || terrainEffect.contains("ice_skate_trail")
+                || terrainEffect.contains("surf_ride")
+                || terrainEffect.contains("river_rapids")
                 || terrainEffect.contains("dust_devil")
                 || terrainEffect.contains("tunnel_path")
                 || terrainEffect.contains("ruptured_earth");
@@ -3194,6 +3497,8 @@ public class GameplayPlaybackManager {
                         || terrainEffect.contains("eye_of_the_storm")
                         || terrainEffect.contains("root_circle")
                         || terrainEffect.contains("ice_shell")
+                        || terrainEffect.contains("ice_skate_trail")
+                        || terrainEffect.contains("river_rapids")
                         || terrainEffect.contains("mist_shroud")
                         || terrainEffect.contains("condensation_veil")
                         || terrainEffect.contains("vanish")
@@ -4498,8 +4803,12 @@ public class GameplayPlaybackManager {
                 || terrainEffect.contains("umbral_shroud")) {
             applyStatusToOwner("evasion", field, player);
         }
-        if (terrainEffect.contains("tide_pool") || terrainEffect.contains("rainbow")) {
+        if (terrainEffect.contains("rainbow")) {
             applyStatusToOwner("speed", field, player);
+        }
+        if (terrainEffect.contains("oil_spill")) {
+            applyStatusToOwner("evasion", field, player);
+            applyStatusToOwner("defense_buff", field, player);
         }
         if (terrainEffect.contains("sanctuary") || terrainEffect.contains("glacier") || terrainEffect.contains("purifying")) {
             applyStatusToOwner("defense_buff", field, player);
@@ -4609,6 +4918,7 @@ public class GameplayPlaybackManager {
         if (terrainEffect.contains("snowstorm")) {
             applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             applyTargetToken("attack_slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            applyTargetToken("dot", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
@@ -4641,7 +4951,7 @@ public class GameplayPlaybackManager {
             return;
         }
 
-        if (terrainEffect.contains("glacier")) {
+        if (terrainEffect.contains("glacier") || terrainEffect.contains("ice_cap") || terrainEffect.contains("ice_shelf")) {
             applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
@@ -4649,6 +4959,17 @@ public class GameplayPlaybackManager {
         if (terrainEffect.contains("ice_shell")) {
             applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             applyTargetToken("grounded", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            return;
+        }
+
+        if (terrainEffect.contains("tide_pool")) {
+            applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            return;
+        }
+
+        if (terrainEffect.contains("oil_spill")) {
+            applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            applyTargetToken("toxic", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
@@ -4714,7 +5035,8 @@ public class GameplayPlaybackManager {
         }
 
         if (terrainEffect.contains("rainbow")) {
-            applyShield(player.getPlayerId(), ownerRef, store, field.ability(), 3.5 * sustainMultiplier);
+            healEntity(ownerRef, store, 5.0 * sustainMultiplier);
+            applyStatusToOwner("attack_buff", field, player);
             applyStatusToOwner("speed", field, player);
             return;
         }
@@ -4744,7 +5066,13 @@ public class GameplayPlaybackManager {
             return;
         }
 
-        if (terrainEffect.contains("tide_pool")) {
+        if (terrainEffect.contains("oil_spill")) {
+            applyStatusToOwner("evasion", field, player);
+            applyStatusToOwner("defense_buff", field, player);
+            return;
+        }
+
+        if (terrainEffect.contains("river_rapids")) {
             applyStatusToOwner("speed", field, player);
             return;
         }
@@ -5636,6 +5964,15 @@ public class GameplayPlaybackManager {
             }
         }
 
+        if ("anchor_haul".equals(lower(ability.getId()))) {
+            int chained = applyAnchorHaulToxicChains(playerRef, store, player, ability, affectedEntities);
+            if (chained > 0) {
+                pulledTargets += chained;
+                appliedCount += chained;
+                appliedTokens.add("toxic chain");
+            }
+        }
+
         if (appliedCount <= 0 && pulledTargets <= 0) {
             return EffectResolution.none();
         }
@@ -5656,6 +5993,44 @@ public class GameplayPlaybackManager {
                 appliedCount + pulledTargets,
                 String.join(" | ", summaryParts)
         );
+    }
+
+    private int applyAnchorHaulToxicChains(Ref<EntityStore> playerRef,
+                                           Store<EntityStore> store,
+                                           PlayerData player,
+                                           AbilityData ability,
+                                           Set<String> affectedEntities) {
+        if (playerRef == null || store == null || player == null || ability == null) {
+            return 0;
+        }
+
+        Vector3d origin = getPosition(playerRef, store);
+        if (origin == null) {
+            return 0;
+        }
+
+        int chained = 0;
+        for (Ref<EntityStore> targetRef : collectNearbyNpcTargets(store, origin, 5.0, 6)) {
+            String entityId = resolveEntityId(targetRef, store);
+            if (entityId == null || entityId.equals(player.getPlayerId()) || affectedEntities.contains(entityId)) {
+                continue;
+            }
+            boolean toxicMarked = mod.getStatusEffectManager().hasEffect(entityId, StatusEffect.Type.VULNERABILITY)
+                    || mod.getStatusEffectManager().hasEffect(entityId, StatusEffect.Type.DOT);
+            if (!toxicMarked) {
+                continue;
+            }
+            if (applyAnchorDrag(targetRef, store, playerRef, ability)) {
+                affectedEntities.add(entityId);
+                chained++;
+                applyEffectById(targetRef, store, resolveImpactEffectId(player.getPlayerClass(), currentStyleId(player), ability));
+            }
+        }
+        if (chained > 0) {
+            LOG.info("[MOTM] Anchor Haul toxic chains resolved: playerId=" + player.getPlayerId()
+                    + " chained=" + chained);
+        }
+        return chained;
     }
 
     private LineControlRuntimeResult startLineControlRuntime(Player runtimePlayer,
@@ -5910,6 +6285,7 @@ public class GameplayPlaybackManager {
             LOG.warning("[MOTM] No summon model mapping for " + ability.getId());
             return SummonRuntimeResult.none();
         }
+        String roleId = resolveSummonRoleId(player.getPlayerClass(), style.getId(), ability, modelId);
 
         Vector3d spawnPosition = resolveSummonPosition(playerRef, store, ability, context);
         if (spawnPosition == null) {
@@ -5918,7 +6294,7 @@ public class GameplayPlaybackManager {
 
         World world = runtimePlayer.getWorld();
         NPCEntity summon = new NPCEntity(world);
-        summon.setRoleName(modelId);
+        summon.setRoleName(roleId);
         summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
         world.spawnEntity(summon, spawnPosition, new Rotation3f(0f, 0f, 0f));
 
@@ -5936,6 +6312,7 @@ public class GameplayPlaybackManager {
 
         LOG.info("[MOTM] Summon spawned: abilityId=" + ability.getId()
                 + " model=" + modelId
+                + " role=" + roleId
                 + " position=" + formatVector(spawnPosition)
                 + " duration=" + AbilityPresentation.formatDecimal(Math.max(2.0, ability.getDurationSeconds())) + "s");
 
@@ -6102,10 +6479,10 @@ public class GameplayPlaybackManager {
 
     private String resolveSummonRole(String summonName) {
         return switch (summonName) {
-            case "frosty_golem" -> "tank";
-            case "snow_imp", "skeleton_minion" -> "skirmisher";
+            case "frosty_golem", "yeti_frosty" -> "tank";
+            case "snow_imp", "snowman_imp", "skeleton_minion" -> "skirmisher";
             case "void_spawn" -> "caster";
-            case "swamp_monster", "treant_sapling" -> "bruiser";
+            case "swamp_monster", "crocodile_swamp_monster", "snapjaw_abyssal", "treant_sapling" -> "bruiser";
             case "locust_queen" -> "swarm";
             case "shadow_clone" -> "clone";
             case "scarak_egg" -> "hatchling";
@@ -6354,9 +6731,10 @@ public class GameplayPlaybackManager {
         }
 
         return switch (summonName) {
-            case "frosty_golem" -> "root";
-            case "snow_imp" -> "slow";
-            case "swamp_monster", "treant_sapling" -> "root";
+            case "frosty_golem", "yeti_frosty" -> "root";
+            case "snow_imp", "snowman_imp" -> "slow";
+            case "swamp_monster", "crocodile_swamp_monster", "treant_sapling" -> "root";
+            case "snapjaw_abyssal" -> "vulnerability";
             case "void_spawn" -> "vulnerability";
             case "locust_queen", "scarak_egg" -> "dot";
             case "shadow_clone" -> "vulnerability";
@@ -6382,17 +6760,21 @@ public class GameplayPlaybackManager {
         String summonName = lower(summon.ability.getSummonName());
         switch (summonName) {
             case "skeleton_minion" -> applyTokenToTarget("dot", targetRef, store, summon.ref(), summon.ownerPlayerId, summon.ability);
-            case "snow_imp" -> {
+            case "snow_imp", "snowman_imp" -> {
                 applyTokenToTarget("attack_slow", targetRef, store, summon.ref(), summon.ownerPlayerId, summon.ability);
                 applySummonSplashToken(summon, targetRef, store, "slow", 2.6, 1);
             }
-            case "frosty_golem" -> {
+            case "frosty_golem", "yeti_frosty" -> {
                 applySummonSplashToken(summon, targetRef, store, "slow", 3.4, 2);
                 applySummonSplashToken(summon, targetRef, store, "root", 2.0, 1);
             }
-            case "swamp_monster" -> {
+            case "swamp_monster", "crocodile_swamp_monster" -> {
                 applySummonSplashToken(summon, targetRef, store, "dot", 3.2, 2);
                 applySummonSplashToken(summon, targetRef, store, "slow", 3.2, 2);
+            }
+            case "snapjaw_abyssal" -> {
+                applyTokenToTarget("vulnerability", targetRef, store, summon.ref(), summon.ownerPlayerId, summon.ability);
+                applySummonSplashToken(summon, targetRef, store, "slow", 2.8, 2);
             }
             case "treant_sapling" -> {
                 applySummonSplashToken(summon, targetRef, store, "root", 2.8, 2);
@@ -7346,7 +7728,13 @@ public class GameplayPlaybackManager {
         if (!"self_buff".equals(castType) && !"dash_buff".equals(castType)) {
             return false;
         }
-        if ("metal_coat".equals(lower(ability.getId())) || "obsidian_skin".equals(lower(ability.getId()))) {
+        String abilityId = lower(ability.getId());
+        if ("metal_coat".equals(abilityId) || "obsidian_skin".equals(abilityId)
+                || switch (abilityId) {
+                    case "skate", "waverider", "overheat", "vapor_vanish", "dispersion",
+                            "hidrosis", "river_rapids", "rainbow" -> true;
+                    default -> false;
+                }) {
             return false;
         }
 
@@ -7646,6 +8034,12 @@ public class GameplayPlaybackManager {
                 modifier += 0.25;
             }
             return damage * modifier;
+        }
+
+        if ("anchor_haul".equals(abilityId)
+                && (mod.getStatusEffectManager().hasEffect(targetEntityId, StatusEffect.Type.VULNERABILITY)
+                || mod.getStatusEffectManager().hasEffect(targetEntityId, StatusEffect.Type.DOT))) {
+            return damage * 1.10;
         }
 
         return damage;
@@ -8046,7 +8440,16 @@ public class GameplayPlaybackManager {
     }
 
     private boolean isCasterCenteredAreaAbility(AbilityData ability) {
-        return ability != null && "lava_pool".equals(lower(ability.getId()));
+        if (ability == null) {
+            return false;
+        }
+        String abilityId = lower(ability.getId());
+        return "lava_pool".equals(abilityId)
+                || "snowstorm".equals(abilityId)
+                || "piercing_rain".equals(abilityId)
+                || "rainbow".equals(abilityId)
+                || "tide_pool".equals(abilityId)
+                || "oil_spill".equals(abilityId);
     }
 
     private Vector3d resolveActiveLapidaryGemCenter(PlayerData player, AbilityData ability, Store<EntityStore> store) {
@@ -8193,8 +8596,12 @@ public class GameplayPlaybackManager {
             return switch (summonName) {
                 case "treant_sapling" -> "Spirit_Root";
                 case "snow_imp" -> "Spirit_Frost";
+                case "snowman_imp" -> "WinterHoliday_Snowman";
                 case "frosty_golem" -> "Golem_Crystal_Frost";
+                case "yeti_frosty" -> "Yeti";
                 case "swamp_monster" -> "Frog_Green";
+                case "crocodile_swamp_monster" -> "Crocodile";
+                case "snapjaw_abyssal" -> "Snapjaw";
                 case "skeleton_minion", "shadow_clone" -> "Shadow_Knight";
                 case "void_spawn" -> "Spawn_Void";
                 case "scarak_egg" -> "Scarak_Fighter";
@@ -8204,6 +8611,17 @@ public class GameplayPlaybackManager {
         }
 
         return HytaleAssetResolver.resolveModelId(classId, styleId, ability);
+    }
+
+    private String resolveSummonRoleId(String classId, String styleId, AbilityData ability, String modelId) {
+        String summonName = lower(ability != null ? ability.getSummonName() : null);
+        return switch (summonName) {
+            case "snowman_imp" -> EMPTY_VISUAL_ROLE_NAME;
+            case "yeti_frosty" -> "Yeti";
+            case "crocodile_swamp_monster" -> "Crocodile";
+            case "snapjaw_abyssal" -> "Snapjaw";
+            default -> modelId != null && !modelId.isBlank() ? modelId : SUMMON_ROLE_NAME;
+        };
     }
 
     private String resolveTransformationEffectId(String abilityId) {
@@ -8963,15 +9381,25 @@ public class GameplayPlaybackManager {
             case "burn", "self_burn" -> new StatusEffect(
                     StatusEffect.Type.BURN, durationTicks, 0.03, sourcePlayerId, sourceAbilityId);
             case "dot" -> new StatusEffect(
-                    StatusEffect.Type.DOT, durationTicks, 0.05, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.DOT, durationTicks,
+                    ability != null && ability.getDotPercentPerSecond() > 0
+                            ? ability.getDotPercentPerSecond() / 100.0
+                            : 0.05,
+                    sourcePlayerId, sourceAbilityId);
             case "stun", "stun_if_wall" -> new StatusEffect(
                     StatusEffect.Type.STUN, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "slow" -> new StatusEffect(
-                    StatusEffect.Type.SLOW, durationTicks, 0.20, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.SLOW, durationTicks, resolveSlowValue(ability), sourcePlayerId, sourceAbilityId);
             case "slow_stack" -> new StatusEffect(
                     StatusEffect.Type.SLOW_STACK, durationTicks, 0.10, sourcePlayerId, sourceAbilityId);
             case "vulnerability", "curse" -> new StatusEffect(
-                    StatusEffect.Type.VULNERABILITY, durationTicks, 0.25, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.VULNERABILITY, durationTicks, resolveVulnerabilityValue(ability), sourcePlayerId, sourceAbilityId);
+            case "toxic" -> new StatusEffect(
+                    StatusEffect.Type.VULNERABILITY,
+                    Math.max(durationTicks, (int) Math.round(10.0 * StyleManager.TICKS_PER_SECOND)),
+                    0.10,
+                    sourcePlayerId,
+                    sourceAbilityId);
             case "freeze" -> new StatusEffect(
                     StatusEffect.Type.FREEZE, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "root" -> new StatusEffect(
@@ -9030,6 +9458,36 @@ public class GameplayPlaybackManager {
                                    Ref<EntityStore> sourceRef,
                                    AbilityData ability) {
         return applyKnockbackResult(targetRef, store, sourceRef, ability).applied();
+    }
+
+    private double resolveSlowValue(AbilityData ability) {
+        String abilityId = lower(ability != null ? ability.getId() : null);
+        String terrainEffect = lower(ability != null ? ability.getTerrainEffect() : null);
+        if ("oil_spill".equals(abilityId) || terrainEffect.contains("oil_spill")) {
+            return 0.60;
+        }
+        if ("bilge_dump".equals(abilityId)) {
+            return 0.20;
+        }
+        if (terrainEffect.contains("ice_cap") || terrainEffect.contains("glacier") || terrainEffect.contains("ice_shelf")) {
+            return 0.30;
+        }
+        if ("snowstorm".equals(abilityId)) {
+            return 0.30;
+        }
+        return 0.20;
+    }
+
+    private double resolveVulnerabilityValue(AbilityData ability) {
+        String abilityId = lower(ability != null ? ability.getId() : null);
+        String terrainEffect = lower(ability != null ? ability.getTerrainEffect() : null);
+        if ("tide_pool".equals(abilityId) || "rip_current".equals(abilityId) || terrainEffect.contains("tide_pool")) {
+            return 0.20;
+        }
+        if ("rainbow".equals(abilityId)) {
+            return 0.0;
+        }
+        return 0.25;
     }
 
     private boolean applyKnockbackFromPoint(Ref<EntityStore> targetRef,
@@ -9322,6 +9780,24 @@ public class GameplayPlaybackManager {
         Vector3d anchor = getPosition(sourceRef, store);
         if (anchor == null) {
             return false;
+        }
+
+        if ("rip_current".equals(lower(ability != null ? ability.getId() : null))) {
+            String playerId = resolveEntityId(sourceRef, store);
+            ActiveField tidePool = findActiveOwnerField(playerId, "tide_pool");
+            if (tidePool != null
+                    && tidePool.center() != null
+                    && distance(anchor, tidePool.center()) <= Math.max(1.0, tidePool.radius())) {
+                return applyPullTowardsPoint(
+                        targetRef,
+                        store,
+                        tidePool.center(),
+                        ability,
+                        1.0,
+                        1.25,
+                        0.05
+                );
+            }
         }
 
         return applyPullTowardsPoint(
