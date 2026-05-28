@@ -471,6 +471,53 @@ function Assert-RunEvidence {
         }
     }
 
+    $cleanupSnapshots = @($serverTruthEvents | Where-Object {
+        -not $_.parseError `
+            -and [string]$_.type -eq "snapshot" `
+            -and [string]$_.data.label -eq "post-test-protection-cleanup"
+    })
+    if ($cleanupSnapshots.Count -eq 0) {
+        throw "Missing post-test-protection-cleanup snapshot."
+    }
+    $cleanup = $cleanupSnapshots[-1].data
+    if ([bool]$cleanup.playerData.freeCast) {
+        throw "Cleanup left test protection/freecast enabled."
+    }
+    if (@($cleanup.runtimePlayer.nativeEntityEffects).Count -gt 0) {
+        throw "Cleanup left native entity effects active."
+    }
+    if (@($cleanup.statusEffects).Count -gt 0) {
+        throw "Cleanup left MOTM status effects active."
+    }
+    $runtime = $cleanup.activeRuntime
+    $runtimeResidue = New-Object System.Collections.Generic.List[string]
+    foreach ($field in @(
+            "activeProjectiles",
+            "activeFields",
+            "activeTerrainSelections",
+            "activeMovingTerrainTrails",
+            "activeStackingColumns",
+            "activeLapidaryGems",
+            "activeChannels",
+            "activeLineControls",
+            "activePlayerAnchors",
+            "activeSelfEffects",
+            "visualProxyRefs",
+            "activeTransformations",
+            "activeWeaponFollowUps",
+            "activeSummonOwners",
+            "activeSummons"
+        )) {
+        $value = 0
+        try { $value = [int]$runtime.$field } catch { $value = 0 }
+        if ($value -ne 0) {
+            [void]$runtimeResidue.Add("$field=$value")
+        }
+    }
+    if ($runtimeResidue.Count -gt 0) {
+        throw "Cleanup left active runtime residue: $($runtimeResidue -join ', ')"
+    }
+
     $packetEvents = Read-JsonlObjects $packetPath
     $eventsBySource = @{
         "control" = $controlEvents

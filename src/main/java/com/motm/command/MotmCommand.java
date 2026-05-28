@@ -1291,9 +1291,11 @@ public class MotmCommand {
         if (args.length >= 3 && "clear".equalsIgnoreCase(args[2])) {
             mod.setFreeCastEnabled(player.getPlayerId(), false);
             mod.getStatusEffectManager().clearEffects(player.getPlayerId());
+            String runtimeReset = resetRuntimeForLoadoutSwap(player, runtimePlayer);
             String nativeResult = mod.queueRuntimeEntityEffectsClearForDev(player.getPlayerId());
             mod.refreshStatusHud(player.getPlayerId());
-            String result = "[MOTM] Dev effects cleared: test protection disabled, statuses cleared, visuals=" + nativeResult + ".";
+            String result = "[MOTM] Dev effects cleared: test protection disabled, statuses cleared, runtime="
+                    + runtimeReset + ", visuals=" + nativeResult + ".";
             LOG.info(result);
             return result;
         }
