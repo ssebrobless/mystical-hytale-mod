@@ -54,6 +54,7 @@ function Get-JavaSurface([string]$Root) {
 $stylePath = Join-Path $ProjectRoot "src/main/resources/data/styles/terra_styles.json"
 $playbackPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/GameplayPlaybackManager.java"
 $styleManagerPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/StyleManager.java"
+$sinkholeMarkerPath = Join-Path $ProjectRoot "src/main/java/com/motm/runtime/ability/terrain/TerrainSinkholeMarkerHytaleAdapter.java"
 
 Assert (Test-Path $stylePath) "terra_styles.json exists"
 Assert (Test-Path $playbackPath) "GameplayPlaybackManager.java exists"
@@ -62,6 +63,10 @@ Assert (Test-Path $styleManagerPath) "StyleManager.java exists"
 $data = Get-Content $stylePath -Raw | ConvertFrom-Json
 $playback = Get-JavaSurface $ProjectRoot
 $styleManager = Get-Content $styleManagerPath -Raw
+$sinkholeMarker = ""
+if (Test-Path $sinkholeMarkerPath) {
+    $sinkholeMarker = Get-Content $sinkholeMarkerPath -Raw
+}
 
 $terraStyles = @($data.styles | Where-Object { $_.class_id -eq "terra" })
 $abilities = @{}
@@ -133,6 +138,10 @@ Assert ($styleManager -match 'consumeActiveToggle\(playerId,\s*consumedToggle\)'
 Assert ($playback -match 'case "sandstorm" -> \{[\s\S]*?sand particle aura[\s\S]*?\}') "Sandstorm uses particle aura path, not block placement"
 Assert ($playback -notmatch 'case "sandstorm" ->[\s\S]*?placeRingBlockSelection[\s\S]*?"Soil_Sand"') "Sandstorm does not place sand/sandstone block rings"
 Assert ($playback -notmatch 'dust_devil_sand') "Dust Devil does not place supplemental sand/sandstone block rings"
+Assert ($playback -notmatch 'case "debris" -> placementAdapter\.placeTrailSelection') "Debris does not place placeholder trail blocks"
+Assert ($playback -match 'case "debris" -> "brown debris wave"') "Debris is routed as a brown debris wave cue"
+Assert ($playback -notmatch 'case "tunnel" -> placementAdapter\.placeTrailSelection') "Tunnel does not place placeholder stone trail blocks"
+Assert ($playback -match 'case "tunnel" -> "stone tunnel form"') "Tunnel is routed as a transformation/movement cue"
 
 $lapidary = Get-Ability $abilities "lapidary"
 Assert ($lapidary.cast_type -eq "ground_target") "Lapidary places a ground target object"
@@ -147,12 +156,16 @@ Assert ([double]$fracture.radius -eq 20.0) "Fracture radius is 20"
 Assert ([double]$fracture.height -eq 12.0) "Fracture height is 12"
 Assert ([double]$fracture.damage_percent -eq 40.0) "Fracture damage is 40 percent max HP"
 Assert ($fracture.terrain_effect -eq "crystal_fracture") "Fracture terrain effect is crystal_fracture"
+Assert ($playback -notmatch 'case "fracture" -> placementAdapter\.placeRingBlockSelection') "Fracture does not place placeholder crystal ring blocks"
+Assert ($playback -match 'case "fracture" -> \{[\s\S]*?green fracture burst at') "Fracture is routed as a green burst cue"
 
 $refraction = Get-Ability $abilities "refraction"
 Assert ($refraction.cast_type -eq "support_zone") "Refraction is a support zone"
 Assert ([double]$refraction.radius -eq 20.0) "Refraction radius is 20"
 Assert ([double]$refraction.height -eq 12.0) "Refraction height is 12"
 Assert ($refraction.terrain_effect -eq "crystal_refraction") "Refraction terrain effect is crystal_refraction"
+Assert ($playback -notmatch 'case "refraction" -> placementAdapter\.placeRingBlockSelection') "Refraction does not place placeholder crystal ring blocks"
+Assert ($playback -match 'case "refraction" -> \{[\s\S]*?green refraction aura at') "Refraction is routed as a green aura cue"
 
 Assert ($playback -match '\[MOTM\]\[terra-audit\]') "Terra cast telemetry is present"
 Assert ($playback -match 'targetBlock\.y \+ 1\.0') "Ground markers are offset above targeted blocks"
@@ -161,11 +174,17 @@ Assert ($playback -match 'case "fracture"') "Fracture has terrain runtime hooks"
 Assert ($playback -match 'case "refraction"') "Refraction has terrain runtime hooks"
 Assert ($playback -match 'resolveActiveLapidaryGemCenter') "Gem abilities resolve the active Lapidary anchor"
 Assert ($playback -match '2,\s*2,\s*2,\s*expireAt') "Lapidary visual is a 2x2x2 cube"
+Assert ($sinkholeMarker -match 'Sinkhole surface marker uses particle/effect cue only') "Sinkhole marker avoids placeholder crack block platforms"
+Assert ($sinkholeMarker -notmatch 'placeSurfacePatchSelection') "Sinkhole marker does not place surface patch block cracks"
+Assert ($sinkholeMarker -notmatch 'placeRingBlockSelection') "Sinkhole marker does not place dust ring blocks"
+Assert ($playback -match 'GLOBAL_CLEANUP_ROLES[\s\S]*?Test_Dummy_Stationary') "Style-test dummy cleanup includes stale global dummy cleanup"
 Assert ($playback -match 'MOTM_Proof_Coating_Obsidian') "Obsidian Skin queues the obsidian coating effect"
 Assert ($playback -match 'Plant_Flower_Tall_Red') "Nightshade uses the locked tall red flower marker"
 Assert ($playback -match 'Plant_Cactus_Ball_1') "Cacti Cluster uses the locked cactus ball marker"
-Assert ($playback -match 'Furniture_Ancient_Statue') "Gargoyle uses the ancient statue marker"
-Assert ($playback -match 'Furniture_Temple_Light_Statue') "Glare uses the temple light statue marker"
+Assert ($playback -match 'case "gargoyle" -> \{[\s\S]*?MOTM_Proof_Coating_Stone[\s\S]*?owner stone coating') "Gargoyle uses entity stone coating without marker blocks"
+Assert ($playback -match 'case "glare" -> \{[\s\S]*?MOTM_Proof_Coating_Stone[\s\S]*?target stone coating') "Glare uses target stone coating without marker blocks"
+Assert ($playback -notmatch 'case "gargoyle" -> placementAdapter\.placeSurfaceColumnSelection') "Gargoyle does not place placeholder statue blocks"
+Assert ($playback -notmatch 'case "glare" ->[\s\S]*?Furniture_Temple_Light_Statue') "Glare does not place placeholder statue blocks"
 Assert ($playback -match '"rubble_rouser"[\s\S]*?4\.0') "Rubble Rouser splash radius is 4"
 Assert ($playback -match 'case "alloy_enhancement" -> 0\.30') "Alloy Enhancement native damage multiplier is 30 percent"
 Assert ($playback -match 'terrainEffect\.contains\("mudpit"\)[\s\S]*?applyTargetToken\("slow"[\s\S]*?applyTargetToken\("vulnerability"') "Mud Pit applies slow and vulnerability without root"

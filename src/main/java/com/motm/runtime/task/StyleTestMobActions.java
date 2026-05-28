@@ -37,6 +37,9 @@ public final class StyleTestMobActions {
             "HytaleWolf",
             "Crawler"
     );
+    private static final Set<String> GLOBAL_CLEANUP_ROLES = Set.of(
+            "Test_Dummy_Stationary"
+    );
 
     private final StyleTestRuntimeState state;
     private final Logger log;
@@ -93,7 +96,9 @@ public final class StyleTestMobActions {
             return "[MOTM] Runtime world is unavailable for style-test mobs.";
         }
 
+        Store<EntityStore> currentStore = playerRefStore(runtimePlayer);
         int cleared = clearTracked(playerId);
+        int staleCleared = visitCleanupRoles(currentStore, runtimePlayer, true, true);
         List<Ref<EntityStore>> targets = new ArrayList<>();
         if ("cluster".equals(normalizedMode)) {
             addNpc(targets, world, com.motm.util.MotmVectors.addScaled(basePosition, horizontalForward, 4.0), "Test_Dummy_Stationary");
@@ -123,7 +128,7 @@ public final class StyleTestMobActions {
 
         String summary = "[MOTM] Style test mobs spawned: count=" + spawned
                 + " mode=" + normalizedMode
-                + " clearedPrevious=" + cleared
+                + " clearedPrevious=" + (cleared + staleCleared)
                 + " tracked=" + countValidRefs(targets)
                 + " grounded=" + formatVector(groundPosition)
                 + " floating=" + formatVector(floatingPosition);
@@ -133,7 +138,7 @@ public final class StyleTestMobActions {
 
     public String clear(String playerId, Store<EntityStore> currentStore, Player player) {
         int cleared = clearTracked(playerId);
-        int staleCleared = visitNearby(currentStore, player, true);
+        int staleCleared = visitCleanupRoles(currentStore, player, true, true);
         String summary = "[MOTM] Style test mobs cleared: count=" + (cleared + staleCleared)
                 + " tracked=" + cleared
                 + " staleNearby=" + staleCleared;
@@ -143,7 +148,7 @@ public final class StyleTestMobActions {
 
     public String count(String playerId, Store<EntityStore> currentStore, Player player) {
         int count = countTracked(playerId);
-        int nearby = visitNearby(currentStore, player, false);
+        int nearby = visitCleanupRoles(currentStore, player, false, true);
         String summary = "[MOTM] Style test mobs tracked: count=" + count
                 + " nearbyCleanupRoles=" + nearby;
         log.info(summary + " playerId=" + playerId);
@@ -237,7 +242,14 @@ public final class StyleTestMobActions {
         return cleared;
     }
 
-    private int visitNearby(Store<EntityStore> currentStore, Player player, boolean despawn) {
+    private Store<EntityStore> playerRefStore(Player player) {
+        if (player == null || player.getReference() == null || !player.getReference().isValid()) {
+            return null;
+        }
+        return player.getReference().getStore();
+    }
+
+    private int visitCleanupRoles(Store<EntityStore> currentStore, Player player, boolean despawn, boolean includeGlobalDummies) {
         if (currentStore == null || player == null) {
             return 0;
         }
@@ -257,7 +269,8 @@ public final class StyleTestMobActions {
 
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 Vector3d position = entityPosition(currentStore, ref);
-                if (position == null || distance(playerPosition, position) > 28.0) {
+                boolean globalCleanup = includeGlobalDummies && isGlobalCleanupRole(npc);
+                if (!globalCleanup && (position == null || distance(playerPosition, position) > 28.0)) {
                     continue;
                 }
 
@@ -276,6 +289,14 @@ public final class StyleTestMobActions {
         }
         return CLEANUP_ROLES.contains(npc.getRoleName())
                 || CLEANUP_ROLES.contains(npc.getNPCTypeId());
+    }
+
+    private boolean isGlobalCleanupRole(NPCEntity npc) {
+        if (npc == null) {
+            return false;
+        }
+        return GLOBAL_CLEANUP_ROLES.contains(npc.getRoleName())
+                || GLOBAL_CLEANUP_ROLES.contains(npc.getNPCTypeId());
     }
 
     private int countValidRefs(List<Ref<EntityStore>> refs) {

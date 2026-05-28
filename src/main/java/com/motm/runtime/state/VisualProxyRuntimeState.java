@@ -27,14 +27,17 @@ public final class VisualProxyRuntimeState {
     }
 
     public boolean isEmpty() {
+        pruneInvalidRefs();
         return visualProxyRefs.isEmpty();
     }
 
     public int size() {
+        pruneInvalidRefs();
         return visualProxyRefs.size();
     }
 
     public List<Ref<EntityStore>> snapshot() {
+        pruneInvalidRefs();
         return List.copyOf(visualProxyRefs);
     }
 
@@ -43,7 +46,7 @@ public final class VisualProxyRuntimeState {
             return false;
         }
         try {
-            Store<EntityStore> store = ref.isValid() ? ref.getStore() : null;
+            Store<EntityStore> store = isValidRef(ref) ? ref.getStore() : null;
             NPCEntity npc = store != null ? store.getComponent(ref, NPCEntity.getComponentType()) : null;
             if (npc != null && !npc.isDespawning()) {
                 npc.setToDespawn();
@@ -64,12 +67,18 @@ public final class VisualProxyRuntimeState {
     }
 
     public int despawnForStore(Store<EntityStore> store) {
-        if (store == null || isEmpty()) {
+        if (store == null) {
             return 0;
         }
         int removed = 0;
         for (Ref<EntityStore> ref : snapshot()) {
-            if (ref == null || !ref.isValid() || ref.getStore() != store) {
+            if (ref == null || !isValidRef(ref)) {
+                if (remove(ref)) {
+                    removed++;
+                }
+                continue;
+            }
+            if (ref.getStore() != store) {
                 continue;
             }
             if (despawn(ref)) {
@@ -77,5 +86,21 @@ public final class VisualProxyRuntimeState {
             }
         }
         return removed;
+    }
+
+    private void pruneInvalidRefs() {
+        for (Ref<EntityStore> ref : visualProxyRefs) {
+            if (ref == null || !isValidRef(ref)) {
+                remove(ref);
+            }
+        }
+    }
+
+    private static boolean isValidRef(Ref<EntityStore> ref) {
+        try {
+            return ref != null && ref.isValid();
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 }

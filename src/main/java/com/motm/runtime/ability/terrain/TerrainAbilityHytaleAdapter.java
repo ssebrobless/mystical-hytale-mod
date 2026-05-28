@@ -86,35 +86,35 @@ public final class TerrainAbilityHytaleAdapter {
             case "fracture" -> {
                 Vector3d gemCenter = support.resolveActiveLapidaryGemCenter(player, ability, store);
                 Vector3d burstCenter = gemCenter != null ? gemCenter : center;
-                String terrain = placementAdapter.placeRingBlockSelection(world, reason, burstCenter, Math.max(2.0, ability.getRadius()),
-                        Math.min(expireAt, System.currentTimeMillis() + 1200L),
-                        "Rock_Crystal_Green_Block", "Rock_Crystal_Green_Large", "Plant_Bush_Crystal");
-                yield terrain.isBlank() ? "green fracture burst" : "green fracture burst + " + terrain;
+                yield "green fracture burst at " + formatVector(burstCenter);
             }
             case "refraction" -> {
                 Vector3d gemCenter = support.resolveActiveLapidaryGemCenter(player, ability, store);
                 Vector3d auraCenter = gemCenter != null ? gemCenter : center;
-                String terrain = placementAdapter.placeRingBlockSelection(world, reason, auraCenter, Math.max(2.0, ability.getRadius()),
-                        expireAt, "Rock_Crystal_Green_Block", "Rock_Crystal_Green_Large", "Plant_Bush_Crystal");
-                yield terrain.isBlank() ? "green refraction aura" : "green refraction aura + " + terrain;
+                yield "green refraction aura at " + formatVector(auraCenter);
             }
             case "glare" -> {
                 if (explicitTargetRef != null) {
                     support.applyEffectById(explicitTargetRef, store, "MOTM_Proof_Coating_Stone");
-                    String terrain = placementAdapter.placeSurfacePatchSelection(world, reason, center, 1, expireAt,
-                            "Furniture_Temple_Light_Statue", "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
-                    yield terrain.isBlank() ? "target stone coating" : "target stone coating + " + terrain;
+                    yield "target stone coating";
                 }
                 yield "";
             }
-            case "gargoyle" -> placementAdapter.placeSurfaceColumnSelection(world, reason, origin, 1, expireAt,
-                    "Furniture_Ancient_Statue", "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
-            case "debris" -> placementAdapter.placeTrailSelection(world, reason, origin, forward, System.currentTimeMillis() + 2400L,
-                    "Soil_Dirt", "Rock_Stone", "Rock_Stone_Brick");
-            case "tunnel" -> placementAdapter.placeTrailSelection(world, reason, origin, forward, System.currentTimeMillis() + 2400L,
-                    "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
+            case "gargoyle" -> {
+                support.applyEffectById(playerRef, store, "MOTM_Proof_Coating_Stone");
+                yield "owner stone coating";
+            }
+            case "debris" -> "brown debris wave";
+            case "tunnel" -> "stone tunnel form";
             default -> "";
         };
+    }
+
+    private String formatVector(Vector3d vector) {
+        if (vector == null) {
+            return "(unknown)";
+        }
+        return String.format(java.util.Locale.ROOT, "(%.2f, %.2f, %.2f)", vector.x, vector.y, vector.z);
     }
 
     public interface Support {

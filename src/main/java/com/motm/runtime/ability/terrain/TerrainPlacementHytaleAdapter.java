@@ -120,9 +120,9 @@ public final class TerrainPlacementHytaleAdapter {
             return;
         }
         if (terrainEffect.contains("tunnel_path") || terrainEffect.contains("ruptured_earth")) {
-            placeSurfacePatchSelection(world, abilityId.isBlank() ? "earth_movement" : abilityId,
-                    center, 1, Math.min(expireAtMillis, System.currentTimeMillis() + 2600L),
-                    "Soil_Dirt", "Rock_Stone", "Rock_Stone_Brick");
+            logInfo("[MOTM] Skipping block surface cue for movement-only terrain effect: ability="
+                    + (abilityId.isBlank() ? "<unknown>" : abilityId)
+                    + " terrainEffect=" + terrainEffect);
         }
     }
 

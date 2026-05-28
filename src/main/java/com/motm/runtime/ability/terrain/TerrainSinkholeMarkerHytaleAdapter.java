@@ -26,16 +26,9 @@ public final class TerrainSinkholeMarkerHytaleAdapter {
             return;
         }
 
-        long expireAt = System.currentTimeMillis() + Math.max(1200L, durationMillis);
-        String cracks = placementAdapter.placeSurfacePatchSelection(world, "sinkhole_cracks", field.center(), 2, expireAt,
-                "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
-        String dust = placementAdapter.placeRingBlockSelection(world, "sinkhole_dust_ring", field.center(), 3.0, expireAt,
-                "Soil_Dirt", "Soil_Grass");
-        if (!cracks.isBlank() || !dust.isBlank()) {
-            support.logInfo("[MOTM] Sinkhole surface marker placed: cracks=" + !cracks.isBlank()
-                    + " dustRing=" + !dust.isBlank()
-                    + " center=" + field.center());
-        }
+        support.logInfo("[MOTM] Sinkhole surface marker uses particle/effect cue only: center="
+                + field.center()
+                + " durationMillis=" + Math.max(1200L, durationMillis));
     }
 
     public interface Support {
