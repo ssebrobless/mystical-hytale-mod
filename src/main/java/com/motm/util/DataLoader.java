@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.motm.content.ability.AbilityContentValidator;
 import com.motm.model.*;
 
 import java.io.*;
@@ -192,6 +193,10 @@ public class DataLoader {
                 LOG.info("[MOTM] Loaded " + styles.size() + " styles (" + totalAbilities + " abilities) for class: " + classId);
             }
         }
+        var validation = AbilityContentValidator.validateStyles(
+                styleCache.values().stream().flatMap(List::stream).toList());
+        validation.throwIfInvalid();
+        LOG.info("[MOTM] Validated " + validation.shapes().size() + " ability runtime shapes.");
     }
 
     public List<StyleData> getStylesForClass(String classId) {

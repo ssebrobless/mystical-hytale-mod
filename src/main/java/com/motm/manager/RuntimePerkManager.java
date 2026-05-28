@@ -379,7 +379,7 @@ public class RuntimePerkManager {
         if (forced && forcedWeatherIndex >= 0) {
             WeatherTracker tracker = store.getComponent(playerRef, WeatherTracker.getComponentType());
             try {
-                PlayerRef universePlayerRef = runtimePlayer.getPlayerRef();
+                PlayerRef universePlayerRef = store.getComponent(playerRef, PlayerRef.getComponentType());
                 if (tracker != null && universePlayerRef != null) {
                     tracker.setWeatherIndex(universePlayerRef, forcedWeatherIndex);
                     rainState = resolveRainState(playerRef, store);

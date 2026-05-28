@@ -11,6 +11,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+if (($global:IsMacOS -eq $true) -and [string]::IsNullOrWhiteSpace($env:APPDATA)) {
+    $env:APPDATA = Join-Path $HOME "Library/Application Support"
+}
+
 function Resolve-MotmDataDir {
     param([string]$WorldName, [string]$DataDir)
 
@@ -80,7 +84,191 @@ function Write-ControlEvent {
         Add-Content -LiteralPath (Join-Path $RunDir "control-requests.jsonl") -Encoding UTF8
 }
 
-$motmDataDir = Resolve-MotmDataDir -WorldName $WorldName -DataDir $DataDir
+function Resolve-HytaleRootForDiagnostic {
+    if (-not [string]::IsNullOrWhiteSpace($env:HYTALE_ROOT)) {
+        return $env:HYTALE_ROOT
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:APPDATA)) {
+        $candidate = Join-Path $env:APPDATA "Hytale"
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+    if ($global:IsMacOS -eq $true) {
+        $candidate = Join-Path $HOME "Library/Application Support/Hytale"
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+    return ""
+}
+
+function Get-RecentLogSummary {
+    $hytaleRoot = Resolve-HytaleRootForDiagnostic
+    if ([string]::IsNullOrWhiteSpace($hytaleRoot)) {
+        return $null
+    }
+
+    $logsDir = Join-Path $hytaleRoot "UserData/Logs"
+    if (-not (Test-Path -LiteralPath $logsDir)) {
+        return [ordered]@{
+            logsDir = $logsDir
+            exists = $false
+        }
+    }
+
+    $latest = Get-ChildItem -LiteralPath $logsDir -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+    if (-not $latest) {
+        return [ordered]@{
+            logsDir = $logsDir
+            exists = $true
+            latestLog = $null
+        }
+    }
+
+    $tail = @()
+    try {
+        $tail = @(Get-Content -LiteralPath $latest.FullName -Tail 40 -ErrorAction Stop)
+    } catch {
+        $tail = @("Could not read latest log tail: $($_.Exception.Message)")
+    }
+
+    return [ordered]@{
+        logsDir = $logsDir
+        exists = $true
+        latestLog = $latest.FullName
+        latestLogLastWriteTime = $latest.LastWriteTime.ToString("o")
+        latestLogTail = $tail
+    }
+}
+
+function Get-HytaleProcessSummary {
+    $matches = @()
+    try {
+        $matches = @(Get-Process -ErrorAction Stop | Where-Object {
+            $_.ProcessName -match '(?i)hytale'
+        } | Select-Object -First 10 | ForEach-Object {
+            $startTime = $null
+            $path = $null
+            try { $startTime = $_.StartTime.ToString("o") } catch { }
+            try { $path = $_.Path } catch { }
+            [ordered]@{
+                id = $_.Id
+                processName = $_.ProcessName
+                startTime = $startTime
+                path = $path
+            }
+        })
+    } catch {
+        return [ordered]@{
+            error = $_.Exception.Message
+            matches = @()
+        }
+    }
+
+    return [ordered]@{
+        count = $matches.Count
+        matches = $matches
+    }
+}
+
+function New-DevCommandDiagnostic {
+    param(
+        [string]$FailureType,
+        [string]$Message,
+        [string]$MotmDataDir = "",
+        [string]$Inbox = "",
+        [string]$Outbox = "",
+        [Int64]$BeforeLength = 0
+    )
+
+    $outboxTail = @()
+    $outboxLength = $null
+    $outboxLastWrite = $null
+    if (-not [string]::IsNullOrWhiteSpace($Outbox) -and (Test-Path -LiteralPath $Outbox)) {
+        try {
+            $outboxItem = Get-Item -LiteralPath $Outbox
+            $outboxLength = $outboxItem.Length
+            $outboxLastWrite = $outboxItem.LastWriteTime.ToString("o")
+            $outboxTail = @(Get-Content -LiteralPath $Outbox -Tail 30 -ErrorAction Stop)
+        } catch {
+            $outboxTail = @("Could not read outbox tail: $($_.Exception.Message)")
+        }
+    }
+
+    $diagnostic = [ordered]@{
+        timestamp = (Get-Date).ToUniversalTime().ToString("o")
+        failureType = $FailureType
+        message = $Message
+        command = "/motm $(Normalize-CommandForMatch $Command)"
+        worldName = $WorldName
+        scenarioId = $ScenarioId
+        runDir = $RunDir
+        motmDataDir = $MotmDataDir
+        inbox = $Inbox
+        outbox = $Outbox
+        outboxBeforeLength = $BeforeLength
+        outboxCurrentLength = $outboxLength
+        outboxLastWriteTime = $outboxLastWrite
+        appdata = $env:APPDATA
+        hytaleRoot = Resolve-HytaleRootForDiagnostic
+        hytaleProcesses = Get-HytaleProcessSummary
+        latestClientLog = Get-RecentLogSummary
+        recommendedNextSteps = @(
+            "Launch or restart Hytale through the official launcher after installing the internal MOTM jar.",
+            "Enter the requested world '$WorldName' and wait until MOTM writes motm-server.properties.",
+            "If -SkipBuild was used, rerun without -SkipBuild or run scripts/build-install.ps1, then restart Hytale onto the new jar.",
+            "Inspect dev-command-outbox.log and the latest Hytale client log tail in this diagnostic.",
+            "If the wrong world/data folder is selected, rerun with -WorldName or -DataDir pointing at the active motm-data directory."
+        )
+        outboxTail = $outboxTail
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($RunDir)) {
+        New-Item -ItemType Directory -Path $RunDir -Force | Out-Null
+        $jsonPath = Join-Path $RunDir "dev-command-diagnostic.json"
+        $mdPath = Join-Path $RunDir "dev-command-diagnostic.md"
+        $diagnostic["diagnosticJson"] = $jsonPath
+        $diagnostic["diagnosticMarkdown"] = $mdPath
+        $diagnostic | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $jsonPath -Encoding UTF8
+        @(
+            "# Dev Command Diagnostic",
+            "",
+            "- FailureType: $FailureType",
+            "- Command: $($diagnostic.command)",
+            "- WorldName: $WorldName",
+            "- ScenarioId: $ScenarioId",
+            "- MOTM data dir: $MotmDataDir",
+            "- Inbox: $Inbox",
+            "- Outbox: $Outbox",
+            "- Hytale process count: $($diagnostic.hytaleProcesses.count)",
+            "- JSON: $jsonPath",
+            "",
+            "## Recommended Next Steps",
+            ""
+        ) + ($diagnostic.recommendedNextSteps | ForEach-Object { "- $_" }) + @(
+            "",
+            "## Error",
+            "",
+            $Message
+        ) | Set-Content -LiteralPath $mdPath -Encoding UTF8
+    }
+
+    Write-ControlEvent -Type "dev_command_diagnostic" -Data $diagnostic
+    return $diagnostic
+}
+
+try {
+    $motmDataDir = Resolve-MotmDataDir -WorldName $WorldName -DataDir $DataDir
+} catch {
+    $diagnostic = New-DevCommandDiagnostic `
+        -FailureType "data_dir_not_found" `
+        -Message $_.Exception.Message
+    $detail = if ($diagnostic.diagnosticMarkdown) { " Diagnostic: $($diagnostic.diagnosticMarkdown)" } else { "" }
+    throw "$($_.Exception.Message)$detail"
+}
 $inbox = Join-Path $motmDataDir "dev-command-inbox.txt"
 $outbox = Join-Path $motmDataDir "dev-command-outbox.log"
 $normalized = Normalize-CommandForMatch $Command
@@ -106,7 +294,15 @@ while ($null -eq $lockStream -and (Get-Date) -lt $lockDeadline) {
     }
 }
 if ($null -eq $lockStream) {
-    throw "Timed out acquiring dev command bridge lock: $lockPath"
+    $diagnostic = New-DevCommandDiagnostic `
+        -FailureType "lock_timeout" `
+        -Message "Timed out acquiring dev command bridge lock: $lockPath" `
+        -MotmDataDir $motmDataDir `
+        -Inbox $inbox `
+        -Outbox $outbox `
+        -BeforeLength $beforeLength
+    $detail = if ($diagnostic.diagnosticMarkdown) { " Diagnostic: $($diagnostic.diagnosticMarkdown)" } else { "" }
+    throw "Timed out acquiring dev command bridge lock: $lockPath.$detail"
 }
 
 try {
@@ -161,7 +357,15 @@ Write-ControlEvent -Type "dev_command_timeout" -Data ([ordered]@{
     command = "/motm $normalized"
     timeoutMilliseconds = $TimeoutMilliseconds
 })
-throw "Timed out waiting for dev command result: /motm $normalized"
+$diagnostic = New-DevCommandDiagnostic `
+    -FailureType "command_timeout" `
+    -Message "Timed out waiting for dev command result: /motm $normalized" `
+    -MotmDataDir $motmDataDir `
+    -Inbox $inbox `
+    -Outbox $outbox `
+    -BeforeLength $beforeLength
+$detail = if ($diagnostic.diagnosticMarkdown) { " Diagnostic: $($diagnostic.diagnosticMarkdown)" } else { "" }
+throw "Timed out waiting for dev command result: /motm $normalized.$detail"
 } finally {
     if ($lockStream) {
         $lockStream.Dispose()

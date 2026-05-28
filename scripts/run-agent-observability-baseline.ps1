@@ -9,9 +9,7 @@ param(
     [int]$CleanupDelayMilliseconds = 5500,
     [string]$StyleId = "",
     [string[]]$Abilities = @(),
-    [string]$MobMode = "stationary",
-    [string[]]$Proofs = @("coating-metal"),
-    [switch]$NoDefaultProofs
+    [string[]]$Proofs = @()
 )
 
 $ErrorActionPreference = "Stop"
@@ -92,6 +90,75 @@ function Resolve-GradleExecutable {
     throw "Could not locate the Gradle wrapper or system Gradle. Run scripts/build-install.ps1 to bootstrap the project."
 }
 
+function Resolve-HytaleRoot {
+    if (-not [string]::IsNullOrWhiteSpace($env:HYTALE_ROOT)) {
+        return $env:HYTALE_ROOT
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:APPDATA)) {
+        $candidate = Join-Path $env:APPDATA "Hytale"
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+    if (Test-IsMacOS) {
+        $candidate = Join-Path $HOME "Library/Application Support/Hytale"
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+    return ""
+}
+
+function Resolve-JavapExecutable {
+    if (-not [string]::IsNullOrWhiteSpace($JavaHome)) {
+        $javapName = if ($env:OS -eq "Windows_NT") { "javap.exe" } else { "javap" }
+        $candidate = Join-Path $JavaHome (Join-Path "bin" $javapName)
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+
+    $command = Get-Command javap -ErrorAction SilentlyContinue
+    if ($command) {
+        return $command.Source
+    }
+
+    throw "Could not locate javap to verify the installed MOTM build channel. Use a JDK JavaHome, not a JRE."
+}
+
+function Assert-InstalledInternalTesterJar {
+    $hytaleRoot = Resolve-HytaleRoot
+    if ([string]::IsNullOrWhiteSpace($hytaleRoot)) {
+        throw "Could not resolve Hytale root to verify installed MOTM build channel. Set HYTALE_ROOT or APPDATA."
+    }
+
+    $modsDir = Join-Path $hytaleRoot "UserData/Mods"
+    if (-not (Test-Path -LiteralPath $modsDir)) {
+        throw "Could not find Hytale mods directory at $modsDir."
+    }
+
+    $installedJars = @(Get-ChildItem -LiteralPath $modsDir -Filter "mentees_of_the_mystical-*.jar" -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending)
+    if ($installedJars.Count -eq 0) {
+        throw "No MOTM jar is installed in $modsDir. Run the harness without -SkipBuild or run scripts/build-install.ps1."
+    }
+    if ($installedJars.Count -gt 1) {
+        throw "Multiple MOTM jars are installed in ${modsDir}: $($installedJars.Name -join ', '). Remove stale jars before launching Hytale."
+    }
+
+    $installedJar = $installedJars[0].FullName
+    $javap = Resolve-JavapExecutable
+    $buildInfo = & $javap -classpath $installedJar -constants com.motm.MotmBuildInfo 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not inspect MotmBuildInfo in installed jar $installedJar. javap output: $($buildInfo -join ' ')"
+    }
+    if (($buildInfo -join "`n") -notmatch 'INTERNAL_TEST_BUILD\s*=\s*true') {
+        throw "Installed MOTM jar is not an internal tester build: $installedJar. Rebuild with -Pmotm_build_channel=internal and restart Hytale before running observability scenarios."
+    }
+
+    Add-Line("- PASS: installed jar is internal tester build: $installedJar")
+}
+
 if ((Test-IsMacOS) -and [string]::IsNullOrWhiteSpace($env:APPDATA)) {
     $env:APPDATA = Join-Path $HOME "Library/Application Support"
 }
@@ -99,9 +166,6 @@ if ([string]::IsNullOrWhiteSpace($RunId)) {
     $RunId = Get-Date -Format "yyyy-MM-ddTHH-mm-ss"
 }
 $Proofs = @($Proofs | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-if ($NoDefaultProofs) {
-    $Proofs = @()
-}
 $Abilities = @($Abilities | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 $JavaHome = Resolve-JavaHome $JavaHome
 if (-not [string]::IsNullOrWhiteSpace($JavaHome)) {
@@ -112,6 +176,55 @@ $script:PowerShellExe = Resolve-PowerShellExecutable
 $outDir = Join-Path $repoRoot (Join-Path "audits" (Join-Path "agent-observability" $RunId))
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 $report = New-Object System.Collections.Generic.List[string]
+
+function Resolve-ScenarioFile {
+    param([string]$RequestedScenarioId)
+
+    if ([string]::IsNullOrWhiteSpace($RequestedScenarioId)) {
+        return ""
+    }
+    $scenarioName = $RequestedScenarioId.Trim().ToLowerInvariant()
+    $scenarioPath = Join-Path $repoRoot (Join-Path "scripts/scenarios" ($scenarioName + ".json"))
+    if (Test-Path -LiteralPath $scenarioPath) {
+        return $scenarioPath
+    }
+    return ""
+}
+
+function Apply-ScenarioDefaults {
+    $scenarioPath = Resolve-ScenarioFile $ScenarioId
+    if ([string]::IsNullOrWhiteSpace($scenarioPath)) {
+        if ($Proofs.Count -eq 0) {
+            $script:Proofs = @("coating-metal")
+        }
+        return
+    }
+
+    $scenario = Get-Content -LiteralPath $scenarioPath -Raw | ConvertFrom-Json -ErrorAction Stop
+    if ([string]::IsNullOrWhiteSpace($StyleId) -and -not [string]::IsNullOrWhiteSpace([string]$scenario.styleId)) {
+        $script:StyleId = [string]$scenario.styleId
+    }
+    if ($Abilities.Count -eq 0 -and $null -ne $scenario.abilities) {
+        $script:Abilities = @($scenario.abilities | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+    if ($Proofs.Count -eq 0 -and $null -ne $scenario.proofs) {
+        $script:Proofs = @($scenario.proofs | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+    $script:ScenarioSetupCommands = @($scenario.setupCommands | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $script:ScenarioCommands = @($scenario.commands | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $script:ScenarioCleanupCommands = @($scenario.cleanupCommands | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $script:ScenarioExpectedEvidence = @($scenario.expectedEvidence | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $script:ScenarioDescription = [string]$scenario.description
+    $script:ScenarioFile = $scenarioPath
+}
+
+$script:ScenarioSetupCommands = @()
+$script:ScenarioCommands = @()
+$script:ScenarioCleanupCommands = @()
+$script:ScenarioExpectedEvidence = @()
+$script:ScenarioDescription = ""
+$script:ScenarioFile = ""
+Apply-ScenarioDefaults
 
 function Add-Line([string]$Line) {
     $script:report.Add($Line)
@@ -141,10 +254,11 @@ function Invoke-ObservedCommand {
     if (-not [string]::IsNullOrWhiteSpace($DataDir)) {
         $sendArgs += @("-DataDir", $DataDir)
     }
+    $commandLog = Join-Path $outDir ("command-" + ($traceId -replace '[^A-Za-z0-9_.-]', '-') + ".log")
     & $script:PowerShellExe @sendArgs 2>&1 |
-        Tee-Object -FilePath (Join-Path $outDir ("command-" + ($traceId -replace '[^A-Za-z0-9_.-]', '-') + ".log"))
+        Tee-Object -FilePath $commandLog
     if ($LASTEXITCODE -ne 0) {
-        throw "Command failed: /motm $Command"
+        throw "Command failed: /motm $displayCommand. See command log: $commandLog"
     }
     if ($DelayMilliseconds -gt 0) {
         Start-Sleep -Milliseconds $DelayMilliseconds
@@ -170,6 +284,46 @@ function Read-JsonlObjects {
         }
     }
     return $objects
+}
+
+function Invoke-ScenarioCommandList {
+    param(
+        [string]$Label,
+        [string[]]$Commands,
+        [int]$TimeoutMilliseconds = 9000,
+        [int]$DelayMilliseconds = 900
+    )
+
+    if ($Commands.Count -eq 0) {
+        Add-Line("- Scenario $Label commands: <none>")
+        return
+    }
+
+    Add-Line("- Scenario $Label commands: $($Commands.Count)")
+    foreach ($command in $Commands) {
+        Invoke-ObservedCommand $command -TimeoutMilliseconds $TimeoutMilliseconds -DelayMilliseconds $DelayMilliseconds
+    }
+}
+
+function Get-ScenarioRuntimeTaskExpectations {
+    $expectedTaskTypes = New-Object System.Collections.Generic.HashSet[string]
+    $allCommands = @($script:ScenarioSetupCommands) + @($script:ScenarioCommands) + @($script:ScenarioCleanupCommands)
+    foreach ($command in $allCommands) {
+        $normalized = ([string]$command).Trim().ToLowerInvariant()
+        if ($normalized -match '^motm\s+dev\s+test\s+mobs\s+count\b') {
+            [void]$expectedTaskTypes.Add("style-test-mob-count")
+            continue
+        }
+        if ($normalized -match '^motm\s+dev\s+test\s+mobs\s+clear\b') {
+            [void]$expectedTaskTypes.Add("style-test-mob-clear")
+            continue
+        }
+        if ($normalized -match '^motm\s+dev\s+test\s+mobs\b') {
+            [void]$expectedTaskTypes.Add("style-test-mob-spawn")
+            continue
+        }
+    }
+    return @($expectedTaskTypes)
 }
 
 function Assert-RunEvidence {
@@ -211,6 +365,18 @@ function Assert-RunEvidence {
     $missingProofs = @($Proofs | Where-Object { $endedProofIds -notcontains $_ })
     if ($missingProofs.Count -gt 0) {
         throw "Missing proof_end events for expected proof(s): $($missingProofs -join ', ')"
+    }
+
+    $runtimeTaskExpectations = @(Get-ScenarioRuntimeTaskExpectations)
+    foreach ($taskType in $runtimeTaskExpectations) {
+        $matchingRuntimeTasks = @($causalityEvents | Where-Object {
+            -not $_.parseError `
+                -and [string]$_.type -eq "runtime_task_executed" `
+                -and [string]$_.data.taskType -eq $taskType
+        })
+        if ($matchingRuntimeTasks.Count -eq 0) {
+            throw "Missing runtime_task_executed evidence for scenario task '$taskType'."
+        }
     }
 
     $clientIntentEvents = Read-JsonlObjects $clientIntentPath
@@ -270,6 +436,43 @@ function Assert-RunEvidence {
     }
 
     $packetEvents = Read-JsonlObjects $packetPath
+    $eventsBySource = @{
+        "control" = $controlEvents
+        "causality" = $causalityEvents
+        "client-intent" = $clientIntentEvents
+        "server-truth" = $serverTruthEvents
+        "packets" = $packetEvents
+    }
+    foreach ($expectation in $script:ScenarioExpectedEvidence) {
+        $parts = $expectation.Split(":", 2)
+        if ($parts.Count -ne 2) {
+            throw "Invalid scenario expectedEvidence entry '$expectation'. Expected source:type."
+        }
+        $source = $parts[0]
+        $eventType = $parts[1]
+        if (-not $eventsBySource.ContainsKey($source)) {
+            throw "Invalid scenario expectedEvidence source '$source' in '$expectation'."
+        }
+        $matchingEvents = @($eventsBySource[$source] | Where-Object {
+            if ($_.parseError) { return $false }
+            if ($source -eq "packets") {
+                return [string]$_.data.packetSimpleName -eq $eventType
+            }
+            if ($source -eq "server-truth" -and $eventType -eq "activeWeaponFollowUp") {
+                try {
+                    return [Int32]$_.data.activeRuntime.activeWeaponFollowUps -gt 0 `
+                        -or [bool]$_.data.activeRuntime.player.activeWeaponFollowUp
+                } catch {
+                    return $false
+                }
+            }
+            return [string]$_.type -eq $eventType
+        })
+        if ($matchingEvents.Count -eq 0) {
+            throw "Missing expected scenario evidence '$expectation'."
+        }
+    }
+
     $tracedHudPackets = @($packetEvents | Where-Object {
         -not $_.parseError `
             -and -not [string]::IsNullOrWhiteSpace([string]$_.traceId) `
@@ -286,6 +489,12 @@ try {
     Add-Line("")
     Add-Line("- RunId: $RunId")
     Add-Line("- ScenarioId: $ScenarioId")
+    if (-not [string]::IsNullOrWhiteSpace($script:ScenarioDescription)) {
+        Add-Line("- ScenarioDescription: $script:ScenarioDescription")
+    }
+    if (-not [string]::IsNullOrWhiteSpace($script:ScenarioFile)) {
+        Add-Line("- ScenarioFile: $script:ScenarioFile")
+    }
     Add-Line("- World: $WorldName")
     if (-not [string]::IsNullOrWhiteSpace($StyleId)) {
         Add-Line("- StyleId: $StyleId")
@@ -294,10 +503,26 @@ try {
         Add-Line("- Abilities: $($Abilities -join ', ')")
     }
     Add-Line("- Proofs: $($Proofs -join ', ')")
+    if ($script:ScenarioExpectedEvidence.Count -gt 0) {
+        Add-Line("- ExpectedEvidence: $($script:ScenarioExpectedEvidence -join ', ')")
+    }
     Add-Line("- APPDATA: $env:APPDATA")
     Add-Line("- JAVA_HOME: $env:JAVA_HOME")
     Add-Line("- PowerShell: $script:PowerShellExe")
     Add-Line("")
+
+    Add-Line("## Static Scenario Validation")
+    Add-Line("")
+    $validateScript = Join-Path $PSScriptRoot "validate-content-shape.ps1"
+    if (Test-Path -LiteralPath $validateScript) {
+        & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File $validateScript -ProjectRoot $repoRoot 2>&1 |
+            Tee-Object -FilePath (Join-Path $outDir "validate-content-shape.log")
+        if ($LASTEXITCODE -ne 0) {
+            throw "Content/scenario validation failed with exit code $LASTEXITCODE."
+        }
+        Add-Line("- PASS: content and scenario catalog validated.")
+        Add-Line("")
+    }
 
     if (-not $SkipBuild) {
         $ensureScript = Join-Path $PSScriptRoot "ensure-dev-environment.ps1"
@@ -341,17 +566,15 @@ try {
         Add-Line("")
     }
 
+    Add-Line("## Installed Build Verification")
+    Add-Line("")
+    Assert-InstalledInternalTesterJar
+    Add-Line("")
+
     Add-Line("## Runtime Commands")
     Add-Line("")
     Invoke-ObservedCommand "motm dev observe start $RunId $ScenarioId" -TimeoutMilliseconds 8000
-    Invoke-ObservedCommand "motm dev observe marker baseline-start"
-    Invoke-ObservedCommand "motm dev observe snapshot initial"
-    Invoke-ObservedCommand "motm dev position"
-    Invoke-ObservedCommand "motm dev effects"
-    Invoke-ObservedCommand "motm dev freecast on"
-    Invoke-ObservedCommand "motm dev test mobs $MobMode" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
-    Invoke-ObservedCommand "motm dev test mobs count"
-    Invoke-ObservedCommand "motm dev observe snapshot after-target-setup"
+    Invoke-ScenarioCommandList "setup" $script:ScenarioSetupCommands
 
     if (-not [string]::IsNullOrWhiteSpace($StyleId)) {
         Invoke-ObservedCommand "motm dev observe marker style-$StyleId-before"
@@ -359,10 +582,14 @@ try {
         Invoke-ObservedCommand "motm dev observe snapshot style-$StyleId-after"
     }
 
+    foreach ($command in $script:ScenarioCommands) {
+        Invoke-ObservedCommand $command -TimeoutMilliseconds 9000 -DelayMilliseconds 900
+    }
+
     foreach ($ability in $Abilities) {
         Invoke-ObservedCommand "motm dev observe marker ability-$ability-before"
         Invoke-ObservedCommand "motm dev test ability $ability" -TimeoutMilliseconds 9000 -DelayMilliseconds 2200
-        if ($ability -eq "stomp" -or $ability -eq "leap_frog") {
+        if ($ability -eq "stomp") {
             Invoke-ObservedCommand "motm dev test stomp-land" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
         }
         Invoke-ObservedCommand "motm dev observe snapshot ability-$ability-after"
@@ -378,12 +605,7 @@ try {
         Add-Line("- Waiting $CleanupDelayMilliseconds ms for proof cleanup windows.")
         Start-Sleep -Milliseconds $CleanupDelayMilliseconds
     }
-    Invoke-ObservedCommand "motm dev observe snapshot post-proof-cleanup"
-    Invoke-ObservedCommand "motm dev test mobs clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
-    Invoke-ObservedCommand "motm dev observe snapshot post-target-cleanup"
-
-    Invoke-ObservedCommand "motm dev observe marker baseline-end"
-    Invoke-ObservedCommand "motm dev observe snapshot final"
+    Invoke-ScenarioCommandList "cleanup" $script:ScenarioCleanupCommands
     Invoke-ObservedCommand "motm dev observe stop baseline-complete"
 
     if (-not $SkipScreenshot -and (Test-IsMacOS)) {

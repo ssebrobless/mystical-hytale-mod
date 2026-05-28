@@ -21,6 +21,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.motm.MenteesMod;
 import com.motm.model.PlayerData;
+import com.motm.model.ScaledMobResult;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -176,7 +177,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
 
     private void applyScaledResult(Ref<EntityStore> ref, Store<EntityStore> store,
                                    CommandBuffer<EntityStore> commandBuffer,
-                                   MenteesMod.ScaledMobResult result) {
+                                   ScaledMobResult result) {
         EntityStatMap entityStatMap = store.getComponent(ref, EntityStatMap.getComponentType());
         if (entityStatMap != null) {
             applyHealthScaling(entityStatMap, result.stats().getHealth());

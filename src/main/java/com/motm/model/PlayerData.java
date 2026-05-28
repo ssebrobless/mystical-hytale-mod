@@ -41,7 +41,7 @@ public class PlayerData {
     private Settings settings = new Settings();
     private Metadata metadata = new Metadata();
 
-    // Phase 1 additions: styles and legacy resource state
+    // Persisted style and resource state.
     @SerializedName("selected_styles")
     private List<String> selectedStyles = new ArrayList<>();
     @SerializedName("class_resources")

@@ -1,0 +1,33 @@
+{
+  "id": "baseline",
+  "description": "Default low-risk harness slice: prove command flow, target setup, HUD packet evidence, and a coating proof.",
+  "styleId": "",
+  "abilities": [],
+  "proofs": [
+    "coating-metal"
+  ],
+  "setupCommands": [
+    "motm dev observe marker baseline-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker baseline-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "control:dev_command_executed",
+    "causality:runtime_task_executed",
+    "causality:proof_end",
+    "packets:CustomHud"
+  ]
+}

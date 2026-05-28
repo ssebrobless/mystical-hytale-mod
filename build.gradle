@@ -24,6 +24,22 @@ def normalizeServerVersionRange = { raw ->
 }
 def generatedBuildInfoDir = layout.buildDirectory.dir('generated/sources/motmBuildInfo/main/java')
 def motmModId = project.mod_id.toString()
+def resolvePowerShellExecutable = {
+    def windows = System.getProperty('os.name', '').toLowerCase(Locale.ROOT).contains('windows')
+    def candidates = windows ? ['pwsh.exe', 'powershell.exe'] : ['pwsh', 'powershell']
+    for (candidate in candidates) {
+        try {
+            def process = new ProcessBuilder(candidate, '-NoProfile', '-Command', '$PSVersionTable.PSVersion.ToString()')
+                    .redirectErrorStream(true)
+                    .start()
+            if (process.waitFor() == 0) {
+                return candidate
+            }
+        } catch (Exception ignored) {
+        }
+    }
+    throw new GradleException('Could not locate pwsh or powershell. Run scripts/setup-agent-workstation.ps1 to bootstrap agent tooling.')
+}
 def resolveHytaleRootPath = {
     def explicitRoot = (project.findProperty('hytale_root') ?: System.getenv('HYTALE_ROOT'))?.toString()
     if (explicitRoot != null && !explicitRoot.isBlank()) {
@@ -67,9 +83,17 @@ repositories {
 dependencies {
     if (hytaleServerJar != null) {
         compileOnly files(hytaleServerJar)
+        testCompileOnly files(hytaleServerJar)
+        testRuntimeOnly files(hytaleServerJar)
     }
 
     implementation 'com.google.code.gson:gson:2.11.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 tasks.register('verifyHytaleInstall') {
@@ -96,6 +120,8 @@ tasks.register('diagnoseDevEnvironment') {
 }
 
 tasks.register('generateMotmBuildInfo') {
+    inputs.property('motmBuildChannel', motmBuildChannel)
+    inputs.property('motmInternalTestBuild', motmInternalTestBuild)
     outputs.dir(generatedBuildInfoDir)
     doLast {
         def outputDir = generatedBuildInfoDir.get().file('com/motm/MotmBuildInfo.java').asFile
@@ -113,9 +139,39 @@ public final class MotmBuildInfo {
     }
 }
 
+tasks.register('validateContentShape', Exec) {
+    group = 'verification'
+    description = 'Validates authored MOTM content and writes generated catalogs for agents.'
+    inputs.files(fileTree('src/main/resources/data') { include '**/*.json' })
+    inputs.files(fileTree('scripts/scenarios') { include '**/*.json' })
+    inputs.file('src/main/java/com/motm/proof/MotmProofCatalog.java')
+    outputs.dir(layout.buildDirectory.dir('reports/motm/content-shape'))
+    executable = resolvePowerShellExecutable()
+    args '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-File', file('scripts/validate-content-shape.ps1').absolutePath,
+            '-ProjectRoot', projectDir.absolutePath,
+            '-OutDir', layout.buildDirectory.dir('reports/motm/content-shape').get().asFile.absolutePath
+}
+
+tasks.register('checkArchitecture', Exec) {
+    group = 'verification'
+    description = 'Runs agent-facing architecture ratchets that prevent new debt patterns.'
+    inputs.files(fileTree('src/main/java') { include '**/*.java' })
+    inputs.files(fileTree('scripts/scenarios') { include '**/*.json' })
+    inputs.files('AGENTS.md', 'README.md', 'docs/compatibility-register.md')
+    executable = resolvePowerShellExecutable()
+    args '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-File', file('scripts/check-architecture.ps1').absolutePath,
+            '-ProjectRoot', projectDir.absolutePath
+}
+
 compileJava {
     dependsOn tasks.named('generateMotmBuildInfo')
     dependsOn tasks.named('verifyHytaleInstall')
+    dependsOn tasks.named('validateContentShape')
+    dependsOn tasks.named('checkArchitecture')
 }
 
 processResources {

@@ -17,4 +17,14 @@ public final class MotmCommandAuth {
     public static String deniedMessage(boolean allowed, String disabledMessage) {
         return allowed ? null : disabledMessage;
     }
+
+    public static String devToolsDisabledMessage(boolean internalTestBuild, String configFileName) {
+        if (!internalTestBuild) {
+            return "[MOTM] Dev tools are not included in this public release build.\n"
+                    + "Use an internal tester build to access /motm dev and live automation commands.";
+        }
+        return "[MOTM] Dev tools are disabled on this build/server.\n"
+                + "To enable them, set dev_tools_enabled=true in "
+                + configFileName + " inside the mod data folder and restart Hytale.";
+    }
 }
