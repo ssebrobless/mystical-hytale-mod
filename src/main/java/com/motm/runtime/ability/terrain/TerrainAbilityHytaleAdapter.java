@@ -111,8 +111,6 @@ public final class TerrainAbilityHytaleAdapter {
                     "Furniture_Ancient_Statue", "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
             case "debris" -> placementAdapter.placeTrailSelection(world, reason, origin, forward, System.currentTimeMillis() + 2400L,
                     "Soil_Dirt", "Rock_Stone", "Rock_Stone_Brick");
-            case "sandstorm" -> placementAdapter.placeRingBlockSelection(world, reason, origin, Math.max(2.0, ability.getRadius()),
-                    System.currentTimeMillis() + 2200L, "Soil_Sand", "Rock_Sandstone", "Rock_Sandstone_White");
             case "tunnel" -> placementAdapter.placeTrailSelection(world, reason, origin, forward, System.currentTimeMillis() + 2400L,
                     "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
             default -> "";

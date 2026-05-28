@@ -130,6 +130,9 @@ Assert ([double]$sandstorm.toggle_cooldown_seconds -eq 2.0) "Sandstorm has a 2s 
 Assert ([double]$sandstorm.radius -eq 5.0) "Sandstorm radius is 5"
 Assert ($styleManager -match 'requiresActiveToggle\(ability,\s*"sandstorm"\)') "Dust Devil requires active Sandstorm"
 Assert ($styleManager -match 'consumeActiveToggle\(playerId,\s*consumedToggle\)') "Dust Devil consumes active Sandstorm"
+Assert ($playback -match 'case "sandstorm" -> \{[\s\S]*?sand particle aura[\s\S]*?\}') "Sandstorm uses particle aura path, not block placement"
+Assert ($playback -notmatch 'case "sandstorm" ->[\s\S]*?placeRingBlockSelection[\s\S]*?"Soil_Sand"') "Sandstorm does not place sand/sandstone block rings"
+Assert ($playback -notmatch 'dust_devil_sand') "Dust Devil does not place supplemental sand/sandstone block rings"
 
 $lapidary = Get-Ability $abilities "lapidary"
 Assert ($lapidary.cast_type -eq "ground_target") "Lapidary places a ground target object"

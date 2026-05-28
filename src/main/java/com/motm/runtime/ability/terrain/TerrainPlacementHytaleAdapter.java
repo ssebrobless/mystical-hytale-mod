@@ -117,9 +117,6 @@ public final class TerrainPlacementHytaleAdapter {
         String abilityId = lower(ability.getId());
         String terrainEffect = lower(ability.getTerrainEffect());
         if (terrainEffect.contains("dust_devil")) {
-            placeRingBlockSelection(world, "dust_devil_sand", center, Math.max(1.6, ability.getRadius()),
-                    Math.min(expireAtMillis, System.currentTimeMillis() + 3200L),
-                    "Soil_Sand", "Rock_Sandstone", "Rock_Sandstone_White");
             return;
         }
         if (terrainEffect.contains("tunnel_path") || terrainEffect.contains("ruptured_earth")) {

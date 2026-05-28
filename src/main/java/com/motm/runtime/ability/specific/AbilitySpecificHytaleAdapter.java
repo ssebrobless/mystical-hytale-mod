@@ -82,11 +82,7 @@ public final class AbilitySpecificHytaleAdapter {
                 addTerrain(parts, runtimePlayer, player, ability, explicitTargetRef, targetBlock, abilityId);
             }
             case "sandstorm" -> {
-                String terrain = placeTerrain(runtimePlayer, player, ability, explicitTargetRef, targetBlock, abilityId);
-                if (!terrain.isBlank()) {
-                    parts.add("sand surface ring");
-                    parts.add(terrain);
-                }
+                parts.add("sand particle aura");
             }
             case "tunnel" -> {
                 if (support.applyEffectById(playerRef, store, "MOTM_Proof_Coating_Stone")) {
