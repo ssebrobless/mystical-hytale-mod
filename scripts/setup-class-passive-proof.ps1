@@ -81,6 +81,7 @@ switch ($TestId) {
         Send-MotmCommand "motm dev styles clear" 700
         Send-MotmCommand "motm dev passive knockback" 500
         Send-MotmCommand "motm dev mode adventure" 1000
+        Send-MotmCommand "motm dev test mobs clear" 900
         Send-MotmCommand "motm dev test mobs close" 1200
         Add-Line $instructions "## Manual Action"
         Add-Line $instructions "Let a nearby native enemy/source hit you or trigger a controlled hit source with knockback."

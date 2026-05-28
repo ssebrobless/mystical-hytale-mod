@@ -52,6 +52,7 @@ if ($ReviewMode -ne "unchanged") {
 }
 Send-MotmCommand "motm dev test reset" 1300
 Send-MotmCommand "motm dev freecast on" 700
+Send-MotmCommand "motm dev test mobs clear" 900
 if ($MobMode -ne "clear") {
     Send-MotmCommand "motm dev test mobs $MobMode" 1350
 }

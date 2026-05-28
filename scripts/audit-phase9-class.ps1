@@ -350,6 +350,7 @@ function Invoke-WeaponProof([string]$StyleId, [string]$AbilityId, $Plan) {
         -or @($Plan.PostActions).Count -gt 0
     if ($needsFreshTarget) {
         Add-Line("  - Weapon proof setup: reacquiring a stationary target at current player position")
+        Send-MotmCommand "motm dev test mobs clear" 900
         Send-MotmCommand "motm dev test mobs stationary" 1450
         Send-MotmCommand "motm dev test mobs count" 450
     } else {
@@ -374,6 +375,7 @@ function Prepare-AbilityEnvironment([string]$StyleId, [string]$AbilityId, $Plan)
     Send-MotmCommand "motm dev class set $ClassId" 650
     Send-MotmCommand "motm dev styles clear" 450
     Send-MotmCommand "motm style $StyleId" 1250
+    Send-MotmCommand "motm dev test mobs clear" 900
     Send-MotmCommand "motm dev test mobs count" 350
 
     if ($StyleId.ToLowerInvariant() -eq "gem" -and $AbilityId.ToLowerInvariant() -in @("fracture", "refraction")) {

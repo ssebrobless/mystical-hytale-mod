@@ -422,7 +422,7 @@ public class MotmCommand {
         }
 
         if (internalTestFlow) {
-            mod.setFreeCastEnabled(player.getPlayerId(), true);
+            mod.setFreeCastEnabled(player.getPlayerId(), false);
             boolean grantedImmediately = runtimePlayer != null && mod.ensureSpellbookItem(runtimePlayer);
             if (!grantedImmediately) {
                 mod.queueSpellbookGrant(player.getPlayerId());
@@ -438,7 +438,7 @@ public class MotmCommand {
                 sb.append("Flow: class auto-set from style id.\n");
             }
             sb.append("Reset: class perks, style, casting state, and cooldowns cleared for a clean test swap.\n");
-            sb.append("Test Protection: legacy free-cast flag enabled and spellbook delivery queued automatically.\n");
+            sb.append("Test Protection: disabled for player-visible review; /motm dev test enables it only for harness runs.\n");
         }
         sb.append("Style: ").append(resolvedStyle.style().getName()).append("\n");
         sb.append("Theme: ").append(resolvedStyle.style().getTheme()).append("\n");
@@ -1289,10 +1289,11 @@ public class MotmCommand {
 
     String handleDevEffects(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length >= 3 && "clear".equalsIgnoreCase(args[2])) {
+            mod.setFreeCastEnabled(player.getPlayerId(), false);
             mod.getStatusEffectManager().clearEffects(player.getPlayerId());
             String nativeResult = mod.queueRuntimeEntityEffectsClearForDev(player.getPlayerId());
             mod.refreshStatusHud(player.getPlayerId());
-            String result = "[MOTM] Dev effects cleared: statuses cleared, visuals=" + nativeResult + ".";
+            String result = "[MOTM] Dev effects cleared: test protection disabled, statuses cleared, visuals=" + nativeResult + ".";
             LOG.info(result);
             return result;
         }

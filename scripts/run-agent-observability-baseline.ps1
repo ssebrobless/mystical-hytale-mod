@@ -663,6 +663,9 @@ try {
         Invoke-ObservedCommand "motm dev test mobs clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
         Invoke-ObservedCommand "motm dev observe snapshot post-target-cleanup"
     }
+    Invoke-ObservedCommand "motm dev freecast off" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
+    Invoke-ObservedCommand "motm dev effects clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
+    Invoke-ObservedCommand "motm dev observe snapshot post-test-protection-cleanup"
     Invoke-ObservedCommand "motm dev observe stop baseline-complete"
 
     if (-not $SkipScreenshot -and (Test-IsMacOS)) {

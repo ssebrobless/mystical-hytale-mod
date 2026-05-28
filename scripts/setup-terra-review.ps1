@@ -35,6 +35,7 @@ Send-MotmCommand "motm dev class set terra" 650
 Send-MotmCommand "motm dev styles clear" 450
 Send-MotmCommand "motm style $StyleId" 1100
 Send-MotmCommand "motm dev test reset" 1300
+Send-MotmCommand "motm dev test mobs clear" 900
 if ($MobMode -ne "clear") {
     Send-MotmCommand "motm dev test mobs $MobMode" 1350
 }

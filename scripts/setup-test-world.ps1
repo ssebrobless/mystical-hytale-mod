@@ -91,6 +91,7 @@ try {
     Send-MotmCommand "motm dev class set $ClassId"
     Send-MotmCommand "motm dev styles clear"
     Send-MotmCommand "motm style $StyleId"
+    Send-MotmCommand "motm dev test mobs clear"
     if ($CloseGroundedTarget) {
         Send-MotmCommand "motm dev test mobs close"
     } else {
