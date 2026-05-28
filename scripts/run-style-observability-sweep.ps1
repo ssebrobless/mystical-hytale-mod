@@ -80,6 +80,7 @@ foreach ($style in $selectedStyles) {
         "-WorldName", $WorldName,
         "-RunId", $styleRunId,
         "-ScenarioId", "style-sweep-$classId-$styleId",
+        "-ClassId", $classId,
         "-StyleId", $styleId,
         "-MobMode", $mobMode,
         "-Abilities", ($abilities -join ","),

@@ -7,9 +7,12 @@ param(
     [switch]$SkipBuild,
     [switch]$SkipScreenshot,
     [int]$CleanupDelayMilliseconds = 5500,
+    [string]$ClassId = "",
     [string]$StyleId = "",
+    [string]$MobMode = "",
     [string[]]$Abilities = @(),
-    [string[]]$Proofs = @()
+    [string[]]$Proofs = @(),
+    [switch]$NoDefaultProofs
 )
 
 $ErrorActionPreference = "Stop"
@@ -194,7 +197,7 @@ function Resolve-ScenarioFile {
 function Apply-ScenarioDefaults {
     $scenarioPath = Resolve-ScenarioFile $ScenarioId
     if ([string]::IsNullOrWhiteSpace($scenarioPath)) {
-        if ($Proofs.Count -eq 0) {
+        if ($Proofs.Count -eq 0 -and -not $NoDefaultProofs) {
             $script:Proofs = @("coating-metal")
         }
         return
@@ -326,6 +329,36 @@ function Get-ScenarioRuntimeTaskExpectations {
     return @($expectedTaskTypes)
 }
 
+function Test-ArmedJumpAbilityEvidence {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$AbilityId,
+        [Parameter(Mandatory = $true)]
+        [array]$CausalityEvents,
+        [Parameter(Mandatory = $true)]
+        [array]$ServerTruthEvents
+    )
+
+    $began = @($CausalityEvents | Where-Object {
+        -not $_.parseError `
+            -and [string]$_.type -eq "ability_cast_begin" `
+            -and [string]$_.data.abilityId -eq $AbilityId
+    }).Count -gt 0
+    if (-not $began) {
+        return $false
+    }
+
+    $expectedLabel = "ability-$AbilityId-after"
+    $armedSnapshots = @($ServerTruthEvents | Where-Object {
+        -not $_.parseError `
+            -and [string]$_.type -eq "snapshot" `
+            -and [string]$_.data.label -eq $expectedLabel `
+            -and [bool]$_.data.activeRuntime.player.armedStomp
+    })
+
+    return $armedSnapshots.Count -gt 0
+}
+
 function Assert-RunEvidence {
     $motmRawDir = Join-Path $outDir "raw/motm-observability"
     $controlPath = Join-Path $motmRawDir "control.jsonl"
@@ -342,10 +375,14 @@ function Assert-RunEvidence {
     }
 
     $causalityEvents = Read-JsonlObjects $causalityPath
+    $serverTruthEvents = Read-JsonlObjects $serverTruthPath
     if ($Abilities.Count -gt 0) {
         $abilityEnds = @($causalityEvents | Where-Object { $_.type -eq "ability_cast_end" })
         $endedAbilityIds = @($abilityEnds | ForEach-Object { [string]$_.data.abilityId })
-        $missingAbilities = @($Abilities | Where-Object { $endedAbilityIds -notcontains $_ })
+        $missingAbilities = @($Abilities | Where-Object {
+            $endedAbilityIds -notcontains $_ `
+                -and -not (Test-ArmedJumpAbilityEvidence -AbilityId $_ -CausalityEvents $causalityEvents -ServerTruthEvents $serverTruthEvents)
+        })
         if ($missingAbilities.Count -gt 0) {
             throw "Missing ability_cast_end events for expected ability/abilities: $($missingAbilities -join ', ')"
         }
@@ -380,7 +417,6 @@ function Assert-RunEvidence {
     }
 
     $clientIntentEvents = Read-JsonlObjects $clientIntentPath
-    $serverTruthEvents = Read-JsonlObjects $serverTruthPath
     $untracedClientIntent = @($clientIntentEvents | Where-Object {
         -not $_.parseError -and [string]::IsNullOrWhiteSpace([string]$_.traceId)
     })
@@ -499,6 +535,9 @@ try {
     if (-not [string]::IsNullOrWhiteSpace($StyleId)) {
         Add-Line("- StyleId: $StyleId")
     }
+    if (-not [string]::IsNullOrWhiteSpace($MobMode)) {
+        Add-Line("- MobMode: $MobMode")
+    }
     if ($Abilities.Count -gt 0) {
         Add-Line("- Abilities: $($Abilities -join ', ')")
     }
@@ -576,10 +615,24 @@ try {
     Invoke-ObservedCommand "motm dev observe start $RunId $ScenarioId" -TimeoutMilliseconds 8000
     Invoke-ScenarioCommandList "setup" $script:ScenarioSetupCommands
 
+    if (-not [string]::IsNullOrWhiteSpace($ClassId)) {
+        Invoke-ObservedCommand "motm dev observe marker class-$ClassId-before"
+        Invoke-ObservedCommand "motm class $ClassId" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
+        Invoke-ObservedCommand "motm dev observe snapshot class-$ClassId-after"
+    }
+
     if (-not [string]::IsNullOrWhiteSpace($StyleId)) {
         Invoke-ObservedCommand "motm dev observe marker style-$StyleId-before"
         Invoke-ObservedCommand "motm style $StyleId" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
         Invoke-ObservedCommand "motm dev observe snapshot style-$StyleId-after"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($MobMode)) {
+        Invoke-ObservedCommand "motm dev freecast on" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
+        Invoke-ObservedCommand "motm dev test mobs clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
+        Invoke-ObservedCommand "motm dev test mobs $MobMode" -TimeoutMilliseconds 9000 -DelayMilliseconds 1600
+        Invoke-ObservedCommand "motm dev test mobs count" -TimeoutMilliseconds 9000 -DelayMilliseconds 700
+        Invoke-ObservedCommand "motm dev observe snapshot after-target-setup"
     }
 
     foreach ($command in $script:ScenarioCommands) {
@@ -606,6 +659,10 @@ try {
         Start-Sleep -Milliseconds $CleanupDelayMilliseconds
     }
     Invoke-ScenarioCommandList "cleanup" $script:ScenarioCleanupCommands
+    if (-not [string]::IsNullOrWhiteSpace($MobMode)) {
+        Invoke-ObservedCommand "motm dev test mobs clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
+        Invoke-ObservedCommand "motm dev observe snapshot post-target-cleanup"
+    }
     Invoke-ObservedCommand "motm dev observe stop baseline-complete"
 
     if (-not $SkipScreenshot -and (Test-IsMacOS)) {

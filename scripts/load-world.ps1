@@ -2,7 +2,8 @@ param(
     [string]$WorldName = "MOTM Creative Test",
     [int]$LoadTimeoutSec = 180,
     [string]$DataDir = "",
-    [switch]$AttemptRespawnRecovery
+    [switch]$AttemptRespawnRecovery,
+    [switch]$SkipPreClickProbe
 )
 
 $ErrorActionPreference = "Stop"
@@ -154,11 +155,29 @@ function Invoke-MotmPositionProbe([string]$Label, [int]$TimeoutMilliseconds = 35
         $args += @("-DataDir", $DataDir)
     }
 
+    $hardTimeoutSec = [Math]::Max(5, [int][Math]::Ceiling($TimeoutMilliseconds / 1000.0) + 2)
+    $probe = Start-Job -ScriptBlock {
+        param([string[]]$ProbeArgs)
+        $output = @(& powershell @ProbeArgs 2>&1)
+        [PSCustomObject]@{
+            ExitCode = $LASTEXITCODE
+            Output = $output
+        }
+    } -ArgumentList (, $args)
+
     try {
-        $output = @(& powershell @args 2>&1)
+        if (-not (Wait-Job -Job $probe -Timeout $hardTimeoutSec)) {
+            Stop-Job -Job $probe -ErrorAction SilentlyContinue
+            "Timed out after ${hardTimeoutSec}s running /motm dev position probe." |
+                Set-Content -LiteralPath $commandLog -Encoding UTF8
+            Write-Step "Dev position probe '$Label' timed out after ${hardTimeoutSec}s. See $commandLog"
+            return $null
+        }
+        $jobResult = Receive-Job -Job $probe
+        $output = @($jobResult.Output)
         $output | Set-Content -LiteralPath $commandLog -Encoding UTF8
         $joined = $output -join "`n"
-        if ($LASTEXITCODE -eq 0 -and $joined -match "\[MOTM\] Dev position:") {
+        if ([int]$jobResult.ExitCode -eq 0 -and $joined -match "\[MOTM\] Dev position:") {
             $line = ($output | Where-Object { $_ -match "\[MOTM\] Dev position:" } | Select-Object -Last 1)
             return [PSCustomObject]@{
                 Kind = "dev-position"
@@ -170,6 +189,8 @@ function Invoke-MotmPositionProbe([string]$Label, [int]$TimeoutMilliseconds = 35
     } catch {
         $_.Exception.Message | Set-Content -LiteralPath $commandLog -Encoding UTF8
         Write-Step "Dev position probe '$Label' failed: $($_.Exception.Message)"
+    } finally {
+        Remove-Job -Job $probe -Force -ErrorAction SilentlyContinue
     }
     return $null
 }
@@ -178,7 +199,12 @@ $result = "FAIL"
 $matched = $null
 $startedAt = Get-Date
 try {
-    $existing = Invoke-MotmPositionProbe "pre-click" 2500
+    $existing = $null
+    if (-not $SkipPreClickProbe) {
+        $existing = Invoke-MotmPositionProbe "pre-click" 2500
+    } else {
+        Write-Step "Skipping pre-click /motm dev position probe; launch flow is expected to be at menu."
+    }
     if (-not $existing) {
         $existing = Wait-OnPlayerConnect $startedAt 1
     }
