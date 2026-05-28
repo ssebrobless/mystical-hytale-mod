@@ -28,6 +28,7 @@ public class StatusEffect {
         DAMAGE_BUFF,    // +35% next attack only, until consumed
         STEALTH,        // Invisible, +40% damage next hit, until consumed
         HEAL_OVER_TIME, // Regen % HP per tick
+        TOXIC_MARK,     // Bilgewater mark for Anchor Haul follow-up, no damage by itself
         LIFESTEAL,      // Heal for % of damage dealt
         SPEED_BUFF      // Faster movement / follow-up momentum
     }

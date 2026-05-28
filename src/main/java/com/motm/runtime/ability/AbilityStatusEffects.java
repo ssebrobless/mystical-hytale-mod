@@ -29,6 +29,8 @@ public final class AbilityStatusEffects {
                     StatusEffect.Type.BURN, durationTicks, 0.03, sourcePlayerId, sourceAbilityId);
             case "dot" -> new StatusEffect(
                     StatusEffect.Type.DOT, durationTicks, 0.05, sourcePlayerId, sourceAbilityId);
+            case "toxic" -> new StatusEffect(
+                    StatusEffect.Type.TOXIC_MARK, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "stun", "stun_if_wall" -> new StatusEffect(
                     StatusEffect.Type.STUN, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "slow" -> new StatusEffect(
@@ -72,6 +74,9 @@ public final class AbilityStatusEffects {
     }
 
     public static int durationTicks(AbilityData ability, String token) {
+        if ("toxic".equals(lower(token))) {
+            return 10 * TICKS_PER_SECOND;
+        }
         double seconds = ability != null && ability.getDurationSeconds() > 0
                 ? ability.getDurationSeconds()
                 : defaultDurationSeconds(token);
@@ -85,6 +90,7 @@ public final class AbilityStatusEffects {
             case "shield" -> 6.0;
             case "attack_buff", "defense_buff", "evasion", "evasion_buff", "evasion_zone",
                     "flying", "lifesteal", "vulnerability", "curse", "speed" -> 6.0;
+            case "toxic" -> 10.0;
             case "damage_buff", "stealth" -> ONE_SHOT_BUFF_SECONDS;
             default -> DEFAULT_STATUS_SECONDS;
         };

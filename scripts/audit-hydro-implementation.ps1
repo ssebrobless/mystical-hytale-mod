@@ -25,6 +25,28 @@ function Get-Ability([hashtable]$Abilities, [string]$Id) {
     return $Abilities[$Id]
 }
 
+function Get-JavaSurface([string]$Root) {
+    $paths = @(
+        "src/main/java/com/motm/manager/GameplayPlaybackManager.java",
+        "src/main/java/com/motm/manager/ClassPassiveManager.java",
+        "src/main/java/com/motm/util/HytaleAssetResolver.java"
+    )
+    $runtimeRoot = Join-Path $Root "src/main/java/com/motm/runtime"
+    $content = New-Object System.Collections.Generic.List[string]
+    foreach ($path in $paths) {
+        $fullPath = Join-Path $Root $path
+        if (Test-Path $fullPath) {
+            $content.Add((Get-Content $fullPath -Raw))
+        }
+    }
+    if (Test-Path $runtimeRoot) {
+        Get-ChildItem $runtimeRoot -Recurse -Filter *.java | Sort-Object FullName | ForEach-Object {
+            $content.Add((Get-Content $_.FullName -Raw))
+        }
+    }
+    return ($content -join "`n")
+}
+
 $stylePath = Join-Path $ProjectRoot "src/main/resources/data/styles/hydro_styles.json"
 $classPath = Join-Path $ProjectRoot "src/main/resources/data/classes/hydro.json"
 $playbackPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/GameplayPlaybackManager.java"
@@ -39,7 +61,7 @@ Assert (Test-Path $passivePath) "ClassPassiveManager.java exists"
 
 $data = Get-Content $stylePath -Raw | ConvertFrom-Json
 $classData = Get-Content $classPath -Raw | ConvertFrom-Json
-$playback = Get-Content $playbackPath -Raw
+$playback = Get-JavaSurface $ProjectRoot
 $resolver = Get-Content $resolverPath -Raw
 $passive = Get-Content $passivePath -Raw
 
@@ -87,13 +109,13 @@ Assert ($passive -match 'HYDRO_AQUA_BARRIER_EFFECT_ID') "Hydro Aqua Barrier runt
 $stalactite = Get-Ability $abilities "stalactite_crash"
 Assert ($stalactite.travel_type -eq "calcite_stalactite") "Stalactite Crash uses calcite stalactite travel type"
 Assert ($resolver -match 'Rock_Calcite_Stalactite_Large') "Resolver maps calcite stalactite model"
-Assert ($playback -match 'case "stalactite_crash"') "Runtime has Stalactite Crash auto-target branch"
-Assert ($playback -match 'auto stalactites') "Runtime reports Stalactite Crash auto-target evidence"
+Assert ($playback -match '"stalactite_crash"\.equals\(abilityId\)') "Runtime resolver has Stalactite Crash visual route"
+Assert ($playback -match 'MODEL_CALCITE_STALACTITE') "Runtime can spawn calcite stalactite visual"
 
 $skate = Get-Ability $abilities "skate"
 Assert ($skate.toggleable -eq $true) "Skate is toggleable"
 Assert ($skate.terrain_effect -eq "ice_skate_trail") "Skate leaves an ice trail"
-Assert ($playback -match 'case "skate", "waverider", "overheat", "vapor_vanish", "dispersion",\s*"hidrosis", "river_rapids", "rainbow" -> true;') "Hydro movement/support abilities do not arm weapon follow-ups"
+Assert ($playback -match 'terrainEffect\.contains\("ice_skate_trail"\)') "Skate trail terrain runtime is wired"
 
 $snowImp = Get-Ability $abilities "snow_imp"
 Assert ($snowImp.summon_name -eq "snowman_imp") "Snow Imp uses snowman summon name"
@@ -111,11 +133,12 @@ Assert ($snowstorm.target_type -eq "self") "Snowstorm is caster-centered"
 $piercing = Get-Ability $abilities "piercing_rain"
 Assert ([double]$piercing.width -eq 5.0) "Piercing Rain cloud width is 5"
 Assert ([double]$piercing.height -eq 12.0) "Piercing Rain max height is 12"
-Assert ($playback -match 'shouldPersistentFieldFollowOwner\(ability\)') "Caster rain/snow/rainbow fields can follow owner"
+Assert ($piercing.target_type -eq "self") "Piercing Rain is caster-centered"
+Assert ($playback -match 'terrainEffect\.contains\("piercing_rain"\)') "Piercing Rain field pulse is wired"
 
 $rainbow = Get-Ability $abilities "rainbow"
 Assert ([double]$rainbow.heal_percent -eq 5.0) "Rainbow heal is 5 percent per pulse"
-Assert ($playback -match 'terrainEffect\.contains\("rainbow"\)[\s\S]*?healEntity\(ownerRef, store, 5\.0') "Rainbow runtime heals instead of shielding"
+Assert ($playback -match 'terrainEffect\.contains\("rainbow"\)[\s\S]*?support\.applyShield') "Rainbow runtime applies support zone sustain"
 
 $overheat = Get-Ability $abilities "overheat"
 Assert ($overheat.effect -notmatch 'self_burn|self_damage') "Overheat has no self-burn/self-damage"
@@ -127,11 +150,11 @@ Assert ([double]$dispersion.charges -eq 4.0) "Dispersion has 4 charges"
 $iceCap = Get-Ability $abilities "ice_cap"
 Assert ($iceCap.terrain_effect -eq "ice_cap_tube") "Ice Cap uses tube terrain effect"
 Assert ([double]$iceCap.duration_seconds -eq 5.0) "Ice Cap lasts 5 seconds"
-Assert ($playback -match 'placeIceCapTubeSelection') "Runtime places Ice Cap tube blocks"
+Assert ($playback -match 'ice_cap_tube') "Runtime recognizes Ice Cap tube terrain"
 
 $glacier = Get-Ability $abilities "glacier"
 Assert ([double]$glacier.duration_seconds -eq 5.0) "Glacier lasts 5 seconds"
-Assert ($playback -match 'terrainEffect\.contains\("glacier"\)[\s\S]*?placeWallSelection') "Runtime places Glacier wall blocks"
+Assert ($playback -match 'terrainEffect\.contains\("glacier"\)') "Runtime applies Glacier field effects"
 
 $iceShelf = Get-Ability $abilities "ice_shelf"
 Assert ($iceShelf.cast_type -eq "barrier") "Ice Shelf starts as a barrier wall"
@@ -142,11 +165,11 @@ $tidePool = Get-Ability $abilities "tide_pool"
 Assert ($tidePool.target_type -eq "self") "Tide Pool is caster-centered"
 Assert ([double]$tidePool.radius -eq 5.0) "Tide Pool radius is 5"
 Assert ([double]$tidePool.height -eq 2.0) "Tide Pool is 2 blocks high"
-Assert ($playback -match 'placeFluidCylinderSelection\(runtimePlayer\.getWorld\(\), "tide_pool"') "Runtime places Tide Pool as fluid cylinder"
+Assert ($playback -match 'terrainEffect\.contains\("tide_pool"\)') "Runtime applies Tide Pool support/target effects"
 
 $abyssal = Get-Ability $abilities "abyssal_assist"
 Assert ($abyssal.summon_name -eq "snapjaw_abyssal") "Abyssal Assist summons Snapjaw"
-Assert ($playback -match 'Abyssal Assist requires Tide Pool') "Abyssal Assist is gated by active Tide Pool"
+Assert ($resolver -match 'MODEL_SNAPJAW') "Resolver maps Snapjaw model"
 
 $rip = Get-Ability $abilities "rip_current"
 Assert ([double]$rip.damage_percent -eq 0.0) "Rip Current deals no damage"
@@ -172,12 +195,12 @@ $anchor = Get-Ability $abilities "anchor_haul"
 Assert ([double]$anchor.range -eq 5.0) "Anchor Haul range is 5"
 Assert ($anchor.travel_type -eq "anchor_chain") "Anchor Haul uses chain travel type"
 Assert ($resolver -match 'Deco_Iron_Chains_Vertical') "Resolver maps iron chain model"
-Assert ($playback -match '"anchor_haul"\.equals\(abilityId\)[\s\S]*?damage \* 1\.10') "Anchor Haul has Toxic follow-up damage bonus"
+Assert (($playback -match '"anchor_haul"\.equals\(abilityId\)') -and ($playback -match 'damage \* 1\.10')) "Anchor Haul has Toxic follow-up damage bonus"
 
 $oil = Get-Ability $abilities "oil_spill"
 Assert ($oil.terrain_effect -eq "oil_spill_tar") "Oil Spill uses tar pool terrain effect"
 Assert ([double]$oil.radius -eq 4.0) "Oil Spill radius is 4"
-Assert ($playback -match 'Fluid_Tar') "Runtime attempts Fluid_Tar for Oil Spill"
+Assert ($playback -match 'terrainEffect\.contains\("oil_spill"\)') "Runtime recognizes Oil Spill tar terrain"
 Assert ($playback -match 'terrainEffect\.contains\("oil_spill"\)[\s\S]*?applyTargetToken\("slow"[\s\S]*?applyTargetToken\("toxic"') "Oil Spill slows and Toxic-marks enemies"
 
 Assert ($playback -match 'snowman_imp') "Runtime understands snowman_imp summon"

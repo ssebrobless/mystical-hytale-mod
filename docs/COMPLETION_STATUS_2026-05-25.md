@@ -50,12 +50,14 @@ aesthetic review.
 - Terror now has a conservative runtime hook on native weapon damage while the
   player's signature energy is full. This avoids inventing a missing native
   ultimate event while still proving the intended AoE stun behavior.
-- Eco-friendly now hooks bare-hand grass/soil block damage, checks open space,
-  places a temporary tree structure, pushes nearby NPCs, and grants temporary
-  damage reduction.
+- Eco-friendly now hooks bare-hand natural earth/grass block damage, checks
+  open space, places a temporary no-drop tree structure, pushes nearby NPCs,
+  and grants temporary damage reduction.
 - Blacksmith and Toolsmith now hook `PlayerCraftEvent` and stamp/enhance crafted
   stacks through metadata where the Hytale inventory API exposes the crafted
-  result.
+  result. Blacksmith now adds 20% of each stamped armor piece's native armor
+  resistance, capped at 20% total; Toolsmith stamps `Toolsmith Perk +25%
+  Durability` and raises eligible native item durability to 125%.
 - Stomp now has nonzero damage in `terra_styles.json`, and dummy/stationary test
   NPCs are treated as grounded for the landing proof.
 - The class audit harness now has stronger concept-proof handling for support

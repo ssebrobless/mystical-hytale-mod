@@ -88,6 +88,21 @@ public final class TerrainPlacementHytaleAdapter {
                     terrain.columnHeight(),
                     expireAtMillis,
                     terrain.primaryAssetIdArray());
+            case TIDE_POOL, OIL_SPILL -> placeGroundedFluidCylinderSelection(
+                    runtimePlayer.getWorld(),
+                    terrain.reason(),
+                    center,
+                    ability.getRadius(),
+                    Math.max(1, (int) Math.round(ability.getHeight())),
+                    expireAtMillis,
+                    terrain.primaryAssetIdArray());
+            case ICE_CAP_TUBE -> placeIceCapTubeSelection(
+                    runtimePlayer.getWorld(),
+                    terrain.reason(),
+                    center,
+                    Math.max(1, terrain.columnHeight()),
+                    expireAtMillis,
+                    terrain.primaryAssetIdArray());
             case NONE -> "";
         };
     }
@@ -237,7 +252,7 @@ public final class TerrainPlacementHytaleAdapter {
             secondaryBlockTypeId = primaryBlockTypeId;
         }
 
-        Vector3i anchor = surfaceOverlayAnchor(center);
+        Vector3i anchor = surfaceDecorationAnchor(center);
         if (restoreAdapter != null) {
             restoreAdapter.restoreActiveTemporarySelections(terrainState, world, reason);
         }
@@ -245,7 +260,7 @@ public final class TerrainPlacementHytaleAdapter {
         BlockSelection selection = baseSelection(anchor);
         for (int x = 0; x < 3; x++) {
             int offset = x - 1;
-            for (int y = 0; y < 3; y++) {
+            for (int y = 0; y < 4; y++) {
                 int blockTypeId = ((x + y) % 2 == 0) ? primaryBlockTypeId : secondaryBlockTypeId;
                 selection.addBlockAtWorldPos(
                         anchor.x + (rightStep.x * offset),
@@ -254,7 +269,7 @@ public final class TerrainPlacementHytaleAdapter {
                         blockTypeId, 0, 0, 0);
             }
         }
-        String summary = "9 iron blocks";
+        String summary = "12 grounded iron blocks";
         return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis, summary);
     }
 
@@ -376,6 +391,30 @@ public final class TerrainPlacementHytaleAdapter {
                                        String... blockIds) {
         return placeWallSelection(world, reason, center, new Vector3d(1.0, 0.0, 0.0),
                 width, height, expireAtMillis, blockIds);
+    }
+
+    public String placeIceCapTubeSelection(World world,
+                                           String reason,
+                                           Vector3d center,
+                                           int height,
+                                           long expireAtMillis,
+                                           String... blockIds) {
+        int blockTypeId = resolveRuntimeBlockTypeId(blockIds);
+        if (world == null || center == null || blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            return "";
+        }
+
+        Vector3i anchor = surfaceDecorationAnchor(center);
+        BlockSelection selection = baseSelection(anchor);
+        int h = Math.max(1, height);
+        for (int y = 0; y < h; y++) {
+            selection.addBlockAtWorldPos(anchor.x - 1, anchor.y + y, anchor.z, blockTypeId, 0, 0, 0);
+            selection.addBlockAtWorldPos(anchor.x + 1, anchor.y + y, anchor.z, blockTypeId, 0, 0, 0);
+            selection.addBlockAtWorldPos(anchor.x, anchor.y + y, anchor.z - 1, blockTypeId, 0, 0, 0);
+            selection.addBlockAtWorldPos(anchor.x, anchor.y + y, anchor.z + 1, blockTypeId, 0, 0, 0);
+        }
+        return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
+                selection.getBlockCount() + " ice cap tube blocks");
     }
 
     public String placeRingBlockSelection(World world,
@@ -515,6 +554,42 @@ public final class TerrainPlacementHytaleAdapter {
         }
         Vector3d grounded = new Vector3d(center.x, center.y - 1.0, center.z);
         return placeFluidDiscSelection(world, reason, grounded, radius, expireAtMillis, fluidIds);
+    }
+
+    public String placeGroundedFluidCylinderSelection(World world,
+                                                      String reason,
+                                                      Vector3d center,
+                                                      double radius,
+                                                      int height,
+                                                      long expireAtMillis,
+                                                      String... fluidIds) {
+        int fluidTypeId = resolveRuntimeFluidTypeId(fluidIds);
+        Fluid fluid = fluidTypeId != Fluid.UNKNOWN_ID && fluidTypeId != Fluid.EMPTY_ID
+                ? Fluid.getAssetMap().getAsset(fluidTypeId)
+                : null;
+        if (world == null || center == null || fluid == null || fluid.isUnknown()) {
+            return "";
+        }
+
+        Vector3d grounded = new Vector3d(center.x, center.y - 1.0, center.z);
+        Vector3i anchor = blockAnchor(grounded);
+        BlockSelection selection = baseSelection(anchor);
+        int r = Math.max(1, (int) Math.round(radius));
+        int h = Math.max(1, height);
+        byte fluidLevel = (byte) Math.max(1, fluid.getMaxFluidLevel());
+        for (int x = -r; x <= r; x++) {
+            for (int z = -r; z <= r; z++) {
+                double dist = Math.sqrt((x * x) + (z * z));
+                if (dist > r + 0.2) {
+                    continue;
+                }
+                for (int y = 0; y < h; y++) {
+                    selection.addFluidAtWorldPos(anchor.x + x, anchor.y + y, anchor.z + z, fluidTypeId, fluidLevel);
+                }
+            }
+        }
+        return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
+                selection.getFluidCount() + " grounded fluid cylinder fluids");
     }
 
     public String placeTemporarySelection(World world,

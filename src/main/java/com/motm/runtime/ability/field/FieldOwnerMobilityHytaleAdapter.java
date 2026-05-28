@@ -34,9 +34,18 @@ public final class FieldOwnerMobilityHytaleAdapter {
     }
 
     public void applyLavaPoolOwnerMobility(ActiveField field, Store<EntityStore> store) {
-        if (field == null || store == null || field.ownerPlayerId() == null
-                || !"lava_pool".equals(lower(field.ability().getId()))
-                || lavaHazardState == null) {
+        if (field == null || store == null || field.ownerPlayerId() == null || field.ability() == null) {
+            return;
+        }
+
+        String abilityId = lower(field.ability().getId());
+        String terrainEffect = lower(field.ability().getTerrainEffect());
+        if (terrainEffect.contains("oil_spill") || terrainEffect.contains("tide_pool")) {
+            clearFriendlyFluidHazards(field, store);
+            return;
+        }
+
+        if (!"lava_pool".equals(abilityId) || lavaHazardState == null) {
             return;
         }
 
@@ -53,6 +62,18 @@ public final class FieldOwnerMobilityHytaleAdapter {
             support.removeEffect(field.ownerPlayerId(), StatusEffect.Type.BURN);
         }
         applyLavaPoolOwnerMovementBoost(field.ownerPlayerId(), field.ownerRef(), store);
+    }
+
+    private void clearFriendlyFluidHazards(ActiveField field, Store<EntityStore> store) {
+        Vector3d ownerPosition = position(field.ownerRef(), store);
+        if (ownerPosition == null || distance(ownerPosition, field.center()) > Math.max(1.5, field.radius() + 0.5)
+                || support == null) {
+            return;
+        }
+        support.removeEffect(field.ownerPlayerId(), StatusEffect.Type.SLOW);
+        support.removeEffect(field.ownerPlayerId(), StatusEffect.Type.SLOW_STACK);
+        support.removeEffect(field.ownerPlayerId(), StatusEffect.Type.BURN);
+        support.removeEffect(field.ownerPlayerId(), StatusEffect.Type.DOT);
     }
 
     public void clearLavaPoolOwnerVelocityBoost(String playerId,

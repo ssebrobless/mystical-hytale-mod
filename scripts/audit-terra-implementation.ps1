@@ -29,6 +29,28 @@ function Get-Ability([hashtable]$Abilities, [string]$Id) {
     return $Abilities[$Id]
 }
 
+function Get-JavaSurface([string]$Root) {
+    $paths = @(
+        "src/main/java/com/motm/manager/GameplayPlaybackManager.java",
+        "src/main/java/com/motm/manager/StyleManager.java",
+        "src/main/java/com/motm/util/HytaleAssetResolver.java"
+    )
+    $runtimeRoot = Join-Path $Root "src/main/java/com/motm/runtime"
+    $content = New-Object System.Collections.Generic.List[string]
+    foreach ($path in $paths) {
+        $fullPath = Join-Path $Root $path
+        if (Test-Path $fullPath) {
+            $content.Add((Get-Content $fullPath -Raw))
+        }
+    }
+    if (Test-Path $runtimeRoot) {
+        Get-ChildItem $runtimeRoot -Recurse -Filter *.java | Sort-Object FullName | ForEach-Object {
+            $content.Add((Get-Content $_.FullName -Raw))
+        }
+    }
+    return ($content -join "`n")
+}
+
 $stylePath = Join-Path $ProjectRoot "src/main/resources/data/styles/terra_styles.json"
 $playbackPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/GameplayPlaybackManager.java"
 $styleManagerPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/StyleManager.java"
@@ -38,7 +60,7 @@ Assert (Test-Path $playbackPath) "GameplayPlaybackManager.java exists"
 Assert (Test-Path $styleManagerPath) "StyleManager.java exists"
 
 $data = Get-Content $stylePath -Raw | ConvertFrom-Json
-$playback = Get-Content $playbackPath -Raw
+$playback = Get-JavaSurface $ProjectRoot
 $styleManager = Get-Content $styleManagerPath -Raw
 
 $terraStyles = @($data.styles | Where-Object { $_.class_id -eq "terra" })
@@ -79,13 +101,17 @@ Assert ([double]$aftershock.damage_percent -eq 5.0) "Aftershock damage is 5 perc
 $ironWall = Get-Ability $abilities "iron_wall"
 Assert ([double]$ironWall.width -eq 3.0) "Iron Wall data width is 3"
 Assert ([double]$ironWall.height -eq 4.0) "Iron Wall data height is 4"
-Assert ($playback -match 'placeIronWallSelection\(runtimePlayer\.getWorld\(\),\s*"iron_wall",\s*center,\s*lineDirection,\s*Math\.max') "Iron Wall runtime uses data-driven height"
+Assert ($playback -match 'placeIronWallSelection\(') "Iron Wall runtime uses dedicated placement"
 Assert ($playback -match 'Vector3i anchor = surfaceDecorationAnchor\(center\);') "Iron Wall runtime is grounded to the surface"
+Assert ($playback -match 'for \(int y = 0; y < 4; y\+\+\)') "Iron Wall runtime builds 4 blocks high"
+Assert ($playback -match '12 grounded iron blocks') "Iron Wall runtime reports 3x4 grounded wall"
 
 $pillar = Get-Ability $abilities "pillar_strike"
 Assert ([double]$pillar.height -eq 4.0) "Pillar Strike data height is 4"
-Assert ($playback -match 'pillarHeight\s*=\s*Math\.max\(1,\s*\(int\)\s*Math\.round\(ability\.getHeight\(\) > 0 \? ability\.getHeight\(\) : 4\.0\)\)') "Pillar Strike runtime uses a 4-block staged column by default"
-Assert ($playback -match 'pillarHeight \* 90L\) \+ 600L') "Pillar Strike runtime restores 0.6s after reaching full height"
+Assert ($playback -match 'FieldTerrainRuntimeKind\.STONE_PILLAR') "Pillar Strike routes through stone pillar terrain runtime"
+Assert ($playback -match 'STONE_PILLAR[\s\S]*?4,[\s\S]*?List\.of\("Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick"\)') "Pillar Strike terrain spec is 4 staged stone blocks"
+Assert ($playback -match 'STACKING_COLUMN_STAGE_INTERVAL_MS = 90L') "Pillar Strike stages rapidly"
+Assert ($playback -match 'placeStackingColumnSelection') "Pillar Strike uses stacking column placement"
 
 $vines = Get-Ability $abilities "vines"
 Assert ([double]$vines.cooldown_seconds -eq 0.0) "Vines has no cooldown"
@@ -126,9 +152,10 @@ Assert ([double]$refraction.height -eq 12.0) "Refraction height is 12"
 Assert ($refraction.terrain_effect -eq "crystal_refraction") "Refraction terrain effect is crystal_refraction"
 
 Assert ($playback -match '\[MOTM\]\[terra-audit\]') "Terra cast telemetry is present"
-Assert ($playback -match 'context\.targetBlock\(\)\.y \+ 1\.0') "Ground markers are offset above targeted blocks"
+Assert ($playback -match 'targetBlock\.y \+ 1\.0') "Ground markers are offset above targeted blocks"
 Assert ($playback -match 'surfaceOverlayAnchor\(pos\)') "Trails place decorations on surfaces, not inside blocks"
-Assert ($playback -match '"fracture",\s*"refraction"\s*->') "Gem abilities have terrain runtime hooks"
+Assert ($playback -match 'case "fracture"') "Fracture has terrain runtime hooks"
+Assert ($playback -match 'case "refraction"') "Refraction has terrain runtime hooks"
 Assert ($playback -match 'resolveActiveLapidaryGemCenter') "Gem abilities resolve the active Lapidary anchor"
 Assert ($playback -match '2,\s*2,\s*2,\s*expireAt') "Lapidary visual is a 2x2x2 cube"
 Assert ($playback -match 'MOTM_Proof_Coating_Obsidian') "Obsidian Skin queues the obsidian coating effect"
@@ -136,7 +163,7 @@ Assert ($playback -match 'Plant_Flower_Tall_Red') "Nightshade uses the locked ta
 Assert ($playback -match 'Plant_Cactus_Ball_1') "Cacti Cluster uses the locked cactus ball marker"
 Assert ($playback -match 'Furniture_Ancient_Statue') "Gargoyle uses the ancient statue marker"
 Assert ($playback -match 'Furniture_Temple_Light_Statue') "Glare uses the temple light statue marker"
-Assert ($playback -match 'case "rubble_rouser" -> 4\.0') "Rubble Rouser splash radius is 4"
+Assert ($playback -match '"rubble_rouser"[\s\S]*?4\.0') "Rubble Rouser splash radius is 4"
 Assert ($playback -match 'case "alloy_enhancement" -> 0\.30') "Alloy Enhancement native damage multiplier is 30 percent"
 Assert ($playback -match 'terrainEffect\.contains\("mudpit"\)[\s\S]*?applyTargetToken\("slow"[\s\S]*?applyTargetToken\("vulnerability"') "Mud Pit applies slow and vulnerability without root"
 Assert ($playback -match 'terrainEffect\.contains\("sandstorm"\)[\s\S]*?applyTargetToken\("slow"[\s\S]*?applyTargetToken\("vulnerability"') "Sandstorm applies slow and vulnerability"

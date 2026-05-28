@@ -86,7 +86,7 @@ class FieldRuntimeSpecsTest {
         assertEquals(List.of("mudpit"), FieldRuntimeSpecs.terrainRestoreReasons(mudpitAbility()));
 
         assertEquals(FieldTerrainRuntimeKind.STONE_PILLAR, pillar.kind());
-        assertEquals(3, pillar.columnHeight());
+        assertEquals(4, pillar.columnHeight());
         assertEquals(List.of("Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick"), pillar.primaryAssetIds());
     }
 

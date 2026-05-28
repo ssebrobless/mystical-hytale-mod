@@ -1,6 +1,6 @@
 # Final Shared Perk Runtime Status
 
-Updated: 2026-05-25
+Updated: 2026-05-28
 
 This document records the current gameplay contract for the 20 shared perk choices. Perks are passive choices unlocked every 10 levels through level 100. Any player can choose any perk, regardless of class.
 
@@ -37,10 +37,10 @@ This document records the current gameplay contract for the 20 shared perk choic
 | Vampirism | Heals the player for 10% of successful native or MOTM damage dealt to mobs. |
 | Terror | Uses the closest proven native hook: if the player hits with a native weapon while signature energy is full, nearby enemies are stunned for 3 seconds and the perk starts a 20 second cooldown. |
 | Heavyweight | Reduces incoming knockback by 15% and increases outgoing knockback by 4% when a native knockback component exists. |
-| Eco-friendly | Bare-hand grass block damage in open space grows a temporary tree/sapling structure, pushes nearby NPCs, grants 5% damage reduction for 5 seconds, then uses a 15 second cooldown window. |
+| Eco-friendly | Bare-hand natural earth/grass block damage in open space grows a temporary no-drop tree structure, pushes nearby NPCs, grants 5% damage reduction for 5 seconds, then uses a 15 second cooldown window. |
 | Mole Man | Adds +10% mining multiplier while Terra cave vision says the player is underground. |
-| Blacksmith | Player craft events mark eligible crafted armor; marked equipped pieces reduce incoming damage by 5% each, capped at the requested 20%. |
-| Toolsmith | Player craft events mark eligible crafted tools/weapons and raise max durability to 125%; the enhanced item can be used by others because the bonus is stored on the item metadata. |
+| Blacksmith | Player craft events mark eligible crafted armor; marked equipped pieces add 20% of that piece's native armor resistance as extra reduction, capped at 20% total. The enhanced item can be used by others because the bonus is stored on item metadata. |
+| Toolsmith | Player craft events mark eligible crafted native tools/weapons, label them `Toolsmith Perk +25% Durability`, and raise max/restored durability to 125%; the enhanced item can be used by others because the bonus is stored on item metadata. |
 
 ## Verification Entry Points
 

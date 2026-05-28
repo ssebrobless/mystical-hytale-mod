@@ -77,7 +77,7 @@ public final class MotmInventoryOps {
         }
     }
 
-    public static boolean restoreSlot(ItemContainer container, byte slot, ItemStack stack, Logger log, String context) {
+    public static boolean restoreSlot(ItemContainer container, short slot, ItemStack stack, Logger log, String context) {
         if (container == null || stack == null) {
             return false;
         }

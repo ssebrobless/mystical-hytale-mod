@@ -28,7 +28,7 @@ public final class AbilityExecutionPolicy {
     private static final Set<String> TARGET_EFFECT_TOKENS = Set.of(
             "burn", "dot", "stun", "stun_if_wall", "slow", "slow_stack", "vulnerability",
             "freeze", "root", "blind", "deafen", "disoriented", "attack_slow",
-            "grounded", "shocked", "lightning", "knockback", "curse");
+            "grounded", "shocked", "lightning", "knockback", "curse", "toxic");
 
     private AbilityExecutionPolicy() {
     }
@@ -138,6 +138,9 @@ public final class AbilityExecutionPolicy {
         if ("consume".equals(abilityId)) {
             return SpecialDamagePolicy.CONSUME;
         }
+        if ("anchor_haul".equals(abilityId)) {
+            return SpecialDamagePolicy.ANCHOR_TOXIC;
+        }
         if (lower(ability != null ? ability.getEffect() : null).contains("lightning")) {
             return SpecialDamagePolicy.LIGHTNING;
         }
@@ -156,6 +159,7 @@ public final class AbilityExecutionPolicy {
         NONE,
         COMBUST,
         CONSUME,
-        LIGHTNING
+        LIGHTNING,
+        ANCHOR_TOXIC
     }
 }

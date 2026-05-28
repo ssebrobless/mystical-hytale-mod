@@ -114,13 +114,13 @@ $styleManagerPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/Style
 $resourceManagerPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/ResourceManager.java"
 $hudPath = Join-Path $ProjectRoot "src/main/java/com/motm/ui/MotmStatusHud.java"
 $bookPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/BookInteractionManager.java"
-$modPath = Join-Path $ProjectRoot "src/main/java/com/motm/MenteesMod.java"
+$hydroRefillPath = Join-Path $ProjectRoot "src/main/java/com/motm/resource/HydroContainerRefillHandler.java"
 
 $styleManager = Get-Content $styleManagerPath -Raw
 $resourceManager = Get-Content $resourceManagerPath -Raw
 $hud = Get-Content $hudPath -Raw
 $book = Get-Content $bookPath -Raw
-$mod = Get-Content $modPath -Raw
+$hydroRefill = Get-Content $hydroRefillPath -Raw
 
 Assert ($styleManager -match 'areAbilityResourceCostsEnabled\(\)[\s\S]*resourceManager\.spend') "StyleManager spends resources only behind the global flag"
 Assert ($styleManager -match 'areAbilityResourceCostsEnabled\(\)[\s\S]*Not enough') "StyleManager blocks for missing resources only behind the global flag"
@@ -129,7 +129,7 @@ Assert ($resourceManager -match 'createDefaultResources[\s\S]*areAbilityResource
 Assert ($resourceManager -match 'refillWater[\s\S]*areAbilityResourceCostsEnabled\(\)[\s\S]*return') "Hydro water refill is inert when resources are disabled"
 Assert ($hud -match 'buildResourceSnapshot[\s\S]*areAbilityResourceCostsEnabled\(\)[\s\S]*ResourceSnapshot\.hidden') "HUD resource root is hidden by the global disabled flag"
 Assert ($book -match 'getResourceOptionLabels[\s\S]*areAbilityResourceCostsEnabled\(\)[\s\S]*Collections\.emptyList') "Dev book resource tools are hidden when resources are disabled"
-Assert ($mod -match 'tryHandleHydroContainerRefill[\s\S]*areAbilityResourceCostsEnabled\(\)[\s\S]*return false') "Hydro refill interaction is bypassed when resources are disabled"
+Assert ($hydroRefill -match 'tryHandle[\s\S]*areAbilityResourceCostsEnabled\(\)[\s\S]*return false') "Hydro refill interaction is bypassed when resources are disabled"
 
 if ($script:Failed) {
     Write-Host "No-resource audit: FAIL" -ForegroundColor Red

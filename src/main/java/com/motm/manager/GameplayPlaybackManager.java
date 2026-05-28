@@ -3290,6 +3290,14 @@ public class GameplayPlaybackManager {
                 }
                 yield damage * modifier;
             }
+            case ANCHOR_TOXIC -> {
+                if (mod.getStatusEffectManager().hasEffect(targetEntityId, StatusEffect.Type.TOXIC_MARK)) {
+                    LOG.info("[MOTM] Anchor Haul Toxic follow-up applied: target="
+                            + targetEntityId + " multiplier=1.10");
+                    yield damage * 1.10;
+                }
+                yield damage;
+            }
             case NONE -> damage;
         };
     }

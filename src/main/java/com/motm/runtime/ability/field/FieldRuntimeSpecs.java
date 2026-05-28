@@ -101,8 +101,44 @@ public final class FieldRuntimeSpecs {
                     false,
                     false,
                     false,
-                    3,
+                    4,
                     List.of("Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick"),
+                    List.of()
+            );
+        }
+        if (terrainEffect.contains("tide_pool")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.TIDE_POOL,
+                    "tide_pool",
+                    false,
+                    true,
+                    false,
+                    0,
+                    List.of("Fluid_Water", "Water", "water"),
+                    List.of()
+            );
+        }
+        if (terrainEffect.contains("oil_spill")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.OIL_SPILL,
+                    "oil_spill",
+                    false,
+                    true,
+                    false,
+                    0,
+                    List.of("Fluid_Tar", "Tar", "tar", "Fluid_Water", "Water", "water"),
+                    List.of()
+            );
+        }
+        if (terrainEffect.contains("ice_cap_tube")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.ICE_CAP_TUBE,
+                    "ice_cap_tube",
+                    false,
+                    false,
+                    false,
+                    3,
+                    List.of("Ice_Block", "Fluid_Ice", "Water_Ice", "Rock_Calcite"),
                     List.of()
             );
         }

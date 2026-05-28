@@ -141,6 +141,26 @@ delete the old code instead of teaching agents to route around it.
 - Removal gate: HUD renderer no longer constructs or receives the old icon-slot
   widgets.
 
+### Player Craft Event Perk Stamping
+
+- Owner: crafted-item perk stamping in `RuntimePerkManager`.
+- Implementation boundary:
+  `src/main/java/com/motm/lifecycle/MotmLifecycleRegistrar.java`,
+  `src/main/java/com/motm/MenteesMod.java`, and
+  `src/main/java/com/motm/manager/RuntimePerkManager.java`.
+- Consumer: Blacksmith and Toolsmith perks need the current player-scoped craft
+  output hook so crafted armor/tools can receive permanent item metadata.
+- Preferred replacement: the next supported Hytale player crafting/output API
+  that exposes the crafter and crafted stack without using the deprecated
+  `PlayerCraftEvent`.
+- Verification evidence: perk/runtime proof or manual crafting-table flow shows
+  Blacksmith armor receives `Blacksmith Perk` metadata and Toolsmith tools or
+  weapons receive `Toolsmith Perk +25% Durability` metadata plus 125% max
+  durability.
+- Removal gate: Hytale exposes and MOTM verifies a non-deprecated player craft
+  output hook, then the event registration and imports are replaced in the same
+  change.
+
 ### MenteesMod Mutable State Ratchet
 
 - Owner: architecture check and runtime state refactor plan.

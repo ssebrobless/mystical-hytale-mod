@@ -75,7 +75,7 @@ public final class WeaponFollowUpSpecs {
 
     private static double resolveDamageMultiplierBonus(String abilityId) {
         return switch (abilityId) {
-            case "alloy_enhancement" -> 0.35;
+            case "alloy_enhancement" -> 0.30;
             default -> 0.0;
         };
     }

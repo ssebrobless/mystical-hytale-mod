@@ -4,14 +4,22 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Rotation3f;
 import org.joml.Vector3d;
+import org.joml.Vector3i;
+import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerCraftEvent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
@@ -20,16 +28,23 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
+import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
+import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.builtin.weather.components.WeatherTracker;
 import com.hypixel.hytale.builtin.weather.resources.WeatherResource;
+import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.motm.MenteesMod;
 import com.motm.model.PlayerData;
 import com.motm.model.StatusEffect;
+import com.motm.util.MotmInventoryOps;
+import org.bson.BsonBoolean;
+import org.bson.BsonString;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +70,8 @@ public class RuntimePerkManager {
     private static final String IGNITE_EFFECT_ID = "MOTM_Corruptus_Impact";
     private static final String GHOST_ROLE_ID = "Empty_Role";
     private static final String GHOST_MODEL_ID = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
+    private static final String BLACKSMITH_METADATA_KEY = "motm_blacksmith_armor";
+    private static final String TOOLSMITH_METADATA_KEY = "motm_toolsmith_durability";
 
     private static final String AERO_TWINKLETOES = "aero_t01_twinkletoes";
     private static final String AERO_ACCELERATE = "aero_t01_accelerate";
@@ -85,7 +102,9 @@ public class RuntimePerkManager {
     private final Map<String, TemporaryDamageReduction> temporaryDamageReductionByPlayer = new HashMap<>();
     private final Map<String, MovementSnapshot> movementSnapshots = new HashMap<>();
     private final Map<String, Long> rainyDayLastRegenTickByPlayer = new HashMap<>();
+    private final Map<String, LowHealthLatch> lowHealthLatchByPlayer = new HashMap<>();
     private final List<IgniteDot> activeIgnites = new ArrayList<>();
+    private final List<TemporaryEcoTree> activeEcoTrees = new ArrayList<>();
     private long tickCounter = 0L;
 
     public RuntimePerkManager(MenteesMod mod) {
@@ -97,6 +116,7 @@ public class RuntimePerkManager {
         tickCounter++;
         tickIgnites(store);
         tickGhosts(store);
+        tickEcoTrees();
         if (player == null || runtimePlayer == null || playerRef == null || !playerRef.isValid()) {
             return;
         }
@@ -106,6 +126,7 @@ public class RuntimePerkManager {
         speedBonus += updateSprintPerks(player, runtimePlayer, playerRef, store);
         speedBonus += updateSwimPerks(player, runtimePlayer, playerRef, store);
 
+        updateLowHealthLatches(player, playerRef, store);
         expireTemporaryDamageReductions();
         applyRainyDay(player, runtimePlayer, playerRef, store, false);
 
@@ -126,11 +147,12 @@ public class RuntimePerkManager {
             if (perkId == null || perkId.isBlank()) {
                 continue;
             }
+            boolean active = isHudActive(player, perkId);
             entries.add(new RuntimePerkHudEntry(
                     perkId,
                     resolvePerkName(perkId),
-                    cooldownSecondsRemaining(player.getPlayerId(), perkId),
-                    isHudActive(player, perkId)
+                    active ? 0.0 : cooldownSecondsRemaining(player.getPlayerId(), perkId),
+                    active
             ));
         }
         return entries;
@@ -339,7 +361,7 @@ public class RuntimePerkManager {
             return true;
         }
 
-        MenteesMod.EcoFriendlyTreeResult result = mod.applyEcoFriendlyTree(player, runtimePlayer, event);
+        MenteesMod.EcoFriendlyTreeResult result = placeEcoFriendlyTree(player, runtimePlayer, event);
         LOG.info("[MOTM] Runtime perk eco-friendly tree proof: player=" + playerId
                 + " success=" + result.success()
                 + " summary=" + result.summary());
@@ -352,6 +374,340 @@ public class RuntimePerkManager {
         LOG.info("[MOTM] Runtime perk proc: eco_friendly damageReduction=0.050 durationSeconds=5 cooldownSeconds=15 player="
                 + playerId);
         return true;
+    }
+
+    public void handlePlayerCraft(PlayerCraftEvent event) {
+        if (event == null || event.getPlayer() == null || event.getCraftedRecipe() == null) {
+            return;
+        }
+        Player runtimePlayer = event.getPlayer();
+        String playerId = mod.getRuntimePlayerId(runtimePlayer);
+        PlayerData playerData = playerId != null && mod.getPlayerDataManager() != null
+                ? mod.getPlayerDataManager().getOnlinePlayer(playerId)
+                : null;
+        if (playerData == null || playerData.getSelectedPerks() == null || runtimePlayer.getInventory() == null) {
+            return;
+        }
+
+        CraftedOutput craftedOutput = craftedOutput(event.getCraftedRecipe());
+        if (craftedOutput == null || craftedOutput.itemId == null || craftedOutput.itemId.isBlank()) {
+            LOG.info("[MOTM] Runtime perk crafting enhancement skipped: no primary item output recipe="
+                    + event.getCraftedRecipe().getId());
+            return;
+        }
+
+        Item item = Item.getAssetMap().getAsset(craftedOutput.itemId);
+        boolean enhanced = false;
+        if (hasPerk(playerData, TERRA_BLACKSMITH) && item != null && item.getArmor() != null) {
+            enhanced = enhanceFirstMatchingCraftedStack(runtimePlayer,
+                    craftedOutput.itemId,
+                    BLACKSMITH_METADATA_KEY,
+                    "Blacksmith Perk",
+                    1.0,
+                    "blacksmithArmor");
+        } else if (hasPerk(playerData, TERRA_TOOLSMITH) && isToolsmithEligibleItem(craftedOutput.itemId, item)) {
+            enhanced = enhanceFirstMatchingCraftedStack(runtimePlayer,
+                    craftedOutput.itemId,
+                    TOOLSMITH_METADATA_KEY,
+                    "Toolsmith Perk +25% Durability",
+                    1.25,
+                    "toolsmithDurability");
+        }
+
+        LOG.info("[MOTM] Runtime perk crafting enhancement: player=" + playerId
+                + " recipe=" + event.getCraftedRecipe().getId()
+                + " itemId=" + craftedOutput.itemId
+                + " quantity=" + event.getQuantity()
+                + " enhanced=" + enhanced);
+    }
+
+    private CraftedOutput craftedOutput(CraftingRecipe recipe) {
+        if (recipe == null) {
+            return null;
+        }
+        MaterialQuantity primary = recipe.getPrimaryOutput();
+        if (primary != null && primary.getItemId() != null && !primary.getItemId().isBlank()) {
+            return new CraftedOutput(primary.getItemId(), Math.max(1, primary.getQuantity()));
+        }
+        MaterialQuantity[] outputs = recipe.getOutputs();
+        if (outputs == null) {
+            return null;
+        }
+        for (MaterialQuantity output : outputs) {
+            if (output != null && output.getItemId() != null && !output.getItemId().isBlank()) {
+                return new CraftedOutput(output.getItemId(), Math.max(1, output.getQuantity()));
+            }
+        }
+        return null;
+    }
+
+    private boolean isToolsmithEligibleItem(String itemId, Item item) {
+        if (itemId == null || itemId.isBlank() || item == null) {
+            return false;
+        }
+        String normalized = itemId.toLowerCase(Locale.ROOT);
+        if (normalized.startsWith("motm_") || mod.getRecognizedSpellbookItemIds().contains(itemId)) {
+            return false;
+        }
+        return item.getTool() != null || item.getWeapon() != null;
+    }
+
+    private boolean enhanceFirstMatchingCraftedStack(Player player,
+                                                    String itemId,
+                                                    String metadataKey,
+                                                    String label,
+                                                    double maxDurabilityMultiplier,
+                                                    String context) {
+        if (player == null || player.getInventory() == null || itemId == null || itemId.isBlank()) {
+            return false;
+        }
+        ItemContainer[] containers = new ItemContainer[] {
+                player.getInventory().getHotbar(),
+                player.getInventory().getTools(),
+                player.getInventory().getStorage(),
+                player.getInventory().getBackpack(),
+                player.getInventory().getUtility()
+        };
+        for (ItemContainer container : containers) {
+            if (container == null) {
+                continue;
+            }
+            short slot = findEnhanceableSlot(container, itemId, metadataKey);
+            if (slot < 0) {
+                continue;
+            }
+            ItemStack stack = container.getItemStack(slot);
+            ItemStack enhanced = stack
+                    .withMetadata(metadataKey, BsonBoolean.TRUE)
+                    .withMetadata("motm_perk_label", new BsonString(label));
+            if (maxDurabilityMultiplier > 1.0 && stack.getMaxDurability() > 0.0) {
+                double maxDurability = stack.getMaxDurability() * maxDurabilityMultiplier;
+                enhanced = enhanced.withMaxDurability(maxDurability).withRestoredDurability(maxDurability);
+            }
+            boolean restored = MotmInventoryOps.restoreSlot(container, slot, enhanced, LOG, context);
+            if (restored) {
+                LOG.info("[MOTM] Runtime perk crafting stack enhanced: context=" + context
+                        + " itemId=" + itemId
+                        + " slot=" + slot
+                        + " label=\"" + label + "\""
+                        + " maxDurabilityMultiplier=" + format(maxDurabilityMultiplier));
+            }
+            return restored;
+        }
+        return false;
+    }
+
+    private short findEnhanceableSlot(ItemContainer container, String itemId, String metadataKey) {
+        if (container == null) {
+            return -1;
+        }
+        short capacity = container.getCapacity();
+        for (short slot = 0; slot < capacity; slot++) {
+            ItemStack stack = container.getItemStack(slot);
+            if (stack == null || stack.isEmpty() || !itemId.equals(stack.getItemId())) {
+                continue;
+            }
+            if (hasMetadataFlag(stack, metadataKey)) {
+                continue;
+            }
+            return slot;
+        }
+        return -1;
+    }
+
+    private boolean hasMetadataFlag(ItemStack stack, String key) {
+        return stack != null
+                && stack.getMetadata() != null
+                && key != null
+                && stack.getMetadata().containsKey(key);
+    }
+
+    private MenteesMod.EcoFriendlyTreeResult placeEcoFriendlyTree(PlayerData playerData, Player player, DamageBlockEvent event) {
+        World world = player != null ? player.getWorld() : null;
+        Ref<EntityStore> playerRef = player != null ? player.getReference() : null;
+        Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
+        Vector3i target = event != null ? event.getTargetBlock() : null;
+        if (world == null || store == null || target == null) {
+            return new MenteesMod.EcoFriendlyTreeResult(false, "missing world/store/target");
+        }
+        BlockType targetType = blockType(world, target.x, target.y, target.z);
+        if (!isNaturalEcoSurface(targetType)) {
+            return new MenteesMod.EcoFriendlyTreeResult(false, "target surface is not natural earth: "
+                    + blockTypeId(targetType));
+        }
+        for (int y = 1; y <= 7; y++) {
+            if (blockMaterial(world, target.x, target.y + y, target.z) == BlockMaterial.Solid) {
+                return new MenteesMod.EcoFriendlyTreeResult(false, "not enough open space above target");
+            }
+        }
+
+        int trunk = resolveBlockType(
+                "Wood_Oak_Trunk", "Wood_Beech_Trunk", "Wood_Birch_Trunk",
+                "Wood_Ash_Trunk", "Wood_Apple_Trunk", "Wood_Aspen_Trunk");
+        int leaves = resolveBlockType(
+                "Plant_Leaves_Oak", "Plant_Leaves_Beech", "Plant_Leaves_Birch",
+                "Plant_Leaves_Ash", "Plant_Leaves_Apple", "Plant_Leaves_Aspen");
+        if (!usableBlock(trunk) || !usableBlock(leaves)) {
+            return new MenteesMod.EcoFriendlyTreeResult(false, "tree block assets unavailable trunk="
+                    + trunk + " leaves=" + leaves);
+        }
+
+        int x = target.x;
+        int baseY = target.y + 1;
+        int z = target.z;
+        BlockSelection tree = new BlockSelection();
+        tree.setPosition(x, baseY, z);
+        tree.setAnchorAtWorldPos(x, baseY, z);
+        for (int y = 0; y < 5; y++) {
+            tree.addBlockAtWorldPos(x, baseY + y, z, trunk, 0, 0, 0);
+        }
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                int distance = Math.abs(dx) + Math.abs(dz);
+                if (distance <= 3) {
+                    tree.addBlockAtWorldPos(x + dx, baseY + 4, z + dz, leaves, 0, 0, 0);
+                }
+                if (distance <= 2) {
+                    tree.addBlockAtWorldPos(x + dx, baseY + 5, z + dz, leaves, 0, 0, 0);
+                }
+            }
+        }
+        tree.addBlockAtWorldPos(x, baseY + 6, z, leaves, 0, 0, 0);
+
+        try {
+            BlockSelection original = tree.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
+            int pushed = pushNpcsOutward(store, new Vector3d(x + 0.5, baseY, z + 0.5), 4.0, 3.25);
+            long clearAtTick = tickCounter + 10L * TICKS_PER_SECOND;
+            activeEcoTrees.add(new TemporaryEcoTree(playerData.getPlayerId(), world, original, clearAtTick));
+            return new MenteesMod.EcoFriendlyTreeResult(true,
+                    "temporary tree blocks=" + tree.getBlockCount()
+                            + " pushed=" + pushed
+                            + " clearsAtTick=" + clearAtTick
+                            + " noDrops=true");
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] Runtime perk eco-friendly tree placement failed safely: " + e.getMessage());
+            return new MenteesMod.EcoFriendlyTreeResult(false, e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private void tickEcoTrees() {
+        Iterator<TemporaryEcoTree> iterator = activeEcoTrees.iterator();
+        while (iterator.hasNext()) {
+            TemporaryEcoTree tree = iterator.next();
+            if (tree.clearAtTick > tickCounter) {
+                continue;
+            }
+            iterator.remove();
+            try {
+                tree.originalSelection.place(null, tree.world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
+                LOG.info("[MOTM] Runtime perk eco-friendly tree cleared: player="
+                        + tree.playerId + " blockDrops=false");
+            } catch (Throwable e) {
+                LOG.warning("[MOTM] Runtime perk eco-friendly tree clear failed safely: " + e.getMessage());
+            }
+        }
+    }
+
+    private boolean isNaturalEcoSurface(BlockType blockType) {
+        if (blockType == null || blockType.getMaterial() != BlockMaterial.Solid) {
+            return false;
+        }
+        String id = blockTypeId(blockType).toLowerCase(Locale.ROOT);
+        return id.contains("grass")
+                || id.contains("dirt")
+                || id.contains("soil")
+                || id.contains("moss")
+                || id.contains("mud")
+                || id.contains("peat");
+    }
+
+    private String blockTypeId(BlockType blockType) {
+        if (blockType == null) {
+            return "";
+        }
+        for (String methodName : List.of("getId", "getName")) {
+            try {
+                Object value = blockType.getClass().getMethod(methodName).invoke(blockType);
+                if (value != null) {
+                    return String.valueOf(value);
+                }
+            } catch (ReflectiveOperationException ignored) {
+                // Try the next known accessor. The Hytale API has moved this name across builds.
+            }
+        }
+        return blockType.toString();
+    }
+
+    private BlockType blockType(World world, int x, int y, int z) {
+        if (world == null) {
+            return null;
+        }
+        long chunkIndex = ChunkUtil.indexChunkFromBlock(x, z);
+        WorldChunk chunk = world.getChunkIfLoaded(chunkIndex);
+        if (chunk == null) {
+            chunk = world.getChunkIfInMemory(chunkIndex);
+        }
+        if (chunk == null) {
+            return null;
+        }
+        int localX = ChunkUtil.localCoordinate(x);
+        int localZ = ChunkUtil.localCoordinate(z);
+        return chunk.getBlockType(localX, y, localZ);
+    }
+
+    private BlockMaterial blockMaterial(World world, int x, int y, int z) {
+        BlockType blockType = blockType(world, x, y, z);
+        return blockType != null ? blockType.getMaterial() : BlockMaterial.Empty;
+    }
+
+    private int resolveBlockType(String... blockIds) {
+        for (String blockId : blockIds) {
+            try {
+                int id = BlockType.getBlockIdOrUnknown(blockId, "MOTM Eco-friendly perk tree");
+                if (usableBlock(id)) {
+                    return id;
+                }
+            } catch (Throwable e) {
+                LOG.warning("[MOTM] Eco-friendly block candidate skipped: id=" + blockId
+                        + " error=" + e.getMessage());
+            }
+        }
+        return BlockType.UNKNOWN_ID;
+    }
+
+    private boolean usableBlock(int blockTypeId) {
+        return blockTypeId != BlockType.UNKNOWN_ID && blockTypeId != BlockType.EMPTY_ID;
+    }
+
+    private int pushNpcsOutward(Store<EntityStore> store, Vector3d center, double radius, double distance) {
+        int pushed = 0;
+        for (Ref<EntityStore> target : nearbyNpcs(store, center, radius)) {
+            Vector3d position = position(target, store);
+            if (position == null) {
+                continue;
+            }
+            Vector3d direction = new Vector3d(position.x - center.x, 0.0, position.z - center.z);
+            if (!direction.isFinite() || direction.length() < 0.01) {
+                direction.set(1.0, 0.0, 0.0);
+            } else {
+                direction.normalize();
+            }
+            Vector3d destination = new Vector3d(
+                    center.x + (direction.x * distance),
+                    position.y,
+                    center.z + (direction.z * distance)
+            );
+            try {
+                NPCEntity npc = store.getComponent(target, NPCEntity.getComponentType());
+                if (npc != null) {
+                    npc.moveTo(target, destination.x, destination.y, destination.z, store);
+                    pushed++;
+                }
+            } catch (Throwable e) {
+                LOG.warning("[MOTM] Eco-friendly tree push failed safely: " + e.getMessage());
+            }
+        }
+        return pushed;
     }
 
     public String runRainyDayProof(PlayerData player, Player runtimePlayer, String requestedWeatherId) {
@@ -412,12 +768,46 @@ public class RuntimePerkManager {
         temporaryDamageReductionByPlayer.remove(playerId);
         movementSnapshots.remove(playerId);
         rainyDayLastRegenTickByPlayer.remove(playerId);
+        lowHealthLatchByPlayer.remove(playerId);
         ghostAlliesByPlayer.remove(playerId);
         activeIgnites.removeIf(dot -> playerId.equals(dot.ownerPlayerId));
+        Iterator<TemporaryEcoTree> ecoIterator = activeEcoTrees.iterator();
+        while (ecoIterator.hasNext()) {
+            TemporaryEcoTree tree = ecoIterator.next();
+            if (!playerId.equals(tree.playerId)) {
+                continue;
+            }
+            ecoIterator.remove();
+            try {
+                tree.originalSelection.place(null, tree.world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
+                LOG.info("[MOTM] Runtime perk eco-friendly tree cleared by player reset: player="
+                        + playerId + " blockDrops=false");
+            } catch (Throwable e) {
+                LOG.warning("[MOTM] Runtime perk eco-friendly reset clear failed safely: " + e.getMessage());
+            }
+        }
     }
 
     private void expireTemporaryDamageReductions() {
         temporaryDamageReductionByPlayer.entrySet().removeIf(entry -> entry.getValue().expireAtTick <= tickCounter);
+    }
+
+    private void updateLowHealthLatches(PlayerData player, Ref<EntityStore> playerRef, Store<EntityStore> store) {
+        if (player == null || player.getPlayerId() == null) {
+            return;
+        }
+        double maxHealth = maxHealth(playerRef, store);
+        if (maxHealth <= 0.0) {
+            return;
+        }
+        double fraction = currentHealth(playerRef, store) / maxHealth;
+        LowHealthLatch latch = lowHealthLatchByPlayer.computeIfAbsent(player.getPlayerId(), ignored -> new LowHealthLatch());
+        if (fraction > 0.10) {
+            latch.neptuneArmed = true;
+        }
+        if (fraction > 0.20) {
+            latch.freezingWindsArmed = true;
+        }
     }
 
     private double updateSprintPerks(PlayerData player, Player runtimePlayer, Ref<EntityStore> playerRef, Store<EntityStore> store) {
@@ -467,9 +857,12 @@ public class RuntimePerkManager {
         boolean swimming = isMovementState(playerRef, store, "swimming");
         SwimState state = swimStateByPlayer.computeIfAbsent(player.getPlayerId(), ignored -> new SwimState());
         if (!swimming) {
-            state.swimStartTick = -1L;
+            if (tickCounter - state.lastSwimmingTick > 10L) {
+                state.swimStartTick = -1L;
+            }
             return 0.0;
         }
+        state.lastSwimmingTick = tickCounter;
         if (state.swimStartTick < 0L) {
             state.swimStartTick = tickCounter;
         }
@@ -587,21 +980,32 @@ public class RuntimePerkManager {
             return;
         }
         double projected = Math.max(0.0, currentHealth - incomingDamage);
+        double projectedFraction = projected / maxHealth;
+        LowHealthLatch latch = lowHealthLatchByPlayer.computeIfAbsent(playerId, ignored -> new LowHealthLatch());
         if (hasPerk(target, HYDRO_NEPTUNES_GRACE)
-                && projected / maxHealth <= 0.10
+                && projectedFraction <= 0.10
+                && latch.neptuneArmed
                 && !onCooldown(playerId, HYDRO_NEPTUNES_GRACE)) {
             double healed = healEntity(targetRef, store, maxHealth * 0.40);
+            latch.neptuneArmed = false;
             setCooldown(playerId, HYDRO_NEPTUNES_GRACE, 25L * TICKS_PER_SECOND);
+            applyEffectById(targetRef, store, "MOTM_Hydro_Impact");
             LOG.info("[MOTM] Runtime perk proc: neptunes_grace heal=" + format(healed)
-                    + " cooldownSeconds=25 player=" + playerId);
+                    + " thresholdFresh=true visual=blue_bubble_pulse cooldownSeconds=25 player=" + playerId);
+        } else if (hasPerk(target, HYDRO_NEPTUNES_GRACE) && projectedFraction <= 0.10) {
+            latch.neptuneArmed = false;
         }
         if (hasPerk(target, HYDRO_FREEZING_WINDS)
-                && projected / maxHealth <= 0.20
+                && projectedFraction <= 0.20
+                && latch.freezingWindsArmed
                 && !onCooldown(playerId, HYDRO_FREEZING_WINDS)) {
             int targets = applyFreezingWinds(playerId, targetRef, store);
+            latch.freezingWindsArmed = false;
             setCooldown(playerId, HYDRO_FREEZING_WINDS, 15L * TICKS_PER_SECOND);
             LOG.info("[MOTM] Runtime perk proc: freezing_winds targets=" + targets
-                    + " cooldownSeconds=15 player=" + playerId);
+                    + " thresholdFresh=true visual=outward_ice_snow_burst cooldownSeconds=15 player=" + playerId);
+        } else if (hasPerk(target, HYDRO_FREEZING_WINDS) && projectedFraction <= 0.20) {
+            latch.freezingWindsArmed = false;
         }
     }
 
@@ -610,6 +1014,7 @@ public class RuntimePerkManager {
         if (center == null) {
             return 0;
         }
+        applyEffectById(playerRef, store, FREEZING_WINDS_EFFECT_ID);
         int targets = 0;
         for (Ref<EntityStore> target : nearbyNpcs(store, center, 5.0)) {
             String entityId = entityId(target, store);
@@ -619,9 +1024,36 @@ public class RuntimePerkManager {
             mod.getStatusEffectManager().applyEffect(entityId,
                     new StatusEffect(StatusEffect.Type.SLOW, 5 * TICKS_PER_SECOND, 0.50, playerId, HYDRO_FREEZING_WINDS));
             applyEffectById(target, store, FREEZING_WINDS_EFFECT_ID);
+            pushNpcAway(target, store, center, 5.75);
             targets++;
         }
         return targets;
+    }
+
+    private void pushNpcAway(Ref<EntityStore> target, Store<EntityStore> store, Vector3d center, double distance) {
+        Vector3d position = position(target, store);
+        if (position == null || center == null) {
+            return;
+        }
+        Vector3d direction = new Vector3d(position.x - center.x, 0.0, position.z - center.z);
+        if (!direction.isFinite() || direction.length() < 0.01) {
+            direction.set(1.0, 0.0, 0.0);
+        } else {
+            direction.normalize();
+        }
+        Vector3d destination = new Vector3d(
+                center.x + (direction.x * distance),
+                position.y,
+                center.z + (direction.z * distance)
+        );
+        try {
+            NPCEntity npc = store.getComponent(target, NPCEntity.getComponentType());
+            if (npc != null) {
+                npc.moveTo(target, destination.x, destination.y, destination.z, store);
+            }
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] Freezing Winds knockback failed safely: " + e.getMessage());
+        }
     }
 
     private int applyIgnite(PlayerData attacker, Ref<EntityStore> attackerRef, Store<EntityStore> store, Ref<EntityStore> targetRef) {
@@ -1024,6 +1456,7 @@ public class RuntimePerkManager {
 
     private static final class SwimState {
         private long swimStartTick = -1L;
+        private long lastSwimmingTick = Long.MIN_VALUE;
     }
 
     private static final class TemporaryDamageReduction {
@@ -1036,9 +1469,30 @@ public class RuntimePerkManager {
         }
     }
 
+    private static final class LowHealthLatch {
+        private boolean neptuneArmed = true;
+        private boolean freezingWindsArmed = true;
+    }
+
+    private static final class TemporaryEcoTree {
+        private final String playerId;
+        private final World world;
+        private final BlockSelection originalSelection;
+        private final long clearAtTick;
+
+        private TemporaryEcoTree(String playerId, World world, BlockSelection originalSelection, long clearAtTick) {
+            this.playerId = playerId;
+            this.world = world;
+            this.originalSelection = originalSelection;
+            this.clearAtTick = clearAtTick;
+        }
+    }
+
     private record RainState(boolean raining, int weatherIndex, String weatherId) {}
 
     public record RuntimePerkHudEntry(String id, String name, double cooldownSeconds, boolean active) {}
+
+    private record CraftedOutput(String itemId, int quantity) {}
 
     private static final class IgniteDot {
         private final String ownerPlayerId;

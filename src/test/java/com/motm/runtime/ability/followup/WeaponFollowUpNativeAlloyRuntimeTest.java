@@ -22,16 +22,16 @@ class WeaponFollowUpNativeAlloyRuntimeTest {
 
         String message = runtime.applyNativeDamage(followUp, "hytale:pickaxe", 10.0f, hooks);
 
-        assertEquals("[MOTM] Alloy Enhancement hit: 10 -> 13.5 damage | durability protected | 2 use(s) left", message);
-        assertEquals(13.5f, hooks.damageAmount, 0.0001f);
+        assertEquals("[MOTM] Alloy Enhancement hit: 10 -> 13 damage | durability protected | 2 use(s) left", message);
+        assertEquals(13.0f, hooks.damageAmount, 0.0001f);
         assertEquals(List.of(
                 "bound:player:hytale:pickaxe:3",
                 "applyVisual",
-                "setDamage:13.5",
+                "setDamage:13.0",
                 "impact",
                 "secondary:vulnerability",
                 "restore:hytale:pickaxe",
-                "log:[MOTM] Alloy Enhancement hit: 10 -> 13.5 damage | durability protected | 2 use(s) left:player:hytale:pickaxe"
+                "log:[MOTM] Alloy Enhancement hit: 10 -> 13 damage | durability protected | 2 use(s) left:player:hytale:pickaxe"
         ), hooks.events);
     }
 
@@ -44,17 +44,17 @@ class WeaponFollowUpNativeAlloyRuntimeTest {
 
         String message = runtime.applyNativeDamage(followUp, "hytale:pickaxe", 8.0f, hooks);
 
-        assertEquals("[MOTM] Alloy Enhancement hit: 8 -> 10.8 damage | durability protected | Alloy finished", message);
+        assertEquals("[MOTM] Alloy Enhancement hit: 8 -> 10.4 damage | durability protected | Alloy finished", message);
         assertEquals(List.of(
                 "bound:player:hytale:pickaxe:1",
                 "applyVisual",
-                "setDamage:10.8",
+                "setDamage:10.4",
                 "impact",
                 "secondary:vulnerability",
                 "restore:hytale:pickaxe",
                 "remove:player",
                 "clearVisual",
-                "log:[MOTM] Alloy Enhancement hit: 8 -> 10.8 damage | durability protected | Alloy finished:player:hytale:pickaxe"
+                "log:[MOTM] Alloy Enhancement hit: 8 -> 10.4 damage | durability protected | Alloy finished:player:hytale:pickaxe"
         ), hooks.events);
     }
 

@@ -5,5 +5,8 @@ public enum FieldTerrainRuntimeKind {
     IRON_WALL,
     LAVA_POOL,
     MUDPIT,
-    STONE_PILLAR
+    STONE_PILLAR,
+    TIDE_POOL,
+    OIL_SPILL,
+    ICE_CAP_TUBE
 }

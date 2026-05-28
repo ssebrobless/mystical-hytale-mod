@@ -109,8 +109,8 @@ public final class FieldPulseHytaleAdapter {
         }
 
         if (terrainEffect.contains("mudpit")) {
-            support.applyTargetToken("root", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             support.applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            support.applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
@@ -182,6 +182,7 @@ public final class FieldPulseHytaleAdapter {
         if (terrainEffect.contains("sandstorm")) {
             support.applyTargetToken("blind", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             support.applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            support.applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
@@ -208,6 +209,12 @@ public final class FieldPulseHytaleAdapter {
         if (terrainEffect.contains("piercing_rain")) {
             support.applyTargetToken("attack_slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             support.applyTargetToken("dot", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            return;
+        }
+
+        if (terrainEffect.contains("oil_spill")) {
+            support.applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            support.applyTargetToken("toxic", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 

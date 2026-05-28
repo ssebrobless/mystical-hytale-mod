@@ -79,6 +79,7 @@ public final class AbilitySpecificHytaleAdapter {
                 if (support.applyEffectById(playerRef, store, "MOTM_Proof_Coating_Stone")) {
                     parts.add("stone coating");
                 }
+                addTerrain(parts, runtimePlayer, player, ability, explicitTargetRef, targetBlock, abilityId);
             }
             case "sandstorm" -> {
                 String terrain = placeTerrain(runtimePlayer, player, ability, explicitTargetRef, targetBlock, abilityId);

@@ -82,6 +82,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerCraftEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
@@ -1790,6 +1791,12 @@ public class MenteesMod extends JavaPlugin {
                     }
 
                     @Override
+                    public boolean handleBareHandBlockPunch(PlayerData playerData, Player player, DamageBlockEvent event) {
+                        return runtimePerkManager != null
+                                && runtimePerkManager.handleBareHandBlockPunch(playerData, player, event);
+                    }
+
+                    @Override
                     public void sendMessage(Player player, Message message) {
                         MenteesMod.this.sendPlayerMessage(player, message);
                     }
@@ -1931,7 +1938,8 @@ public class MenteesMod extends JavaPlugin {
                 this::onPlayerDisconnect,
                 this::handleDamageBlock,
                 this::handlePlayerInteract,
-                this::handlePlayerMouseButton
+                this::handlePlayerMouseButton,
+                this::handlePlayerCraft
         );
     }
 
@@ -2365,6 +2373,12 @@ public class MenteesMod extends JavaPlugin {
         }
     }
 
+    private void handlePlayerCraft(PlayerCraftEvent event) {
+        if (runtimePerkManager != null) {
+            runtimePerkManager.handlePlayerCraft(event);
+        }
+    }
+
     // --- Agent observability surface ---
 
     public String startObservabilityRun(String runId, String scenarioId, String playerId) {
@@ -2558,15 +2572,19 @@ public class MenteesMod extends JavaPlugin {
             return 0.0;
         }
         final int[] enhancedPieces = {0};
+        final double[] extraResistance = {0.0};
         player.getInventory().getArmor().forEach((slot, stack) -> {
             if (hasBooleanMetadata(stack, BLACKSMITH_METADATA_KEY)) {
                 enhancedPieces[0]++;
+                if (stack != null && stack.getItem() != null && stack.getItem().getArmor() != null) {
+                    extraResistance[0] += Math.max(0.0, stack.getItem().getArmor().getBaseDamageResistance()) * 0.20;
+                }
             }
         });
-        double reduction = Math.min(0.20, enhancedPieces[0] * 0.05);
+        double reduction = Math.min(0.20, extraResistance[0]);
         if (reduction > 0.0) {
             LOG.info("[MOTM] Runtime perk armor: blacksmith craftedPieces=" + enhancedPieces[0]
-                    + " damageReduction=" + String.format(Locale.ROOT, "%.3f", reduction)
+                    + " nativeArmorExtraResistance=" + String.format(Locale.ROOT, "%.3f", reduction)
                     + " player=" + playerId);
         }
         return reduction;

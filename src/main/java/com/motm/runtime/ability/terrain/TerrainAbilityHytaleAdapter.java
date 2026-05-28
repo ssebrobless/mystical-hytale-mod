@@ -63,16 +63,16 @@ public final class TerrainAbilityHytaleAdapter {
             case "rooted" -> placementAdapter.placeSurfacePatchSelection(world, reason, origin, 1, expireAt,
                     "Plant_Roots_Leafy", "Plant_Roots_Cave", "Plant_Vine_Thick_Roots");
             case "sapling" -> placementAdapter.placeSurfaceColumnSelection(world, reason, center, 1, expireAt,
-                    "Plant_Sapling_Oak", "Plant_Sapling_Crystal");
+                    "Furniture_Temple_Emerald_Statue", "Plant_Sapling_Oak", "Plant_Sapling_Crystal");
             case "nightshade" -> placementAdapter.placeSurfaceColumnSelection(world, reason, center, 1, expireAt,
-                    "Plant_Flower_Common_Purple", "Plant_Flower_Common_Blue");
+                    "Plant_Flower_Tall_Red", "Plant_Flower_Common_Purple", "Plant_Flower_Common_Blue");
             case "frolick" -> {
                 boolean started = placementAdapter.startMovingTerrainTrail(world, playerRef, reason, expireAt,
                         "Plant_Flower_Common_Purple", "Plant_Flower_Common_Yellow", "Plant_Flower_Common_Blue");
                 yield started ? "moving flower trail" : "";
             }
             case "cacti_cluster" -> placementAdapter.placeSurfaceColumnSelection(world, reason, center, 2, expireAt,
-                    "Plant_Cactus_1", "Prototype_Cactus_Kit_Tall_Base", "Prototype_Cactus_One");
+                    "Plant_Cactus_Ball_1", "Plant_Cactus_1", "Prototype_Cactus_Kit_Tall_Base", "Prototype_Cactus_One");
             case "lapidary" -> {
                 String placed = placementAdapter.placeFloatingClusterSelection(world, reason, center,
                         2, 2, 2, expireAt,
@@ -102,11 +102,13 @@ public final class TerrainAbilityHytaleAdapter {
                 if (explicitTargetRef != null) {
                     support.applyEffectById(explicitTargetRef, store, "MOTM_Proof_Coating_Stone");
                     String terrain = placementAdapter.placeSurfacePatchSelection(world, reason, center, 1, expireAt,
-                            "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
+                            "Furniture_Temple_Light_Statue", "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
                     yield terrain.isBlank() ? "target stone coating" : "target stone coating + " + terrain;
                 }
                 yield "";
             }
+            case "gargoyle" -> placementAdapter.placeSurfaceColumnSelection(world, reason, origin, 1, expireAt,
+                    "Furniture_Ancient_Statue", "Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
             case "debris" -> placementAdapter.placeTrailSelection(world, reason, origin, forward, System.currentTimeMillis() + 2400L,
                     "Soil_Dirt", "Rock_Stone", "Rock_Stone_Brick");
             case "sandstorm" -> placementAdapter.placeRingBlockSelection(world, reason, origin, Math.max(2.0, ability.getRadius()),

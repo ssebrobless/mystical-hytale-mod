@@ -32,7 +32,7 @@ class WeaponFollowUpSpecsTest {
         assertTrue(spec.alloyFollowUp());
         assertEquals(3, spec.uses());
         assertEquals(27.0, spec.flatDamageBonus(), 0.0001);
-        assertEquals(0.35, spec.damageMultiplierBonus(), 0.0001);
+        assertEquals(0.30, spec.damageMultiplierBonus(), 0.0001);
         assertEquals("vulnerability", spec.secondaryRiderToken());
         assertNull(spec.riderToken());
     }

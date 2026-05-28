@@ -27,16 +27,27 @@ public final class BlockDamageInteractionHandler {
         if (log != null) {
             log.info("[MOTM] >>> handleDamageBlock ENTERED");
         }
-        if (event == null || event.getItemInHand() == null || event.getTargetBlock() == null || support == null) {
+        if (event == null || event.getTargetBlock() == null || support == null) {
             return;
         }
 
-        String itemId = event.getItemInHand().getItemId();
+        Player nearbyPlayer = resolvePlayerForBlockDamage(event, false);
+        if (nearbyPlayer != null) {
+            String playerId = support.runtimePlayerId(nearbyPlayer);
+            PlayerData playerData = playerId != null ? support.playerData(playerId) : null;
+            if (isBareHanded(nearbyPlayer, event)
+                    && support.handleBareHandBlockPunch(playerData, nearbyPlayer, event)) {
+                return;
+            }
+        }
+
+        ItemStack eventItem = event.getItemInHand();
+        String itemId = eventItem != null ? eventItem.getItemId() : null;
         if (!isPickaxeItemId(itemId)) {
             return;
         }
 
-        Player terraMiner = resolveTerraMinerForBlockDamage(event);
+        Player terraMiner = resolvePlayerForBlockDamage(event, true);
         if (terraMiner == null) {
             return;
         }
@@ -53,13 +64,13 @@ public final class BlockDamageInteractionHandler {
         }
     }
 
-    private Player resolveTerraMinerForBlockDamage(DamageBlockEvent event) {
-        if (event == null || event.getTargetBlock() == null || event.getItemInHand() == null) {
+    private Player resolvePlayerForBlockDamage(DamageBlockEvent event, boolean requireTerraPickaxe) {
+        if (event == null || event.getTargetBlock() == null) {
             return null;
         }
 
-        String eventItemId = event.getItemInHand().getItemId();
-        if (eventItemId == null || eventItemId.isBlank()) {
+        String eventItemId = event.getItemInHand() != null ? event.getItemInHand().getItemId() : null;
+        if (requireTerraPickaxe && (eventItemId == null || eventItemId.isBlank())) {
             return null;
         }
 
@@ -78,12 +89,13 @@ public final class BlockDamageInteractionHandler {
             }
 
             PlayerData playerData = support.playerData(entry.getKey());
-            if (playerData == null || !"terra".equalsIgnoreCase(playerData.getPlayerClass())) {
+            if (requireTerraPickaxe && (playerData == null || !"terra".equalsIgnoreCase(playerData.getPlayerClass()))) {
                 continue;
             }
 
             ItemStack itemInHand = candidate.getInventory().getItemInHand();
-            if (itemInHand == null || itemInHand.isEmpty() || !eventItemId.equalsIgnoreCase(itemInHand.getItemId())) {
+            if (requireTerraPickaxe
+                    && (itemInHand == null || itemInHand.isEmpty() || !eventItemId.equalsIgnoreCase(itemInHand.getItemId()))) {
                 continue;
             }
 
@@ -116,6 +128,17 @@ public final class BlockDamageInteractionHandler {
         return bestMatch;
     }
 
+    private static boolean isBareHanded(Player player, DamageBlockEvent event) {
+        ItemStack eventItem = event != null ? event.getItemInHand() : null;
+        if (eventItem != null && !eventItem.isEmpty()) {
+            return false;
+        }
+        ItemStack held = player != null && player.getInventory() != null
+                ? player.getInventory().getItemInHand()
+                : null;
+        return held == null || held.isEmpty();
+    }
+
     private static boolean isPickaxeItemId(String itemId) {
         if (itemId == null || itemId.isBlank()) {
             return false;
@@ -133,6 +156,8 @@ public final class BlockDamageInteractionHandler {
         String runtimePlayerId(Player player);
 
         String handleAlloyToolUse(Player player, PlayerData playerData, String itemId);
+
+        boolean handleBareHandBlockPunch(PlayerData playerData, Player player, DamageBlockEvent event);
 
         void sendMessage(Player player, Message message);
     }
