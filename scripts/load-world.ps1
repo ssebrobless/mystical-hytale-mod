@@ -1,6 +1,8 @@
 param(
     [string]$WorldName = "MOTM Creative Test",
-    [int]$LoadTimeoutSec = 180
+    [int]$LoadTimeoutSec = 180,
+    [string]$DataDir = "",
+    [switch]$AttemptRespawnRecovery
 )
 
 $ErrorActionPreference = "Stop"
@@ -91,23 +93,42 @@ function Click-Relative($Process, [double]$XRatio, [double]$YRatio, [string]$Lab
     [HytaleHarnessLoad.Win32]::mouse_event([HytaleHarnessLoad.Win32]::MOUSEEVENTF_LEFTUP, 0, 0, 0, [IntPtr]::Zero)
 }
 
-function Get-LatestServerLog {
-    $saveLogDir = Join-Path $env:APPDATA ("Hytale\UserData\Saves\" + $WorldName + "\logs")
-    Get-ChildItem -Path $saveLogDir -File -Filter "*.log" -ErrorAction SilentlyContinue |
+function Get-CandidateServerLogs {
+    $logs = New-Object System.Collections.Generic.List[object]
+    $saveRoot = Join-Path $env:APPDATA "Hytale\UserData\Saves"
+    $namedLogDir = Join-Path $saveRoot (Join-Path $WorldName "logs")
+    if (Test-Path -LiteralPath $namedLogDir) {
+        Get-ChildItem -LiteralPath $namedLogDir -File -Filter "*.log" -ErrorAction SilentlyContinue |
+            ForEach-Object { $logs.Add($_) }
+    }
+
+    if (Test-Path -LiteralPath $saveRoot) {
+        Get-ChildItem -LiteralPath $saveRoot -Directory -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                $dir = Join-Path $_.FullName "logs"
+                if (Test-Path -LiteralPath $dir) {
+                    Get-ChildItem -LiteralPath $dir -File -Filter "*.log" -ErrorAction SilentlyContinue |
+                        ForEach-Object { $logs.Add($_) }
+                }
+            }
+    }
+
+    $logs |
         Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+        Select-Object -First 8
 }
 
 function Wait-OnPlayerConnect([datetime]$After, [int]$TimeoutSec) {
     $deadline = (Get-Date).AddSeconds($TimeoutSec)
     $threshold = if ($After -le ([datetime]::MinValue).AddDays(1)) { [datetime]::MinValue } else { $After.AddSeconds(-2) }
     do {
-        $latest = Get-LatestServerLog
-        if ($latest -and $latest.LastWriteTime -ge $threshold) {
-            $match = Select-String -Path $latest.FullName -Pattern "\[MOTM\].*>>> onPlayerConnect" -ErrorAction SilentlyContinue |
-                Select-Object -First 1
-            if ($match) {
-                return [PSCustomObject]@{ Log = $latest.FullName; Line = $match.Line }
+        foreach ($latest in @(Get-CandidateServerLogs)) {
+            if ($latest -and $latest.LastWriteTime -ge $threshold) {
+                $match = Select-String -Path $latest.FullName -Pattern "\[MOTM\].*>>> onPlayerConnect" -ErrorAction SilentlyContinue |
+                    Select-Object -First 1
+                if ($match) {
+                    return [PSCustomObject]@{ Kind = "server-log"; Log = $latest.FullName; Line = $match.Line }
+                }
             }
         }
         Start-Sleep -Seconds 2
@@ -115,11 +136,52 @@ function Wait-OnPlayerConnect([datetime]$After, [int]$TimeoutSec) {
     return $null
 }
 
+function Invoke-MotmPositionProbe([string]$Label, [int]$TimeoutMilliseconds = 3500) {
+    $traceId = "load-world-" + $Label + "-" + ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
+    $commandLog = Join-Path $auditDir ("dev-position-" + $Label + ".log")
+    $args = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", (Join-Path $PSScriptRoot "send-dev-command.ps1"),
+        "-Command", "/motm dev position",
+        "-WorldName", $WorldName,
+        "-TimeoutMilliseconds", $TimeoutMilliseconds,
+        "-RunDir", $auditDir,
+        "-TraceId", $traceId,
+        "-ScenarioId", "load-world"
+    )
+    if (-not [string]::IsNullOrWhiteSpace($DataDir)) {
+        $args += @("-DataDir", $DataDir)
+    }
+
+    try {
+        $output = @(& powershell @args 2>&1)
+        $output | Set-Content -LiteralPath $commandLog -Encoding UTF8
+        $joined = $output -join "`n"
+        if ($LASTEXITCODE -eq 0 -and $joined -match "\[MOTM\] Dev position:") {
+            $line = ($output | Where-Object { $_ -match "\[MOTM\] Dev position:" } | Select-Object -Last 1)
+            return [PSCustomObject]@{
+                Kind = "dev-position"
+                Log = $commandLog
+                Line = [string]$line
+            }
+        }
+        Write-Step "Dev position probe '$Label' did not confirm in-world state. See $commandLog"
+    } catch {
+        $_.Exception.Message | Set-Content -LiteralPath $commandLog -Encoding UTF8
+        Write-Step "Dev position probe '$Label' failed: $($_.Exception.Message)"
+    }
+    return $null
+}
+
 $result = "FAIL"
 $matched = $null
 $startedAt = Get-Date
 try {
-    $existing = Wait-OnPlayerConnect $startedAt 1
+    $existing = Invoke-MotmPositionProbe "pre-click" 2500
+    if (-not $existing) {
+        $existing = Wait-OnPlayerConnect $startedAt 1
+    }
     if ($existing) {
         $matched = $existing
         Write-Step "Already in world: $($matched.Line)"
@@ -141,25 +203,33 @@ try {
         Click-Relative $proc $firstWorldX $firstWorldY "first world card confirm"
         Start-Sleep -Milliseconds 900
         Click-Relative $proc $firstWorldX $firstWorldY "first world card final confirm"
-        $matched = Wait-OnPlayerConnect $startedAt $LoadTimeoutSec
+        $matched = Invoke-MotmPositionProbe "post-click" 6000
         if (-not $matched) {
-            throw "Timed out waiting for [MOTM] >>> onPlayerConnect."
+            $matched = Wait-OnPlayerConnect $startedAt $LoadTimeoutSec
+        }
+        if (-not $matched) {
+            throw "Timed out waiting for MOTM in-world readiness. Tried /motm dev position and [MOTM] >>> onPlayerConnect."
         }
     }
 
     $proc = Get-HytaleWindow
-    if ($proc) {
+    if ($AttemptRespawnRecovery -and $proc) {
         Start-Sleep -Seconds 8
         Click-Relative $proc 0.508 0.596 "respawn recovery button"
         Start-Sleep -Seconds 2
         Click-Relative $proc 0.508 0.596 "respawn recovery button confirm"
         Start-Sleep -Seconds 8
+    } elseif ($proc) {
+        Write-Step "Skipping respawn recovery clicks; use -AttemptRespawnRecovery if the loaded world is on a death screen."
     }
 
     & (Join-Path $PSScriptRoot "capture-evidence.ps1") -Phase "harness/load-world" -RunId $runId -Name "in-world"
-    Copy-Item -LiteralPath $matched.Log -Destination (Join-Path $auditDir "server.log") -Force
+    if ($matched.Log -and (Test-Path -LiteralPath $matched.Log)) {
+        $destName = if ($matched.Kind -eq "server-log") { "server.log" } else { "motm-position-probe.log" }
+        Copy-Item -LiteralPath $matched.Log -Destination (Join-Path $auditDir $destName) -Force
+    }
     $result = "PASS"
-    Write-Step "PASS: onPlayerConnect matched in $($matched.Log)"
+    Write-Step "PASS: MOTM in-world readiness confirmed via $($matched.Kind) in $($matched.Log)"
 } finally {
     @"
 # H2 load-world run - $runId
@@ -173,9 +243,12 @@ $WorldName
 ## Log evidence
 $($matched.Line)
 
+## Readiness kind
+$($matched.Kind)
+
 ## Evidence
 - in-world.png
-- server.log
+- server.log or motm-position-probe.log
 - load-world.log
 "@ | Set-Content -Path $reportPath -Encoding UTF8
 }
