@@ -117,6 +117,8 @@ Assert ($passiveEffects["oxygen_capacity_bonus"] -eq 0.50) "Hydro breathing pass
 Assert ($passiveEffects["aqua_barrier_shield"] -eq 0.10) "Aqua Barrier shield is 10 percent max HP"
 Assert ($passiveEffects["aqua_barrier_cooldown_seconds"] -eq 8.0) "Aqua Barrier cooldown is 8 seconds"
 Assert ($passive -match 'HYDRO_AQUA_BARRIER_EFFECT_ID') "Hydro Aqua Barrier runtime effect is wired"
+Assert ($passive -match 'devPassiveSuppressedUntilMillisByPlayer[\s\S]*suppressHydroAquaBarrierForDevCleanup[\s\S]*clearHydroPassiveRuntime[\s\S]*hydroBarrierReadyTickByPlayer\.put') "Dev cleanup suppresses immediate Aqua Barrier reapply"
+Assert ($passive -match 'devPassiveSuppressedUntilMillisByPlayer\.get[\s\S]*System\.currentTimeMillis\(\)[\s\S]*clearHydroPassiveRuntime[\s\S]*continue;') "Passive tick honors wall-clock dev cleanup suppression before reapplying Aqua Barrier"
 Assert ($fieldSpecs -match 'isCasterCentered[\s\S]*snowstorm[\s\S]*piercing_rain[\s\S]*healing_rainbow[\s\S]*tide_pool[\s\S]*oil_spill') "Hydro self fields are caster-centered instead of cursor-targeted"
 Assert ($fieldSpecs -match 'shouldFollowOwner[\s\S]*snowstorm[\s\S]*piercing_rain[\s\S]*healing_rainbow') "Hydro moving aura fields follow the caster"
 Assert ($fieldActivation -match 'FieldRuntimeSpecs\.shouldFollowOwner\(ability\)') "Field activation passes follow-owner routing to runtime"

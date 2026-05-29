@@ -83,6 +83,7 @@ public class ClassPassiveManager {
     private final Map<String, Long> terraMiningAffinityActiveUntilTickByPlayer = new HashMap<>();
     private final Map<String, Vector3d> hydroSwimBoostByPlayer = new HashMap<>();
     private final Map<String, Long> hydroBarrierReadyTickByPlayer = new HashMap<>();
+    private final Map<String, Long> devPassiveSuppressedUntilMillisByPlayer = new HashMap<>();
     private final Set<String> hydroSwimmingPlayers = new HashSet<>();
     private final Set<String> hydroUnderwaterPlayers = new HashSet<>();
     private final Set<String> hydroBarrierActivePlayers = new HashSet<>();
@@ -140,6 +141,17 @@ public class ClassPassiveManager {
         corruptusPassiveLockoutUntilTickByPlayer.remove(playerId);
     }
 
+    public synchronized void suppressHydroAquaBarrierForDevCleanup(String playerId, Player runtimePlayer) {
+        if (playerId == null) {
+            return;
+        }
+
+        clearHydroPassiveRuntime(playerId, runtimePlayer);
+        devPassiveSuppressedUntilMillisByPlayer.put(playerId, System.currentTimeMillis() + 10_000L);
+        hydroBarrierReadyTickByPlayer.put(playerId, tickCounter + Math.max(hydroPassive.aquaBarrierCooldownTicks(), 10 * TICKS_PER_SECOND));
+        LOG.info("[MOTM] Dev passive cleanup suppression armed: player=" + playerId + " millis=10000");
+    }
+
     public synchronized void tick(Map<String, Player> runtimePlayers, Store<EntityStore> currentStore) {
         tickCounter++;
 
@@ -165,6 +177,19 @@ public class ClassPassiveManager {
                 clearAeroPassiveRuntime(playerId, runtimePlayer);
                 clearPlayerState(playerId);
                 continue;
+            }
+
+            Long devSuppressedUntilMillis = devPassiveSuppressedUntilMillisByPlayer.get(playerId);
+            if (devSuppressedUntilMillis != null) {
+                if (System.currentTimeMillis() < devSuppressedUntilMillis) {
+                    clearTerraPassiveRuntime(playerId, runtimePlayer);
+                    clearHydroPassiveRuntime(playerId, runtimePlayer);
+                    clearAeroPassiveRuntime(playerId, runtimePlayer);
+                    clearCorruptusPassiveRuntime(playerId);
+                    updateTrackedPosition(playerId, runtimePlayer);
+                    continue;
+                }
+                devPassiveSuppressedUntilMillisByPlayer.remove(playerId);
             }
 
             switch (player.getPlayerClass().toLowerCase(Locale.ROOT)) {
@@ -685,6 +710,13 @@ public class ClassPassiveManager {
             return;
         }
 
+        if (tickCounter < hydroBarrierReadyTickByPlayer.getOrDefault(playerId, 0L)) {
+            hydroBarrierActivePlayers.remove(playerId);
+            statusEffectManager.clearEffectsFromSource(playerId, HYDRO_AQUA_BARRIER_SOURCE_ID);
+            removeEffectById(playerRef, store, HYDRO_AQUA_BARRIER_EFFECT_ID);
+            return;
+        }
+
         double currentShield = statusEffectManager.getShieldHp(playerId, HYDRO_AQUA_BARRIER_SOURCE_ID);
         if (currentShield > 0.0) {
             hydroBarrierActivePlayers.add(playerId);
@@ -694,10 +726,6 @@ public class ClassPassiveManager {
 
         updateHydroAquaBarrierCooldown(playerId);
         removeEffectById(playerRef, store, HYDRO_AQUA_BARRIER_EFFECT_ID);
-        if (tickCounter < hydroBarrierReadyTickByPlayer.getOrDefault(playerId, 0L)) {
-            return;
-        }
-
         double applied = applyShieldFraction(
                 playerId,
                 playerRef,
