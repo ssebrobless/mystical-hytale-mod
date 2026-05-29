@@ -1688,15 +1688,17 @@ public class GameplayPlaybackManager {
         logTerraAbilityEvent("stomp.armed", player, style, ability,
                 "startY=" + AbilityPresentation.formatDecimal(transform.getTransform().getPosition().y)
                         + " timeoutMs=" + STOMP_ARM_TIMEOUT_MILLIS);
-        LOG.info("[MOTM] Stomp armed: player=" + player.getPlayerName()
-                + " - next jump's landing will trigger the shockwave");
+        LOG.info("[MOTM] " + ability.getName() + " armed: player=" + player.getPlayerName()
+                + " - next jump's landing will trigger " + ability.getName());
         String effectId = AbilityRuntimeEffects.castEffectId(player.getPlayerClass(), currentStyleId(player), ability);
         applyEffectById(playerRef, store, effectId);
+        int takeoffDisplaced = displaceTargetsAround(runtimePlayer, player, ability,
+                new Vector3d(transform.getTransform().getPosition()));
 
         return new ExecutionResult(
-                PlaybackResult.none("Stomp armed - jump and land to release."),
-                0, 0.0, 0, 0, false,
-                "Stomp armed (jump -> land to release the shockwave)");
+                PlaybackResult.none(ability.getName() + " armed - jump and land to release."),
+                takeoffDisplaced, 0.0, 0, 0, false,
+                ability.getName() + " armed (jump -> land to release)");
     }
 
     public synchronized void tick(Store<EntityStore> currentStore) {
@@ -1760,7 +1762,7 @@ public class GameplayPlaybackManager {
                     && fractionalY < STOMP_LAND_TOLERANCE_BLOCKS
                     && dy <= 0.0;
             if (landed) {
-                fireArmedStomp(runtimePlayer, armed, new Vector3d(transform.getTransform().getPosition()));
+                fireArmedJumpLanding(runtimePlayer, armed, new Vector3d(transform.getTransform().getPosition()));
                 stompState.remove(playerId, armed);
                 continue;
             }
@@ -1770,6 +1772,18 @@ public class GameplayPlaybackManager {
     }
 
     private void fireArmedStomp(Player runtimePlayer, ArmedStomp armed, Vector3d landingPosition) {
+        fireArmedJumpLanding(runtimePlayer, armed, landingPosition);
+    }
+
+    private void fireArmedJumpLanding(Player runtimePlayer, ArmedStomp armed, Vector3d landingPosition) {
+        if (armed == null || armed.ability() == null) {
+            return;
+        }
+        if ("leap_frog".equals(lower(armed.ability().getId()))) {
+            fireArmedLeapFrog(runtimePlayer, armed, landingPosition);
+            return;
+        }
+
         LOG.info("[MOTM] Stomp fired at landing: player=" + armed.player().getPlayerName()
                 + " pos=" + landingPosition);
         CastContext landingContext = CastContext.atPosition(landingPosition);
@@ -1818,6 +1832,53 @@ public class GameplayPlaybackManager {
                 "summonsBuffed", 0,
                 "formApplied", false
         ));
+    }
+
+    private void fireArmedLeapFrog(Player runtimePlayer, ArmedStomp armed, Vector3d landingPosition) {
+        AbilityData ability = armed.ability();
+        PlaybackResult playback = playAbility(runtimePlayer, armed.player(), armed.style(), ability);
+        int displaced = displaceTargetsAround(runtimePlayer, armed.player(), ability, landingPosition);
+        LOG.info("[MOTM] Leap Frog landing resolved: targets=" + displaced
+                + " pos=" + landingPosition
+                + (playback.effectApplied() ? " visual=applied" : " visual=missing"));
+        mod.recordCausality("ability_cast_end", armed.traceId(), MotmObservability.mapOf(
+                "playerId", armed.player().getPlayerId(),
+                "styleId", safe(armed.style() != null ? armed.style().getId() : currentStyleId(armed.player())),
+                "abilityId", safe(ability.getId()),
+                "summary", "Leap Frog landing resolved: displaced=" + displaced
+                        + (playback.effectApplied() ? " visual=applied" : " visual=missing"),
+                "combatTargets", displaced,
+                "totalDamage", 0.0,
+                "projectiles", 0,
+                "fieldActivated", false,
+                "terrainActivated", false,
+                "summonsSpawned", 0,
+                "summonsBuffed", 0,
+                "formApplied", false
+        ));
+    }
+
+    private int displaceTargetsAround(Player runtimePlayer,
+                                      PlayerData player,
+                                      AbilityData ability,
+                                      Vector3d center) {
+        if (runtimePlayer == null || player == null || ability == null || center == null) {
+            return 0;
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return 0;
+        }
+
+        Store<EntityStore> store = playerRef.getStore();
+        double radius = Math.max(2.0, ability.getRadius() > 0 ? ability.getRadius() : 3.0);
+        int displaced = 0;
+        for (Ref<EntityStore> target : collectTargetsAroundPoint(playerRef, store, center, radius, 4.0)) {
+            if (applyTargetToken("knockback", target, store, playerRef, player.getPlayerId(), ability)) {
+                displaced++;
+            }
+        }
+        return displaced;
     }
 
     private void spawnQuakeImpactRing(Player runtimePlayer, AbilityData ability, Vector3d center) {
@@ -2018,11 +2079,13 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d landingPosition = new Vector3d(transform.getTransform().getPosition());
-        LOG.info("[MOTM] Dev forced Stomp landing: player=" + armed.player().getPlayerName()
+        LOG.info("[MOTM] Dev forced jump landing: ability=" + armed.ability().getId()
+                + " player=" + armed.player().getPlayerName()
                 + " pos=" + formatVector(landingPosition));
-        fireArmedStomp(runtimePlayer, armed, landingPosition);
+        fireArmedJumpLanding(runtimePlayer, armed, landingPosition);
         stompState.remove(playerId, armed);
-        return "[MOTM] Dev forced Stomp landing resolved at " + formatVector(landingPosition) + ".";
+        return "[MOTM] Dev forced jump landing resolved for " + armed.ability().getName()
+                + " at " + formatVector(landingPosition) + ".";
     }
 
     public synchronized boolean isMagmaHazardProtected(String playerId) {

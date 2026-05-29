@@ -2,12 +2,15 @@
   "Duration": 1.5,
   "OverlapBehavior": "Extend",
   "ApplicationEffects": {
-    "EntityTopTint": "#6ecbff",
-    "EntityBottomTint": "#0d78c8",
     "Particles": [
       {
         "SystemId": "E_Sphere"
       },
+      {
+        "SystemId": "Water_Bubble_Stream"
+      }
+    ],
+    "FirstPersonParticles": [
       {
         "SystemId": "Water_Bubble_Stream"
       }

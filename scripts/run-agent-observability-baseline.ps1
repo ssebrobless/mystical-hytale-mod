@@ -292,6 +292,21 @@ function Wait-HarnessResourceBudget {
     throw "Timed out waiting for harness memory budget before $Description."
 }
 
+function Join-ProcessArguments {
+    param([string[]]$Arguments)
+
+    @($Arguments | ForEach-Object {
+        $value = [string]$_
+        if ([string]::IsNullOrEmpty($value)) {
+            '""'
+        } elseif ($value -match '[\s"]') {
+            '"' + ($value -replace '"', '\"') + '"'
+        } else {
+            $value
+        }
+    }) -join " "
+}
+
 function Invoke-HarnessChildProcess {
     param(
         [Parameter(Mandatory = $true)]
@@ -311,34 +326,49 @@ function Invoke-HarnessChildProcess {
 
     Wait-HarnessResourceBudget -Description $Description
 
-    $process = Start-Process -FilePath $script:PowerShellExe `
-        -ArgumentList $Arguments `
-        -NoNewWindow `
-        -PassThru `
-        -RedirectStandardOutput $stdoutPath `
-        -RedirectStandardError $stderrPath
+    $process = $null
+    try {
+        $process = Start-Process -FilePath $script:PowerShellExe `
+            -ArgumentList (Join-ProcessArguments $Arguments) `
+            -NoNewWindow `
+            -PassThru `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath
 
-    $hardTimeout = [Math]::Max($TimeoutMilliseconds + 10000, 15000)
-    if (-not $process.WaitForExit($hardTimeout)) {
-        Stop-ProcessTree -RootProcessId $process.Id
-        $message = "Timed out after ${hardTimeout}ms: $Description"
-        $message | Set-Content -LiteralPath $LogPath -Encoding UTF8
-        throw $message
-    }
+        $hardTimeout = [Math]::Max($TimeoutMilliseconds + 10000, 15000)
+        if (-not $process.WaitForExit($hardTimeout)) {
+            Stop-ProcessTree -RootProcessId $process.Id
+            $message = "Timed out after ${hardTimeout}ms: $Description"
+            $output = New-Object System.Collections.Generic.List[string]
+            $output.Add($message)
+            if (Test-Path -LiteralPath $stdoutPath) {
+                Get-Content -LiteralPath $stdoutPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+            }
+            if (Test-Path -LiteralPath $stderrPath) {
+                Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+            }
+            $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
+            throw $message
+        }
 
-    $output = New-Object System.Collections.Generic.List[string]
-    if (Test-Path -LiteralPath $stdoutPath) {
-        Get-Content -LiteralPath $stdoutPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
-    }
-    if (Test-Path -LiteralPath $stderrPath) {
-        Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
-    }
-    $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
-    $output | ForEach-Object { Write-Host $_ }
-    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+        $output = New-Object System.Collections.Generic.List[string]
+        if (Test-Path -LiteralPath $stdoutPath) {
+            Get-Content -LiteralPath $stdoutPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+        }
+        if (Test-Path -LiteralPath $stderrPath) {
+            Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+        }
+        $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
+        $output | ForEach-Object { Write-Host $_ }
 
-    if ($process.ExitCode -ne 0) {
-        throw "$Description exited with code $($process.ExitCode). See command log: $LogPath"
+        if ($process.ExitCode -ne 0) {
+            throw "$Description exited with code $($process.ExitCode). See command log: $LogPath"
+        }
+    } finally {
+        if ($process -and -not $process.HasExited) {
+            Stop-ProcessTree -RootProcessId $process.Id
+        }
+        Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
     }
 }
 

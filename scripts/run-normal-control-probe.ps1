@@ -83,7 +83,7 @@ function Invoke-HarnessChildProcess {
     $child = $null
     try {
         $child = Start-Process -FilePath $script:PowerShellExe `
-            -ArgumentList $Arguments `
+            -ArgumentList (Join-ProcessArguments $Arguments) `
             -NoNewWindow `
             -PassThru `
             -RedirectStandardOutput $stdoutPath `
@@ -114,6 +114,21 @@ function Invoke-HarnessChildProcess {
         }
         Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
     }
+}
+
+function Join-ProcessArguments {
+    param([string[]]$Arguments)
+
+    @($Arguments | ForEach-Object {
+        $value = [string]$_
+        if ([string]::IsNullOrEmpty($value)) {
+            '""'
+        } elseif ($value -match '[\s"]') {
+            '"' + ($value -replace '"', '\"') + '"'
+        } else {
+            $value
+        }
+    }) -join " "
 }
 
 function Invoke-ObservedCommand {

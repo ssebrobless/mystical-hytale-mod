@@ -116,6 +116,21 @@ function Wait-HarnessResourceBudget {
     throw "Timed out waiting for harness resource budget before $Description."
 }
 
+function Join-ProcessArguments {
+    param([string[]]$Arguments)
+
+    @($Arguments | ForEach-Object {
+        $value = [string]$_
+        if ([string]::IsNullOrEmpty($value)) {
+            '""'
+        } elseif ($value -match '[\s"]') {
+            '"' + ($value -replace '"', '\"') + '"'
+        } else {
+            $value
+        }
+    }) -join " "
+}
+
 function Invoke-StyleBaselineRun {
     param(
         [string[]]$Arguments,
@@ -131,7 +146,7 @@ function Invoke-StyleBaselineRun {
     $child = $null
     try {
         $child = Start-Process -FilePath $psExe `
-            -ArgumentList $Arguments `
+            -ArgumentList (Join-ProcessArguments $Arguments) `
             -NoNewWindow `
             -PassThru `
             -RedirectStandardOutput $stdoutPath `

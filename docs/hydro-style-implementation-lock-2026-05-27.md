@@ -11,7 +11,10 @@ compare code, data, and in-game evidence against the intended design.
 - Underwater breathing duration is increased by 50%.
 - Aqua Barrier is a top-layer blue bubble shield worth 10% max HP. It stays on
   until destroyed, then goes on 8 seconds cooldown. Hydro passives must not add a
-  permanent body tint or water trail when the barrier is inactive.
+  permanent body tint or water trail when the barrier is inactive. The visual
+  must be first-person safe: world/third-person can show the large bubble shell,
+  but first-person must use only non-obstructive water-bubble cues and no
+  player/item tint.
 
 ## Icicle
 

@@ -52,6 +52,7 @@ $classPath = Join-Path $ProjectRoot "src/main/resources/data/classes/hydro.json"
 $playbackPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/GameplayPlaybackManager.java"
 $resolverPath = Join-Path $ProjectRoot "src/main/java/com/motm/util/HytaleAssetResolver.java"
 $passivePath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/ClassPassiveManager.java"
+$aquaBarrierEffectPath = Join-Path $ProjectRoot "src/main/resources/Server/Entity/Effects/MOTM/MOTM_Hydro_Aqua_Barrier.json"
 $fieldSpecsPath = Join-Path $ProjectRoot "src/main/java/com/motm/runtime/ability/field/FieldRuntimeSpecs.java"
 $fieldActivationPath = Join-Path $ProjectRoot "src/main/java/com/motm/runtime/ability/field/FieldActivationHytaleAdapter.java"
 $fieldPulsePath = Join-Path $ProjectRoot "src/main/java/com/motm/runtime/ability/field/FieldPulseHytaleAdapter.java"
@@ -62,6 +63,7 @@ Assert (Test-Path $classPath) "hydro.json exists"
 Assert (Test-Path $playbackPath) "GameplayPlaybackManager.java exists"
 Assert (Test-Path $resolverPath) "HytaleAssetResolver.java exists"
 Assert (Test-Path $passivePath) "ClassPassiveManager.java exists"
+Assert (Test-Path $aquaBarrierEffectPath) "MOTM_Hydro_Aqua_Barrier.json exists"
 Assert (Test-Path $fieldSpecsPath) "FieldRuntimeSpecs.java exists"
 Assert (Test-Path $fieldActivationPath) "FieldActivationHytaleAdapter.java exists"
 Assert (Test-Path $fieldPulsePath) "FieldPulseHytaleAdapter.java exists"
@@ -72,6 +74,7 @@ $classData = Get-Content $classPath -Raw | ConvertFrom-Json
 $playback = Get-JavaSurface $ProjectRoot
 $resolver = Get-Content $resolverPath -Raw
 $passive = Get-Content $passivePath -Raw
+$aquaBarrierEffect = Get-Content $aquaBarrierEffectPath -Raw
 $fieldSpecs = Get-Content $fieldSpecsPath -Raw
 $fieldActivation = Get-Content $fieldActivationPath -Raw
 $fieldPulse = Get-Content $fieldPulsePath -Raw
@@ -117,6 +120,9 @@ Assert ($passiveEffects["oxygen_capacity_bonus"] -eq 0.50) "Hydro breathing pass
 Assert ($passiveEffects["aqua_barrier_shield"] -eq 0.10) "Aqua Barrier shield is 10 percent max HP"
 Assert ($passiveEffects["aqua_barrier_cooldown_seconds"] -eq 8.0) "Aqua Barrier cooldown is 8 seconds"
 Assert ($passive -match 'HYDRO_AQUA_BARRIER_EFFECT_ID') "Hydro Aqua Barrier runtime effect is wired"
+Assert ($aquaBarrierEffect -notmatch 'EntityTopTint|EntityBottomTint') "Aqua Barrier does not tint the player or held item"
+Assert ($aquaBarrierEffect -match 'FirstPersonParticles') "Aqua Barrier declares first-person-safe particles"
+Assert ($aquaBarrierEffect -match 'FirstPersonParticles[\s\S]*Water_Bubble_Stream') "Aqua Barrier first-person cue is non-obstructive bubbles"
 Assert ($passive -match 'devPassiveSuppressedUntilMillisByPlayer[\s\S]*suppressHydroAquaBarrierForDevCleanup[\s\S]*clearHydroPassiveRuntime[\s\S]*hydroBarrierReadyTickByPlayer\.put') "Dev cleanup suppresses immediate Aqua Barrier reapply"
 Assert ($passive -match 'devPassiveSuppressedUntilMillisByPlayer\.get[\s\S]*System\.currentTimeMillis\(\)[\s\S]*clearHydroPassiveRuntime[\s\S]*continue;') "Passive tick honors wall-clock dev cleanup suppression before reapplying Aqua Barrier"
 Assert ($fieldSpecs -match 'isCasterCentered[\s\S]*snowstorm[\s\S]*piercing_rain[\s\S]*healing_rainbow[\s\S]*tide_pool[\s\S]*oil_spill') "Hydro self fields are caster-centered instead of cursor-targeted"

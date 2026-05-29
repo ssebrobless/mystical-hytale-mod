@@ -859,7 +859,7 @@ public class MotmCommand {
             }
             case "reset", "arena-reset" -> mod.resetStyleReviewArena(player.getPlayerId());
             case "weapon-hit", "weapon", "attack" -> mod.runStyleTestWeaponHit(player.getPlayerId());
-            case "stomp-land", "stomp-landing" -> mod.forceStyleTestStompLanding(player.getPlayerId());
+            case "stomp-land", "stomp-landing", "jump-land", "jump-landing" -> mod.forceStyleTestStompLanding(player.getPlayerId());
             case "status" -> mod.getStyleTestStatus(player.getPlayerId());
             case "stop" -> mod.stopStyleTest(player.getPlayerId());
             default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|reset|status|stop>";
