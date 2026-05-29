@@ -84,6 +84,46 @@ function Write-ControlEvent {
         Add-Content -LiteralPath (Join-Path $RunDir "control-requests.jsonl") -Encoding UTF8
 }
 
+function Read-SharedFileTailLines {
+    param(
+        [string]$Path,
+        [int]$MaxBytes = 32768,
+        [int]$MaxLines = 40
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) {
+        return @()
+    }
+
+    $stream = $null
+    try {
+        $stream = [System.IO.File]::Open(
+            $Path,
+            [System.IO.FileMode]::Open,
+            [System.IO.FileAccess]::Read,
+            [System.IO.FileShare]::ReadWrite)
+        $bytesToRead = [Math]::Min([int64]$MaxBytes, $stream.Length)
+        if ($bytesToRead -le 0) {
+            return @()
+        }
+        $buffer = New-Object byte[] ([int]$bytesToRead)
+        $stream.Position = $stream.Length - $bytesToRead
+        [void]$stream.Read($buffer, 0, [int]$bytesToRead)
+        $text = [System.Text.Encoding]::UTF8.GetString($buffer)
+        $lines = @($text -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        if ($lines.Count -gt $MaxLines) {
+            return @($lines | Select-Object -Last $MaxLines)
+        }
+        return $lines
+    } catch {
+        return @("Could not read shared file tail: $($_.Exception.Message)")
+    } finally {
+        if ($stream) {
+            $stream.Dispose()
+        }
+    }
+}
+
 function Resolve-HytaleRootForDiagnostic {
     if (-not [string]::IsNullOrWhiteSpace($env:HYTALE_ROOT)) {
         return $env:HYTALE_ROOT
@@ -128,12 +168,7 @@ function Get-RecentLogSummary {
         }
     }
 
-    $tail = @()
-    try {
-        $tail = @(Get-Content -LiteralPath $latest.FullName -Tail 40 -ErrorAction Stop)
-    } catch {
-        $tail = @("Could not read latest log tail: $($_.Exception.Message)")
-    }
+    $tail = @(Read-SharedFileTailLines -Path $latest.FullName -MaxBytes 32768 -MaxLines 40)
 
     return [ordered]@{
         logsDir = $logsDir
@@ -192,7 +227,7 @@ function New-DevCommandDiagnostic {
             $outboxItem = Get-Item -LiteralPath $Outbox
             $outboxLength = $outboxItem.Length
             $outboxLastWrite = $outboxItem.LastWriteTime.ToString("o")
-            $outboxTail = @(Get-Content -LiteralPath $Outbox -Tail 30 -ErrorAction Stop)
+            $outboxTail = @(Read-SharedFileTailLines -Path $Outbox -MaxBytes 32768 -MaxLines 30)
         } catch {
             $outboxTail = @("Could not read outbox tail: $($_.Exception.Message)")
         }

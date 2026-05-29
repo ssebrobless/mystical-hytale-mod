@@ -783,9 +783,25 @@ try {
         Add-Line("## Build/Install")
         Add-Line("")
         Add-Line("- Command: $gradle $($gradleArgs -join ' ')")
-        & $gradle @gradleArgs 2>&1 | Tee-Object -FilePath (Join-Path $outDir "gradle-build-install.log")
-        if ($LASTEXITCODE -ne 0) {
-            throw "Gradle build/install failed with exit code $LASTEXITCODE."
+        $previousErrorActionPreference = $ErrorActionPreference
+        $previousNativeErrorPreference = $null
+        $hasNativeErrorPreference = Get-Variable -Name PSNativeCommandUseErrorActionPreference -Scope Global -ErrorAction SilentlyContinue
+        if ($hasNativeErrorPreference) {
+            $previousNativeErrorPreference = $global:PSNativeCommandUseErrorActionPreference
+            $global:PSNativeCommandUseErrorActionPreference = $false
+        }
+        try {
+            $ErrorActionPreference = "Continue"
+            & $gradle @gradleArgs 2>&1 | Tee-Object -FilePath (Join-Path $outDir "gradle-build-install.log")
+            $gradleExitCode = $LASTEXITCODE
+        } finally {
+            $ErrorActionPreference = $previousErrorActionPreference
+            if ($hasNativeErrorPreference) {
+                $global:PSNativeCommandUseErrorActionPreference = $previousNativeErrorPreference
+            }
+        }
+        if ($gradleExitCode -ne 0) {
+            throw "Gradle build/install failed with exit code $gradleExitCode."
         }
         Add-Line("- PASS: internal build installed.")
         Add-Line("")

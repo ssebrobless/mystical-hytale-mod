@@ -38,13 +38,15 @@ function Stop-ProcessTree {
 
 function Get-HarnessProcesses {
     $scriptPattern = "scripts[\\/](run-style-observability-sweep|run-agent-observability-baseline|send-dev-command)\.ps1"
+    $selfPattern = "scripts[\\/]stop-harness-processes\.ps1"
     $cutoff = (Get-Date).AddSeconds(-[Math]::Max($OlderThanSeconds, 0))
 
     @(Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' OR Name = 'pwsh.exe'" -ErrorAction SilentlyContinue |
         Where-Object {
             $commandLine = [string]$_.CommandLine
             [int]$_.ProcessId -ne $PID -and
-                $commandLine -match $scriptPattern
+                $commandLine -match $scriptPattern -and
+                $commandLine -notmatch $selfPattern
         } |
         ForEach-Object {
             $startTime = $null

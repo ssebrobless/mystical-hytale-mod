@@ -3,7 +3,6 @@ param(
     [string]$RunId = "",
     [string[]]$Classes = @("terra", "hydro", "aero", "corruptus"),
     [string[]]$Styles = @(),
-    [ValidateSet("PrimitiveProofs", "NormalControl")]
     [string[]]$Layers = @("PrimitiveProofs", "NormalControl"),
     [ValidateSet("PrimarySecondaryUse", "AbilityKeys", "Both")]
     [string]$ControlMode = "PrimarySecondaryUse",
@@ -23,6 +22,12 @@ if ([string]::IsNullOrWhiteSpace($RunId)) {
 $Classes = @($Classes | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
 $Styles = @($Styles | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
 $Layers = @($Layers | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+$validLayers = @("PrimitiveProofs", "NormalControl")
+foreach ($layer in $Layers) {
+    if ($validLayers -notcontains $layer) {
+        throw "Invalid layer '$layer'. Valid layers: $($validLayers -join ', ')"
+    }
+}
 
 $outDir = Join-Path $repoRoot (Join-Path "audits\concept-verification-live" $RunId)
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
@@ -272,19 +277,25 @@ if ($DryRunQueue) {
 
 if ($Layers -contains "PrimitiveProofs") {
     $proofs = Get-ProofIds
-    $args = @(
-        "-NoProfile",
-        "-ExecutionPolicy", "Bypass",
-        "-File", (Join-Path $PSScriptRoot "run-agent-observability-baseline.ps1"),
-        "-WorldName", $WorldName,
-        "-RunId", "$RunId-primitives",
-        "-ScenarioId", "concept-primitive-proofs",
-        "-Proofs", ($proofs -join ",")
-    )
-    if ($SkipBuild) {
-        $args += "-SkipBuild"
+    if ($DryRunQueue) {
+        Add-Line("- PrimitiveProofs")
+        Add-Line("  - proofs: $($proofs -join ', ')")
+        Add-Row "PrimitiveProofs" "QUEUED" "" "Dry run only; primitive proof baseline not executed."
+    } else {
+        $args = @(
+            "-NoProfile",
+            "-ExecutionPolicy", "Bypass",
+            "-File", (Join-Path $PSScriptRoot "run-agent-observability-baseline.ps1"),
+            "-WorldName", $WorldName,
+            "-RunId", "$RunId-primitives",
+            "-ScenarioId", "concept-primitive-proofs",
+            "-Proofs", ($proofs -join ",")
+        )
+        if ($SkipBuild) {
+            $args += "-SkipBuild"
+        }
+        Invoke-LayerCommand "PrimitiveProofs" $args "primitive-proofs.log"
     }
-    Invoke-LayerCommand "PrimitiveProofs" $args "primitive-proofs.log"
 }
 
 if ($Layers -contains "NormalControl") {
