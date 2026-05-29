@@ -222,7 +222,7 @@ Assert ([double]$bilge.dot_percent_per_second -eq 1.0) "Bilge Dump DoT is 1 perc
 $anchor = Get-Ability $abilities "anchor_haul"
 Assert ([double]$anchor.range -eq 5.0) "Anchor Haul range is 5"
 Assert ($anchor.travel_type -eq "anchor_chain") "Anchor Haul uses chain travel type"
-Assert ($resolver -match 'Deco_Iron_Chains_Vertical') "Resolver maps iron chain model"
+Assert ($resolver -notmatch 'Deco_Iron_Chains_Vertical' -and $resolver -notmatch 'Iron_Chains_Large_Vertical') "Anchor Haul avoids unsupported chain item as NPC model"
 Assert (($playback -match '"anchor_haul"\.equals\(abilityId\)') -and ($playback -match 'damage \* 1\.10')) "Anchor Haul has Toxic follow-up damage bonus"
 
 $oil = Get-Ability $abilities "oil_spill"

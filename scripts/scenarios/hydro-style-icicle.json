@@ -1,0 +1,34 @@
+{
+  "id": "hydro-style-icicle",
+  "description": "Hydro Icicle style scenario for Frozen Needles, Stalactite Crash, and Skate runtime, target, movement, and cleanup evidence.",
+  "styleId": "icicle",
+  "abilities": [
+    "frozen_needles",
+    "stalactite_crash",
+    "skate"
+  ],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker hydro-icicle-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker hydro-icicle-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "server-truth:snapshot"
+  ]
+}

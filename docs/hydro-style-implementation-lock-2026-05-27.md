@@ -89,7 +89,7 @@ compare code, data, and in-game evidence against the intended design.
 
 - Bilge Dump sprays `Fluid_Tar` flavored filth: 1% caster max HP DoT per second
   for 5 seconds, 20% slow, and a 10 second Toxic mark.
-- Anchor Haul fires a 5 block chain using `Deco_Iron_Chains_Vertical`, pulls a
+- Anchor Haul fires a 5 block tether using Hydro impact FX, pulls a
   hit target to one block from the caster, chains nearby Toxic-marked enemies,
   and deals 10% more damage to Toxic targets.
 - Oil Spill creates a radius 4 `Fluid_Tar` pool around the caster. Enemies inside

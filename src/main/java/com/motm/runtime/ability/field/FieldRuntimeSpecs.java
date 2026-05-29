@@ -174,7 +174,7 @@ public final class FieldRuntimeSpecs {
                     false,
                     false,
                     3,
-                    List.of("Ice_Block", "Fluid_Ice", "Water_Ice", "Rock_Calcite"),
+                    List.of("Rock_Stone_Brick_Pillar_Middle", "Rock_Calcite", "Ice_Block", "Fluid_Ice", "Water_Ice"),
                     List.of()
             );
         }
@@ -186,7 +186,7 @@ public final class FieldRuntimeSpecs {
                     false,
                     false,
                     0,
-                    List.of("Ice_Block", "Fluid_Ice", "Water_Ice", "Rock_Calcite"),
+                    List.of("Rock_Stone_Brick_Pillar_Middle", "Rock_Calcite", "Ice_Block", "Fluid_Ice", "Water_Ice"),
                     List.of()
             );
         }
@@ -198,7 +198,7 @@ public final class FieldRuntimeSpecs {
                     false,
                     false,
                     0,
-                    List.of("Ice_Block", "Fluid_Ice", "Water_Ice", "Rock_Calcite"),
+                    List.of("Rock_Stone_Brick_Pillar_Middle", "Rock_Calcite", "Ice_Block", "Fluid_Ice", "Water_Ice"),
                     List.of()
             );
         }

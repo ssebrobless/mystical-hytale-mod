@@ -1,0 +1,34 @@
+{
+  "id": "hydro-style-vapor",
+  "description": "Hydro Vapor style scenario for Vapor Vanish, Dispersion, and Hidrosis evasion/movement runtime and cleanup evidence.",
+  "styleId": "vapor",
+  "abilities": [
+    "vapor_vanish",
+    "dispersion",
+    "hidrosis"
+  ],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker hydro-vapor-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs close",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker hydro-vapor-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "server-truth:snapshot"
+  ]
+}
