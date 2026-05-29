@@ -342,7 +342,7 @@ function New-SetupDiagnosticBundle {
             Set-Content -LiteralPath (Join-Path $diagDir "setup-error.txt") -Encoding UTF8
     }
 
-    $commands = @("pwsh", "powershell", "git", "java", "javac")
+    $commands = @("powershell", "pwsh", "git", "java", "javac")
     $commandInfo = foreach ($command in $commands) {
         $resolved = Get-Command $command -ErrorAction SilentlyContinue
         [PSCustomObject]@{
@@ -405,7 +405,7 @@ function Write-SetupFailure {
     }
     Write-Host ""
     Write-Host "Agent next command:"
-    Write-Host "  pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-dev-environment.ps1"
+    Write-Host "  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-dev-environment.ps1"
 }
 
 try {

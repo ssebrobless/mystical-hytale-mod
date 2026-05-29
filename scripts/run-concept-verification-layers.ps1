@@ -9,7 +9,8 @@ param(
     [string]$ControlMode = "PrimarySecondaryUse",
     [switch]$SkipBuild,
     [switch]$DryRunQueue,
-    [switch]$StopOnFailure
+    [switch]$StopOnFailure,
+    [int]$LayerTimeoutSeconds = 600
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,11 +34,16 @@ function Add-Line([string]$Line) {
 }
 
 function Resolve-PowerShellExecutable {
+    if ($env:OS -eq "Windows_NT") {
+        $powershell = Get-Command powershell -ErrorAction SilentlyContinue
+        if ($powershell) { return $powershell.Source }
+    }
+
     $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
     if ($pwsh) { return $pwsh.Source }
     $powershell = Get-Command powershell -ErrorAction SilentlyContinue
     if ($powershell) { return $powershell.Source }
-    throw "Could not locate pwsh or powershell."
+    throw "Could not locate powershell or pwsh."
 }
 
 function Get-StyleDefinitions {
@@ -128,6 +134,83 @@ function Get-AbilityExerciseTags {
     return $tags
 }
 
+function Stop-ProcessTree {
+    param([int]$RootProcessId)
+
+    if ($RootProcessId -le 0) {
+        return
+    }
+
+    $allProcesses = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
+    $processIds = New-Object System.Collections.Generic.HashSet[int]
+    [void]$processIds.Add($RootProcessId)
+    $changed = $true
+    while ($changed) {
+        $changed = $false
+        foreach ($process in $allProcesses) {
+            $processId = [int]$process.ProcessId
+            $parentId = [int]$process.ParentProcessId
+            if ($processIds.Contains($parentId) -and -not $processIds.Contains($processId)) {
+                [void]$processIds.Add($processId)
+                $changed = $true
+            }
+        }
+    }
+
+    $processIds |
+        Sort-Object -Descending |
+        Where-Object { $_ -ne $PID } |
+        ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+}
+
+function Invoke-HarnessChildProcess {
+    param(
+        [string[]]$Arguments,
+        [string]$LogPath,
+        [string]$Description
+    )
+
+    New-Item -ItemType Directory -Path (Split-Path -Parent $LogPath) -Force | Out-Null
+    $stdoutPath = "$LogPath.stdout.tmp"
+    $stderrPath = "$LogPath.stderr.tmp"
+    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+
+    $child = $null
+    try {
+        $child = Start-Process -FilePath $script:PowerShellExe `
+            -ArgumentList $Arguments `
+            -NoNewWindow `
+            -PassThru `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath
+        $timeoutMs = [Math]::Max($LayerTimeoutSeconds * 1000, 15000)
+        if (-not $child.WaitForExit($timeoutMs)) {
+            Stop-ProcessTree -RootProcessId $child.Id
+            $message = "Timed out after ${timeoutMs}ms: $Description"
+            $message | Set-Content -LiteralPath $LogPath -Encoding UTF8
+            throw $message
+        }
+
+        $output = New-Object System.Collections.Generic.List[string]
+        if (Test-Path -LiteralPath $stdoutPath) {
+            Get-Content -LiteralPath $stdoutPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+        }
+        if (Test-Path -LiteralPath $stderrPath) {
+            Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+        }
+        $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
+        $output | ForEach-Object { Write-Host $_ }
+        if ($child.ExitCode -ne 0) {
+            throw "$Description exited with code $($child.ExitCode). See command log: $LogPath"
+        }
+    } finally {
+        if ($child -and -not $child.HasExited) {
+            Stop-ProcessTree -RootProcessId $child.Id
+        }
+        Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Invoke-LayerCommand {
     param(
         [string]$Label,
@@ -140,10 +223,7 @@ function Invoke-LayerCommand {
     $status = "PASS"
     $note = ""
     try {
-        & $script:PowerShellExe @Arguments 2>&1 | Tee-Object -FilePath $logPath
-        if ($LASTEXITCODE -ne 0) {
-            throw "$Label exited with code $LASTEXITCODE"
-        }
+        Invoke-HarnessChildProcess -Arguments $Arguments -LogPath $logPath -Description $Label
     } catch {
         $status = "FAIL"
         $note = $_.Exception.Message

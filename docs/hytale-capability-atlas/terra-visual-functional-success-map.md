@@ -35,7 +35,7 @@ User concept decisions
                     └─▶ Local Hytale contract
                           ├─▶ Assets.zip
                           ├─▶ HytaleServer.jar javap signatures
-                          └─▶ cold-launch runtime logs
+                          └─▶ observability runtime logs
 ```
 
 Public docs are useful for discovering systems. Local jar/assets/logs decide exact API names, asset IDs, and whether an implementation really works in this Hytale build.

@@ -385,8 +385,8 @@ The closed frontier is now:
 Use this command set as the initial sanity check before continuing:
 
 ```
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1
 ./gradlew test --warning-mode all
 ./gradlew compileJava --warning-mode all
 ./gradlew test --tests 'com.motm.observability.MotmObservabilityActionsTest' --tests 'com.motm.runtime.player.PlayerRuntimeRebuildActionsTest' --tests 'com.motm.runtime.player.PerkTriggerRuntimeActionsTest' --tests 'com.motm.runtime.ability.AbilityRuntimeMathTest' --warning-mode all

@@ -12,7 +12,8 @@ param(
     [string]$MobMode = "",
     [string[]]$Abilities = @(),
     [string[]]$Proofs = @(),
-    [switch]$NoDefaultProofs
+    [switch]$NoDefaultProofs,
+    [int]$MinimumFreeMemoryMB = 512
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +25,11 @@ function Test-IsMacOS {
 }
 
 function Resolve-PowerShellExecutable {
+    if ($env:OS -eq "Windows_NT") {
+        $powershell = Get-Command powershell -ErrorAction SilentlyContinue
+        if ($powershell) { return $powershell.Source }
+    }
+
     try {
         $current = (Get-Process -Id $PID).Path
         if (-not [string]::IsNullOrWhiteSpace($current) -and (Test-Path -LiteralPath $current)) {
@@ -38,7 +44,7 @@ function Resolve-PowerShellExecutable {
     $powershell = Get-Command powershell -ErrorAction SilentlyContinue
     if ($powershell) { return $powershell.Source }
 
-    throw "Could not locate pwsh or powershell for child script execution."
+    throw "Could not locate powershell or pwsh for child script execution."
 }
 
 function Resolve-JavaHome {
@@ -233,6 +239,109 @@ function Add-Line([string]$Line) {
     $script:report.Add($Line)
 }
 
+function Stop-ProcessTree {
+    param([int]$RootProcessId)
+
+    if ($RootProcessId -le 0) {
+        return
+    }
+
+    $allProcesses = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
+    $processIds = New-Object System.Collections.Generic.HashSet[int]
+    [void]$processIds.Add($RootProcessId)
+    $changed = $true
+    while ($changed) {
+        $changed = $false
+        foreach ($process in $allProcesses) {
+            $processId = [int]$process.ProcessId
+            $parentId = [int]$process.ParentProcessId
+            if ($processIds.Contains($parentId) -and -not $processIds.Contains($processId)) {
+                [void]$processIds.Add($processId)
+                $changed = $true
+            }
+        }
+    }
+
+    $processIds |
+        Sort-Object -Descending |
+        Where-Object { $_ -ne $PID } |
+        ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+}
+
+function Get-AvailableMemoryMB {
+    $os = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
+    if (-not $os) {
+        return [int]::MaxValue
+    }
+    return [int]([double]$os.FreePhysicalMemory / 1024.0)
+}
+
+function Wait-HarnessResourceBudget {
+    param([string]$Description)
+
+    $deadline = (Get-Date).AddSeconds(60)
+    while ((Get-Date) -lt $deadline) {
+        $freeMemory = Get-AvailableMemoryMB
+        if ($freeMemory -ge $MinimumFreeMemoryMB) {
+            return
+        }
+        Write-Host "[run-agent-observability-baseline] waiting for memory budget before ${Description}: free=${freeMemory}MB required=${MinimumFreeMemoryMB}MB"
+        Start-Sleep -Seconds 2
+    }
+
+    throw "Timed out waiting for harness memory budget before $Description."
+}
+
+function Invoke-HarnessChildProcess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+        [Parameter(Mandatory = $true)]
+        [string]$LogPath,
+        [Parameter(Mandatory = $true)]
+        [int]$TimeoutMilliseconds,
+        [Parameter(Mandatory = $true)]
+        [string]$Description
+    )
+
+    New-Item -ItemType Directory -Path (Split-Path -Parent $LogPath) -Force | Out-Null
+    $stdoutPath = "$LogPath.stdout.tmp"
+    $stderrPath = "$LogPath.stderr.tmp"
+    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+
+    Wait-HarnessResourceBudget -Description $Description
+
+    $process = Start-Process -FilePath $script:PowerShellExe `
+        -ArgumentList $Arguments `
+        -NoNewWindow `
+        -PassThru `
+        -RedirectStandardOutput $stdoutPath `
+        -RedirectStandardError $stderrPath
+
+    $hardTimeout = [Math]::Max($TimeoutMilliseconds + 10000, 15000)
+    if (-not $process.WaitForExit($hardTimeout)) {
+        Stop-ProcessTree -RootProcessId $process.Id
+        $message = "Timed out after ${hardTimeout}ms: $Description"
+        $message | Set-Content -LiteralPath $LogPath -Encoding UTF8
+        throw $message
+    }
+
+    $output = New-Object System.Collections.Generic.List[string]
+    if (Test-Path -LiteralPath $stdoutPath) {
+        Get-Content -LiteralPath $stdoutPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+    }
+    if (Test-Path -LiteralPath $stderrPath) {
+        Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+    }
+    $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
+    $output | ForEach-Object { Write-Host $_ }
+    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+
+    if ($process.ExitCode -ne 0) {
+        throw "$Description exited with code $($process.ExitCode). See command log: $LogPath"
+    }
+}
+
 function Invoke-ObservedCommand {
     param(
         [string]$Command,
@@ -258,11 +367,11 @@ function Invoke-ObservedCommand {
         $sendArgs += @("-DataDir", $DataDir)
     }
     $commandLog = Join-Path $outDir ("command-" + ($traceId -replace '[^A-Za-z0-9_.-]', '-') + ".log")
-    & $script:PowerShellExe @sendArgs 2>&1 |
-        Tee-Object -FilePath $commandLog
-    if ($LASTEXITCODE -ne 0) {
-        throw "Command failed: /motm $displayCommand. See command log: $commandLog"
-    }
+    Invoke-HarnessChildProcess `
+        -Arguments $sendArgs `
+        -LogPath $commandLog `
+        -TimeoutMilliseconds $TimeoutMilliseconds `
+        -Description "Command /motm $displayCommand"
     if ($DelayMilliseconds -gt 0) {
         Start-Sleep -Milliseconds $DelayMilliseconds
     }
@@ -689,8 +798,8 @@ try {
     foreach ($ability in $Abilities) {
         Invoke-ObservedCommand "motm dev observe marker ability-$ability-before"
         Invoke-ObservedCommand "motm dev test ability $ability" -TimeoutMilliseconds 9000 -DelayMilliseconds 2200
-        if ($ability -eq "stomp") {
-            Invoke-ObservedCommand "motm dev test stomp-land" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
+        if ($ability -in @("stomp", "leap_frog")) {
+            Invoke-ObservedCommand "motm dev test jump-land" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
         }
         Invoke-ObservedCommand "motm dev observe snapshot ability-$ability-after"
     }
@@ -741,11 +850,11 @@ try {
     if (-not [string]::IsNullOrWhiteSpace($DataDir)) {
         $collectArgs += @("-DataDir", $DataDir)
     }
-    & $script:PowerShellExe @collectArgs 2>&1 |
-        Tee-Object -FilePath (Join-Path $outDir "collect-observability-evidence.log")
-    if ($LASTEXITCODE -ne 0) {
-        throw "Evidence collection failed with exit code $LASTEXITCODE."
-    }
+    Invoke-HarnessChildProcess `
+        -Arguments $collectArgs `
+        -LogPath (Join-Path $outDir "collect-observability-evidence.log") `
+        -TimeoutMilliseconds 30000 `
+        -Description "Evidence collection"
     Assert-RunEvidence
 
     Add-Line("")

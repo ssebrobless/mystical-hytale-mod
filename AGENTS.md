@@ -24,9 +24,9 @@
   evidence ledger whenever closing, reviewing, or resuming the architecture
   refactor checklist.
 - Before runtime validation, run the static agent rails:
-  `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1`
+  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1`
   and
-  `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1`.
+  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1`.
   These are also wired into Gradle through `validateContentShape` and
   `checkArchitecture`.
 - Use `scripts/run-agent-observability-baseline.ps1` as the default in-game
@@ -37,10 +37,10 @@
   useful state and evidence needs to be bundled without driving a scenario.
 - Use `scripts/query-observability-evidence.ps1` to inspect summaries, sources,
   events, and raw windows. Do not replace raw evidence with summaries.
-- Older scripts such as `run-runtime-proofs.ps1`, `audit-phase9-class.ps1`,
-  `acceptance-phase5.ps1`, `visual-validate.ps1`, and screenshot-heavy flows are
-  historical or supplemental. Use them only when their specific narrow check is
-  needed, and route final acceptance through the observability harness.
+- Obsolete screenshot-heavy and manual setup flows have been removed. If a
+  behavior is not covered, extend `scripts/scenarios/`, `/motm dev`, proof
+  catalog entries, or observability collection rather than resurrecting the old
+  harness style.
 
 ## Feature Work Verification
 
@@ -275,13 +275,13 @@ same MOTM JSONL      same MOTM JSONL
   installs, and writes `audits/setup-diagnostics/...` on success or failure.
 - On macOS, the harness sets `APPDATA` to `~/Library/Application Support` when
   needed. Run:
-  `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 -WorldName Main`
+  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 -WorldName Main`
 - Build/install should go through `scripts/build-install.ps1` or the checked-in
   Gradle Wrapper, not a machine-specific Gradle install. `scripts/build-install.ps1`
   and the observability baseline call `scripts/ensure-dev-environment.ps1`, which
   finds or downloads Java 25 and verifies the Hytale install path first.
 - If setup fails, run
-  `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-dev-environment.ps1`
+  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-dev-environment.ps1`
   and follow its concrete next steps. Inspect any printed
   `audits/setup-diagnostics/...` bundle before retrying; fix the concrete blocker
   rather than guessing.
@@ -289,6 +289,12 @@ same MOTM JSONL      same MOTM JSONL
   `baseline-report.md`. `scripts/send-dev-command.ps1` writes
   `dev-command-diagnostic.json` and `.md` into the run directory with process
   state, latest Hytale log tail, inbox/outbox paths, and recovery steps.
+- Harness launchers must put nested PowerShell work behind a hard timeout and
+  process-tree cleanup. After an interrupted run, or before closing out a
+  feature, run
+  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-harness-processes.ps1`
+  on Windows so stale style sweeps, baselines, and command
+  senders cannot passively consume machine resources.
 - Screenshots/video are optional external artifacts. The trusted core evidence is
   server truth, causality, client intent, packet observations, logs, telemetry,
   manifests, and raw JSONL streams.

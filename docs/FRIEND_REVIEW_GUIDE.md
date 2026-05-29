@@ -248,7 +248,7 @@ The perk system is now a shared 20-choice pool. Players unlock one perk choice e
 Runtime/proof status is tracked in `docs/PERK_RUNTIME_STATUS.md`. The in-world proof runner is:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-perk-runtime-proofs.ps1 -WorldName "MOTM Creative Test"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 -WorldName Main -ScenarioId command-observability-smoke
 ```
 
 ## Current Review Questions For Your Friend

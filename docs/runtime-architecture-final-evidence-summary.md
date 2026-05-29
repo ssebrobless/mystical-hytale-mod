@@ -32,9 +32,9 @@ restarted onto the player-ready lifecycle fix.
 
 Latest local verification on this branch:
 
-- `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1`
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1`
   - PASS.
-- `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1`
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1`
   - PASS.
 - PowerShell parser check for `scripts/run-agent-observability-baseline.ps1`
   - PASS.
@@ -176,7 +176,7 @@ If the already-running client is on the installed internal tester jar, prefer
 is restarted:
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 `
   -WorldName Main `
   -ScenarioId command-observability-smoke `
   -RunId mac-command-observability-smoke-20260526-final `

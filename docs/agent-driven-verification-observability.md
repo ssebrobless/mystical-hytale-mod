@@ -84,11 +84,10 @@ assets, logs, and runtime evidence win when details conflict.
 | `scripts/build-install.ps1` | Compatibility wrapper around the cross-platform bootstrap and Gradle wrapper. |
 | `scripts/send-dev-command.ps1` | Current file-backed control bridge. |
 | `scripts/run-agent-observability-baseline.ps1` | Current cross-platform agent observability baseline entrypoint. |
-| `scripts/run-runtime-proofs.ps1` | Existing proof orchestration to reuse conceptually. |
-| `scripts/assert-ability-proof.ps1` | Current proof classifier; useful as a contrast, not the desired final judge. |
+| `scripts/stop-harness-processes.ps1` | Cleanup guard for stale MOTM harness PowerShell process trees after interrupted runs or feature completion. |
 | `scripts/probe-hytale-runtime-capabilities.ps1` | Local API/capability probing precedent. |
 | `scripts/discover-hytale-assets.ps1` | Local asset-indexing precedent. |
-| `scripts/setup-test-world.ps1` and `scripts/load-world.ps1` | Existing world setup/load automation ideas. |
+| `scripts/scenarios/*.json` | Declarative scenario catalog for in-game feature verification. |
 
 ### Local Hytale Installation References
 
@@ -197,6 +196,23 @@ on macOS it is `~/Library/Application Support`.
 ### Control Plane
 
 Goal: let the agent reliably perform experiments.
+
+Harness launchers are bounded test work, not background services.
+`run-agent-observability-baseline.ps1` and
+`run-style-observability-sweep.ps1` launch child PowerShell scripts with hard
+timeouts, capture stdout/stderr into the run log, and stop the whole child
+process tree when a timeout is exceeded. The style sweep also checks a small
+free-memory budget before each style run and cleans stale MOTM harness children
+before launching the next baseline.
+
+After an interrupted run, and before closing out a feature, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-harness-processes.ps1
+```
+
+Use `-WhatIfOnly` first when diagnosing a machine that may still have an
+intentionally running harness.
 
 Expected capabilities:
 - mark a run and scenario with a stable id

@@ -162,10 +162,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-normal-control-p
 ```
 
 Launch note: use the official launcher/auth path before running this probe.
-`scripts/cold-launch.ps1` and `scripts/start-hytale.ps1` now default to
-`Launcher`; direct client launch is reserved for a future explicitly supported
-offline-token path because the current direct route fails with Hytale's
-`Offline mode requires an offline token` client error.
+The obsolete GUI/menu-click launch scripts have been removed; direct client
+launch is reserved for a future explicitly supported offline-token path because
+the current direct route fails with Hytale's `Offline mode requires an offline
+token` client error.
 
 Control modes:
 

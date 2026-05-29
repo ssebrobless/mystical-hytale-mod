@@ -43,7 +43,6 @@
 - `scripts/collect-observability-evidence.ps1` - copies raw client logs, server logs, telemetry, MOTM observability JSONL, settings, and build metadata into a run bundle with indexes
 - `scripts/query-observability-evidence.ps1` - lists runs, sources, events, and raw evidence windows for shell-based agents
 - `scripts/audit-no-resource.ps1` - verifies the no-resource casting model across all classes/styles/abilities
-- `scripts/run-perk-runtime-proofs.ps1` - in-world proof runner for the final shared perk runtime hooks
 - `docs/agent-driven-verification-observability.md` - architecture contract and completion checklist for the verification platform
 - `docs/runtime-architecture-refactor-checklist.md` - current runtime ownership map
   and refactor completion record
@@ -67,7 +66,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-install.ps1
 macOS:
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/build-install.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-install.ps1
 ```
 
 That helper will:
@@ -81,7 +80,7 @@ That helper will:
 Use this when a machine is not building cleanly:
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-dev-environment.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/diagnose-dev-environment.ps1
 ```
 
 For a remote Windows agent, the intended first instruction can be this simple:
@@ -99,8 +98,8 @@ Direct Gradle Wrapper usage is also supported after Java and Hytale are resolved
 Static agent rails can run without launching the game:
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-content-shape.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1
 ./gradlew validateContentShape checkArchitecture test
 ```
 
@@ -150,11 +149,7 @@ Use this check before claiming ability data and docs are still aligned:
 powershell -ExecutionPolicy Bypass -File scripts/audit-no-resource.ps1
 ```
 
-The current final perk contract and proof matrix are documented in [`docs/PERK_RUNTIME_STATUS.md`](docs/PERK_RUNTIME_STATUS.md). In an already loaded world, run:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-perk-runtime-proofs.ps1 -WorldName "MOTM Creative Test"
-```
+The current final perk contract and proof matrix are documented in [`docs/PERK_RUNTIME_STATUS.md`](docs/PERK_RUNTIME_STATUS.md). Perk runtime checks now run through the scenario harness; add or select a scenario under `scripts/scenarios/`, then run `scripts/run-agent-observability-baseline.ps1` and inspect the raw evidence bundle.
 
 ## Agent Observability Harness
 
@@ -172,14 +167,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observabil
 macOS:
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 -WorldName Main
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 -WorldName Main
 ```
 
 To collect/index evidence from an existing session without driving commands:
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/collect-observability-evidence.ps1 -WorldName Main
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/query-observability-evidence.ps1 -Action summary -RunId latest
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/collect-observability-evidence.ps1 -WorldName Main
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/query-observability-evidence.ps1 -Action summary -RunId latest
 ```
 
 For feature implementation, agents should choose or add a scenario that directly
@@ -199,7 +194,7 @@ summary, latest client log tail, and concrete recovery steps.
 Example targeted run:
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 `
   -WorldName Main `
   -RunId feature-check-20260525 `
   -ScenarioId terra-projectile-magma-sling

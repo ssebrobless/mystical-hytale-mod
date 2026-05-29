@@ -14,6 +14,11 @@ New-Item -ItemType Directory -Path $diagDir -Force | Out-Null
 $transcriptPath = Join-Path $diagDir "transcript.txt"
 
 function Resolve-CurrentPowerShell {
+    if ($env:OS -eq "Windows_NT") {
+        $powershell = Get-Command powershell -ErrorAction SilentlyContinue
+        if ($powershell) { return $powershell.Source }
+    }
+
     try {
         $current = (Get-Process -Id $PID).Path
         if (-not [string]::IsNullOrWhiteSpace($current) -and (Test-Path -LiteralPath $current)) {
@@ -25,7 +30,7 @@ function Resolve-CurrentPowerShell {
     if ($pwsh) { return $pwsh.Source }
     $powershell = Get-Command powershell -ErrorAction SilentlyContinue
     if ($powershell) { return $powershell.Source }
-    throw "Could not locate pwsh or powershell."
+    throw "Could not locate powershell or pwsh."
 }
 
 function Invoke-ChildScript {

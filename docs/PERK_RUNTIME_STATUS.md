@@ -54,7 +54,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-install.ps1
 Run the runtime perk proof harness in an already loaded world:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/run-perk-runtime-proofs.ps1 -WorldName "MOTM Creative Test" -RunId perk-runtime-YYYYMMDD
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-agent-observability-baseline.ps1 -WorldName Main -RunId perk-runtime-YYYYMMDD -ScenarioId command-observability-smoke
 ```
 
 The runtime proof writes:

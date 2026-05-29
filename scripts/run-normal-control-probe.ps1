@@ -26,11 +26,94 @@ function Add-Line([string]$Line) {
 }
 
 function Resolve-PowerShellExecutable {
+    if ($env:OS -eq "Windows_NT") {
+        $powershell = Get-Command powershell -ErrorAction SilentlyContinue
+        if ($powershell) { return $powershell.Source }
+    }
+
     $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
     if ($pwsh) { return $pwsh.Source }
     $powershell = Get-Command powershell -ErrorAction SilentlyContinue
     if ($powershell) { return $powershell.Source }
-    throw "Could not locate pwsh or powershell."
+    throw "Could not locate powershell or pwsh."
+}
+
+function Stop-ProcessTree {
+    param([int]$RootProcessId)
+
+    if ($RootProcessId -le 0) {
+        return
+    }
+
+    $allProcesses = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
+    $processIds = New-Object System.Collections.Generic.HashSet[int]
+    [void]$processIds.Add($RootProcessId)
+    $changed = $true
+    while ($changed) {
+        $changed = $false
+        foreach ($process in $allProcesses) {
+            $processId = [int]$process.ProcessId
+            $parentId = [int]$process.ParentProcessId
+            if ($processIds.Contains($parentId) -and -not $processIds.Contains($processId)) {
+                [void]$processIds.Add($processId)
+                $changed = $true
+            }
+        }
+    }
+
+    $processIds |
+        Sort-Object -Descending |
+        Where-Object { $_ -ne $PID } |
+        ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+}
+
+function Invoke-HarnessChildProcess {
+    param(
+        [string[]]$Arguments,
+        [string]$LogPath,
+        [int]$TimeoutMilliseconds,
+        [string]$Description
+    )
+
+    New-Item -ItemType Directory -Path (Split-Path -Parent $LogPath) -Force | Out-Null
+    $stdoutPath = "$LogPath.stdout.tmp"
+    $stderrPath = "$LogPath.stderr.tmp"
+    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+
+    $child = $null
+    try {
+        $child = Start-Process -FilePath $script:PowerShellExe `
+            -ArgumentList $Arguments `
+            -NoNewWindow `
+            -PassThru `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath
+        $hardTimeout = [Math]::Max($TimeoutMilliseconds + 10000, 15000)
+        if (-not $child.WaitForExit($hardTimeout)) {
+            Stop-ProcessTree -RootProcessId $child.Id
+            $message = "Timed out after ${hardTimeout}ms: $Description"
+            $message | Set-Content -LiteralPath $LogPath -Encoding UTF8
+            throw $message
+        }
+
+        $output = New-Object System.Collections.Generic.List[string]
+        if (Test-Path -LiteralPath $stdoutPath) {
+            Get-Content -LiteralPath $stdoutPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+        }
+        if (Test-Path -LiteralPath $stderrPath) {
+            Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue | ForEach-Object { $output.Add($_) }
+        }
+        $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
+        $output | ForEach-Object { Write-Host $_ }
+        if ($child.ExitCode -ne 0) {
+            throw "$Description exited with code $($child.ExitCode). See command log: $LogPath"
+        }
+    } finally {
+        if ($child -and -not $child.HasExited) {
+            Stop-ProcessTree -RootProcessId $child.Id
+        }
+        Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Invoke-ObservedCommand {
@@ -42,17 +125,21 @@ function Invoke-ObservedCommand {
 
     $traceId = "normal-control-" + ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
     Add-Line("- Command: `/motm $($Command -replace '^\s*motm\s+', '')` traceId=$traceId")
-    & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "send-dev-command.ps1") `
-        -Command $Command `
-        -WorldName $WorldName `
+    $args = @(
+        "-NoProfile", "-ExecutionPolicy", "Bypass",
+        "-File", (Join-Path $PSScriptRoot "send-dev-command.ps1"),
+        "-Command", $Command,
+        "-WorldName", $WorldName,
+        "-TimeoutMilliseconds", $TimeoutMilliseconds,
+        "-RunDir", $outDir,
+        "-TraceId", $traceId,
+        "-ScenarioId", "normal-control-$ClassId-$StyleId"
+    )
+    Invoke-HarnessChildProcess `
+        -Arguments $args `
+        -LogPath (Join-Path $outDir ("command-" + ($traceId -replace '[^A-Za-z0-9_.-]', '-') + ".log")) `
         -TimeoutMilliseconds $TimeoutMilliseconds `
-        -RunDir $outDir `
-        -TraceId $traceId `
-        -ScenarioId "normal-control-$ClassId-$StyleId" 2>&1 |
-        Tee-Object -FilePath (Join-Path $outDir ("command-" + ($traceId -replace '[^A-Za-z0-9_.-]', '-') + ".log"))
-    if ($LASTEXITCODE -ne 0) {
-        throw "Command failed: /motm $Command"
-    }
+        -Description "Command /motm $Command"
     if ($Delay -gt 0) {
         Start-Sleep -Milliseconds $Delay
     }
@@ -65,13 +152,17 @@ function Invoke-InputAction {
     )
 
     Add-Line("- Input: $Label via scripts/send-input.ps1 -Action $Action")
-    & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "send-input.ps1") `
-        -Action $Action `
-        -DelayMilliseconds 250 2>&1 |
-        Tee-Object -FilePath (Join-Path $outDir ("input-" + $Label + ".log"))
-    if ($LASTEXITCODE -ne 0) {
-        throw "Input action failed: $Action"
-    }
+    $args = @(
+        "-NoProfile", "-ExecutionPolicy", "Bypass",
+        "-File", (Join-Path $PSScriptRoot "send-input.ps1"),
+        "-Action", $Action,
+        "-DelayMilliseconds", 250
+    )
+    Invoke-HarnessChildProcess `
+        -Arguments $args `
+        -LogPath (Join-Path $outDir ("input-" + $Label + ".log")) `
+        -TimeoutMilliseconds 5000 `
+        -Description "Input action $Action"
     Start-Sleep -Milliseconds $DelayMilliseconds
 }
 
@@ -250,11 +341,17 @@ try {
     Invoke-ObservedCommand "motm dev test mobs close" -TimeoutMilliseconds 9000 -Delay 1200
     Invoke-ObservedCommand "motm dev observe snapshot normal-control-ready"
 
-    & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "send-input.ps1") `
-        -Action Key `
-        -Keys ([string]$SpellbookHotbarSlot) `
-        -DelayMilliseconds 450 2>&1 |
-        Tee-Object -FilePath (Join-Path $outDir "input-select-spellbook.log")
+    Invoke-HarnessChildProcess `
+        -Arguments @(
+            "-NoProfile", "-ExecutionPolicy", "Bypass",
+            "-File", (Join-Path $PSScriptRoot "send-input.ps1"),
+            "-Action", "Key",
+            "-Keys", ([string]$SpellbookHotbarSlot),
+            "-DelayMilliseconds", 450
+        ) `
+        -LogPath (Join-Path $outDir "input-select-spellbook.log") `
+        -TimeoutMilliseconds 5000 `
+        -Description "Select spellbook hotbar slot"
 
     foreach ($slot in $expected) {
         Invoke-ObservedCommand "motm dev observe marker normal-control-slot-$($slot.slot)-before" -Delay 150
@@ -271,14 +368,17 @@ try {
     Invoke-ObservedCommand "motm dev observe stop normal-control-complete"
 
     if (-not $SkipCollect) {
-        & $script:PowerShellExe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "collect-observability-evidence.ps1") `
-            -WorldName $WorldName `
-            -RunId $RunId `
-            -OutDir $outDir 2>&1 |
-            Tee-Object -FilePath (Join-Path $outDir "collect-observability-evidence.log")
-        if ($LASTEXITCODE -ne 0) {
-            throw "Evidence collection failed with exit code $LASTEXITCODE."
-        }
+        Invoke-HarnessChildProcess `
+            -Arguments @(
+                "-NoProfile", "-ExecutionPolicy", "Bypass",
+                "-File", (Join-Path $PSScriptRoot "collect-observability-evidence.ps1"),
+                "-WorldName", $WorldName,
+                "-RunId", $RunId,
+                "-OutDir", $outDir
+            ) `
+            -LogPath (Join-Path $outDir "collect-observability-evidence.log") `
+            -TimeoutMilliseconds 30000 `
+            -Description "Evidence collection"
         $failures = Assert-NormalControlEvidence $expected
         if ($failures.Count -gt 0) {
             Add-Line("")
