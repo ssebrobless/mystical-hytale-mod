@@ -1,0 +1,26 @@
+{
+  "id": "corruptus-style-primordial",
+  "description": "Corruptus Primordial style scenario for Pterodactyl, Trillodon, and T-Rex transformation evidence.",
+  "styleId": "primordial",
+  "abilities": ["pterodactyl_form", "triceratops_form", "t_rex_form"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker corruptus-primordial-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker corruptus-primordial-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "causality:runtime_task_executed", "client-intent:entity_effect_add"]
+}

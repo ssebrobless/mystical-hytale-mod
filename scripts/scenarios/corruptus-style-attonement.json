@@ -1,0 +1,26 @@
+{
+  "id": "corruptus-style-attonement",
+  "description": "Corruptus Attonement style scenario for Sanctuary, Absorb, and Purify holy-field evidence.",
+  "styleId": "attonement",
+  "abilities": ["sanctuary", "absorb", "purify"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker corruptus-attonement-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker corruptus-attonement-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "causality:runtime_task_executed", "server-truth:snapshot"]
+}

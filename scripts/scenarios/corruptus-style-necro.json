@@ -1,0 +1,26 @@
+{
+  "id": "corruptus-style-necro",
+  "description": "Corruptus Necro style scenario for Raise Dead, Life Drain, and Death Mark summon/channel/mark evidence.",
+  "styleId": "necro",
+  "abilities": ["raise_dead", "life_drain", "death_mark"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker corruptus-necro-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker corruptus-necro-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "causality:runtime_task_executed", "server-truth:snapshot"]
+}
