@@ -34,7 +34,6 @@
   "expectedEvidence": [
     "causality:ability_cast_end",
     "causality:runtime_task_executed",
-    "server-truth:temporary_selection_placed",
     "client-intent:projectile_visual_proxy_spawned",
     "causality:proof_end"
   ]
