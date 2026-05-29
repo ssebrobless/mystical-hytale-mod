@@ -1,0 +1,38 @@
+{
+  "id": "terra-style-soil",
+  "description": "Terra Soil style scenario for Burrow, Mudpit, Debris wave, movement, temporary mud field, and cleanup evidence.",
+  "styleId": "soil",
+  "abilities": [
+    "burrow",
+    "mudpit",
+    "debris"
+  ],
+  "proofs": [
+    "movement-burrow",
+    "tempfluid-mud-field",
+    "proxy-debris-wave"
+  ],
+  "setupCommands": [
+    "motm dev observe marker terra-soil-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs close",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker terra-soil-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "causality:proof_end"
+  ]
+}

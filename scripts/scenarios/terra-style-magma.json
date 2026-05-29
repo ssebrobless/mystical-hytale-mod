@@ -1,0 +1,39 @@
+{
+  "id": "terra-style-magma",
+  "description": "Terra Magma style scenario for Lava Pool, Obsidian Skin, Magma Sling projectile, lava hazard protection, and cleanup evidence.",
+  "styleId": "magma",
+  "abilities": [
+    "lava_pool",
+    "obsidian_skin",
+    "magma_sling"
+  ],
+  "proofs": [
+    "tempfluid-lava-ring",
+    "coating-obsidian",
+    "proxy-magma-blob"
+  ],
+  "setupCommands": [
+    "motm dev observe marker terra-magma-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker terra-magma-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "client-intent:projectile_visual_proxy_spawned",
+    "causality:proof_end"
+  ]
+}

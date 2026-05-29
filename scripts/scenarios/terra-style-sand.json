@@ -1,0 +1,37 @@
+{
+  "id": "terra-style-sand",
+  "description": "Terra Sand style scenario for Sandstorm, Dust Devil, Vitrification, linked toggle behavior, sand cloud proxy, movement, and cleanup evidence.",
+  "styleId": "sand",
+  "abilities": [
+    "sandstorm",
+    "dust_devil",
+    "vitrification"
+  ],
+  "proofs": [
+    "proxy-sand-cloud",
+    "movement-dust-devil"
+  ],
+  "setupCommands": [
+    "motm dev observe marker terra-sand-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs close",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker terra-sand-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "causality:proof_end"
+  ]
+}

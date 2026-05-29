@@ -1,0 +1,37 @@
+{
+  "id": "terra-style-self-petrification",
+  "description": "Terra Self Petrification style scenario for Gargoyle, Glare, Tunnel movement safety, stone transformations, and cleanup evidence.",
+  "styleId": "self_petrification",
+  "abilities": [
+    "gargoyle",
+    "glare",
+    "tunnel"
+  ],
+  "proofs": [
+    "coating-stone",
+    "movement-tunnel"
+  ],
+  "setupCommands": [
+    "motm dev observe marker terra-self-petrification-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker terra-self-petrification-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "causality:proof_end"
+  ]
+}

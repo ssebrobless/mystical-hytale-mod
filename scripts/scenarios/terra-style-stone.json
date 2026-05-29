@@ -1,0 +1,40 @@
+{
+  "id": "terra-style-stone",
+  "description": "Terra Stone style scenario for Rubble Rouser, Pillar Strike, Rockslide movement, temporary pillar staging, debris projectile, and cleanup evidence.",
+  "styleId": "stone",
+  "abilities": [
+    "rubble_rouser",
+    "pillar_strike",
+    "rockslide"
+  ],
+  "proofs": [
+    "tempblock-stone-pillar",
+    "proxy-debris-wave"
+  ],
+  "setupCommands": [
+    "motm dev observe marker terra-stone-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs close",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [
+    "motm dev test weapon-hit"
+  ],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker terra-stone-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "server-truth:temporary_selection_placed",
+    "causality:proof_end"
+  ]
+}

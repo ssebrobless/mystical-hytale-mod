@@ -1,0 +1,41 @@
+{
+  "id": "terra-style-metal",
+  "description": "Terra Metal style scenario for Iron Wall, Metal Coat, Alloy Enhancement, weapon follow-up state, target push, and cleanup evidence.",
+  "styleId": "metal",
+  "abilities": [
+    "iron_wall",
+    "metal_coat",
+    "alloy_enhancement"
+  ],
+  "proofs": [
+    "tempblock-metal-wall",
+    "coating-metal"
+  ],
+  "setupCommands": [
+    "motm dev observe marker terra-metal-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs close",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [
+    "motm dev test weapon-hit"
+  ],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker terra-metal-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "server-truth:temporary_selection_placed",
+    "server-truth:activeWeaponFollowUp",
+    "causality:proof_end"
+  ]
+}
