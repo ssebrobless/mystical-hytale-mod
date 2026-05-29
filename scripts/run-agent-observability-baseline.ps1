@@ -361,8 +361,21 @@ function Invoke-HarnessChildProcess {
         $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
         $output | ForEach-Object { Write-Host $_ }
 
-        if ($process.ExitCode -ne 0) {
-            throw "$Description exited with code $($process.ExitCode). See command log: $LogPath"
+        $process.Refresh()
+        $exitCode = $process.ExitCode
+        if ($null -eq $exitCode) {
+            $joinedOutput = $output -join "`n"
+            $looksSuccessful = $joinedOutput -match "Dev command inbox executed|PASS|BUILD SUCCESSFUL"
+            $looksFailed = $joinedOutput -match "Dev command inbox skipped|Dev command inbox failed|FAIL|BUILD FAILED|Exception|CategoryInfo|FullyQualifiedErrorId"
+            if ($looksSuccessful -and -not $looksFailed) {
+                $exitCode = 0
+            } else {
+                $exitCode = 1
+            }
+        }
+
+        if ($exitCode -ne 0) {
+            throw "$Description exited with code $exitCode. See command log: $LogPath"
         }
     } finally {
         if ($process -and -not $process.HasExited) {
@@ -815,6 +828,7 @@ try {
     Add-Line("## Runtime Commands")
     Add-Line("")
     Invoke-ObservedCommand "motm dev observe start $RunId $ScenarioId" -TimeoutMilliseconds 8000
+    Invoke-ObservedCommand "motm dev effects clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
     Invoke-ScenarioCommandList "setup" $script:ScenarioSetupCommands
 
     if (-not [string]::IsNullOrWhiteSpace($ClassId)) {
