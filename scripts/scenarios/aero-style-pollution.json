@@ -1,0 +1,26 @@
+{
+  "id": "aero-style-pollution",
+  "description": "Aero Pollution style scenario for Smog, Toxic Breath, and Acid Rain cloud/debuff evidence.",
+  "styleId": "pollution",
+  "abilities": ["smog", "toxic_breath", "acid_rain"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker aero-pollution-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker aero-pollution-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "causality:runtime_task_executed", "server-truth:snapshot"]
+}

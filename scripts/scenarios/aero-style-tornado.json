@@ -1,0 +1,26 @@
+{
+  "id": "aero-style-tornado",
+  "description": "Aero Tornado style scenario for Twister, Funnel Cloud, and Eye of the Storm field evidence.",
+  "styleId": "tornado",
+  "abilities": ["twister", "funnel_cloud", "eye_of_the_storm"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker aero-tornado-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker aero-tornado-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "causality:runtime_task_executed", "server-truth:snapshot"]
+}
