@@ -50,9 +50,9 @@
         {
           "id": "battle_cry",
           "name": "Battle Cry",
-          "description": "Boost your attack and speed for 3 turns",
+          "description": "Rally yourself and nearby allies with a sonic battle cry, granting +15% damage and +10% speed.",
           "damage_percent": 0,
-          "cooldown_seconds": 5,
+          "cooldown_seconds": 15,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
           "effect": "attack_buff+speed",
@@ -62,7 +62,8 @@
           "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
-          "duration_seconds": 6,
+          "duration_seconds": 10,
+          "radius": 8,
           "terrain_effect": "resonant_aura"
         }
       ]
@@ -77,8 +78,8 @@
         {
           "id": "jet_burst",
           "name": "Jet Burst",
-          "description": "Dash attack, launch enemy",
-          "damage_percent": 10,
+          "description": "Burst in the aimed direction, displacing enemies you pass without dealing damage.",
+          "damage_percent": 0,
           "cooldown_seconds": 2,
           "cast_time_seconds": 0.2,
           "recovery_seconds": 0.16,
@@ -102,9 +103,9 @@
         {
           "id": "afterburner",
           "name": "Afterburner",
-          "description": "Enhanced dash that leaves damage trail",
+          "description": "Accelerate with jet-fire trailing behind you for 8 seconds; enemies touching the trail burn.",
           "damage_percent": 15,
-          "cooldown_seconds": 4,
+          "cooldown_seconds": 5,
           "cast_time_seconds": 0.2,
           "recovery_seconds": 0.16,
           "effect": "burn",
@@ -117,7 +118,7 @@
           "target_type": "line",
           "range": 14,
           "dash_distance": 14,
-          "duration_seconds": 3,
+          "duration_seconds": 8,
           "travel_type": "afterburner_dash",
           "terrain_effect": "ember_trail"
         },
@@ -155,7 +156,7 @@
         {
           "id": "thunderclap",
           "name": "Thunderclap",
-          "description": "Stun all and apply shocked",
+          "description": "Release a point-blank thunder shockwave that stuns enemies for 3.5 seconds.",
           "damage_percent": 0,
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.28,
@@ -169,13 +170,13 @@
           "cast_type": "self_burst",
           "target_type": "self_centered",
           "radius": 5,
-          "duration_seconds": 2.5,
+          "duration_seconds": 3.5,
           "terrain_effect": "thunderclap"
         },
         {
           "id": "smite",
           "name": "Smite",
-          "description": "Lightning bolt, bonus vs shocked",
+          "description": "Call down a crosshair-aimed lightning strike with a 3x3 impact footprint.",
           "damage_percent": 20,
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.35,
@@ -190,13 +191,14 @@
           "cast_type": "projectile",
           "target_type": "enemy",
           "range": 18,
+          "radius": 1.5,
           "projectile_speed": 30,
           "travel_type": "lightning_bolt"
         },
         {
           "id": "chain_lightning",
           "name": "Chain Lightning",
-          "description": "Continuous lightning damage",
+          "description": "Chain lightning through up to six targets, jumping only to the closest target within 3 blocks.",
           "damage_percent": 10,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.4,
@@ -210,7 +212,7 @@
           "cast_type": "chain",
           "target_type": "enemy_cluster",
           "range": 16,
-          "radius": 8,
+          "radius": 3,
           "duration_seconds": 4,
           "travel_type": "chain_lightning"
         }
@@ -226,7 +228,7 @@
         {
           "id": "twister",
           "name": "Twister",
-          "description": "Spin up a twister that knocks enemies back",
+          "description": "Send a smaller tornado forward, swirling enemies near the ground with light lift.",
           "damage_percent": 10,
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.55,
@@ -248,7 +250,7 @@
         {
           "id": "funnel_cloud",
           "name": "Funnel Cloud",
-          "description": "Create a funnel cloud that damages over time",
+          "description": "Create a large funnel cloud that pulls enemies inward and lifts them up to 12 blocks if space allows.",
           "damage_percent": 8,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.55,
@@ -270,7 +272,7 @@
         {
           "id": "eye_of_the_storm",
           "name": "Eye of the Storm",
-          "description": "Find calm in the storm, healing and shielding",
+          "description": "Create a caster-centered storm zone that protects allies while slowing and damaging enemies.",
           "damage_percent": 0,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.28,
@@ -300,12 +302,12 @@
         {
           "id": "leap",
           "name": "Leap",
-          "description": "Launch into the air and crash down on the enemy",
-          "damage_percent": 8,
+          "description": "Arm your next jump for 5 seconds, making it 60% higher with forward boost and no damage.",
+          "damage_percent": 0,
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.2,
           "recovery_seconds": 0.16,
-          "effect": "knockback+vulnerability",
+          "effect": "",
           "categories": [
             "damage",
             "crowd_control",
@@ -320,13 +322,14 @@
           "range": 10,
           "dash_distance": 10,
           "launch_height": 6,
+          "duration_seconds": 5,
           "radius": 3,
           "travel_type": "jump_arc"
         },
         {
           "id": "divebomb",
           "name": "Divebomb",
-          "description": "Dive from great height for devastating damage",
+          "description": "While airborne, dive into an aimed ground impact that damages and knocks enemies away.",
           "damage_percent": 20,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.5,
@@ -349,7 +352,7 @@
         {
           "id": "hang_time",
           "name": "Hang Time",
-          "description": "Stay airborne to dodge incoming attacks",
+          "description": "Float in the air for 3 seconds, drifting slightly until canceled by jump or another movement ability.",
           "damage_percent": 0,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.2,
@@ -379,7 +382,7 @@
         {
           "id": "air_slash",
           "name": "Air Slash",
-          "description": "Slice the air to send a cutting gust",
+          "description": "Fire a 3-block-wide sideways pale-yellow cutting wind arc that pierces enemies.",
           "damage_percent": 8,
           "cooldown_seconds": 2,
           "cast_time_seconds": 0.35,
@@ -392,19 +395,19 @@
           "cast_type": "projectile_line",
           "target_type": "enemy",
           "range": 16,
-          "width": 2,
+          "width": 3,
           "projectile_speed": 28,
           "travel_type": "wind_blade"
         },
         {
           "id": "gale_cutter",
           "name": "Gale Cutter",
-          "description": "A powerful wind blade that knocks back",
+          "description": "Fire two crossing pale-yellow wind slashes in an X formation that pierce enemies.",
           "damage_percent": 12,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.35,
           "recovery_seconds": 0.24,
-          "effect": "knockback",
+          "effect": "",
           "categories": [
             "damage",
             "crowd_control"
@@ -421,19 +424,22 @@
         {
           "id": "razor_wind",
           "name": "Razor Wind",
-          "description": "Sharpen the wind around you for stronger attacks",
-          "damage_percent": 0,
+          "description": "Perform five rapid little wind slashes against enemies in front of you.",
+          "damage_percent": 5,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "attack_buff",
+          "effect": "",
           "categories": [
             "buff"
           ],
           "resource_cost": 0,
-          "cast_type": "self_buff",
-          "target_type": "self",
-          "duration_seconds": 8
+          "cast_type": "projectile_volley",
+          "target_type": "enemy_cluster",
+          "range": 12,
+          "width": 5,
+          "projectile_speed": 34,
+          "travel_type": "razor_wind"
         }
       ]
     },
@@ -447,12 +453,12 @@
         {
           "id": "smoke_bomb",
           "name": "Smoke Bomb",
-          "description": "Deploy smoke to slow enemies and speed yourself",
+          "description": "Throw a smoke bomb that creates a 5-block cloud for 6 seconds, blinding and slowing enemies.",
           "damage_percent": 0,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.55,
           "recovery_seconds": 0.32,
-          "effect": "slow+attack_buff+speed",
+          "effect": "blind+slow",
           "categories": [
             "debuff",
             "buff"
@@ -461,14 +467,14 @@
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 10,
-          "radius": 4,
+          "radius": 5,
           "duration_seconds": 6,
           "terrain_effect": "smoke_bomb"
         },
         {
           "id": "vanish",
           "name": "Vanish",
-          "description": "Disappear in smoke, boosting next attack by 30%",
+          "description": "Vanish in smoke for 3 seconds; attacking or casting a damaging ability ends it early.",
           "damage_percent": 0,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
@@ -480,13 +486,13 @@
           "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
-          "duration_seconds": 5,
+          "duration_seconds": 3,
           "terrain_effect": "vanish"
         },
         {
           "id": "smoke_form",
           "name": "Smoke Form",
-          "description": "Become smoke for 40% evasion over 2 turns",
+          "description": "Become smoke, move through enemies, and reduce projectile damage by 50% without terrain noclip.",
           "damage_percent": 0,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.85,
@@ -515,7 +521,7 @@
         {
           "id": "gust",
           "name": "Gust",
-          "description": "Blast the enemy with a powerful gust of wind",
+          "description": "Blast enemies with a crosshair-aimed gust that pushes and disorients them.",
           "damage_percent": 12,
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.35,
@@ -536,7 +542,7 @@
         {
           "id": "cyclone_shield",
           "name": "Cyclone Shield",
-          "description": "Surround yourself with a defensive cyclone",
+          "description": "Surround yourself with a tight cyclone, reducing projectile damage by 65% and all damage by 10%.",
           "damage_percent": 0,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
@@ -556,7 +562,7 @@
         {
           "id": "tempest",
           "name": "Tempest",
-          "description": "Unleash a devastating tempest that stuns",
+          "description": "Place a storm field that pulls, slows, and repeatedly hits enemies caught inside.",
           "damage_percent": 15,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.55,
@@ -587,7 +593,7 @@
         {
           "id": "air_shot",
           "name": "Air Shot",
-          "description": "Compressed air projectile that hits hard",
+          "description": "Fire a fast compressed-air projectile that travels 15 blocks.",
           "damage_percent": 15,
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.35,
@@ -599,14 +605,14 @@
           "resource_cost": 0,
           "cast_type": "projectile",
           "target_type": "enemy",
-          "range": 18,
+          "range": 15,
           "projectile_speed": 32,
           "travel_type": "compressed_air_shot"
         },
         {
           "id": "bullet_storm",
           "name": "Bullet Storm",
-          "description": "Rapid air bullets that slow the target",
+          "description": "Fire a rapid volley of compressed-air bullets that each travel 15 blocks.",
           "damage_percent": 12,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.32,
@@ -619,7 +625,7 @@
           "resource_cost": 0,
           "cast_type": "projectile_volley",
           "target_type": "enemy",
-          "range": 18,
+          "range": 15,
           "width": 4,
           "projectile_speed": 34,
           "travel_type": "air_bullets"
@@ -627,7 +633,7 @@
         {
           "id": "pressure_burst",
           "name": "Pressure Burst",
-          "description": "Release built-up pressure in an explosive burst",
+          "description": "Charge up to 4 seconds, then fire a larger fast compressed-air shot up to 20 blocks.",
           "damage_percent": 20,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.28,
@@ -638,11 +644,13 @@
             "crowd_control"
           ],
           "resource_cost": 0,
-          "cast_type": "self_burst",
-          "target_type": "self_centered",
-          "radius": 5,
+          "cast_type": "projectile",
+          "target_type": "enemy",
+          "range": 20,
+          "duration_seconds": 4,
+          "projectile_speed": 32,
           "knockback_force": 5,
-          "terrain_effect": "pressure_burst"
+          "travel_type": "pressure_burst"
         }
       ]
     },
@@ -656,7 +664,7 @@
         {
           "id": "smog",
           "name": "Smog",
-          "description": "Engulf the enemy in toxic smog",
+          "description": "Create a lingering toxic cloud that damages, slows, and weakens enemies.",
           "damage_percent": 5,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.55,
@@ -678,7 +686,7 @@
         {
           "id": "toxic_breath",
           "name": "Toxic Breath",
-          "description": "Exhale poisonous fumes that weaken defenses",
+          "description": "Exhale a 60-degree cone of toxic breath up to 8 blocks, applying poison and vulnerability for 5 seconds.",
           "damage_percent": 8,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.25,
@@ -691,15 +699,15 @@
           "resource_cost": 0,
           "cast_type": "cone",
           "target_type": "cone",
-          "range": 10,
-          "cone_angle": 75,
+          "range": 8,
+          "cone_angle": 60,
           "duration_seconds": 5,
           "terrain_effect": "toxic_breath"
         },
         {
           "id": "acid_rain",
           "name": "Acid Rain",
-          "description": "Call down acidic rain that corrodes armor",
+          "description": "Call acidic green rain at the target area for 6 seconds, damaging and weakening enemies.",
           "damage_percent": 10,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.55,
@@ -714,8 +722,8 @@
           "cast_type": "ground_zone",
           "target_type": "ground_target",
           "range": 14,
-          "radius": 6,
-          "duration_seconds": 7,
+          "radius": 5,
+          "duration_seconds": 6,
           "terrain_effect": "acid_rain"
         }
       ]

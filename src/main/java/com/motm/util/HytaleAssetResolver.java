@@ -91,7 +91,7 @@ public final class HytaleAssetResolver {
     private static final String MODEL_PTERODACTYL = "Common/NPC/Flying_Beast/Pterodactyl/Models/Model.blockymodel";
     private static final String MODEL_BAT = "Common/NPC/Flying_Critter/Bat/Models/Model.blockymodel";
     private static final String MODEL_SHADOW_KNIGHT = "Common/NPC/Undead/Shadow_Knight/Models/Model.blockymodel";
-    private static final String MODEL_TOAD_RHINO = "Common/NPC/Beast/Toad_Rhino/Models/Model.blockymodel";
+    private static final String MODEL_TRILLODON = "Common/NPC/Beast/Trillodon/Models/Model.blockymodel";
     private static final String MODEL_REX_CAVE = "Common/NPC/Beast/Rex_Cave/Models/Model.blockymodel";
     private static final String MODEL_VOID_SPAWN = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
     private static final String MODEL_VOID_EYE = "Common/NPC/Void/Eye_Void/Models/Model.blockymodel";
@@ -588,7 +588,7 @@ public final class HytaleAssetResolver {
             return MODEL_BAT;
         }
         if (abilityId.contains("triceratops")) {
-            return MODEL_TOAD_RHINO;
+            return MODEL_TRILLODON;
         }
         if (abilityId.contains("t_rex") || abilityId.contains("trex")) {
             return MODEL_REX_CAVE;

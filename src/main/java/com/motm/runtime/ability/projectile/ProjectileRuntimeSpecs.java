@@ -63,6 +63,7 @@ public final class ProjectileRuntimeSpecs {
         return switch (castType) {
             case "projectile_volley" -> switch (abilityId) {
                 case "bullet_storm" -> 6;
+                case "razor_wind" -> 5;
                 case "frozen_needles", "cacti_cluster" -> 5;
                 case "debris" -> 4;
                 default -> travelType.contains("storm") ? 5 : DEFAULT_PROJECTILE_CLUSTER_COUNT + 1;
@@ -129,6 +130,7 @@ public final class ProjectileRuntimeSpecs {
             };
             case "projectile_volley" -> switch (abilityId) {
                 case "bullet_storm" -> 4.5;
+                case "razor_wind" -> 3.5;
                 case "frozen_needles" -> 5.0;
                 case "cacti_cluster" -> 6.5;
                 case "debris" -> 7.5;
@@ -147,6 +149,7 @@ public final class ProjectileRuntimeSpecs {
             long delay = switch (castType) {
                 case "projectile_volley" -> switch (abilityId) {
                     case "bullet_storm" -> index * 65L;
+                    case "razor_wind" -> index * 45L;
                     case "frozen_needles" -> index * 55L;
                     case "debris" -> index * 90L;
                     default -> index * DEFAULT_VOLLEY_STAGGER_MS;

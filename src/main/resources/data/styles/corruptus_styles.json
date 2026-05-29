@@ -79,7 +79,7 @@
         {
           "id": "raise_dead",
           "name": "Raise Dead",
-          "description": "Summon skeleton minion",
+          "description": "Summon one stronger undead ally that follows you and attacks hostile mobs.",
           "damage_percent": 5,
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.8,
@@ -100,7 +100,7 @@
         {
           "id": "life_drain",
           "name": "Life Drain",
-          "description": "Damage enemy, heal yourself",
+          "description": "Channel a dark tether for 4 seconds, damaging the target each second and healing for 50% of actual damage dealt.",
           "damage_percent": 10,
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.45,
@@ -114,12 +114,12 @@
           "cast_type": "channel",
           "target_type": "enemy",
           "range": 14,
-          "duration_seconds": 3
+          "duration_seconds": 4
         },
         {
           "id": "death_mark",
           "name": "Death Mark",
-          "description": "Mark enemy to take 25% more damage",
+          "description": "Mark one enemy for 8 seconds, making them take 20% more damage; death triggers a small enemy-only dark explosion.",
           "damage_percent": 0,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.38,
@@ -132,7 +132,7 @@
           "cast_type": "curse",
           "target_type": "enemy",
           "range": 16,
-          "duration_seconds": 6
+          "duration_seconds": 8
         }
       ]
     },
@@ -146,12 +146,12 @@
         {
           "id": "shadow_step",
           "name": "Shadow Step",
-          "description": "Teleport and leave damaging clone",
-          "damage_percent": 10,
+          "description": "Blink forward a fixed safe distance, leaving dark smoke at the start and end points.",
+          "damage_percent": 0,
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.2,
           "recovery_seconds": 0.16,
-          "effect": "clone",
+          "effect": "stealth",
           "categories": [
             "damage",
             "dash",
@@ -161,7 +161,7 @@
           "charge_recharge_seconds": 3.0,
           "resource_cost": 0,
           "cast_type": "teleport",
-          "target_type": "enemy",
+          "target_type": "self",
           "range": 12,
           "dash_distance": 12,
           "duration_seconds": 4,
@@ -171,7 +171,7 @@
         {
           "id": "umbral_veil",
           "name": "Umbral Veil",
-          "description": "Go invisible, next attack +40% damage",
+          "description": "Wrap yourself in black-purple wisps, becoming hard to target and reducing incoming damage until you attack.",
           "damage_percent": 0,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.28,
@@ -189,22 +189,21 @@
         {
           "id": "dark_embrace",
           "name": "Dark Embrace",
-          "description": "Create shadow zone, 25% dodge chance",
-          "damage_percent": 5,
+          "description": "Wrap yourself or a targeted ally/summon in dark protection, granting damage reduction and small healing over time.",
+          "damage_percent": 0,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.55,
           "recovery_seconds": 0.32,
-          "effect": "evasion_zone",
+          "effect": "defense_buff+heal",
           "categories": [
             "damage",
             "evasion",
             "aoe"
           ],
           "resource_cost": 0,
-          "cast_type": "ground_zone",
-          "target_type": "ground_target",
+          "cast_type": "self_buff",
+          "target_type": "self",
           "range": 10,
-          "radius": 5,
           "duration_seconds": 6,
           "terrain_effect": "shadow_zone"
         }
@@ -214,13 +213,13 @@
       "id": "hell_flame",
       "name": "Hell Flame",
       "class_id": "corruptus",
-      "theme": "Hellfire, self-damage, overwhelming power",
+      "theme": "Blue soul-fire, hellfire ground, and burning debuffs",
       "resource_type": "",
       "abilities": [
         {
           "id": "hellfire",
           "name": "Hellfire",
-          "description": "Unleash hellfire that burns and slows, scorching yourself",
+          "description": "Breathe blue hellfire in a cone in front of you, burning and slowing enemies.",
           "damage_percent": 8,
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.32,
@@ -231,17 +230,17 @@
             "debuff"
           ],
           "resource_cost": 0,
-          "cast_type": "projectile_burst",
-          "target_type": "enemy",
-          "range": 16,
-          "radius": 3,
-          "projectile_speed": 22,
-          "travel_type": "hellfire_burst"
+          "cast_type": "cone",
+          "target_type": "cone",
+          "range": 9,
+          "cone_angle": 70,
+          "duration_seconds": 5,
+          "terrain_effect": "blue_hellfire_breath"
         },
         {
           "id": "infernal_ground",
           "name": "Infernal Ground",
-          "description": "Set the ground ablaze, burning enemies and boosting attacks",
+          "description": "Set blue infernal ground ablaze under the caster; enemies burn, friendlies are safe.",
           "damage_percent": 5,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.55,
@@ -254,8 +253,8 @@
           ],
           "resource_cost": 0,
           "cast_type": "ground_zone",
-          "target_type": "ground_target",
-          "range": 12,
+          "target_type": "self_centered",
+          "range": 0,
           "radius": 5,
           "duration_seconds": 7,
           "terrain_effect": "infernal_ground"
@@ -263,12 +262,12 @@
         {
           "id": "soul_scorch",
           "name": "Soul Scorch",
-          "description": "Scorch the enemy's soul, weakening and slowing them",
-          "damage_percent": 0,
+          "description": "Wrap one target in blue soul-fire, dealing damage over time and increasing damage taken.",
+          "damage_percent": 8,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.38,
           "recovery_seconds": 0.22,
-          "effect": "vulnerability+slow",
+          "effect": "dot+vulnerability",
           "categories": [
             "debuff"
           ],
@@ -290,12 +289,12 @@
         {
           "id": "dominate",
           "name": "Dominate",
-          "description": "Dominate the enemy's mind, stunning them",
+          "description": "Dominate a single enemy permanently until toggled off or the target dies; dominated targets become friendly allies.",
           "damage_percent": 0,
-          "cooldown_seconds": 7,
+          "cooldown_seconds": 5,
           "cast_time_seconds": 0.38,
           "recovery_seconds": 0.22,
-          "effect": "stun+vulnerability",
+          "effect": "root+disoriented",
           "categories": [
             "crowd_control",
             "debuff"
@@ -304,12 +303,12 @@
           "cast_type": "gaze",
           "target_type": "enemy",
           "range": 15,
-          "duration_seconds": 3
+          "duration_seconds": 999
         },
         {
           "id": "mind_shatter",
           "name": "Mind Shatter",
-          "description": "Shatter the enemy's psyche with raw power",
+          "description": "Create a bright pink 6-block psychic explosion centered on your dominated ally if present, otherwise on you.",
           "damage_percent": 25,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.35,
@@ -320,28 +319,28 @@
             "crowd_control"
           ],
           "resource_cost": 0,
-          "cast_type": "projectile",
-          "target_type": "enemy",
-          "range": 16,
-          "projectile_speed": 26,
-          "travel_type": "psychic_bolt"
+          "cast_type": "self_burst",
+          "target_type": "self_centered",
+          "radius": 6,
+          "terrain_effect": "psychic_shatter"
         },
         {
           "id": "hivemind",
           "name": "Hivemind",
-          "description": "Tap into collective dark intelligence for power",
+          "description": "Control all enemies within 7 blocks for 6 seconds; Mind Shatter can detonate each controlled target.",
           "damage_percent": 0,
-          "cooldown_seconds": 8,
+          "cooldown_seconds": 12,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "attack_buff",
+          "effect": "root+disoriented",
           "categories": [
             "buff"
           ],
           "resource_cost": 0,
-          "cast_type": "self_buff",
-          "target_type": "self",
-          "duration_seconds": 8,
+          "cast_type": "self_burst",
+          "target_type": "self_centered",
+          "radius": 7,
+          "duration_seconds": 6,
           "terrain_effect": "psychic_link"
         }
       ]
@@ -356,7 +355,7 @@
         {
           "id": "imbue_power",
           "name": "Imbue: Power",
-          "description": "Channel dark energy to massively boost attack",
+          "description": "Self-only dark red imbuement that boosts damage; replaces other imbuements.",
           "damage_percent": 0,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
@@ -373,9 +372,9 @@
         {
           "id": "imbue_fortitude",
           "name": "Imbue: Fortitude",
-          "description": "Reinforce your body with dark magic",
+          "description": "Self-only dark green imbuement that boosts damage reduction; replaces other imbuements.",
           "damage_percent": 0,
-          "cooldown_seconds": 7,
+          "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
           "effect": "defense_buff+heal",
@@ -393,9 +392,9 @@
         {
           "id": "imbue_swiftness",
           "name": "Imbue: Swiftness",
-          "description": "Enhance your reflexes with shadow magic",
+          "description": "Self-only bright yellow imbuement that boosts movement and attack speed; replaces other imbuements.",
           "damage_percent": 0,
-          "cooldown_seconds": 5,
+          "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
           "effect": "evasion+attack_buff",
@@ -406,7 +405,7 @@
           "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
-          "duration_seconds": 7,
+          "duration_seconds": 8,
           "dash_distance": 9,
           "travel_type": "shadow_haste"
         }
@@ -422,7 +421,7 @@
         {
           "id": "sanctuary",
           "name": "Sanctuary",
-          "description": "Create a holy space that heals and cleanses",
+          "description": "Place a holy circle that heals and protects friendlies while lightly weakening enemies.",
           "damage_percent": 0,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.55,
@@ -443,7 +442,7 @@
         {
           "id": "absorb",
           "name": "Absorb",
-          "description": "Absorb incoming damage and convert to healing",
+          "description": "Create a caster-only white-gold shield that absorbs damage and converts part of it into healing.",
           "damage_percent": 0,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
@@ -462,18 +461,19 @@
         {
           "id": "purify",
           "name": "Purify",
-          "description": "Purge all negative effects and bolster defenses",
+          "description": "Cleanse negative effects from friendlies in a radius and burst white-gold damage into enemies.",
           "damage_percent": 0,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.38,
           "recovery_seconds": 0.22,
-          "effect": "defense_buff",
+          "effect": "burn+vulnerability",
           "categories": [
             "buff"
           ],
           "resource_cost": 0,
-          "cast_type": "cleanse",
-          "target_type": "self",
+          "cast_type": "self_burst",
+          "target_type": "self_centered",
+          "radius": 6,
           "duration_seconds": 6,
           "terrain_effect": "purifying_aura"
         }
@@ -489,12 +489,12 @@
         {
           "id": "rift",
           "name": "Rift",
-          "description": "Open a void rift that damages over time",
+          "description": "Open a black-purple void tear that pulls and slows enemies.",
           "damage_percent": 8,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.55,
           "recovery_seconds": 0.32,
-          "effect": "dot",
+          "effect": "dot+slow",
           "categories": [
             "dot",
             "aoe"
@@ -511,34 +511,32 @@
         {
           "id": "void_spawn",
           "name": "Void Spawn",
-          "description": "Summon a creature from the void",
+          "description": "Summon three friendly Crawler_Void allies in a triangle around you for 10 seconds.",
           "damage_percent": 0,
-          "cooldown_seconds": 7,
+          "cooldown_seconds": 8,
           "cast_time_seconds": 0.8,
           "recovery_seconds": 0.4,
           "effect": "summon",
           "categories": [
             "summon"
           ],
-          "charges": 2,
-          "charge_recharge_seconds": 7.0,
           "resource_cost": 0,
           "cast_type": "summon",
-          "target_type": "ground_target",
-          "range": 10,
-          "duration_seconds": 18,
-          "summon_name": "void_spawn",
+          "target_type": "self_centered",
+          "range": 0,
+          "duration_seconds": 10,
+          "summon_name": "crawler_void",
           "terrain_effect": "void_gate"
         },
         {
           "id": "consume",
           "name": "Consume",
-          "description": "The void consumes the enemy for massive damage",
+          "description": "Consume a target with void damage, healing yourself; targets below 10% health are executed.",
           "damage_percent": 30,
           "cooldown_seconds": 9,
           "cast_time_seconds": 0.3,
           "recovery_seconds": 0.22,
-          "effect": "stun",
+          "effect": "lifesteal",
           "categories": [
             "damage",
             "crowd_control"
@@ -561,29 +559,27 @@
         {
           "id": "scarak_egg",
           "name": "Scarak Egg",
-          "description": "Lay a scarak egg that hatches into a minion",
+          "description": "Place Deco_Scarak_Eggsacks; after 4 seconds it hatches into friendly Scarak Seeker, Fighter, and Defender summons.",
           "damage_percent": 0,
-          "cooldown_seconds": 3,
+          "cooldown_seconds": 8,
           "cast_time_seconds": 0.8,
           "recovery_seconds": 0.4,
           "effect": "summon",
           "categories": [
             "summon"
           ],
-          "charges": 3,
-          "charge_recharge_seconds": 3.0,
           "resource_cost": 0,
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 8,
-          "duration_seconds": 16,
+          "duration_seconds": 30,
           "summon_name": "scarak_egg",
           "terrain_effect": "brood_nest"
         },
         {
           "id": "brood_surge",
           "name": "Brood Surge",
-          "description": "Empower your minions with dark energy",
+          "description": "Instantly hatch active Scarak eggs and grant Scarak summons +40% movement speed for 6 seconds.",
           "damage_percent": 0,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.28,
@@ -596,12 +592,12 @@
           "cast_type": "summon_buff",
           "target_type": "allied_summons",
           "radius": 12,
-          "duration_seconds": 8
+          "duration_seconds": 6
         },
         {
           "id": "locust_queen",
           "name": "Locust Queen",
-          "description": "Summon a massive locust queen to devastate",
+          "description": "Summon a friendly Scarak_Broodmother directly for 20 seconds.",
           "damage_percent": 0,
           "cooldown_seconds": 10,
           "cast_time_seconds": 0.8,
@@ -614,7 +610,7 @@
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
-          "duration_seconds": 22,
+          "duration_seconds": 20,
           "summon_name": "locust_queen",
           "terrain_effect": "swarm_gate"
         }
@@ -630,7 +626,7 @@
         {
           "id": "pterodactyl_form",
           "name": "Pterodactyl Form",
-          "description": "Take flight in pterodactyl form, gaining evasion",
+          "description": "Transform into Pterodactyl for 30 seconds. Hold Space to fly; form abilities are Swoop and Carry On.",
           "damage_percent": 10,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.85,
@@ -644,16 +640,16 @@
           "resource_cost": 0,
           "cast_type": "transformation",
           "target_type": "self",
-          "duration_seconds": 10,
+          "duration_seconds": 30,
           "toggleable": true,
-          "toggle_cooldown_seconds": 8.0,
+          "toggle_cooldown_seconds": 15.0,
           "launch_height": 6,
           "travel_type": "flight_form"
         },
         {
           "id": "triceratops_form",
           "name": "Triceratops Form",
-          "description": "Charge in armored triceratops form",
+          "description": "Transform into Trillodon for 30 seconds. Stampede breaks forward and Horn Guard protects nearby allies.",
           "damage_percent": 12,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.85,
@@ -666,9 +662,9 @@
           "resource_cost": 0,
           "cast_type": "transformation",
           "target_type": "self",
-          "duration_seconds": 10,
+          "duration_seconds": 30,
           "toggleable": true,
-          "toggle_cooldown_seconds": 8.0,
+          "toggle_cooldown_seconds": 15.0,
           "dash_distance": 10,
           "knockback_force": 5,
           "travel_type": "stampede_charge"
@@ -676,7 +672,7 @@
         {
           "id": "t_rex_form",
           "name": "T-Rex Form",
-          "description": "Transform into a terrifying T-Rex for devastating damage",
+          "description": "Transform into Rex_Cave for 30 seconds. Crushing Bite executes low-health enemies and Primal Roar fears foes.",
           "damage_percent": 20,
           "cooldown_seconds": 10,
           "cast_time_seconds": 0.85,
@@ -690,9 +686,9 @@
           "resource_cost": 0,
           "cast_type": "transformation",
           "target_type": "self",
-          "duration_seconds": 12,
+          "duration_seconds": 30,
           "toggleable": true,
-          "toggle_cooldown_seconds": 10.0,
+          "toggle_cooldown_seconds": 15.0,
           "radius": 4,
           "terrain_effect": "primal_roar"
         }

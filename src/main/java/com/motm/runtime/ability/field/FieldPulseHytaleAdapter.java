@@ -235,12 +235,26 @@ public final class FieldPulseHytaleAdapter {
         }
 
         if (terrainEffect.contains("void_rift")) {
+            support.applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             support.applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 
         if (terrainEffect.contains("infernal_ground")) {
+            support.applyTargetToken("burn", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             support.applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            return;
+        }
+
+        if (terrainEffect.contains("psychic_shatter") || terrainEffect.contains("psychic_link")) {
+            support.applyTargetToken("disoriented", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            support.applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            return;
+        }
+
+        if (terrainEffect.contains("purifying_aura")) {
+            support.applyTargetToken("burn", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            support.applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             return;
         }
 

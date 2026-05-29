@@ -128,8 +128,8 @@ public class GameplayPlaybackManager {
     private static final Set<String> CONE_CAST_TYPES = Set.of("cone", "gaze");
     private static final double DEFAULT_LINE_HALF_WIDTH = 1.75;
     private static final double DEFAULT_AREA_RADIUS = FieldRuntimeSpecs.DEFAULT_AREA_RADIUS;
-    private static final double DEFAULT_CHAIN_RADIUS = 4.5;
-    private static final int DEFAULT_CHAIN_TARGETS = 3;
+    private static final double DEFAULT_CHAIN_RADIUS = 3.0;
+    private static final int DEFAULT_CHAIN_TARGETS = 6;
     private static final String SUMMON_ROLE_NAME = "motm_summon";
     private static final String PROJECTILE_VISUAL_ROLE_NAME = "motm_projectile";
     private static final String FIELD_VISUAL_ROLE_NAME = "motm_field";

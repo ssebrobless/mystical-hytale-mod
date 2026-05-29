@@ -17,6 +17,7 @@ import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.HytaleAssetResolver;
 
+import java.util.List;
 import java.util.Locale;
 
 public final class SummonLifecycleHytaleAdapter {
@@ -52,14 +53,18 @@ public final class SummonLifecycleHytaleAdapter {
             return Result.none();
         }
 
-        String modelId = resolveSummonModelId(player.getPlayerClass(), style.getId(), ability);
-        if (modelId == null || modelId.isBlank()) {
+        List<String> modelIds = resolveSummonModelIds(player.getPlayerClass(), style.getId(), ability);
+        if (modelIds.isEmpty()) {
             support.logWarning("[MOTM] No summon model mapping for " + ability.getId());
             return Result.none();
         }
 
-        Vector3d spawnPosition = resolveSummonPosition(playerRef, store, ability, targetBlock);
-        if (spawnPosition == null) {
+        Vector3d baseSpawnPosition = resolveSummonPosition(playerRef, store, ability, targetBlock);
+        Vector3d forward = direction(playerRef, store);
+        if (forward == null) {
+            forward = new Vector3d(0.0, 0.0, 1.0);
+        }
+        if (baseSpawnPosition == null) {
             return Result.none();
         }
 
@@ -67,44 +72,54 @@ public final class SummonLifecycleHytaleAdapter {
         if (world == null) {
             return Result.none();
         }
-        NPCEntity summon = new NPCEntity(world);
-        summon.setRoleName(modelId);
-        summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
-        world.spawnEntity(summon, spawnPosition, new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
-
-        Ref<EntityStore> summonRef = summon.getReference();
-        if (summonRef == null || !summonRef.isValid()) {
-            return Result.none();
-        }
-
-        NPCEntity.setAppearance(summonRef, modelId, summonRef.getStore());
-        support.applyEffectById(summonRef, summonRef.getStore(),
-                support.resolveImpactEffectId(player.getPlayerClass(), style.getId(), ability));
-
         long now = System.currentTimeMillis();
         long expireAt = now + (long) (Math.max(2.0, ability.getDurationSeconds()) * 1000);
-        ActiveSummon activeSummon = activationRuntime.create(
-                player.getPlayerId(),
-                summonRef,
-                playerRef,
-                player.getPlayerClass(),
-                style.getId(),
-                ability,
-                now,
-                expireAt,
-                resolveSummonRawBaseDamage(player, ability)
-        );
-        if (activeSummon == null) {
+        int spawned = 0;
+        for (int index = 0; index < modelIds.size(); index++) {
+            String modelId = modelIds.get(index);
+            Vector3d spawnPosition = offsetSpawnPosition(baseSpawnPosition, forward, index, modelIds.size());
+            NPCEntity summon = new NPCEntity(world);
+            summon.setRoleName(modelId);
+            summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
+            world.spawnEntity(summon, spawnPosition, new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
+
+            Ref<EntityStore> summonRef = summon.getReference();
+            if (summonRef == null || !summonRef.isValid()) {
+                continue;
+            }
+
+            NPCEntity.setAppearance(summonRef, modelId, summonRef.getStore());
+            support.applyEffectById(summonRef, summonRef.getStore(),
+                    support.resolveImpactEffectId(player.getPlayerClass(), style.getId(), ability));
+
+            ActiveSummon activeSummon = activationRuntime.create(
+                    player.getPlayerId(),
+                    summonRef,
+                    playerRef,
+                    player.getPlayerClass(),
+                    style.getId(),
+                    ability,
+                    now,
+                    expireAt,
+                    resolveSummonRawBaseDamage(player, ability)
+            );
+            if (activeSummon == null) {
+                continue;
+            }
+            summonState.addSummon(player.getPlayerId(), activeSummon);
+            spawned++;
+
+            support.logInfo("[MOTM] Summon spawned: abilityId=" + ability.getId()
+                    + " model=" + modelId
+                    + " position=" + formatVector(spawnPosition)
+                    + " duration=" + AbilityPresentation.formatDecimal(Math.max(2.0, ability.getDurationSeconds())) + "s");
+        }
+
+        if (spawned <= 0) {
             return Result.none();
         }
-        summonState.addSummon(player.getPlayerId(), activeSummon);
 
-        support.logInfo("[MOTM] Summon spawned: abilityId=" + ability.getId()
-                + " model=" + modelId
-                + " position=" + formatVector(spawnPosition)
-                + " duration=" + AbilityPresentation.formatDecimal(Math.max(2.0, ability.getDurationSeconds())) + "s");
-
-        return new Result(1, "summoned " + humanize(modelId));
+        return new Result(spawned, "summoned " + spawned + " " + humanize(modelIds.get(0)));
     }
 
     public int removeSummonsForPlayer(String playerId) {
@@ -148,6 +163,34 @@ public final class SummonLifecycleHytaleAdapter {
         }
 
         return HytaleAssetResolver.resolveModelId(classId, styleId, ability);
+    }
+
+    private List<String> resolveSummonModelIds(String classId, String styleId, AbilityData ability) {
+        List<String> specModels = SummonRuntimeSpecs.modelIds(ability);
+        if (!specModels.isEmpty()) {
+            return specModels;
+        }
+
+        String modelId = resolveSummonModelId(classId, styleId, ability);
+        return modelId == null || modelId.isBlank() ? List.of() : List.of(modelId);
+    }
+
+    private static Vector3d offsetSpawnPosition(Vector3d basePosition, Vector3d forward, int index, int count) {
+        if (basePosition == null || count <= 1) {
+            return basePosition;
+        }
+        Vector3d right = new Vector3d(forward.z, 0.0, -forward.x);
+        if (!right.isFinite() || right.length() < 0.001) {
+            right = new Vector3d(1.0, 0.0, 0.0);
+        } else {
+            right.normalize();
+        }
+        double centered = index - ((count - 1) / 2.0);
+        return new Vector3d(
+                basePosition.x + (right.x * centered * 1.25),
+                basePosition.y,
+                basePosition.z + (right.z * centered * 1.25)
+        );
     }
 
     private double resolveSummonRawBaseDamage(PlayerData player, AbilityData ability) {
