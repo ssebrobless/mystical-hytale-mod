@@ -170,8 +170,21 @@ function Invoke-StyleBaselineRun {
         $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
         $output | ForEach-Object { Write-Host $_ }
 
-        if ($child.ExitCode -ne 0) {
-            throw "$Description exited with code $($child.ExitCode). See command log: $LogPath"
+        $child.Refresh()
+        $exitCode = $child.ExitCode
+        if ($null -eq $exitCode) {
+            $joinedOutput = $output -join "`n"
+            $looksPassed = $joinedOutput -match "\[run-agent-observability-baseline\]\s+PASS report:"
+            $looksFailed = $joinedOutput -match "\[run-agent-observability-baseline\]\s+FAIL report:|## Summary\s+FAIL|Exception|exited with code 1"
+            if ($looksPassed -and -not $looksFailed) {
+                $exitCode = 0
+            } else {
+                $exitCode = 1
+            }
+        }
+
+        if ($exitCode -ne 0) {
+            throw "$Description exited with code $exitCode. See command log: $LogPath"
         }
     } finally {
         if ($child -and -not $child.HasExited) {

@@ -6,7 +6,8 @@ param(
     [string]$DataDir = "",
     [int]$MaxClientLogs = 3,
     [int]$MaxTelemetryFiles = 3,
-    [int]$MaxServerLogs = 3
+    [int]$MaxServerLogs = 3,
+    [int]$MaxLogIndexBytes = 4194304
 )
 
 $ErrorActionPreference = "Stop"
@@ -157,6 +158,40 @@ function Read-TextFileShared {
     }
 }
 
+function Read-TextFileSharedForIndex {
+    param(
+        [string]$Path,
+        [int]$MaxBytes
+    )
+
+    $file = Get-Item -LiteralPath $Path -ErrorAction Stop
+    if ($MaxBytes -le 0 -or $file.Length -le $MaxBytes) {
+        return [PSCustomObject]@{
+            text = Read-TextFileShared $Path
+            truncated = $false
+            indexedBytes = $file.Length
+            totalBytes = $file.Length
+        }
+    }
+
+    $fs = [System.IO.File]::Open($Path, "Open", "Read", "ReadWrite")
+    try {
+        $bytesToRead = [Math]::Min([int64]$MaxBytes, $fs.Length)
+        $buffer = New-Object byte[] ([int]$bytesToRead)
+        $fs.Position = $fs.Length - $bytesToRead
+        [void]$fs.Read($buffer, 0, [int]$bytesToRead)
+        $text = [System.Text.Encoding]::UTF8.GetString($buffer)
+        return [PSCustomObject]@{
+            text = $text
+            truncated = $true
+            indexedBytes = $bytesToRead
+            totalBytes = $fs.Length
+        }
+    } finally {
+        $fs.Dispose()
+    }
+}
+
 function Write-Jsonl {
     param(
         [string]$Path,
@@ -173,14 +208,25 @@ function New-LogIndex {
     param(
         [string[]]$Paths,
         [string]$Kind,
-        [string]$IndexPath
+        [string]$IndexPath,
+        [int]$MaxBytes
     )
 
     $rows = New-Object System.Collections.Generic.List[object]
     foreach ($path in $Paths) {
         if (-not (Test-Path -LiteralPath $path)) { continue }
-        $content = Read-TextFileShared $path
-        $lines = $content -split "`r?`n"
+        $indexed = Read-TextFileSharedForIndex -Path $path -MaxBytes $MaxBytes
+        if ($indexed.truncated) {
+            $rows.Add([PSCustomObject]@{
+                kind = $Kind
+                file = $path
+                lineNumber = 0
+                offsetKind = "tail-bytes"
+                category = "index-note"
+                text = "Log index capped to the newest $($indexed.indexedBytes) bytes out of $($indexed.totalBytes) bytes."
+            })
+        }
+        $lines = $indexed.text -split "`r?`n"
         for ($i = 0; $i -lt $lines.Count; $i++) {
             $line = $lines[$i]
             if ([string]::IsNullOrWhiteSpace($line)) { continue }
@@ -419,8 +465,8 @@ $telemetryCopies = @(Get-ChildItem -LiteralPath (Join-Path $rawDir "telemetry") 
     Where-Object { $_.Name -like "*.jsonl" -or $_.Name -like "*.jsonl.gz" } |
     ForEach-Object FullName)
 
-$clientIndexCount = New-LogIndex -Paths $clientLogCopies -Kind "client-log" -IndexPath (Join-Path $indexDir "client-log-index.jsonl")
-$serverIndexCount = New-LogIndex -Paths $serverLogCopies -Kind "server-log" -IndexPath (Join-Path $indexDir "server-log-index.jsonl")
+$clientIndexCount = New-LogIndex -Paths $clientLogCopies -Kind "client-log" -IndexPath (Join-Path $indexDir "client-log-index.jsonl") -MaxBytes $MaxLogIndexBytes
+$serverIndexCount = New-LogIndex -Paths $serverLogCopies -Kind "server-log" -IndexPath (Join-Path $indexDir "server-log-index.jsonl") -MaxBytes $MaxLogIndexBytes
 $telemetryIndexCount = New-TelemetryIndex -Paths $telemetryCopies -IndexPath (Join-Path $indexDir "telemetry-index.jsonl")
 
 $gitHead = (& git -C $repoRoot rev-parse HEAD 2>$null)

@@ -130,8 +130,12 @@ public final class SummonLifecycleHytaleAdapter {
         if (summon == null) {
             return true;
         }
-        Store<EntityStore> store = summon.ref() != null ? summon.ref().getStore() : null;
-        NPCEntity npc = store != null ? store.getComponent(summon.ref(), NPCEntity.getComponentType()) : null;
+        Ref<EntityStore> ref = summon.ref();
+        if (ref == null || !ref.isValid()) {
+            return true;
+        }
+        Store<EntityStore> store = ref.getStore();
+        NPCEntity npc = store != null ? store.getComponent(ref, NPCEntity.getComponentType()) : null;
         if (npc != null) {
             npc.setToDespawn();
         }
