@@ -103,6 +103,15 @@ public final class TerrainPlacementHytaleAdapter {
                     Math.max(1, terrain.columnHeight()),
                     expireAtMillis,
                     terrain.primaryAssetIdArray());
+            case GLACIER_WALL, ICE_SHELF_WALL -> placeWallSelection(
+                    runtimePlayer.getWorld(),
+                    terrain.reason(),
+                    center,
+                    lineDirection,
+                    Math.max(1, (int) Math.round(ability.getWidth())),
+                    Math.max(1, (int) Math.round(ability.getHeight())),
+                    expireAtMillis,
+                    terrain.primaryAssetIdArray());
             case NONE -> "";
         };
     }

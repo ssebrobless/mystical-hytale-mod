@@ -52,18 +52,30 @@ $classPath = Join-Path $ProjectRoot "src/main/resources/data/classes/hydro.json"
 $playbackPath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/GameplayPlaybackManager.java"
 $resolverPath = Join-Path $ProjectRoot "src/main/java/com/motm/util/HytaleAssetResolver.java"
 $passivePath = Join-Path $ProjectRoot "src/main/java/com/motm/manager/ClassPassiveManager.java"
+$fieldSpecsPath = Join-Path $ProjectRoot "src/main/java/com/motm/runtime/ability/field/FieldRuntimeSpecs.java"
+$fieldActivationPath = Join-Path $ProjectRoot "src/main/java/com/motm/runtime/ability/field/FieldActivationHytaleAdapter.java"
+$fieldPulsePath = Join-Path $ProjectRoot "src/main/java/com/motm/runtime/ability/field/FieldPulseHytaleAdapter.java"
+$terrainPlacementPath = Join-Path $ProjectRoot "src/main/java/com/motm/runtime/ability/terrain/TerrainPlacementHytaleAdapter.java"
 
 Assert (Test-Path $stylePath) "hydro_styles.json exists"
 Assert (Test-Path $classPath) "hydro.json exists"
 Assert (Test-Path $playbackPath) "GameplayPlaybackManager.java exists"
 Assert (Test-Path $resolverPath) "HytaleAssetResolver.java exists"
 Assert (Test-Path $passivePath) "ClassPassiveManager.java exists"
+Assert (Test-Path $fieldSpecsPath) "FieldRuntimeSpecs.java exists"
+Assert (Test-Path $fieldActivationPath) "FieldActivationHytaleAdapter.java exists"
+Assert (Test-Path $fieldPulsePath) "FieldPulseHytaleAdapter.java exists"
+Assert (Test-Path $terrainPlacementPath) "TerrainPlacementHytaleAdapter.java exists"
 
 $data = Get-Content $stylePath -Raw | ConvertFrom-Json
 $classData = Get-Content $classPath -Raw | ConvertFrom-Json
 $playback = Get-JavaSurface $ProjectRoot
 $resolver = Get-Content $resolverPath -Raw
 $passive = Get-Content $passivePath -Raw
+$fieldSpecs = Get-Content $fieldSpecsPath -Raw
+$fieldActivation = Get-Content $fieldActivationPath -Raw
+$fieldPulse = Get-Content $fieldPulsePath -Raw
+$terrainPlacement = Get-Content $terrainPlacementPath -Raw
 
 $hydroStyles = @($data.styles | Where-Object { $_.class_id -eq "hydro" })
 $abilities = @{}
@@ -105,6 +117,14 @@ Assert ($passiveEffects["oxygen_capacity_bonus"] -eq 0.50) "Hydro breathing pass
 Assert ($passiveEffects["aqua_barrier_shield"] -eq 0.10) "Aqua Barrier shield is 10 percent max HP"
 Assert ($passiveEffects["aqua_barrier_cooldown_seconds"] -eq 8.0) "Aqua Barrier cooldown is 8 seconds"
 Assert ($passive -match 'HYDRO_AQUA_BARRIER_EFFECT_ID') "Hydro Aqua Barrier runtime effect is wired"
+Assert ($fieldSpecs -match 'isCasterCentered[\s\S]*snowstorm[\s\S]*piercing_rain[\s\S]*healing_rainbow[\s\S]*tide_pool[\s\S]*oil_spill') "Hydro self fields are caster-centered instead of cursor-targeted"
+Assert ($fieldSpecs -match 'shouldFollowOwner[\s\S]*snowstorm[\s\S]*piercing_rain[\s\S]*healing_rainbow') "Hydro moving aura fields follow the caster"
+Assert ($fieldActivation -match 'FieldRuntimeSpecs\.shouldFollowOwner\(ability\)') "Field activation passes follow-owner routing to runtime"
+Assert ($fieldSpecs -match '"self_buff"\.equals\(castType\)[\s\S]*terrainSpec\(ability\)\.kind\(\) != FieldTerrainRuntimeKind\.NONE') "Self-buff field terrain such as Ice Cap can activate persistent terrain"
+Assert ($fieldSpecs -match 'FieldTerrainRuntimeKind\.GLACIER_WALL') "Glacier wall terrain kind is routed"
+Assert ($fieldSpecs -match 'FieldTerrainRuntimeKind\.ICE_SHELF_WALL') "Ice Shelf wall terrain kind is routed"
+Assert ($terrainPlacement -match 'case GLACIER_WALL, ICE_SHELF_WALL -> placeWallSelection') "Hydro ice walls place temporary wall selections"
+Assert ($fieldPulse -match 'terrainEffect\.contains\("tide_pool"\)[\s\S]*applyTargetToken\("vulnerability"') "Tide Pool applies enemy vulnerability inside the pool"
 
 $stalactite = Get-Ability $abilities "stalactite_crash"
 Assert ($stalactite.travel_type -eq "calcite_stalactite") "Stalactite Crash uses calcite stalactite travel type"

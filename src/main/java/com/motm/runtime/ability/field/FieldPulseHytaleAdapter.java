@@ -114,6 +114,11 @@ public final class FieldPulseHytaleAdapter {
             return;
         }
 
+        if (terrainEffect.contains("tide_pool")) {
+            support.applyTargetToken("vulnerability", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
+            return;
+        }
+
         if (terrainEffect.contains("falling_rocks")) {
             support.applyTargetToken("knockback", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());
             support.applyTargetToken("slow", targetRef, store, field.ownerRef(), player.getPlayerId(), field.ability());

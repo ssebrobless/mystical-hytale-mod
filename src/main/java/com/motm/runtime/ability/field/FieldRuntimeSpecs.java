@@ -28,6 +28,11 @@ public final class FieldRuntimeSpecs {
             return true;
         }
 
+        if ("self_buff".equals(castType)
+                && terrainSpec(ability).kind() != FieldTerrainRuntimeKind.NONE) {
+            return true;
+        }
+
         if (!"ground_target".equals(castType)) {
             return false;
         }
@@ -50,7 +55,38 @@ public final class FieldRuntimeSpecs {
     }
 
     public static boolean isCasterCentered(AbilityData ability) {
-        return ability != null && "lava_pool".equals(lower(ability.getId()));
+        if (ability == null) {
+            return false;
+        }
+        String abilityId = lower(ability.getId());
+        String terrainEffect = lower(ability.getTerrainEffect());
+        return "lava_pool".equals(abilityId)
+                || "ice_cap".equals(abilityId)
+                || "snowstorm".equals(abilityId)
+                || "piercing_rain".equals(abilityId)
+                || "rainbow".equals(abilityId)
+                || "tide_pool".equals(abilityId)
+                || "oil_spill".equals(abilityId)
+                || terrainEffect.contains("ice_cap_tube")
+                || terrainEffect.contains("snowstorm")
+                || terrainEffect.contains("piercing_rain")
+                || terrainEffect.contains("healing_rainbow")
+                || terrainEffect.contains("tide_pool")
+                || terrainEffect.contains("oil_spill");
+    }
+
+    public static boolean shouldFollowOwner(AbilityData ability) {
+        if (ability == null) {
+            return false;
+        }
+        String abilityId = lower(ability.getId());
+        String terrainEffect = lower(ability.getTerrainEffect());
+        return "snowstorm".equals(abilityId)
+                || "piercing_rain".equals(abilityId)
+                || "rainbow".equals(abilityId)
+                || terrainEffect.contains("snowstorm")
+                || terrainEffect.contains("piercing_rain")
+                || terrainEffect.contains("healing_rainbow");
     }
 
     public static FieldTerrainRuntimeSpec terrainSpec(AbilityData ability) {
@@ -138,6 +174,30 @@ public final class FieldRuntimeSpecs {
                     false,
                     false,
                     3,
+                    List.of("Ice_Block", "Fluid_Ice", "Water_Ice", "Rock_Calcite"),
+                    List.of()
+            );
+        }
+        if (terrainEffect.contains("glacier")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.GLACIER_WALL,
+                    "glacier",
+                    false,
+                    false,
+                    false,
+                    0,
+                    List.of("Ice_Block", "Fluid_Ice", "Water_Ice", "Rock_Calcite"),
+                    List.of()
+            );
+        }
+        if (terrainEffect.contains("ice_shelf")) {
+            return new FieldTerrainRuntimeSpec(
+                    FieldTerrainRuntimeKind.ICE_SHELF_WALL,
+                    "ice_shelf",
+                    true,
+                    false,
+                    false,
+                    0,
                     List.of("Ice_Block", "Fluid_Ice", "Water_Ice", "Rock_Calcite"),
                     List.of()
             );

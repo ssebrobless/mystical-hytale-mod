@@ -8,5 +8,7 @@ public enum FieldTerrainRuntimeKind {
     STONE_PILLAR,
     TIDE_POOL,
     OIL_SPILL,
-    ICE_CAP_TUBE
+    ICE_CAP_TUBE,
+    GLACIER_WALL,
+    ICE_SHELF_WALL
 }

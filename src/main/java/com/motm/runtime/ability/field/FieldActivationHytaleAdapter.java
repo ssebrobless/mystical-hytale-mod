@@ -89,6 +89,7 @@ public final class FieldActivationHytaleAdapter {
         long delayMillis = FieldRuntimeSpecs.delayMillis(ability);
         long activateAtMillis = now + delayMillis;
         long durationMillis = FieldRuntimeSpecs.durationMillis(ability);
+        boolean followOwner = FieldRuntimeSpecs.shouldFollowOwner(ability);
         String terrainSummary = support.placePersistentTerrainSelection(
                 runtimePlayer,
                 ability,
@@ -135,7 +136,7 @@ public final class FieldActivationHytaleAdapter {
                 thickness,
                 activateAtMillis,
                 durationMillis,
-                false,
+                followOwner,
                 visual,
                 support.traceId(),
                 terrainSummary,
