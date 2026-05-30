@@ -6,6 +6,7 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.fluid.Fluid;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
 import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
@@ -38,7 +39,8 @@ public final class StyleTestMobActions {
             "Crawler"
     );
     private static final Set<String> GLOBAL_CLEANUP_ROLES = Set.of(
-            "Test_Dummy_Stationary"
+            "Test_Dummy_Stationary",
+            "Mannequin"
     );
 
     private final StyleTestRuntimeState state;
@@ -263,13 +265,14 @@ public final class StyleTestMobActions {
         currentStore.forEachChunk((chunk, commandBuffer) -> {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || !isCleanupRole(npc)) {
+                ModelComponent model = chunk.getComponent(entityIndex, ModelComponent.getComponentType());
+                if (npc == null || npc.isDespawning() || !isCleanupRole(npc, model)) {
                     continue;
                 }
 
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 Vector3d position = entityPosition(currentStore, ref);
-                boolean globalCleanup = includeGlobalDummies && isGlobalCleanupRole(npc);
+                boolean globalCleanup = includeGlobalDummies && isGlobalCleanupRole(npc, model);
                 if (!globalCleanup && (position == null || distance(playerPosition, position) > 28.0)) {
                     continue;
                 }
@@ -283,20 +286,56 @@ public final class StyleTestMobActions {
         return visited[0];
     }
 
-    private boolean isCleanupRole(NPCEntity npc) {
+    private boolean isCleanupRole(NPCEntity npc, ModelComponent model) {
         if (npc == null) {
             return false;
         }
-        return CLEANUP_ROLES.contains(npc.getRoleName())
-                || CLEANUP_ROLES.contains(npc.getNPCTypeId());
+        return isCleanupName(npc.getRoleName())
+                || isCleanupName(npc.getNPCTypeId())
+                || isCleanupModel(model);
     }
 
-    private boolean isGlobalCleanupRole(NPCEntity npc) {
+    private boolean isGlobalCleanupRole(NPCEntity npc, ModelComponent model) {
         if (npc == null) {
             return false;
         }
-        return GLOBAL_CLEANUP_ROLES.contains(npc.getRoleName())
-                || GLOBAL_CLEANUP_ROLES.contains(npc.getNPCTypeId());
+        return isGlobalCleanupName(npc.getRoleName())
+                || isGlobalCleanupName(npc.getNPCTypeId())
+                || isCleanupModel(model);
+    }
+
+    private boolean isCleanupModel(ModelComponent model) {
+        if (model == null || model.getModel() == null) {
+            return false;
+        }
+        return isCleanupName(model.getModel().getModelAssetId())
+                || isCleanupName(model.getModel().getModel());
+    }
+
+    private boolean isCleanupName(String rawName) {
+        if (rawName == null || rawName.isBlank()) {
+            return false;
+        }
+        String name = rawName.trim();
+        return CLEANUP_ROLES.contains(name)
+                || isDummyLikeName(name);
+    }
+
+    private boolean isGlobalCleanupName(String rawName) {
+        if (rawName == null || rawName.isBlank()) {
+            return false;
+        }
+        String name = rawName.trim();
+        return GLOBAL_CLEANUP_ROLES.contains(name)
+                || isDummyLikeName(name);
+    }
+
+    private boolean isDummyLikeName(String rawName) {
+        String normalized = rawName.toLowerCase(Locale.ROOT);
+        return normalized.contains("test_dummy")
+                || normalized.contains("training_dummy")
+                || normalized.contains("dummy")
+                || normalized.contains("mannequin");
     }
 
     private int countValidRefs(List<Ref<EntityStore>> refs) {
