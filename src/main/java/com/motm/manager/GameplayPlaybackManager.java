@@ -1933,6 +1933,7 @@ public class GameplayPlaybackManager {
             Ref<EntityStore> proxyRef = proxy.getReference();
             if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
                 visualProxyState.add(proxyRef);
+                FieldVisualHytaleAdapter.configureRenderlessProxy(proxyRef, proxyRef.getStore());
                 applyEffectById(proxyRef, proxyRef.getStore(), effectId);
                 spawned++;
             }

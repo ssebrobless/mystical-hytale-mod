@@ -4,7 +4,13 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
+import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.modules.entity.component.CollisionResultComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.DisplayNameComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.Interactable;
+import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.RespondToHit;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
@@ -15,8 +21,11 @@ import com.motm.util.HytaleAssetResolver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Logger;
 
 public final class FieldVisualHytaleAdapter {
+    private static final Logger LOG = Logger.getLogger(FieldVisualHytaleAdapter.class.getName());
+
     private final VisualProxyRuntimeState visualProxyState;
     private final EffectApplier effectApplier;
 
@@ -63,6 +72,7 @@ public final class FieldVisualHytaleAdapter {
             if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
                 visualProxyState.add(proxyRef);
                 refs.add(proxyRef);
+                configureRenderlessProxy(proxyRef, proxyRef.getStore());
                 applyEffect(proxyRef, proxyRef.getStore(), effectId);
             }
         }
@@ -146,6 +156,22 @@ public final class FieldVisualHytaleAdapter {
 
     private boolean applyEffect(Ref<EntityStore> ref, Store<EntityStore> store, String effectId) {
         return effectApplier != null && effectApplier.apply(ref, store, effectId);
+    }
+
+    public static void configureRenderlessProxy(Ref<EntityStore> proxyRef, Store<EntityStore> store) {
+        if (proxyRef == null || !proxyRef.isValid() || store == null) {
+            return;
+        }
+        try {
+            store.removeComponentIfExists(proxyRef, ModelComponent.getComponentType());
+            store.removeComponentIfExists(proxyRef, Nameplate.getComponentType());
+            store.removeComponentIfExists(proxyRef, DisplayNameComponent.getComponentType());
+            store.removeComponentIfExists(proxyRef, Interactable.getComponentType());
+            store.removeComponentIfExists(proxyRef, RespondToHit.getComponentType());
+            store.removeComponentIfExists(proxyRef, CollisionResultComponent.getComponentType());
+        } catch (RuntimeException e) {
+            LOG.warning("[MOTM] Field visual proxy render cleanup failed safely: " + e.getMessage());
+        }
     }
 
     static List<Vector3d> buildFieldVisualPositions(Vector3d center,

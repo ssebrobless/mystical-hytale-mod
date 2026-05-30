@@ -101,6 +101,7 @@ public final class HytaleAssetResolver {
     private static final String ROLE_EMPTY = "Empty_Role";
     private static final String ROLE_SLUG_MAGMA = "Slug_Magma";
     private static final String ROLE_SPARK_LIVING = "Spark_Living";
+    private static final String ROLE_VISUAL_PROXY = ROLE_SPARK_LIVING;
 
     private HytaleAssetResolver() {
     }
@@ -156,17 +157,17 @@ public final class HytaleAssetResolver {
         String style = lower(styleId);
 
         if ("terra".equals(lower(classId)) && "magma".equals(style) && "magma_sling".equals(abilityId)) {
-            return ROLE_EMPTY;
+            return ROLE_VISUAL_PROXY;
         }
         if ("terra".equals(lower(classId))
                 && (("stone".equals(style) && "rubble_rouser".equals(abilityId))
                 || ("arbor".equals(style) && ("sapling".equals(abilityId) || "vines".equals(abilityId)))
                 || ("bloom".equals(style) && "nightshade".equals(abilityId)))) {
-            return ROLE_EMPTY;
+            return ROLE_VISUAL_PROXY;
         }
         if ("hydro".equals(lower(classId))
                 && ("stalactite_crash".equals(abilityId) || "anchor_haul".equals(abilityId))) {
-            return ROLE_EMPTY;
+            return ROLE_VISUAL_PROXY;
         }
 
         String modelId = resolveModelId(classId, styleId, ability);
@@ -178,7 +179,7 @@ public final class HytaleAssetResolver {
     }
 
     public static String resolveFieldRoleId(String classId, String styleId, AbilityData ability) {
-        return ROLE_EMPTY;
+        return ROLE_VISUAL_PROXY;
     }
 
     private static String resolveAnimation(String classId, String styleId, AbilityData ability) {

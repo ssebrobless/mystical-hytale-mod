@@ -40,7 +40,8 @@ public final class StyleTestMobActions {
     );
     private static final Set<String> GLOBAL_CLEANUP_ROLES = Set.of(
             "Test_Dummy_Stationary",
-            "Mannequin"
+            "Mannequin",
+            "Spark_Living"
     );
 
     private final StyleTestRuntimeState state;
@@ -266,14 +267,15 @@ public final class StyleTestMobActions {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
                 ModelComponent model = chunk.getComponent(entityIndex, ModelComponent.getComponentType());
-                if (npc == null || npc.isDespawning() || !isCleanupRole(npc, model)) {
+                boolean cleanupRole = isCleanupRole(npc, model);
+                boolean globalCleanupRole = includeGlobalDummies && isGlobalCleanupRole(npc, model);
+                if (npc == null || npc.isDespawning() || (!cleanupRole && !globalCleanupRole)) {
                     continue;
                 }
 
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 Vector3d position = entityPosition(currentStore, ref);
-                boolean globalCleanup = includeGlobalDummies && isGlobalCleanupRole(npc, model);
-                if (!globalCleanup && (position == null || distance(playerPosition, position) > 28.0)) {
+                if (!globalCleanupRole && (position == null || distance(playerPosition, position) > 28.0)) {
                     continue;
                 }
 

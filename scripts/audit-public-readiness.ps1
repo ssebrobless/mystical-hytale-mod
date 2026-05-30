@@ -84,6 +84,12 @@ Test-NoMatches `
     }
 
 Test-NoMatches `
+    "Production visual proxies do not route through Empty_Role mannequins" `
+    @(Join-Path $ProjectRoot "src/main/java/com/motm/util/HytaleAssetResolver.java") `
+    "return ROLE_EMPTY" `
+    { param($relative) $false }
+
+Test-NoMatches `
     "Normal style selection does not claim test protection is automatically enabled" `
     @(Join-Path $ProjectRoot "src/main/java") `
     "Test Protection: legacy free-cast flag enabled" `
