@@ -17,7 +17,7 @@ public record ProjectileTrajectoryProfile(
     }
 
     public static ProjectileTrajectoryProfile magmaSling() {
-        return new ProjectileTrajectoryProfile(1.15, 0.9, 1.0, true, 2.25);
+        return new ProjectileTrajectoryProfile(1.15, 0.9, 1.0, true, 0.75);
     }
 
     public boolean offsetsOrigin() {

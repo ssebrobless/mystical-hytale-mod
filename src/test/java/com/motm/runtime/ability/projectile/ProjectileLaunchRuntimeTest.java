@@ -85,7 +85,7 @@ class ProjectileLaunchRuntimeTest {
                 2_000L,
                 20.0,
                 null,
-                (origin, activateAtMillis, expireAtMillis, hideIdentityComponents) -> null
+                (origin, direction, activateAtMillis, expireAtMillis, hideIdentityComponents) -> null
         );
 
         assertEquals(1, result.launched());
@@ -105,13 +105,13 @@ class ProjectileLaunchRuntimeTest {
 
         assertEquals(0, runtime.launch(null, new TestRef(), "terra", "magma", ability(), "projectile",
                 spec, new Vector3d(0.0, 0.0, 0.0), new Vector3d(0.0, 0.0, 1.0), 1.0,
-                0L, 20.0, null, (origin, activateAtMillis, expireAtMillis, hideIdentityComponents) -> null).launched());
+                0L, 20.0, null, (origin, direction, activateAtMillis, expireAtMillis, hideIdentityComponents) -> null).launched());
         assertEquals(0, runtime.launch("player", new InvalidRef(), "terra", "magma", ability(), "projectile",
                 spec, new Vector3d(0.0, 0.0, 0.0), new Vector3d(0.0, 0.0, 1.0), 1.0,
-                0L, 20.0, null, (origin, activateAtMillis, expireAtMillis, hideIdentityComponents) -> null).launched());
+                0L, 20.0, null, (origin, direction, activateAtMillis, expireAtMillis, hideIdentityComponents) -> null).launched());
         assertEquals(0, runtime.launch("player", new TestRef(), "terra", "magma", ability(), "projectile",
                 spec, null, new Vector3d(0.0, 0.0, 1.0), 1.0,
-                0L, 20.0, null, (origin, activateAtMillis, expireAtMillis, hideIdentityComponents) -> null).launched());
+                0L, 20.0, null, (origin, direction, activateAtMillis, expireAtMillis, hideIdentityComponents) -> null).launched());
     }
 
     private static ProjectileRuntimeSpec spec(int count,
@@ -128,7 +128,8 @@ class ProjectileLaunchRuntimeTest {
                 1_500L,
                 launchDelays,
                 ProjectileTrajectoryProfile.generic(),
-                hideIdentityComponents
+                hideIdentityComponents,
+                List.of()
         );
     }
 
@@ -168,6 +169,7 @@ class ProjectileLaunchRuntimeTest {
 
         @Override
         public ProjectileVisualRuntime spawnVisual(Vector3d origin,
+                                                   Vector3d direction,
                                                    long activateAtMillis,
                                                    long expireAtMillis,
                                                    boolean hideIdentityComponents) {

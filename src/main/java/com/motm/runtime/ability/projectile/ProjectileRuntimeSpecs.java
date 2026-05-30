@@ -53,7 +53,8 @@ public final class ProjectileRuntimeSpecs {
                 lifetimeMillis,
                 launchDelays,
                 trajectoryProfile,
-                hideVisualProxyIdentityComponents
+                hideVisualProxyIdentityComponents,
+                resolveNativeProjectileConfigIds(ability)
         );
     }
 
@@ -185,6 +186,16 @@ public final class ProjectileRuntimeSpecs {
             return ProjectileTrajectoryProfile.magmaSling();
         }
         return ProjectileTrajectoryProfile.generic();
+    }
+
+    private static List<String> resolveNativeProjectileConfigIds(AbilityData ability) {
+        if (isMagmaSlingAbility(ability)) {
+            return List.of(
+                    "Projectile_Config_MOTM_Magma_Sling_Visual",
+                    "Projectile_Config_Fireball",
+                    "Weapons/Stick/Projectile_Config_Fireball");
+        }
+        return List.of();
     }
 
     private static boolean isMagmaSlingAbility(AbilityData ability) {

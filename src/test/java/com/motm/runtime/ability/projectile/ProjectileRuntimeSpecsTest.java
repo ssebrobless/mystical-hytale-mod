@@ -34,8 +34,10 @@ class ProjectileRuntimeSpecsTest {
         assertEquals(0.9, spec.trajectoryProfile().originForwardOffset(), 0.0001);
         assertEquals(1.0, spec.trajectoryProfile().explicitTargetVerticalOffset(), 0.0001);
         assertTrue(spec.trajectoryProfile().preferLookDirectionWhenUntargeted());
-        assertEquals(2.25, spec.trajectoryProfile().ownerSelfClearanceDistance(), 0.0001);
+        assertEquals(0.75, spec.trajectoryProfile().ownerSelfClearanceDistance(), 0.0001);
         assertTrue(spec.hideVisualProxyIdentityComponents());
+        assertTrue(spec.usesNativeProjectileVisual());
+        assertEquals("Projectile_Config_MOTM_Magma_Sling_Visual", spec.nativeProjectileConfigIds().getFirst());
     }
 
     @Test

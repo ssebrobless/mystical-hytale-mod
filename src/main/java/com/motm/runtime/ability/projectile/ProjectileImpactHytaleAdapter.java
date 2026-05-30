@@ -84,6 +84,7 @@ public final class ProjectileImpactHytaleAdapter {
                 + " damage=" + AbilityPresentation.formatDecimal(totalDamage)
                 + " effect=" + safe(projectile.ability() == null ? null : projectile.ability().getEffect())
                 + " impact=" + formatVector(impactPosition));
+        support.recordProjectileImpact(projectile, targets.size(), totalDamage, impactPosition);
 
         if (totalDamage > 0.0) {
             player.getStatistics().setTotalDamageDealt(
@@ -185,6 +186,7 @@ public final class ProjectileImpactHytaleAdapter {
                     + " damage=" + AbilityPresentation.formatDecimal(totalDamage)
                     + " effect=" + safe(projectile.ability() == null ? null : projectile.ability().getEffect())
                     + " position=" + formatVector(to));
+            support.recordProjectileImpact(projectile, resolvedTargets, totalDamage, to);
         }
     }
 
@@ -457,5 +459,10 @@ public final class ProjectileImpactHytaleAdapter {
         boolean isTargetEffectToken(String token);
 
         void logInfo(String message);
+
+        void recordProjectileImpact(ActiveProjectile projectile,
+                                    int targets,
+                                    double totalDamage,
+                                    Vector3d impactPosition);
     }
 }

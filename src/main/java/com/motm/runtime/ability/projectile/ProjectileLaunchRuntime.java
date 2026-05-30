@@ -39,6 +39,7 @@ public final class ProjectileLaunchRuntime {
             long activateAtMillis = launchBaseTimeMillis + spec.launchDelayMillis(index);
             ProjectileVisualRuntime visual = hooks.spawnVisual(
                     origin,
+                    projectileDirection,
                     activateAtMillis,
                     activateAtMillis + spec.lifetimeMillis(),
                     spec.hideVisualProxyIdentityComponents()
@@ -138,6 +139,7 @@ public final class ProjectileLaunchRuntime {
 
     public interface Hooks {
         ProjectileVisualRuntime spawnVisual(Vector3d origin,
+                                            Vector3d direction,
                                             long activateAtMillis,
                                             long expireAtMillis,
                                             boolean hideIdentityComponents);

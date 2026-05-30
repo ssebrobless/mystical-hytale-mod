@@ -1,12 +1,12 @@
 {
   "id": "terra-projectile-magma-sling",
-  "description": "Projectile-family scenario for Magma Sling origin, launch, visual proxy, hit, and cleanup evidence.",
+  "description": "Projectile-family scenario for Magma Sling origin, native visual projectile, hit, and cleanup evidence.",
   "styleId": "magma",
   "abilities": [
     "magma_sling"
   ],
   "proofs": [
-    "proxy-magma-blob"
+    "native-projectile-fireball"
   ],
   "setupCommands": [
     "motm dev observe marker magma-sling-start",
@@ -28,8 +28,9 @@
   ],
   "expectedEvidence": [
     "causality:ability_cast_end",
+    "causality:projectile_impact_resolved",
     "causality:runtime_task_executed",
-    "client-intent:projectile_visual_proxy_spawned",
+    "client-intent:native_projectile_visual_spawned",
     "causality:proof_end"
   ]
 }

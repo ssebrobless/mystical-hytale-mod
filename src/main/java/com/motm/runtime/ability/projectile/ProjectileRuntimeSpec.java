@@ -19,13 +19,22 @@ public record ProjectileRuntimeSpec(
         long lifetimeMillis,
         List<Long> launchDelaysMillis,
         ProjectileTrajectoryProfile trajectoryProfile,
-        boolean hideVisualProxyIdentityComponents
+        boolean hideVisualProxyIdentityComponents,
+        List<String> nativeProjectileConfigIds
 ) {
+    public ProjectileRuntimeSpec {
+        launchDelaysMillis = launchDelaysMillis == null ? List.of() : List.copyOf(launchDelaysMillis);
+        nativeProjectileConfigIds = nativeProjectileConfigIds == null ? List.of() : List.copyOf(nativeProjectileConfigIds);
+    }
 
     public long launchDelayMillis(int index) {
         if (index < 0 || index >= launchDelaysMillis.size()) {
             return 0L;
         }
         return launchDelaysMillis.get(index);
+    }
+
+    public boolean usesNativeProjectileVisual() {
+        return !nativeProjectileConfigIds.isEmpty();
     }
 }

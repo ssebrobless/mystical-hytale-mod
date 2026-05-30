@@ -67,6 +67,7 @@ import com.motm.runtime.ability.projectile.ProjectileImpactHytaleAdapter;
 import com.motm.runtime.ability.projectile.ProjectileLaunchHytaleAdapter;
 import com.motm.runtime.ability.projectile.ProjectileLifecycleHytaleAdapter;
 import com.motm.runtime.ability.projectile.ProjectileRuntimeFacade;
+import com.motm.runtime.ability.projectile.ActiveProjectile;
 import com.motm.runtime.ability.self.SelfActivationRuntime;
 import com.motm.runtime.ability.self.SelfHytaleAdapter;
 import com.motm.runtime.ability.self.SelfRuntimeState;
@@ -1476,6 +1477,29 @@ public class GameplayPlaybackManager {
             @Override
             public void logInfo(String message) {
                 LOG.info(message);
+            }
+
+            @Override
+            public void recordProjectileImpact(ActiveProjectile projectile,
+                                               int targets,
+                                               double totalDamage,
+                                               Vector3d impactPosition) {
+                if (projectile == null) {
+                    return;
+                }
+                GameplayPlaybackManager.this.mod.recordCausality(
+                        "projectile_impact_resolved",
+                        projectile.traceId(),
+                        MotmObservability.mapOf(
+                                "playerId", projectile.ownerPlayerId(),
+                                "classId", projectile.classId(),
+                                "styleId", projectile.styleId(),
+                                "abilityId", projectile.ability() == null ? "" : projectile.ability().getId(),
+                                "targets", targets,
+                                "totalDamage", totalDamage,
+                                "impact", formatVector(impactPosition)
+                        )
+                );
             }
         };
     }

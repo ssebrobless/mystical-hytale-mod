@@ -48,6 +48,7 @@ public final class ProjectileRuntimeFacade {
                 new ProjectileLaunchRuntime(),
                 projectileState,
                 visualAdapter,
+                new NativeProjectileHytaleAdapter(intentRecorder, log),
                 launchSupport
         );
         ProjectileTickHytaleAdapter tickAdapter = new ProjectileTickHytaleAdapter(

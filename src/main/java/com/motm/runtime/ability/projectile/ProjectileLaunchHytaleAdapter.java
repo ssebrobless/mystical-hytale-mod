@@ -20,15 +20,18 @@ public final class ProjectileLaunchHytaleAdapter {
     private final ProjectileLaunchRuntime launchRuntime;
     private final ProjectileRuntimeState projectileState;
     private final ProjectileVisualHytaleAdapter visualAdapter;
+    private final NativeProjectileHytaleAdapter nativeProjectileAdapter;
     private final Support support;
 
     public ProjectileLaunchHytaleAdapter(ProjectileLaunchRuntime launchRuntime,
                                          ProjectileRuntimeState projectileState,
                                          ProjectileVisualHytaleAdapter visualAdapter,
+                                         NativeProjectileHytaleAdapter nativeProjectileAdapter,
                                          Support support) {
         this.launchRuntime = launchRuntime;
         this.projectileState = projectileState;
         this.visualAdapter = visualAdapter;
+        this.nativeProjectileAdapter = nativeProjectileAdapter;
         this.support = support;
     }
 
@@ -70,7 +73,8 @@ public final class ProjectileLaunchHytaleAdapter {
                 store,
                 projectileSpec.trajectoryProfile(),
                 explicitTargetRef,
-                targetBlock
+                targetBlock,
+                origin
         );
         if (origin == null || direction == null) {
             return Result.none();
@@ -93,7 +97,21 @@ public final class ProjectileLaunchHytaleAdapter {
                 launchBaseTime,
                 support.ticksPerSecond(),
                 traceId,
-                (visualOrigin, activateAtMillis, expireAtMillis, hideIdentityComponents) -> {
+                (visualOrigin, visualDirection, activateAtMillis, expireAtMillis, hideIdentityComponents) -> {
+                    if (projectileSpec.usesNativeProjectileVisual() && nativeProjectileAdapter != null) {
+                        return nativeProjectileAdapter.spawn(
+                                runtimePlayer,
+                                playerRef,
+                                player.getPlayerClass(),
+                                style.getId(),
+                                ability,
+                                visualOrigin,
+                                visualDirection,
+                                projectileSpec.nativeProjectileConfigIds(),
+                                activateAtMillis,
+                                expireAtMillis
+                        );
+                    }
                     String visualEffectId = support.visualEffectId(player.getPlayerClass(), style.getId(), ability);
                     return visualAdapter.spawn(
                             runtimePlayer,
@@ -136,8 +154,11 @@ public final class ProjectileLaunchHytaleAdapter {
                                      Store<EntityStore> store,
                                      ProjectileTrajectoryProfile trajectoryProfile,
                                      Ref<EntityStore> explicitTargetRef,
-                                     Vector3i targetBlock) {
-        Vector3d origin = getPosition(playerRef, store);
+                                     Vector3i targetBlock,
+                                     Vector3d launchOrigin) {
+        Vector3d origin = launchOrigin != null && launchOrigin.isFinite()
+                ? launchOrigin
+                : getPosition(playerRef, store);
         if (origin == null) {
             return null;
         }
