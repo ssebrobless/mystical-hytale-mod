@@ -525,6 +525,14 @@ function Assert-RunEvidence {
         $sample = ($commandFailures | Select-Object -First 3 | ForEach-Object { $_.data.command + ": " + $_.data.error }) -join "; "
         throw "Observed dev command failures in run evidence: $sample"
     }
+    $commandNegativeResults = @($controlEvents | Where-Object {
+        $_.type -eq "dev_command_executed" `
+            -and [string]$_.data.result -match "\bsuccess=false\b"
+    })
+    if ($commandNegativeResults.Count -gt 0) {
+        $sample = ($commandNegativeResults | Select-Object -First 3 | ForEach-Object { $_.data.command + ": " + $_.data.result }) -join "; "
+        throw "Observed dev command negative result in run evidence: $sample"
+    }
 
     $causalityEvents = Read-JsonlObjects $causalityPath
     $serverTruthEvents = Read-JsonlObjects $serverTruthPath

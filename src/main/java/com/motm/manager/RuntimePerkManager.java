@@ -498,14 +498,18 @@ public class RuntimePerkManager {
         int x = (int) Math.floor(position.x);
         int y = (int) Math.floor(position.y) - 1;
         int z = (int) Math.floor(position.z);
-        MenteesMod.EcoFriendlyTreeResult tree = placeEcoFriendlyTree(player, runtimePlayer, new Vector3i(x, y, z));
+        Vector3i target = findEcoSurfaceBelow(runtimePlayer.getWorld(), x, y, z, 16);
+        if (target == null) {
+            target = new Vector3i(x, y, z);
+        }
+        MenteesMod.EcoFriendlyTreeResult tree = placeEcoFriendlyTree(player, runtimePlayer, target);
         if (tree.success()) {
             temporaryDamageReductionByPlayer.put(player.getPlayerId(),
                     new TemporaryDamageReduction(0.05, tickCounter + 5L * TICKS_PER_SECOND));
             setCooldown(player.getPlayerId(), TERRA_ECO_FRIENDLY, 15L * TICKS_PER_SECOND);
         }
         String result = "[MOTM] Dev passive eco-friendly: success=" + tree.success()
-                + " target=(" + x + "," + y + "," + z + ")"
+                + " target=(" + target.x + "," + target.y + "," + target.z + ")"
                 + " damageReduction=" + (tree.success() ? "0.050" : "0.000")
                 + " cooldownSeconds=" + (tree.success() ? "15" : "0")
                 + " summary=" + tree.summary();
@@ -802,6 +806,15 @@ public class RuntimePerkManager {
                 || id.contains("moss")
                 || id.contains("mud")
                 || id.contains("peat");
+    }
+
+    private Vector3i findEcoSurfaceBelow(World world, int x, int startY, int z, int maxDepth) {
+        for (int y = startY; y >= startY - Math.max(0, maxDepth); y--) {
+            if (isNaturalEcoSurface(blockType(world, x, y, z))) {
+                return new Vector3i(x, y, z);
+            }
+        }
+        return null;
     }
 
     private String blockTypeId(BlockType blockType) {
