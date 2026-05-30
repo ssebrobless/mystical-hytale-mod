@@ -33,7 +33,7 @@
   "expectedEvidence": [
     "causality:ability_cast_end",
     "causality:runtime_task_executed",
-    "client-intent:projectile_visual_proxy_spawned",
+    "client-intent:native_projectile_visual_spawned",
     "causality:proof_end"
   ]
 }
