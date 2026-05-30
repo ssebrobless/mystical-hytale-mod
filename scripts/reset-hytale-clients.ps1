@@ -15,10 +15,42 @@ $outDir = Join-Path $repoRoot (Join-Path "audits\harness\window-cleanup" $RunId)
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 
 function Write-ProcessSnapshot([string]$Name) {
-    Get-Process -Name HytaleClient,hytale-launcher -ErrorAction SilentlyContinue |
+    Get-HytaleProcesses |
         Select-Object ProcessName,Id,StartTime,MainWindowTitle,Responding,Path |
         ConvertTo-Json -Depth 4 |
         Set-Content -LiteralPath (Join-Path $outDir "$Name-processes.json") -Encoding UTF8
+}
+
+function Get-HytaleProcesses {
+    $hytaleRoot = Join-Path $env:APPDATA "Hytale"
+    @(Get-Process -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Id -ne $PID -and (
+                $_.ProcessName -like "*Hytale*" -or
+                $_.ProcessName -like "*hytale*" -or
+                ($_.Path -and ($_.Path -like "$hytaleRoot*"))
+            )
+        })
+}
+
+function Stop-HytaleProcesses {
+    param(
+        [switch]$LauncherOnly
+    )
+
+    $targets = @(Get-HytaleProcesses | Where-Object {
+        -not $LauncherOnly -or $_.ProcessName -like "*launcher*"
+    })
+
+    foreach ($process in $targets) {
+        try {
+            if ($process.MainWindowHandle -ne 0) {
+                [void]$process.CloseMainWindow()
+            }
+        } catch {
+            Write-Warning "[reset-hytale-clients] CloseMainWindow failed for PID=$($process.Id): $($_.Exception.Message)"
+        }
+    }
 }
 
 function Copy-RecentClientLogs {
@@ -37,22 +69,15 @@ function Copy-RecentClientLogs {
 Write-ProcessSnapshot "before"
 Copy-RecentClientLogs
 
-$clients = @(Get-Process -Name HytaleClient -ErrorAction SilentlyContinue)
-foreach ($process in $clients) {
-    try {
-        if ($process.MainWindowHandle -ne 0) {
-            [void]$process.CloseMainWindow()
-        }
-    } catch {
-        Write-Warning "[reset-hytale-clients] CloseMainWindow failed for PID=$($process.Id): $($_.Exception.Message)"
-    }
-}
+Stop-HytaleProcesses
 
 if ($GraceSeconds -gt 0) {
     Start-Sleep -Seconds $GraceSeconds
 }
 
-$remainingClients = @(Get-Process -Name HytaleClient -ErrorAction SilentlyContinue)
+$remainingClients = @(Get-HytaleProcesses | Where-Object {
+    -not $KeepLauncher -or $_.ProcessName -notlike "*launcher*"
+})
 foreach ($process in $remainingClients) {
     try {
         Stop-Process -Id $process.Id -Force -ErrorAction Stop
@@ -62,23 +87,21 @@ foreach ($process in $remainingClients) {
 }
 
 if (-not $KeepLauncher) {
-    foreach ($process in @(Get-Process -Name hytale-launcher -ErrorAction SilentlyContinue)) {
-        try {
-            if ($process.MainWindowHandle -ne 0) {
-                [void]$process.CloseMainWindow()
-            }
-        } catch {
-            Write-Warning "[reset-hytale-clients] Launcher CloseMainWindow failed for PID=$($process.Id): $($_.Exception.Message)"
-        }
+    Stop-HytaleProcesses -LauncherOnly
+    Start-Sleep -Milliseconds 500
+    foreach ($process in @(Get-HytaleProcesses)) {
+        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
     }
 }
 
 Start-Sleep -Milliseconds 500
 Write-ProcessSnapshot "after"
 
-$remaining = @(Get-Process -Name HytaleClient -ErrorAction SilentlyContinue)
+$remaining = @(Get-HytaleProcesses | Where-Object {
+    -not $KeepLauncher -or $_.ProcessName -notlike "*launcher*"
+})
 if ($remaining.Count -gt 0) {
-    throw "Hytale client cleanup failed; $($remaining.Count) HytaleClient process(es) remain. Evidence: $outDir"
+    throw "Hytale cleanup failed; $($remaining.Count) Hytale process(es) remain. Evidence: $outDir"
 }
 
 Write-Host "[reset-hytale-clients] PASS evidence: $outDir"
