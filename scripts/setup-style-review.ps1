@@ -24,7 +24,8 @@ New-Item -ItemType Directory -Force -Path $runDir | Out-Null
 
 function Invoke-MotmReviewCommand {
     param([string]$Command, [int]$TimeoutMilliseconds = 9000)
-    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/send-dev-command.ps1 `
+    $sendCommandScript = Join-Path $PSScriptRoot "send-dev-command.ps1"
+    & $sendCommandScript `
         -WorldName $WorldName `
         -RunDir $runDir `
         -ScenarioId "manual-style-review" `
