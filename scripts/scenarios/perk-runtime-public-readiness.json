@@ -1,0 +1,55 @@
+{
+  "id": "perk-runtime-public-readiness",
+  "description": "Command-driven readiness sweep for the 20 shared runtime perks: selection, HUD, low-health triggers, combat triggers, movement-adjacent proofs, weather proof, and cleanup.",
+  "styleId": "",
+  "abilities": [],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker perk-runtime-start",
+    "motm dev effects clear",
+    "motm dev class set terra",
+    "motm dev styles clear",
+    "motm dev perks clear",
+    "motm dev perks set all",
+    "motm dev freecast on",
+    "motm dev test mobs surround",
+    "motm dev test mobs count",
+    "motm dev passive status",
+    "motm dev observe snapshot perk-runtime-setup"
+  ],
+  "commands": [
+    "motm dev passive incoming-damage 20 fall",
+    "motm dev passive low-health",
+    "motm dev test mobs surround",
+    "motm dev passive combat 100",
+    "motm dev passive mob-kill",
+    "motm dev passive knockback",
+    "motm dev passive mining Tool_Pickaxe_Iron",
+    "motm dev passive mole-man Tool_Pickaxe_Iron",
+    "motm dev passive movement-perks",
+    "motm dev passive projectile-speed 1.0",
+    "motm dev passive rainy-day auto",
+    "motm dev passive terror",
+    "motm dev passive eco-friendly",
+    "motm dev passive crafting",
+    "motm dev passive velocity 1.0 0.0",
+    "motm dev passive status",
+    "motm dev observe snapshot perk-runtime-after-proofs"
+  ],
+  "cleanupCommands": [
+    "motm dev passive health 9999",
+    "motm dev perks clear",
+    "motm dev effects clear",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev observe marker perk-runtime-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "control:dev_command_executed",
+    "causality:server_tick_heartbeat",
+    "causality:runtime_task_executed",
+    "server-truth:snapshot",
+    "packets:CustomHud"
+  ]
+}

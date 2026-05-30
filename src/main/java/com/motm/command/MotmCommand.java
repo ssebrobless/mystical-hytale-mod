@@ -919,6 +919,26 @@ public class MotmCommand {
                 boolean abilityBased = args.length < 5 || !"weapon".equalsIgnoreCase(args[4]);
                 yield applyDevOutgoingDamage(player, resolvedPlayer, value, abilityBased);
             }
+            case "combat", "damage-perks" -> {
+                if (mod.getRuntimePerkManager() == null) {
+                    yield "[MOTM] Runtime perk manager unavailable.";
+                }
+                double value = 100.0;
+                if (args.length >= 4) {
+                    Double parsed = parseDouble(args[3]);
+                    if (parsed == null || parsed <= 0.0) {
+                        yield "[MOTM] Combat proof damage must be a positive number.";
+                    }
+                    value = parsed;
+                }
+                yield mod.getRuntimePerkManager().runCombatPerkProof(player, resolvedPlayer, value);
+            }
+            case "low-health", "lowhp" -> {
+                if (mod.getRuntimePerkManager() == null) {
+                    yield "[MOTM] Runtime perk manager unavailable.";
+                }
+                yield mod.getRuntimePerkManager().runLowHealthProof(player, resolvedPlayer);
+            }
             case "corruptus-stack", "stack" -> {
                 mod.getClassPassiveManager().onMobKilled(
                         player,
@@ -960,6 +980,20 @@ public class MotmCommand {
                 LOG.info(result);
                 yield result;
             }
+            case "mole-man", "moleman" -> {
+                if (mod.getRuntimePerkManager() == null) {
+                    yield "[MOTM] Runtime perk manager unavailable.";
+                }
+                double base = mod.getClassPassiveManager().getMiningDamageMultiplier(player,
+                        args.length >= 4 ? args[3] : "Tool_Pickaxe_Iron");
+                yield mod.getRuntimePerkManager().runMoleManMiningProof(player, base);
+            }
+            case "movement-perks", "movement" -> {
+                if (mod.getRuntimePerkManager() == null) {
+                    yield "[MOTM] Runtime perk manager unavailable.";
+                }
+                yield mod.getRuntimePerkManager().runMovementPerkProof(player, resolvedPlayer);
+            }
             case "projectile-speed" -> {
                 double baseSpeed = 1.0;
                 if (args.length >= 4) {
@@ -995,6 +1029,18 @@ public class MotmCommand {
                 }
                 yield mod.getRuntimePerkManager().runTerrorProof(player, resolvedPlayer);
             }
+            case "eco-friendly", "eco" -> {
+                if (mod.getRuntimePerkManager() == null) {
+                    yield "[MOTM] Runtime perk manager unavailable.";
+                }
+                yield mod.getRuntimePerkManager().runEcoFriendlyProof(player, resolvedPlayer);
+            }
+            case "crafting", "craft" -> {
+                if (mod.getRuntimePerkManager() == null) {
+                    yield "[MOTM] Runtime perk manager unavailable.";
+                }
+                yield mod.getRuntimePerkManager().runCraftingProof(player, resolvedPlayer);
+            }
             case "velocity" -> {
                 if (args.length < 5) {
                     yield "[MOTM] Usage: /motm dev passive velocity <x> <z>";
@@ -1011,19 +1057,25 @@ public class MotmCommand {
     }
 
     private String getDevPassiveUsage() {
-        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|mob-kill|knockback|mining|projectile-speed|rainy-day|terror|velocity>\n"
+        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|combat|low-health|corruptus-stack|mob-kill|knockback|mining|mole-man|movement-perks|projectile-speed|rainy-day|terror|eco-friendly|crafting|velocity>\n"
                 + "Examples:\n"
                 + "  /motm dev passive status\n"
                 + "  /motm dev passive health 50\n"
                 + "  /motm dev passive incoming-damage 20 physical\n"
                 + "  /motm dev passive outgoing-damage 100 ability\n"
+                + "  /motm dev passive combat 100\n"
+                + "  /motm dev passive low-health\n"
                 + "  /motm dev passive corruptus-stack\n"
                 + "  /motm dev passive mob-kill\n"
                 + "  /motm dev passive knockback\n"
                 + "  /motm dev passive mining Iron_Pickaxe\n"
+                + "  /motm dev passive mole-man Tool_Pickaxe_Iron\n"
+                + "  /motm dev passive movement-perks\n"
                 + "  /motm dev passive projectile-speed 1.0\n"
                 + "  /motm dev passive rainy-day auto\n"
                 + "  /motm dev passive terror\n"
+                + "  /motm dev passive eco-friendly\n"
+                + "  /motm dev passive crafting\n"
                 + "  /motm dev passive velocity 1.0 0.0";
     }
 

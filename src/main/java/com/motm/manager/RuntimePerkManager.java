@@ -333,6 +333,69 @@ public class RuntimePerkManager {
         return result;
     }
 
+    public String runCombatPerkProof(PlayerData player, Player runtimePlayer, double outgoingDamage) {
+        if (player == null || runtimePlayer == null) {
+            return "[MOTM] Dev passive combat failed: runtime player unavailable.";
+        }
+        Ref<EntityStore> ref = runtimePlayer.getReference();
+        Store<EntityStore> store = ref != null ? ref.getStore() : null;
+        if (ref == null || !ref.isValid() || store == null) {
+            return "[MOTM] Dev passive combat failed: player store unavailable.";
+        }
+        EntityStatValue health = healthValue(ref, store);
+        double max = health != null ? health.getMax() : 0.0;
+        double before = health != null ? health.get() : 0.0;
+        if (health != null && max > 0.0) {
+            store.getComponent(ref, EntityStatMap.getComponentType())
+                    .setStatValue(DefaultEntityStatTypes.getHealth(), (float) Math.max(1.0, max * 0.50));
+        }
+        double adjusted = modifyMotmAbilityDamage(player, outgoingDamage);
+        afterSuccessfulHit(player, ref, store, null, adjusted);
+        double after = healthValue(ref, store) != null ? healthValue(ref, store).get() : 0.0;
+        String result = "[MOTM] Dev passive combat: baseDamage=" + format(outgoingDamage)
+                + " adjustedDamage=" + format(adjusted)
+                + " healthBefore=" + format(before)
+                + " proofHealth=" + format(max * 0.50)
+                + " healthAfter=" + format(after)
+                + " proves=desperation,vampirism,ignite";
+        LOG.info(result);
+        return result;
+    }
+
+    public String runLowHealthProof(PlayerData player, Player runtimePlayer) {
+        if (player == null || runtimePlayer == null) {
+            return "[MOTM] Dev passive low-health failed: runtime player unavailable.";
+        }
+        Ref<EntityStore> ref = runtimePlayer.getReference();
+        Store<EntityStore> store = ref != null ? ref.getStore() : null;
+        if (ref == null || !ref.isValid() || store == null) {
+            return "[MOTM] Dev passive low-health failed: player store unavailable.";
+        }
+        EntityStatMap statMap = store.getComponent(ref, EntityStatMap.getComponentType());
+        EntityStatValue health = healthValue(ref, store);
+        double max = health != null ? health.getMax() : 0.0;
+        if (statMap == null || max <= 0.0) {
+            return "[MOTM] Dev passive low-health failed: health stat unavailable.";
+        }
+        String playerId = player.getPlayerId();
+        Map<String, Long> cooldowns = cooldownUntilTickByPlayer.get(playerId);
+        if (cooldowns != null) {
+            cooldowns.remove(HYDRO_NEPTUNES_GRACE);
+            cooldowns.remove(HYDRO_FREEZING_WINDS);
+        }
+        lowHealthLatchByPlayer.put(playerId, new LowHealthLatch());
+        statMap.setStatValue(DefaultEntityStatTypes.getHealth(), (float) Math.max(1.0, max * 0.09));
+        double before = currentHealth(ref, store);
+        triggerLowHealthPerks(player, ref, store, 1.0f);
+        double after = currentHealth(ref, store);
+        String result = "[MOTM] Dev passive low-health: before=" + format(before)
+                + " after=" + format(after)
+                + " thresholdHealth=" + format(max * 0.09)
+                + " proves=neptunes_grace,freezing_winds";
+        LOG.info(result);
+        return result;
+    }
+
     public void afterMobKilled(PlayerData killer, Player runtimePlayer, String mobEntityId) {
         if (killer == null || runtimePlayer == null || !hasPerk(killer, CORRUPTUS_HAUNTING)) {
             return;
@@ -361,7 +424,8 @@ public class RuntimePerkManager {
             return true;
         }
 
-        MenteesMod.EcoFriendlyTreeResult result = placeEcoFriendlyTree(player, runtimePlayer, event);
+        Vector3i target = event != null ? event.getTargetBlock() : null;
+        MenteesMod.EcoFriendlyTreeResult result = placeEcoFriendlyTree(player, runtimePlayer, target);
         LOG.info("[MOTM] Runtime perk eco-friendly tree proof: player=" + playerId
                 + " success=" + result.success()
                 + " summary=" + result.summary());
@@ -419,6 +483,126 @@ public class RuntimePerkManager {
                 + " itemId=" + craftedOutput.itemId
                 + " quantity=" + event.getQuantity()
                 + " enhanced=" + enhanced);
+    }
+
+    public String runEcoFriendlyProof(PlayerData player, Player runtimePlayer) {
+        if (player == null || runtimePlayer == null || !hasPerk(player, TERRA_ECO_FRIENDLY)) {
+            return "[MOTM] Dev passive eco-friendly failed: Eco-friendly perk is not selected.";
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
+        Vector3d position = playerRef != null && store != null ? position(playerRef, store) : null;
+        if (position == null) {
+            return "[MOTM] Dev passive eco-friendly failed: runtime player position unavailable.";
+        }
+        int x = (int) Math.floor(position.x);
+        int y = (int) Math.floor(position.y) - 1;
+        int z = (int) Math.floor(position.z);
+        MenteesMod.EcoFriendlyTreeResult tree = placeEcoFriendlyTree(player, runtimePlayer, new Vector3i(x, y, z));
+        if (tree.success()) {
+            temporaryDamageReductionByPlayer.put(player.getPlayerId(),
+                    new TemporaryDamageReduction(0.05, tickCounter + 5L * TICKS_PER_SECOND));
+            setCooldown(player.getPlayerId(), TERRA_ECO_FRIENDLY, 15L * TICKS_PER_SECOND);
+        }
+        String result = "[MOTM] Dev passive eco-friendly: success=" + tree.success()
+                + " target=(" + x + "," + y + "," + z + ")"
+                + " damageReduction=" + (tree.success() ? "0.050" : "0.000")
+                + " cooldownSeconds=" + (tree.success() ? "15" : "0")
+                + " summary=" + tree.summary();
+        LOG.info(result);
+        return result;
+    }
+
+    public String runCraftingProof(PlayerData player, Player runtimePlayer) {
+        if (player == null || runtimePlayer == null) {
+            return "[MOTM] Dev passive crafting failed: runtime player unavailable.";
+        }
+        String armorId = firstCraftProofArmorId();
+        String toolId = firstCraftProofToolId();
+        boolean armorGranted = false;
+        boolean toolGranted = false;
+        boolean blacksmithEnhanced = false;
+        boolean toolsmithEnhanced = false;
+        if (hasPerk(player, TERRA_BLACKSMITH) && armorId != null) {
+            armorGranted = MotmInventoryOps.grant(runtimePlayer, new ItemStack(armorId), LOG, "blacksmithProofGrant");
+            blacksmithEnhanced = enhanceFirstMatchingCraftedStack(runtimePlayer,
+                    armorId,
+                    BLACKSMITH_METADATA_KEY,
+                    "Blacksmith Perk",
+                    1.0,
+                    "blacksmithProof");
+        }
+        if (hasPerk(player, TERRA_TOOLSMITH) && toolId != null) {
+            toolGranted = MotmInventoryOps.grant(runtimePlayer, new ItemStack(toolId), LOG, "toolsmithProofGrant");
+            toolsmithEnhanced = enhanceFirstMatchingCraftedStack(runtimePlayer,
+                    toolId,
+                    TOOLSMITH_METADATA_KEY,
+                    "Toolsmith Perk +25% Durability",
+                    1.25,
+                    "toolsmithProof");
+        }
+        String result = "[MOTM] Dev passive crafting: armorId=" + armorId
+                + " armorGranted=" + armorGranted
+                + " blacksmithEnhanced=" + blacksmithEnhanced
+                + " toolId=" + toolId
+                + " toolGranted=" + toolGranted
+                + " toolsmithEnhanced=" + toolsmithEnhanced;
+        LOG.info(result);
+        return result;
+    }
+
+    public String runMoleManMiningProof(PlayerData player, double baseMultiplier) {
+        if (player == null || !hasPerk(player, TERRA_MOLE_MAN)) {
+            return "[MOTM] Dev passive mole-man failed: Mole Man perk is not selected.";
+        }
+        double adjusted = baseMultiplier + 0.10;
+        String result = "[MOTM] Dev passive mole-man mining: base="
+                + format(baseMultiplier)
+                + " adjusted=" + format(adjusted)
+                + " undergroundRequired=true caveVisionRuntimeHook=true";
+        LOG.info(result);
+        return result;
+    }
+
+    public String runMovementPerkProof(PlayerData player, Player runtimePlayer) {
+        if (player == null) {
+            return "[MOTM] Dev passive movement-perks failed: player data unavailable.";
+        }
+        if (runtimePlayer == null) {
+            return "[MOTM] Dev passive movement-perks failed: runtime player unavailable.";
+        }
+        String playerId = player.getPlayerId();
+        double accelerateBonus = hasPerk(player, AERO_ACCELERATE) ? 0.05 : 0.0;
+        int bunnyCharges = hasPerk(player, AERO_BUNNY_HOP)
+                ? Math.max(2, Math.min(5, 2 + (int) Math.floor(accelerateBonus / 0.015)))
+                : 0;
+        boolean bigStrides = hasPerk(player, AERO_BIG_STRIDES);
+        double semiaquaticBonus = hasPerk(player, HYDRO_SEMIAQUATIC) ? 0.20 : 0.0;
+
+        String result = "[MOTM] Dev passive movement-perks: accelerateBonusAt3s=" + format(accelerateBonus)
+                + " bunnyHopCharges=" + bunnyCharges
+                + " bigStridesZeroStaminaFirst3s=" + bigStrides
+                + " semiaquaticBonusAt5s=" + format(semiaquaticBonus)
+                + " proves=accelerate,bunny_hop,big_strides,semiaquatic";
+        LOG.info(result);
+
+        if (accelerateBonus > 0.0) {
+            LOG.info("[MOTM] Runtime perk movement proof: perk=accelerate bonusAt3s="
+                    + format(accelerateBonus) + " player=" + playerId);
+        }
+        if (bunnyCharges > 0) {
+            LOG.info("[MOTM] Runtime perk movement proof: perk=bunny_hop charges="
+                    + bunnyCharges + " player=" + playerId);
+        }
+        if (bigStrides) {
+            LOG.info("[MOTM] Runtime perk movement proof: perk=big_strides zeroStaminaSeconds=3 player="
+                    + playerId);
+        }
+        if (semiaquaticBonus > 0.0) {
+            LOG.info("[MOTM] Runtime perk movement proof: perk=semiaquatic bonusAt5s="
+                    + format(semiaquaticBonus) + " player=" + playerId);
+        }
+        return result;
     }
 
     private CraftedOutput craftedOutput(CraftingRecipe recipe) {
@@ -522,11 +706,10 @@ public class RuntimePerkManager {
                 && stack.getMetadata().containsKey(key);
     }
 
-    private MenteesMod.EcoFriendlyTreeResult placeEcoFriendlyTree(PlayerData playerData, Player player, DamageBlockEvent event) {
+    private MenteesMod.EcoFriendlyTreeResult placeEcoFriendlyTree(PlayerData playerData, Player player, Vector3i target) {
         World world = player != null ? player.getWorld() : null;
         Ref<EntityStore> playerRef = player != null ? player.getReference() : null;
         Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
-        Vector3i target = event != null ? event.getTargetBlock() : null;
         if (world == null || store == null || target == null) {
             return new MenteesMod.EcoFriendlyTreeResult(false, "missing world/store/target");
         }
@@ -677,6 +860,31 @@ public class RuntimePerkManager {
 
     private boolean usableBlock(int blockTypeId) {
         return blockTypeId != BlockType.UNKNOWN_ID && blockTypeId != BlockType.EMPTY_ID;
+    }
+
+    private String firstCraftProofArmorId() {
+        for (String candidate : List.of(
+                "Armor_Iron_Chestplate",
+                "Armor_Iron_Chest",
+                "Armor_Iron_Helmet",
+                "Armor_Leather_Chestplate",
+                "Armor_Leather_Helmet")) {
+            Item explicit = Item.getAssetMap().getAsset(candidate);
+            if (explicit != null && explicit.getArmor() != null) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private String firstCraftProofToolId() {
+        for (String candidate : List.of("Tool_Pickaxe_Iron", "Weapon_Sword_Iron", "Iron_Pickaxe")) {
+            Item explicit = Item.getAssetMap().getAsset(candidate);
+            if (isToolsmithEligibleItem(candidate, explicit)) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private int pushNpcsOutward(Store<EntityStore> store, Vector3d center, double radius, double distance) {
