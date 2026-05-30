@@ -20,6 +20,7 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -63,6 +64,7 @@ import com.motm.runtime.ability.followup.WeaponFollowUpNativeAlloyRuntime;
 import com.motm.runtime.ability.followup.WeaponFollowUpRuntimeState;
 import com.motm.runtime.ability.followup.WeaponFollowUpSpec;
 import com.motm.runtime.ability.followup.WeaponFollowUpSpecs;
+import com.motm.runtime.ability.movement.AbilityMovementRuntime;
 import com.motm.runtime.ability.projectile.ProjectileImpactHytaleAdapter;
 import com.motm.runtime.ability.projectile.ProjectileLaunchHytaleAdapter;
 import com.motm.runtime.ability.projectile.ProjectileLifecycleHytaleAdapter;
@@ -158,6 +160,7 @@ public class GameplayPlaybackManager {
     private final WeaponFollowUpLifecycleRuntime weaponFollowUpLifecycleRuntime = new WeaponFollowUpLifecycleRuntime();
     private final WeaponFollowUpHytaleAdapter weaponFollowUpAdapter;
     private final FieldOriginRuntimeState fieldOriginState = new FieldOriginRuntimeState();
+    private final AbilityMovementRuntime movementRuntime = new AbilityMovementRuntime();
     private final LavaHazardRuntimeState lavaHazardState = new LavaHazardRuntimeState();
     private final StompRuntimeState stompState = new StompRuntimeState();
     private final ProjectileRuntimeFacade projectileRuntime;
@@ -2670,18 +2673,53 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d start = new Vector3d(currentTransform.getPosition());
-        Vector3d target = com.motm.util.MotmVectors.addScaled(start, horizontalDirection, horizontalDistance)
-                .add(0.0, verticalDistance, 0.0);
-        runtimePlayer.moveTo(playerRef, target.x, target.y, target.z, store);
+        AbilityMovementRuntime.MovementPlan plan = movementRuntime.plan(
+                ability,
+                castType,
+                start,
+                horizontalDirection,
+                horizontalDistance,
+                verticalDistance
+        );
+        if (!plan.applied()) {
+            return MovementResult.none();
+        }
 
+        boolean applied;
+        if (plan.mode() == AbilityMovementRuntime.MovementMode.BURST) {
+            applied = applyBurstVelocity(playerRef, store, plan.velocity());
+        } else {
+            Vector3d target = plan.target();
+            runtimePlayer.moveTo(playerRef, target.x, target.y, target.z, store);
+            applied = true;
+        }
+        if (!applied) {
+            return MovementResult.none();
+        }
         return new MovementResult(
                 true,
                 horizontalDistance,
                 verticalDistance,
                 start,
-                new Vector3d(target),
-                buildMovementSummary(castType, horizontalDistance, verticalDistance)
+                new Vector3d(plan.target()),
+                buildMovementSummary(castType, horizontalDistance, verticalDistance, plan.mode())
         );
+    }
+
+    private boolean applyBurstVelocity(Ref<EntityStore> playerRef, Store<EntityStore> store, Vector3d burstVelocity) {
+        if (playerRef == null || !playerRef.isValid() || store == null || burstVelocity == null) {
+            return false;
+        }
+        Velocity velocity = store.getComponent(playerRef, Velocity.getComponentType());
+        if (velocity == null) {
+            return false;
+        }
+        Vector3d before = velocity.getVelocity();
+        double y = !Double.isNaN(burstVelocity.y)
+                ? burstVelocity.y
+                : before != null && before.isFinite() ? before.y : 0.0;
+        velocity.set(burstVelocity.x, y, burstVelocity.z);
+        return true;
     }
 
     private CombatResolution applyCombat(Player runtimePlayer,
@@ -4306,9 +4344,15 @@ public class GameplayPlaybackManager {
         return ref != null && visualProxyState.contains(ref);
     }
 
-    private String buildMovementSummary(String castType, double horizontalDistance, double verticalDistance) {
+    private String buildMovementSummary(String castType,
+                                        double horizontalDistance,
+                                        double verticalDistance,
+                                        AbilityMovementRuntime.MovementMode mode) {
         List<String> parts = new ArrayList<>();
         parts.add(castType.replace('_', ' '));
+        if (mode == AbilityMovementRuntime.MovementMode.BURST) {
+            parts.add("burst");
+        }
         if (horizontalDistance > 0.0) parts.add(formatDistance(horizontalDistance) + "m forward");
         if (verticalDistance > 0.0) parts.add("+" + formatDistance(verticalDistance) + "m vertical");
         return String.join(" ", parts);

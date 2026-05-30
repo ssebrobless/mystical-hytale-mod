@@ -12,6 +12,7 @@ import com.hypixel.hytale.server.core.asset.type.fluid.Fluid;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.modules.projectile.ProjectileModule;
 import com.hypixel.hytale.server.core.modules.projectile.config.ProjectileConfig;
 import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
@@ -264,7 +265,8 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
                                    String proofId,
                                    Vector3d forward,
                                    double distance,
-                                   boolean surfaceRecovery) {
+                                   boolean surfaceRecovery,
+                                   boolean burstVelocity) {
         Ref<EntityStore> ref = player.getReference();
         if (ref == null || !ref.isValid() || currentStore == null) {
             return "[MOTM] Proof " + proofId + " FAIL: missing player ref/store.";
@@ -278,11 +280,35 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
         if (surfaceRecovery) {
             destination.y = Math.max(start.y, destination.y);
         }
-        transform.teleportPosition(destination);
-        Vector3d observed = transform.getPosition() != null ? new Vector3d(transform.getPosition()) : null;
-        double observedDisplacement = observed != null ? distance(start, observed) : 0.0;
-        double destinationError = observed != null ? distance(observed, destination) : Double.POSITIVE_INFINITY;
-        boolean moved = observedDisplacement >= Math.min(0.75, Math.max(0.1, distance * 0.25));
+
+        String movementMethod;
+        boolean moved;
+        Vector3d observed;
+        double observedDisplacement;
+        double destinationError;
+        if (burstVelocity) {
+            Velocity velocity = currentStore.getComponent(ref, Velocity.getComponentType());
+            if (velocity == null) {
+                return "[MOTM] Proof " + proofId + " FAIL: missing Velocity component.";
+            }
+            Vector3d burst = forward == null ? new Vector3d() : new Vector3d(forward);
+            burst.mul(Math.max(7.0, Math.min(18.0, distance * 2.4)));
+            Vector3d before = velocity.getVelocity();
+            double y = before != null && before.isFinite() ? before.y : 0.0;
+            velocity.set(burst.x, y, burst.z);
+            observed = transform.getPosition() != null ? new Vector3d(transform.getPosition()) : null;
+            observedDisplacement = observed != null ? distance(start, observed) : 0.0;
+            destinationError = observed != null ? distance(observed, destination) : Double.POSITIVE_INFINITY;
+            moved = burst.length() > 0.1;
+            movementMethod = "velocityBurst";
+        } else {
+            transform.teleportPosition(destination);
+            observed = transform.getPosition() != null ? new Vector3d(transform.getPosition()) : null;
+            observedDisplacement = observed != null ? distance(start, observed) : 0.0;
+            destinationError = observed != null ? distance(observed, destination) : Double.POSITIVE_INFINITY;
+            moved = observedDisplacement >= Math.min(0.75, Math.max(0.1, distance * 0.25));
+            movementMethod = "teleportPosition";
+        }
         hooks.recordServerTruth("proof_movement", MotmObservability.mapOf(
                 "proofId", proofId,
                 "start", formatVector(start),
@@ -291,7 +317,7 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
                 "observedDisplacement", observedDisplacement,
                 "destinationError", destinationError,
                 "moved", moved,
-                "movementMethod", "teleportPosition",
+                "movementMethod", movementMethod,
                 "surfaceRecovery", surfaceRecovery
         ));
         return "[MOTM] Proof " + proofId + " " + (moved ? "PASS" : "FAIL")
@@ -299,7 +325,7 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
                 + " destination=" + formatVector(destination)
                 + " observed=" + (observed != null ? formatVector(observed) : "null")
                 + " displacement=" + String.format(Locale.ROOT, "%.2f", observedDisplacement)
-                + " movementMethod=teleportPosition"
+                + " movementMethod=" + movementMethod
                 + " surfaceRecovery=" + surfaceRecovery;
     }
 

@@ -80,7 +80,8 @@ class MotmProofRuntimeTest {
                                        String proofId,
                                        Vector3d forward,
                                        double distance,
-                                       boolean preserveVerticalVelocity) {
+                                       boolean preserveVerticalVelocity,
+                                       boolean burstVelocity) {
             return "movement:" + proofId + ":" + distance;
         }
     }

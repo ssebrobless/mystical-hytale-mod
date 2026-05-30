@@ -86,11 +86,11 @@ public final class MotmProofRuntime {
         runners.put("proxy-debris-wave",
                 (playerId, player, currentStore, forward) -> actions.runProxyProof(player, "proxy-debris-wave", "Spark_Living", "MOTM_Proof_Debris_Wave", 3.0));
         runners.put("movement-burrow",
-                (playerId, player, currentStore, forward) -> actions.runMovementProof(player, currentStore, "movement-burrow", forward, 4.0, false));
+                (playerId, player, currentStore, forward) -> actions.runMovementProof(player, currentStore, "movement-burrow", forward, 4.0, false, false));
         runners.put("movement-tunnel",
-                (playerId, player, currentStore, forward) -> actions.runMovementProof(player, currentStore, "movement-tunnel", forward, 2.0, true));
+                (playerId, player, currentStore, forward) -> actions.runMovementProof(player, currentStore, "movement-tunnel", forward, 2.0, true, false));
         runners.put("movement-dust-devil",
-                (playerId, player, currentStore, forward) -> actions.runMovementProof(player, currentStore, "movement-dust-devil", forward, 5.0, false));
+                (playerId, player, currentStore, forward) -> actions.runMovementProof(player, currentStore, "movement-dust-devil", forward, 5.0, false, true));
 
         if (!runners.keySet().equals(Set.copyOf(MotmProofCatalog.ids()))) {
             log.warning("[MOTM] Proof runner registry differs from MotmProofCatalog ids.");
@@ -142,6 +142,7 @@ public final class MotmProofRuntime {
                                 String proofId,
                                 Vector3d forward,
                                 double distance,
-                                boolean preserveVerticalVelocity);
+                                boolean preserveVerticalVelocity,
+                                boolean burstVelocity);
     }
 }
