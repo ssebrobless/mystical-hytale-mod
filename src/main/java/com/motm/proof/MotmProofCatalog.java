@@ -22,6 +22,8 @@ public final class MotmProofCatalog {
             new ProofDefinition("tempfluid-lava-ring", ProofKind.TEMPORARY_FLUID, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
             new ProofDefinition("tempfluid-water-field", ProofKind.TEMPORARY_FLUID, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
             new ProofDefinition("tempfluid-mud-field", ProofKind.TEMPORARY_FLUID, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
+            new ProofDefinition("native-projectile-fireball", ProofKind.NATIVE_PROJECTILE,
+                    EnumSet.of(EvidenceStream.SERVER_TRUTH, EvidenceStream.CLIENT_INTENT)),
             new ProofDefinition("proxy-magma-blob", ProofKind.PROXY, EnumSet.of(EvidenceStream.CLIENT_INTENT)),
             new ProofDefinition("proxy-cactus-projectile", ProofKind.PROXY, EnumSet.of(EvidenceStream.CLIENT_INTENT)),
             new ProofDefinition("proxy-gem", ProofKind.PROXY, EnumSet.of(EvidenceStream.CLIENT_INTENT)),
@@ -71,6 +73,7 @@ public final class MotmProofCatalog {
         EFFECT,
         TEMPORARY_BLOCK,
         TEMPORARY_FLUID,
+        NATIVE_PROJECTILE,
         PROXY,
         MOVEMENT
     }

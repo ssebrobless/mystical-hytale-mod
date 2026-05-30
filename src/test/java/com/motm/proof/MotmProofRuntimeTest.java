@@ -61,6 +61,15 @@ class MotmProofRuntimeTest {
         }
 
         @Override
+        public String runNativeProjectileProof(Player player,
+                                               Store<EntityStore> currentStore,
+                                               String proofId,
+                                               Vector3d forward,
+                                               String... projectileConfigIds) {
+            return "native-projectile:" + proofId + ":" + projectileConfigIds[0];
+        }
+
+        @Override
         public String runProxyProof(Player player, String proofId, String roleId, String effectId, double distanceAhead) {
             return "proxy:" + proofId + ":" + roleId;
         }

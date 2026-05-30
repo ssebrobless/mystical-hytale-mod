@@ -63,6 +63,14 @@ public final class MotmProofRuntime {
                 (playerId, player, currentStore, forward) -> actions.runTempFluidProof(player, "tempfluid-water-field", 2, "Fluid_Water", "Water", "water"));
         runners.put("tempfluid-mud-field",
                 (playerId, player, currentStore, forward) -> actions.runTempFluidProof(player, "tempfluid-mud-field", 3, "Fluid_Water", "Water", "water"));
+        runners.put("native-projectile-fireball",
+                (playerId, player, currentStore, forward) -> actions.runNativeProjectileProof(
+                        player,
+                        currentStore,
+                        "native-projectile-fireball",
+                        forward,
+                        "Projectile_Config_Fireball",
+                        "Weapons/Stick/Projectile_Config_Fireball"));
         runners.put("proxy-magma-blob",
                 (playerId, player, currentStore, forward) -> actions.runProxyProof(player, "proxy-magma-blob", "Slug_Magma", "MOTM_Terra_Impact", 2.5));
         runners.put("proxy-cactus-projectile",
@@ -120,6 +128,12 @@ public final class MotmProofRuntime {
         String runTempBlockProof(Player player, String proofId, int width, int height, int yOffset, String... blockIds);
 
         String runTempFluidProof(Player player, String proofId, int radius, String... fluidIds);
+
+        String runNativeProjectileProof(Player player,
+                                        Store<EntityStore> currentStore,
+                                        String proofId,
+                                        Vector3d forward,
+                                        String... projectileConfigIds);
 
         String runProxyProof(Player player, String proofId, String roleId, String effectId, double distanceAhead);
 

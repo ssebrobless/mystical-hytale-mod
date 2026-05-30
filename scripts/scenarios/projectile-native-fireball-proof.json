@@ -1,0 +1,29 @@
+{
+  "id": "projectile-native-fireball-proof",
+  "description": "Proof that MOTM can spawn a real Hytale ProjectileModule projectile instead of a mob/proxy visual.",
+  "styleId": "magma",
+  "abilities": [],
+  "proofs": [
+    "native-projectile-fireball"
+  ],
+  "setupCommands": [
+    "motm dev observe marker native-projectile-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev freecast on"
+  ],
+  "commands": [
+    "motm dev proof native-projectile-fireball",
+    "motm dev observe snapshot native-projectile-post-proof"
+  ],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev observe marker native-projectile-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "client-intent:proof_native_projectile_spawned",
+    "server-truth:proof_native_projectile",
+    "causality:proof_end"
+  ]
+}

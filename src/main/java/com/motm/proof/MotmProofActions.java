@@ -2,6 +2,7 @@ package com.motm.proof;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.CommandBuffer;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -11,6 +12,8 @@ import com.hypixel.hytale.server.core.asset.type.fluid.Fluid;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.projectile.ProjectileModule;
+import com.hypixel.hytale.server.core.modules.projectile.config.ProjectileConfig;
 import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
 import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -25,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -145,6 +149,80 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
                 "fluid=" + fluidResolution.fluidId()
                         + " fluidTypeId=" + fluidTypeId
                         + " fluids=" + selection.getFluidCount());
+    }
+
+    @Override
+    public String runNativeProjectileProof(Player player,
+                                           Store<EntityStore> currentStore,
+                                           String proofId,
+                                           Vector3d forward,
+                                           String... projectileConfigIds) {
+        if (player == null || currentStore == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing player/store.";
+        }
+        Ref<EntityStore> playerRef = player.getReference();
+        Vector3d base = playerPosition(player);
+        Vector3d direction = normalize(forward);
+        if (playerRef == null || !playerRef.isValid() || base == null || direction == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: missing player reference/transform.";
+        }
+
+        ProjectileConfig projectileConfig = resolveProjectileConfig(projectileConfigIds);
+        if (projectileConfig == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: projectile config did not resolve: candidates="
+                    + String.join(",", projectileConfigIds)
+                    + " available=" + listProjectileConfigIds();
+        }
+
+        ProjectileModule projectileModule = ProjectileModule.get();
+        if (projectileModule == null) {
+            return "[MOTM] Proof " + proofId + " FAIL: ProjectileModule.get() returned null.";
+        }
+
+        Vector3d origin = new Vector3d(base).add(0.0, 1.2, 0.0);
+        AtomicReference<Ref<EntityStore>> projectileRef = new AtomicReference<>();
+        AtomicReference<String> failure = new AtomicReference<>();
+        currentStore.forEachChunk((chunk, commandBuffer) -> {
+            if (projectileRef.get() != null || failure.get() != null) {
+                return;
+            }
+            if (commandBuffer == null) {
+                failure.set("no command buffer");
+                return;
+            }
+            try {
+                projectileRef.set(spawnNativeProjectile(projectileModule, playerRef, commandBuffer, projectileConfig, origin, direction));
+            } catch (Exception e) {
+                failure.set(e.getClass().getSimpleName() + ": " + e.getMessage());
+            }
+        });
+
+        Ref<EntityStore> spawnedRef = projectileRef.get();
+        boolean spawned = spawnedRef != null && spawnedRef.isValid();
+        hooks.recordClientIntent("proof_native_projectile_spawned", MotmObservability.mapOf(
+                "proofId", proofId,
+                "projectileConfigId", projectileConfig.getId(),
+                "spawned", spawned,
+                "origin", formatVector(origin),
+                "direction", formatVector(direction),
+                "entityIndex", spawned ? spawnedRef.getIndex() : -1,
+                "failure", failure.get()
+        ));
+        hooks.recordServerTruth("proof_native_projectile", MotmObservability.mapOf(
+                "proofId", proofId,
+                "projectileConfigId", projectileConfig.getId(),
+                "spawned", spawned,
+                "entityIndex", spawned ? spawnedRef.getIndex() : -1,
+                "failure", failure.get()
+        ));
+        if (failure.get() != null) {
+            return "[MOTM] Proof " + proofId + " FAIL: native projectile spawn failed: " + failure.get();
+        }
+        return "[MOTM] Proof " + proofId + " " + (spawned ? "PASS" : "FAIL")
+                + ": native projectile config=" + projectileConfig.getId()
+                + " origin=" + formatVector(origin)
+                + " direction=" + formatVector(direction)
+                + " entityIndex=" + (spawned ? spawnedRef.getIndex() : -1);
     }
 
     @Override
@@ -328,6 +406,44 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
         return ids.isEmpty() ? "<none>" : String.join("|", ids);
     }
 
+    private ProjectileConfig resolveProjectileConfig(String... projectileConfigIds) {
+        if (projectileConfigIds == null) {
+            return null;
+        }
+        for (String candidate : projectileConfigIds) {
+            if (candidate == null || candidate.isBlank()) {
+                continue;
+            }
+            ProjectileConfig projectileConfig = ProjectileConfig.getAssetMap().getAsset(candidate);
+            if (projectileConfig != null) {
+                return projectileConfig;
+            }
+        }
+        return null;
+    }
+
+    private String listProjectileConfigIds() {
+        try {
+            return ProjectileConfig.getAssetMap().getAssetMap().keySet().stream()
+                    .filter(id -> id != null && !id.isBlank())
+                    .sorted()
+                    .limit(32)
+                    .reduce((left, right) -> left + "|" + right)
+                    .orElse("<none>");
+        } catch (Exception e) {
+            return "<unavailable:" + e.getClass().getSimpleName() + ">";
+        }
+    }
+
+    private Ref<EntityStore> spawnNativeProjectile(ProjectileModule projectileModule,
+                                                   Ref<EntityStore> playerRef,
+                                                   CommandBuffer<EntityStore> commandBuffer,
+                                                   ProjectileConfig projectileConfig,
+                                                   Vector3d origin,
+                                                   Vector3d direction) {
+        return projectileModule.spawnProjectile(playerRef, commandBuffer, projectileConfig, origin, direction);
+    }
+
     private String placeTemporarySelection(String proofId,
                                            World world,
                                            Vector3i anchor,
@@ -422,6 +538,17 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
             return new Vector3d(1.0, 0.0, 0.0);
         }
         return new Vector3d(flat.x / length, 0.0, flat.z / length);
+    }
+
+    private Vector3d normalize(Vector3d direction) {
+        if (direction == null) {
+            return new Vector3d(1.0, 0.0, 0.0);
+        }
+        Vector3d normalized = new Vector3d(direction);
+        if (!normalized.isFinite() || normalized.length() < 0.0001) {
+            return new Vector3d(1.0, 0.0, 0.0);
+        }
+        return normalized.normalize();
     }
 
     private double distance(Vector3d a, Vector3d b) {
