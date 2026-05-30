@@ -9,12 +9,14 @@ import com.hypixel.hytale.protocol.MovementStates;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.motm.MenteesMod;
 import com.motm.manager.LevelingManager;
 import com.motm.manager.PerkManager;
@@ -1278,6 +1280,83 @@ public class MotmCommand {
         return mod.describeRuntimePlayerPosition(player.getPlayerId());
     }
 
+    String handleDevEntities(PlayerData player, String[] args, Player runtimePlayer) {
+        Player resolvedPlayer = runtimePlayer != null ? runtimePlayer : mod.getRuntimePlayer(player.getPlayerId());
+        if (resolvedPlayer == null || resolvedPlayer.getReference() == null || !resolvedPlayer.getReference().isValid()) {
+            return "[MOTM] Dev entities failed: runtime player unavailable.";
+        }
+        Store<EntityStore> store = resolvedPlayer.getReference().getStore();
+        TransformComponent playerTransform = store != null
+                ? store.getComponent(resolvedPlayer.getReference(), TransformComponent.getComponentType())
+                : null;
+        if (store == null || playerTransform == null || playerTransform.getTransform() == null) {
+            return "[MOTM] Dev entities failed: player store/position unavailable.";
+        }
+
+        double radius = 64.0;
+        if (args.length >= 3) {
+            Double parsed = parseDouble(args[2]);
+            if (parsed == null || parsed <= 0.0) {
+                return "[MOTM] Usage: /motm dev entities [radius]";
+            }
+            radius = Math.min(256.0, parsed);
+        }
+
+        Vector3d playerPosition = playerTransform.getTransform().getPosition();
+        final double scanRadius = radius;
+        List<String> rows = new java.util.ArrayList<>();
+        store.forEachChunk((chunk, commandBuffer) -> {
+            for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
+                NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
+                if (npc == null || npc.isDespawning()) {
+                    continue;
+                }
+                Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
+                TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
+                Vector3d position = transform != null && transform.getTransform() != null
+                        ? transform.getTransform().getPosition()
+                        : null;
+                if (position == null) {
+                    continue;
+                }
+                double distance = playerPosition.distance(position);
+                if (distance > scanRadius) {
+                    continue;
+                }
+                ModelComponent model = chunk.getComponent(entityIndex, ModelComponent.getComponentType());
+                String modelAssetId = model != null && model.getModel() != null
+                        ? model.getModel().getModelAssetId()
+                        : "none";
+                String modelId = model != null && model.getModel() != null
+                        ? model.getModel().getModel()
+                        : "none";
+                rows.add(String.format(java.util.Locale.ROOT,
+                        "%.1fm role=%s type=%s modelAsset=%s model=%s pos=%s",
+                        distance,
+                        valueOrNone(npc.getRoleName()),
+                        valueOrNone(npc.getNPCTypeId()),
+                        valueOrNone(modelAssetId),
+                        valueOrNone(modelId),
+                        formatCompactTriple(position.x, position.y, position.z)));
+            }
+        });
+
+        rows.sort(String::compareTo);
+        int total = rows.size();
+        int limit = Math.min(total, 12);
+        String result = "[MOTM] Dev entities nearby: radius="
+                + String.format(java.util.Locale.ROOT, "%.1f", radius)
+                + " count=" + total;
+        for (int i = 0; i < limit; i++) {
+            result += "\n  " + rows.get(i);
+        }
+        if (total > limit) {
+            result += "\n  ... " + (total - limit) + " more";
+        }
+        LOG.info(result.replace('\n', ' '));
+        return result;
+    }
+
     String handleDevRelocate(PlayerData player, String[] args) {
         String target = args.length >= 3 ? args[2] : "up";
         return mod.queueRuntimePlayerRelocationForTesting(player.getPlayerId(), target);
@@ -1504,6 +1583,10 @@ public class MotmCommand {
                 + ","
                 + String.format(java.util.Locale.ROOT, "%.2f", z)
                 + ")";
+    }
+
+    private String valueOrNone(String value) {
+        return value == null || value.isBlank() ? "none" : value;
     }
 
     private String formatOneDecimal(float value) {
@@ -1776,6 +1859,7 @@ public class MotmCommand {
                 + "  /motm dev test stop\n"
                 + "  /motm dev proof <proofId> (" + String.join(", ", MotmProofCatalog.ids()) + ")\n"
                 + "  /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|knockback>\n"
+                + "  /motm dev entities [radius]\n"
                 + "  /motm dev position\n"
                 + "  /motm dev relocate <up|flatlands|lane|cave>\n"
                 + "  /motm dev mode <creative|adventure>\n"
