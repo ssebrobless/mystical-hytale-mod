@@ -670,8 +670,7 @@ public final class TerrainPlacementHytaleAdapter {
     }
 
     public Vector3i surfaceOverlayAnchor(Vector3d center) {
-        Vector3i anchor = surfaceDecorationAnchor(center);
-        return new Vector3i(anchor.x, anchor.y + 1, anchor.z);
+        return surfaceDecorationAnchor(center);
     }
 
     public Vector3i blockAnchor(Vector3d center) {

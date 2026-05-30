@@ -148,16 +148,16 @@ public final class FieldVisualHytaleAdapter {
         return effectApplier != null && effectApplier.apply(ref, store, effectId);
     }
 
-    private static List<Vector3d> buildFieldVisualPositions(Vector3d center,
-                                                            Vector3d lineDirection,
-                                                            AbilityData ability,
-                                                            double halfWidth) {
+    static List<Vector3d> buildFieldVisualPositions(Vector3d center,
+                                                    Vector3d lineDirection,
+                                                    AbilityData ability,
+                                                    double halfWidth) {
         if (center == null || ability == null) {
             return List.of();
         }
 
         List<Vector3d> positions = new ArrayList<>();
-        positions.add(new Vector3d(center));
+        positions.add(fieldVisualCenter(center, ability));
         String castType = lower(ability.getCastType());
         if ("barrier".equals(castType) && lineDirection != null && lineDirection.isFinite()) {
             double span = Math.max(2.0, Math.min(Math.max(halfWidth, 0.0), 7.0));
@@ -175,7 +175,24 @@ public final class FieldVisualHytaleAdapter {
             return positions;
         }
 
+        if (isQuakeGroundVisual(ability)) {
+            return positions;
+        }
+
         return buildAreaVisualPositions(center, ability);
+    }
+
+    private static Vector3d fieldVisualCenter(Vector3d center, AbilityData ability) {
+        Vector3d resolved = new Vector3d(center);
+        if ("sinkhole".equals(lower(ability == null ? null : ability.getId()))) {
+            resolved.y -= 1.0;
+        }
+        return resolved;
+    }
+
+    private static boolean isQuakeGroundVisual(AbilityData ability) {
+        String abilityId = lower(ability == null ? null : ability.getId());
+        return "aftershock".equals(abilityId) || "sinkhole".equals(abilityId);
     }
 
     private static List<Vector3d> buildAreaVisualPositions(Vector3d center, AbilityData ability) {

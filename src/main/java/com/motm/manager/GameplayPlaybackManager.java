@@ -1915,10 +1915,7 @@ public class GameplayPlaybackManager {
             return;
         }
 
-        List<Vector3d> positions = buildAreaVisualPositions(center, ability);
-        if (positions.isEmpty()) {
-            positions = List.of(new Vector3d(center));
-        }
+        List<Vector3d> positions = List.of(new Vector3d(center));
 
         String effectId = "MOTM_Terra_Quake_Impact";
         float despawnSeconds = 1.0f;
@@ -1938,7 +1935,7 @@ public class GameplayPlaybackManager {
             }
         }
 
-        LOG.info("[MOTM] Quake impact ring spawned at " + center
+        LOG.info("[MOTM] Quake impact visual spawned at " + center
                 + " positions=" + positions.size()
                 + " applied=" + spawned);
     }
