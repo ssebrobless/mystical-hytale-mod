@@ -118,6 +118,131 @@ function Resolve-HytaleRoot {
     return ""
 }
 
+function Get-LatestLogFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Directory,
+        [Parameter(Mandatory = $true)]
+        [string]$Filter
+    )
+
+    if (-not (Test-Path -LiteralPath $Directory)) {
+        return $null
+    }
+    return Get-ChildItem -LiteralPath $Directory -Filter $Filter -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+}
+
+function Get-SharedFileLength {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return 0L
+    }
+
+    $stream = $null
+    try {
+        $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+        return [Int64]$stream.Length
+    } finally {
+        if ($stream) { $stream.Dispose() }
+    }
+}
+
+function Capture-LiveLogOffsets {
+    $hytaleRoot = Resolve-HytaleRoot
+    $offsets = New-Object System.Collections.Generic.List[object]
+    if ([string]::IsNullOrWhiteSpace($hytaleRoot)) {
+        return @()
+    }
+
+    $clientLog = Get-LatestLogFile -Directory (Join-Path $hytaleRoot "UserData/Logs") -Filter "*_client.log"
+    if ($clientLog) {
+        $offsets.Add([pscustomobject]@{
+            kind = "client"
+            path = $clientLog.FullName
+            offset = Get-SharedFileLength -Path $clientLog.FullName
+        }) | Out-Null
+    }
+
+    $worldLogDir = Join-Path $hytaleRoot (Join-Path "UserData/Saves" (Join-Path $WorldName "logs"))
+    $serverLog = Get-LatestLogFile -Directory $worldLogDir -Filter "*.log"
+    if ($serverLog) {
+        $offsets.Add([pscustomobject]@{
+            kind = "server"
+            path = $serverLog.FullName
+            offset = Get-SharedFileLength -Path $serverLog.FullName
+        }) | Out-Null
+    }
+
+    return $offsets.ToArray()
+}
+
+function Read-FileTailFromOffset {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $true)]
+        [Int64]$Offset
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return ""
+    }
+
+    $stream = $null
+    $reader = $null
+    try {
+        $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+        if ($Offset -gt $stream.Length) {
+            $Offset = 0
+        }
+        [void]$stream.Seek($Offset, [System.IO.SeekOrigin]::Begin)
+        $reader = New-Object System.IO.StreamReader($stream)
+        return $reader.ReadToEnd()
+    } finally {
+        if ($reader) { $reader.Dispose() }
+        if ($stream) { $stream.Dispose() }
+    }
+}
+
+function Assert-NoNewCriticalLogLines {
+    if (-not $script:LiveLogOffsets -or $script:LiveLogOffsets.Count -eq 0) {
+        Add-Line("- WARN: no live log offsets were captured before runtime commands.")
+        return
+    }
+
+    $criticalPattern = "SEVERE|WARN\|\|ERROR|NoClassDefFoundError|NullReferenceException|Index was outside|sx is a non-valid number|Section y must|Entity has moved into a chunk that isn't currently loaded|world crashed|Hytale has crashed|Reloading nonexistent role|OutOfMemoryError|StackOverflowError"
+    $criticalLines = New-Object System.Collections.Generic.List[string]
+    foreach ($entry in $script:LiveLogOffsets) {
+        $tail = Read-FileTailFromOffset -Path ([string]$entry.path) -Offset ([Int64]$entry.offset)
+        if ([string]::IsNullOrWhiteSpace($tail)) {
+            continue
+        }
+        $tail -split "`r?`n" |
+            Where-Object { $_ -match $criticalPattern } |
+            Select-Object -First 12 |
+            ForEach-Object {
+                $criticalLines.Add("[$($entry.kind)] $($_)") | Out-Null
+            }
+    }
+
+    $scanPath = Join-Path $outDir "critical-log-scan.md"
+    if ($criticalLines.Count -gt 0) {
+        @("# Critical Log Scan", "", "FAIL", "", "Matched lines:", "", ($criticalLines -join "`n")) |
+            Set-Content -LiteralPath $scanPath -Encoding UTF8
+        throw "Observed new critical Hytale log lines after run start. See $scanPath"
+    }
+
+    @("# Critical Log Scan", "", "PASS", "", "No critical client/server log lines were observed after run start.") |
+        Set-Content -LiteralPath $scanPath -Encoding UTF8
+    Add-Line("- PASS: no new critical client/server log lines after run start.")
+}
+
 function Resolve-JavapExecutable {
     if (-not [string]::IsNullOrWhiteSpace($JavaHome)) {
         $javapName = if ($env:OS -eq "Windows_NT") { "javap.exe" } else { "javap" }
@@ -460,6 +585,20 @@ function Invoke-ScenarioCommandList {
     }
 }
 
+function Invoke-AbilityPrerequisiteCommands {
+    param([string]$AbilityId)
+
+    $normalizedAbility = ([string]$AbilityId).Trim().ToLowerInvariant()
+    switch ($normalizedAbility) {
+        "dust_devil" {
+            Invoke-ObservedCommand "motm dev effects clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 250
+            Invoke-ObservedCommand "motm style sand" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
+            Invoke-ObservedCommand "motm dev freecast on" -TimeoutMilliseconds 9000 -DelayMilliseconds 250
+            Invoke-ObservedCommand "motm dev test ability sandstorm" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
+        }
+    }
+}
+
 function Get-ScenarioRuntimeTaskExpectations {
     $expectedTaskTypes = New-Object System.Collections.Generic.HashSet[string]
     $allCommands = @($script:ScenarioSetupCommands) + @($script:ScenarioCommands) + @($script:ScenarioCleanupCommands)
@@ -512,6 +651,8 @@ function Test-ArmedJumpAbilityEvidence {
 }
 
 function Assert-RunEvidence {
+    Assert-NoNewCriticalLogLines
+
     $motmRawDir = Join-Path $outDir "raw/motm-observability"
     $controlPath = Join-Path $motmRawDir "control.jsonl"
     $causalityPath = Join-Path $motmRawDir "causality.jsonl"
@@ -835,6 +976,13 @@ try {
 
     Add-Line("## Runtime Commands")
     Add-Line("")
+    $script:LiveLogOffsets = @(Capture-LiveLogOffsets)
+    foreach ($logOffset in $script:LiveLogOffsets) {
+        Add-Line("- Live log baseline: $($logOffset.kind) $($logOffset.path) offset=$($logOffset.offset)")
+    }
+    if ($script:LiveLogOffsets.Count -eq 0) {
+        Add-Line("- WARN: no client/server live log baseline could be captured.")
+    }
     Invoke-ObservedCommand "motm dev observe start $RunId $ScenarioId" -TimeoutMilliseconds 8000
     Invoke-ObservedCommand "motm dev effects clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
     Invoke-ScenarioCommandList "setup" $script:ScenarioSetupCommands
@@ -865,17 +1013,18 @@ try {
 
     foreach ($ability in $Abilities) {
         Invoke-ObservedCommand "motm dev observe marker ability-$ability-before"
+        Invoke-AbilityPrerequisiteCommands $ability
         Invoke-ObservedCommand "motm dev test ability $ability" -TimeoutMilliseconds 9000 -DelayMilliseconds 2200
         if ($ability -in @("stomp", "leap_frog")) {
             Invoke-ObservedCommand "motm dev test jump-land" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
         }
-        Invoke-ObservedCommand "motm dev observe snapshot ability-$ability-after"
+        Invoke-ObservedCommand "motm dev observe snapshot ability-$ability-after" -TimeoutMilliseconds 30000
     }
 
     foreach ($proof in $Proofs) {
         Invoke-ObservedCommand "motm dev observe marker proof-$proof-before"
         Invoke-ObservedCommand "motm dev proof $proof" -TimeoutMilliseconds 9000 -DelayMilliseconds 1800
-        Invoke-ObservedCommand "motm dev observe snapshot proof-$proof-after"
+        Invoke-ObservedCommand "motm dev observe snapshot proof-$proof-after" -TimeoutMilliseconds 30000
     }
 
     if ($CleanupDelayMilliseconds -gt 0) {
@@ -885,11 +1034,11 @@ try {
     Invoke-ScenarioCommandList "cleanup" $script:ScenarioCleanupCommands
     if (-not [string]::IsNullOrWhiteSpace($MobMode)) {
         Invoke-ObservedCommand "motm dev test mobs clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 900
-        Invoke-ObservedCommand "motm dev observe snapshot post-target-cleanup"
+        Invoke-ObservedCommand "motm dev observe snapshot post-target-cleanup" -TimeoutMilliseconds 30000
     }
     Invoke-ObservedCommand "motm dev freecast off" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
     Invoke-ObservedCommand "motm dev effects clear" -TimeoutMilliseconds 9000 -DelayMilliseconds 450
-    Invoke-ObservedCommand "motm dev observe snapshot post-test-protection-cleanup"
+    Invoke-ObservedCommand "motm dev observe snapshot post-test-protection-cleanup" -TimeoutMilliseconds 30000
     Invoke-ObservedCommand "motm dev observe stop baseline-complete"
 
     if (-not $SkipScreenshot -and (Test-IsMacOS)) {
