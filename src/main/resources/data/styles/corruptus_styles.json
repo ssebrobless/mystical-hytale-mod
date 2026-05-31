@@ -559,7 +559,7 @@
         {
           "id": "scarak_egg",
           "name": "Scarak Egg",
-          "description": "Place Deco_Scarak_Eggsacks; after 4 seconds it hatches into friendly Scarak Seeker, Fighter, and Defender summons.",
+          "description": "Place Deco_Scarak_Eggsacks; after 4 seconds it hatches into friendly Scarak Seeker and Fighter summons.",
           "damage_percent": 0,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.8,
@@ -597,7 +597,7 @@
         {
           "id": "locust_queen",
           "name": "Locust Queen",
-          "description": "Summon a friendly Scarak_Broodmother directly for 20 seconds.",
+          "description": "Summon a friendly Scarak fighter queen proxy directly for 20 seconds.",
           "damage_percent": 0,
           "cooldown_seconds": 10,
           "cast_time_seconds": 0.8,

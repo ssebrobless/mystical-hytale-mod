@@ -9,6 +9,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.CollisionResultComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.DisplayNameComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.Interactable;
+import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.RespondToHit;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -58,6 +59,13 @@ public final class ProjectileVisualHytaleAdapter {
             return ProjectileVisualRuntime.none();
         }
 
+        String modelId = HytaleAssetResolver.resolveModelId(classId, styleId, ability);
+        boolean hasExplicitModel = modelId != null && !modelId.isBlank();
+        if (!hasExplicitModel) {
+            recordSkippedSpawn(classId, styleId, ability, effectId, position, activateAtMillis, expireAtMillis);
+            return ProjectileVisualRuntime.none();
+        }
+
         String roleId = HytaleAssetResolver.resolveProjectileRoleId(classId, styleId, ability);
         NPCEntity proxy = new NPCEntity(world);
         proxy.setRoleName(roleId);
@@ -70,11 +78,8 @@ public final class ProjectileVisualHytaleAdapter {
         }
 
         visualProxyState.add(proxyRef);
-        String modelId = HytaleAssetResolver.resolveModelId(classId, styleId, ability);
-        if (modelId != null && !modelId.isBlank()) {
-            NPCEntity.setAppearance(proxyRef, modelId, proxyRef.getStore());
-        }
-        configureProxy(proxyRef, proxyRef.getStore(), hideIdentityComponents);
+        NPCEntity.setAppearance(proxyRef, modelId, proxyRef.getStore());
+        configureProxy(proxyRef, proxyRef.getStore(), hideIdentityComponents, false);
         applyEffect(proxyRef, proxyRef.getStore(), effectId);
         recordSpawn(classId, styleId, ability, roleId, modelId, effectId, position, proxyRef, activateAtMillis, expireAtMillis);
         return new ProjectileVisualRuntime(proxyRef, effectId, activateAtMillis + 80L);
@@ -136,16 +141,22 @@ public final class ProjectileVisualHytaleAdapter {
 
     private void configureProxy(Ref<EntityStore> proxyRef,
                                 Store<EntityStore> store,
-                                boolean hideIdentityComponents) {
-        if (proxyRef == null || !proxyRef.isValid() || store == null || !hideIdentityComponents) {
+                                boolean hideIdentityComponents,
+                                boolean hideModel) {
+        if (proxyRef == null || !proxyRef.isValid() || store == null || (!hideIdentityComponents && !hideModel)) {
             return;
         }
         try {
-            store.removeComponentIfExists(proxyRef, Nameplate.getComponentType());
-            store.removeComponentIfExists(proxyRef, DisplayNameComponent.getComponentType());
-            store.removeComponentIfExists(proxyRef, Interactable.getComponentType());
-            store.removeComponentIfExists(proxyRef, RespondToHit.getComponentType());
-            store.removeComponentIfExists(proxyRef, CollisionResultComponent.getComponentType());
+            if (hideModel) {
+                store.removeComponentIfExists(proxyRef, ModelComponent.getComponentType());
+            }
+            if (hideIdentityComponents) {
+                store.removeComponentIfExists(proxyRef, Nameplate.getComponentType());
+                store.removeComponentIfExists(proxyRef, DisplayNameComponent.getComponentType());
+                store.removeComponentIfExists(proxyRef, Interactable.getComponentType());
+                store.removeComponentIfExists(proxyRef, RespondToHit.getComponentType());
+                store.removeComponentIfExists(proxyRef, CollisionResultComponent.getComponentType());
+            }
         } catch (Exception e) {
             if (log != null) {
                 log.warning("[MOTM] Projectile visual proxy cleanup failed safely: " + e.getMessage());
@@ -155,6 +166,28 @@ public final class ProjectileVisualHytaleAdapter {
 
     private boolean applyEffect(Ref<EntityStore> ref, Store<EntityStore> store, String effectId) {
         return effectApplier != null && effectApplier.apply(ref, store, effectId);
+    }
+
+    private void recordSkippedSpawn(String classId,
+                                    String styleId,
+                                    AbilityData ability,
+                                    String effectId,
+                                    Vector3d position,
+                                    long activateAtMillis,
+                                    long expireAtMillis) {
+        if (intentRecorder == null) {
+            return;
+        }
+        intentRecorder.record("projectile_visual_proxy_skipped", MotmObservability.mapOf(
+                "reason", "particle_only_projectile",
+                "classId", classId,
+                "styleId", styleId,
+                "abilityId", ability != null ? ability.getId() : null,
+                "effectId", effectId,
+                "position", formatVector(position),
+                "activateAtMillis", activateAtMillis,
+                "expireAtMillis", expireAtMillis
+        ));
     }
 
     private void recordSpawn(String classId,

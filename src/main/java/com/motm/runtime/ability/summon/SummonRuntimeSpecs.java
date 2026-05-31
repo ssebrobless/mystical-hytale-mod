@@ -43,7 +43,7 @@ public final class SummonRuntimeSpecs {
         String summonName = summonName(ability);
         return switch (summonName) {
             case "crawler_void", "void_spawn" -> List.of("Crawler_Void", "Crawler_Void", "Crawler_Void");
-            case "scarak_egg" -> List.of("Scarak_Seeker", "Scarak_Fighter", "Scarak_Defender");
+            case "scarak_egg" -> List.of("Scarak_Seeker", "Scarak_Fighter", "Scarak_Fighter");
             default -> {
                 String modelId = modelId(summonName);
                 yield modelId == null || modelId.isBlank() ? List.of() : List.of(modelId);
@@ -53,11 +53,10 @@ public final class SummonRuntimeSpecs {
 
     private static String role(String summonName) {
         return switch (summonName) {
-            case "frosty_golem" -> "tank";
-            case "snow_imp", "skeleton_minion" -> "skirmisher";
+            case "frosty_golem", "yeti_frosty" -> "tank";
+            case "snow_imp", "snowman_imp", "skeleton_minion" -> "skirmisher";
             case "crawler_void", "void_spawn" -> "caster";
-            case "swamp_monster", "treant_sapling" -> "bruiser";
-            case "locust_queen" -> "swarm";
+            case "swamp_monster", "crocodile_swamp_monster", "snapjaw_abyssal", "treant_sapling", "locust_queen" -> "bruiser";
             case "shadow_clone" -> "clone";
             case "scarak_egg" -> "hatchling";
             default -> "bruiser";
@@ -107,9 +106,9 @@ public final class SummonRuntimeSpecs {
     private static String attackToken(String summonName, String role) {
         if (!summonName.isBlank()) {
             return switch (summonName) {
-                case "frosty_golem" -> "root";
-                case "snow_imp" -> "slow";
-                case "swamp_monster", "treant_sapling" -> "root";
+                case "frosty_golem", "yeti_frosty" -> "root";
+                case "snow_imp", "snowman_imp" -> "slow";
+                case "swamp_monster", "crocodile_swamp_monster", "snapjaw_abyssal", "treant_sapling" -> "root";
                 case "crawler_void", "void_spawn" -> "vulnerability";
                 case "locust_queen", "scarak_egg" -> "dot";
                 case "shadow_clone" -> "vulnerability";
@@ -132,14 +131,17 @@ public final class SummonRuntimeSpecs {
     private static String modelId(String summonName) {
         return switch (summonName) {
             case "treant_sapling" -> "Spirit_Root";
-            case "snow_imp" -> "Spirit_Frost";
+            case "snow_imp", "snowman_imp" -> "Spirit_Frost";
             case "frosty_golem" -> "Golem_Crystal_Frost";
+            case "yeti_frosty" -> "Yeti";
             case "swamp_monster" -> "Frog_Green";
+            case "crocodile_swamp_monster" -> "Crocodile";
+            case "snapjaw_abyssal" -> "Snapjaw";
             case "skeleton_minion", "shadow_clone" -> "Shadow_Knight";
             case "void_spawn" -> "Spawn_Void";
             case "crawler_void" -> "Crawler_Void";
             case "scarak_egg" -> "Scarak_Fighter";
-            case "locust_queen" -> "Scarak_Broodmother";
+            case "locust_queen" -> "Scarak_Fighter";
             default -> null;
         };
     }

@@ -74,7 +74,6 @@ class SummonAttackEffectRuntimeTest {
 
         assertEquals(List.of(
                 "token:locust-target:dot",
-                "token:locust-target:dot",
                 "splashToken:locust-target:dot:3.80:3",
                 "splashToken:locust-target:vulnerability:3.80:2",
                 "token:egg-target:dot",

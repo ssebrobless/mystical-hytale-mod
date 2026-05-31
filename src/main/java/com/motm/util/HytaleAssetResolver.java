@@ -182,6 +182,10 @@ public final class HytaleAssetResolver {
         return ROLE_VISUAL_PROXY;
     }
 
+    public static String resolveRenderlessVisualProxyRoleId() {
+        return ROLE_VISUAL_PROXY;
+    }
+
     private static String resolveAnimation(String classId, String styleId, AbilityData ability) {
         String castType = lower(ability.getCastType());
         String abilityId = lower(ability.getId());
@@ -577,7 +581,7 @@ public final class HytaleAssetResolver {
                 case "skeleton_minion", "shadow_clone" -> MODEL_SHADOW_KNIGHT;
                 case "void_spawn" -> MODEL_VOID_SPAWN;
                 case "scarak_egg" -> MODEL_SCARAK;
-                case "locust_queen" -> MODEL_SCARAK_BROODMOTHER;
+                case "locust_queen" -> MODEL_SCARAK;
                 default -> null;
             };
         }

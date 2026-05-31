@@ -74,6 +74,7 @@ public final class TerrainSupplementalHytaleAdapter {
         double thickness = Math.max(1.1, Math.min(radius, 2.5));
         double durationSeconds = Math.max(2.0, ability.getDurationSeconds() > 0 ? ability.getDurationSeconds() : 3.0);
         boolean followOwner = false;
+        boolean useFieldVisualProxy = true;
         String summary;
 
         if (TerrainRuntimeSpecs.shouldCreateMovementTrail(ability, movementApplied, startPosition, endPosition)) {
@@ -91,6 +92,7 @@ public final class TerrainSupplementalHytaleAdapter {
             halfWidth = radius;
             thickness = Math.max(1.1, radius * 0.9);
             followOwner = true;
+            useFieldVisualProxy = false;
             summary = humanize(terrainEffect.isBlank() ? abilityId : terrainEffect) + " aura";
         } else {
             return Result.none();
@@ -101,7 +103,8 @@ public final class TerrainSupplementalHytaleAdapter {
         long expireAtMillis = now + (long) (durationSeconds * 1000);
         boolean created = false;
         for (Vector3d center : centers) {
-            FieldVisualRuntime visual = fieldVisualAdapter.spawn(
+            FieldVisualRuntime visual = useFieldVisualProxy
+                    ? fieldVisualAdapter.spawn(
                     runtimePlayer,
                     player.getPlayerClass(),
                     style.getId(),
@@ -112,7 +115,8 @@ public final class TerrainSupplementalHytaleAdapter {
                     activateAtMillis,
                     expireAtMillis,
                     AbilityRuntimeEffects.fieldVisualEffectId(player.getPlayerClass(), style.getId(), ability)
-            );
+            )
+                    : FieldVisualRuntime.none();
             fieldRegistrar.register(
                     player.getPlayerId(),
                     playerRef,

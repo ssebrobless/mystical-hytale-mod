@@ -73,6 +73,20 @@ class SummonMovementRuntimeTest {
         assertNull(runtime.besideTargetDestination(null, new Vector3d(0.0, 0.0, 0.0)));
     }
 
+    @Test
+    void refusesZeroLengthAndNonFiniteMovementVectors() {
+        Vector3d samePoint = new Vector3d(10.0, 0.0, 10.0);
+        Vector3d nanPoint = new Vector3d(Double.NaN, 0.0, 0.0);
+
+        assertNull(runtime.targetApproachDestination(samePoint, samePoint, 2.0));
+        assertNull(runtime.targetRetreatDestination(samePoint, samePoint, 2.0));
+        assertNull(runtime.ownerFollowDestination(nanPoint, samePoint));
+        assertNull(runtime.targetApproachDestination(samePoint, nanPoint, 2.0));
+
+        Vector3d fallback = runtime.besideTargetDestination(samePoint, samePoint);
+        assertVector(fallback, 10.0, 0.0, 8.85);
+    }
+
     private static void assertVector(Vector3d actual, double x, double y, double z) {
         assertEquals(x, actual.x, 0.0001);
         assertEquals(y, actual.y, 0.0001);

@@ -15,8 +15,10 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.motm.model.AbilityData;
 import com.motm.model.PlayerData;
+import com.motm.runtime.ability.field.FieldVisualHytaleAdapter;
 import com.motm.runtime.state.VisualProxyRuntimeState;
 import com.motm.util.AbilityPresentation;
+import com.motm.util.HytaleAssetResolver;
 
 public final class TerrainGemHytaleAdapter {
     private final LapidaryGemRuntimeState gemState;
@@ -65,7 +67,7 @@ public final class TerrainGemHytaleAdapter {
                 * Math.max(0.10, ability.getShieldPercent() / 100.0));
         Vector3d proxyPosition = new Vector3d(center).add(1.0, 2.35, 1.0);
         NPCEntity proxy = new NPCEntity(world);
-        proxy.setRoleName("Spark_Living");
+        proxy.setRoleName(HytaleAssetResolver.resolveRenderlessVisualProxyRoleId());
         proxy.setDespawnTime((float) Math.max(1.0, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5));
         world.spawnEntity(proxy, proxyPosition, new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
 
@@ -75,6 +77,7 @@ public final class TerrainGemHytaleAdapter {
         }
 
         Store<EntityStore> store = proxyRef.getStore();
+        FieldVisualHytaleAdapter.configureRenderlessProxy(proxyRef, store);
         String label = lapidaryGemLabel(gemHealth, gemHealth);
         applyLapidaryGemLabel(proxyRef, store, label);
         support.applyEffectById(proxyRef, store, "MOTM_Proof_Gem_Green");
