@@ -107,7 +107,7 @@ public final class FieldActivationHytaleAdapter {
                 ironWallForward != null ? ironWallForward : forward,
                 lineDirection)
                 : 0;
-        FieldVisualRuntime visual = visualAdapter == null
+        FieldVisualRuntime visual = visualAdapter == null || !FieldRuntimeSpecs.shouldUseFieldVisualProxy(ability)
                 ? FieldVisualRuntime.none()
                 : visualAdapter.spawn(
                 runtimePlayer,

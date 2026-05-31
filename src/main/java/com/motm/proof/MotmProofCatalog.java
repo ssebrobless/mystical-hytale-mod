@@ -19,7 +19,7 @@ public final class MotmProofCatalog {
             new ProofDefinition("tempblock-gem-cluster", ProofKind.TEMPORARY_BLOCK, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
             new ProofDefinition("tempblock-cactus", ProofKind.TEMPORARY_BLOCK, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
             new ProofDefinition("tempblock-roots", ProofKind.TEMPORARY_BLOCK, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
-            new ProofDefinition("tempfluid-lava-ring", ProofKind.TEMPORARY_FLUID, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
+            new ProofDefinition("tempblock-lava-field", ProofKind.TEMPORARY_BLOCK, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
             new ProofDefinition("tempfluid-water-field", ProofKind.TEMPORARY_FLUID, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
             new ProofDefinition("tempfluid-mud-field", ProofKind.TEMPORARY_FLUID, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
             new ProofDefinition("native-projectile-fireball", ProofKind.NATIVE_PROJECTILE,

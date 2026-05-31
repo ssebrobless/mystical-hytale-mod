@@ -589,6 +589,11 @@ public class GameplayPlaybackManager {
                     }
 
                     @Override
+                    public boolean removeEffectById(Ref<EntityStore> ref, Store<EntityStore> store, String effectId) {
+                        return GameplayPlaybackManager.this.removeEffectById(ref, store, effectId);
+                    }
+
+                    @Override
                     public Vector3d position(Ref<EntityStore> ref, Store<EntityStore> store) {
                         return GameplayPlaybackManager.this.getPosition(ref, store);
                     }
@@ -1913,35 +1918,18 @@ public class GameplayPlaybackManager {
             return;
         }
 
-        World world = runtimePlayer.getWorld();
-        if (world == null) {
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef != null && playerRef.isValid() ? playerRef.getStore() : null;
+        if (playerRef == null || !playerRef.isValid() || store == null) {
             return;
         }
 
-        List<Vector3d> positions = List.of(new Vector3d(center));
-
         String effectId = "MOTM_Terra_Quake_Impact";
-        float despawnSeconds = 1.0f;
-        int spawned = 0;
-        String roleId = HytaleAssetResolver.resolveFieldRoleId("terra", "quake", ability);
-        for (Vector3d position : positions) {
-            NPCEntity proxy = new NPCEntity(world);
-            proxy.setRoleName(roleId);
-            proxy.setDespawnTime(despawnSeconds);
-            world.spawnEntity(proxy, new Vector3d(position), new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
-
-            Ref<EntityStore> proxyRef = proxy.getReference();
-            if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
-                visualProxyState.add(proxyRef);
-                FieldVisualHytaleAdapter.configureRenderlessProxy(proxyRef, proxyRef.getStore());
-                applyEffectById(proxyRef, proxyRef.getStore(), effectId);
-                spawned++;
-            }
-        }
+        boolean applied = applyEffectById(playerRef, store, effectId);
 
         LOG.info("[MOTM] Quake impact visual spawned at " + center
-                + " positions=" + positions.size()
-                + " applied=" + spawned);
+                + " anchor=player"
+                + " applied=" + applied);
     }
 
     public synchronized void clearArmedStomp(String playerId) {
@@ -1964,8 +1952,8 @@ public class GameplayPlaybackManager {
         int armed = stompState.remove(playerId) != null ? 1 : 0;
         int projectiles = projectileRuntime.removeForPlayer(playerId);
         int fields = removeFieldsForPlayer(playerId, currentStore);
-        int anchors = removePlayerAnchorsForPlayer(playerId);
-        int selfEffects = removeSelfEffectsForPlayer(playerId);
+        int anchors = removePlayerAnchorsForPlayer(playerId, currentStore);
+        int selfEffects = removeSelfEffectsForPlayer(playerId, currentStore);
         int gems = removeLapidaryGemsForPlayer(playerId);
         int columns = removeStackingColumnsForWorld(currentWorld);
         int trails = removeMovingTerrainTrailsForWorld(currentWorld);
@@ -2041,12 +2029,12 @@ public class GameplayPlaybackManager {
         });
     }
 
-    private int removePlayerAnchorsForPlayer(String playerId) {
-        return selfState.removePlayerAnchorsForPlayer(playerId);
+    private int removePlayerAnchorsForPlayer(String playerId, Store<EntityStore> currentStore) {
+        return selfAdapter.clearPlayerAnchorsForPlayer(playerId, currentStore);
     }
 
-    private int removeSelfEffectsForPlayer(String playerId) {
-        return selfState.removeSelfEffectsForPlayer(playerId);
+    private int removeSelfEffectsForPlayer(String playerId, Store<EntityStore> currentStore) {
+        return selfAdapter.clearSelfEffectsForPlayer(playerId, currentStore);
     }
 
     private int removeLapidaryGemsForPlayer(String playerId) {

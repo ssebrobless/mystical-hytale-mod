@@ -33,6 +33,48 @@ public final class SelfHytaleAdapter {
                 belongsToCurrentStore(effect.ownerRef(), currentStore) && processSelfEffect(effect, currentStore, now));
     }
 
+    public int clearPlayerAnchorsForPlayer(String playerId, Store<EntityStore> currentStore) {
+        if (playerId == null || playerId.isBlank()) {
+            return 0;
+        }
+        final int[] removed = {0};
+        selfState.removeProcessedPlayerAnchors(anchor -> {
+            if (anchor == null || !playerId.equals(anchor.ownerPlayerId())) {
+                return false;
+            }
+            Store<EntityStore> store = storeFor(anchor.ownerRef(), currentStore);
+            if (store != null) {
+                setAnchorMovementFreeze(anchor.ownerRef(), store, false);
+                zeroVelocity(anchor.ownerRef(), store);
+            }
+            removed[0]++;
+            return true;
+        });
+        return removed[0];
+    }
+
+    public int clearSelfEffectsForPlayer(String playerId, Store<EntityStore> currentStore) {
+        if (playerId == null || playerId.isBlank()) {
+            return 0;
+        }
+        final int[] removed = {0};
+        selfState.removeProcessedSelfEffects(effect -> {
+            if (effect == null || !playerId.equals(effect.ownerPlayerId())) {
+                return false;
+            }
+            Store<EntityStore> store = storeFor(effect.ownerRef(), currentStore);
+            if (store != null) {
+                boolean nativeRemoved = support.removeEffectById(effect.ownerRef(), store, effect.effectId());
+                support.logInfo("[MOTM] Active self effect cleared: playerId=" + effect.ownerPlayerId()
+                        + " effect=" + effect.effectId()
+                        + " nativeRemoved=" + nativeRemoved);
+            }
+            removed[0]++;
+            return true;
+        });
+        return removed[0];
+    }
+
     public void startActiveSelfEffect(Ref<EntityStore> ownerRef,
                                       String ownerPlayerId,
                                       String effectId,
@@ -120,6 +162,10 @@ public final class SelfHytaleAdapter {
             return true;
         }
         if (effect.expired(now)) {
+            boolean removed = support.removeEffectById(effect.ownerRef(), currentStore, effect.effectId());
+            support.logInfo("[MOTM] Active self effect expired: playerId=" + effect.ownerPlayerId()
+                    + " effect=" + effect.effectId()
+                    + " nativeRemoved=" + removed);
             return true;
         }
         if (!effect.readyToApply(now)) {
@@ -185,8 +231,17 @@ public final class SelfHytaleAdapter {
         return ref != null && ref.isValid() && ref.getStore() == currentStore;
     }
 
+    private static Store<EntityStore> storeFor(Ref<EntityStore> ref, Store<EntityStore> fallback) {
+        if (ref != null && ref.isValid() && ref.getStore() != null) {
+            return ref.getStore();
+        }
+        return fallback;
+    }
+
     public interface Support {
         boolean applyEffectById(Ref<EntityStore> ref, Store<EntityStore> store, String effectId);
+
+        boolean removeEffectById(Ref<EntityStore> ref, Store<EntityStore> store, String effectId);
 
         Vector3d position(Ref<EntityStore> ref, Store<EntityStore> store);
 

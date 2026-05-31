@@ -232,13 +232,16 @@ foreach ($style in $selectedStyles) {
     $abilities = @($style.abilities | ForEach-Object { [string]$_.id })
     $mobMode = Get-MobModeForStyle $style
     $styleRunId = "$RunId-$classId-$styleId"
+    $authoredScenarioId = "$classId-style-$styleId"
+    $authoredScenarioPath = Join-Path $repoRoot (Join-Path "scripts/scenarios" ($authoredScenarioId + ".json"))
+    $scenarioId = if (Test-Path -LiteralPath $authoredScenarioPath) { $authoredScenarioId } else { "style-sweep-$classId-$styleId" }
     $args = @(
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
         "-File", (Join-Path $PSScriptRoot "run-agent-observability-baseline.ps1"),
         "-WorldName", $WorldName,
         "-RunId", $styleRunId,
-        "-ScenarioId", "style-sweep-$classId-$styleId",
+        "-ScenarioId", $scenarioId,
         "-ClassId", $classId,
         "-StyleId", $styleId,
         "-MobMode", $mobMode,
@@ -251,7 +254,7 @@ foreach ($style in $selectedStyles) {
     }
 
     $logPath = Join-Path $outDir "$classId-$styleId.log"
-    Write-Host "[style-sweep] START $classId/$styleId abilities=$($abilities -join ',') mobMode=$mobMode"
+    Write-Host "[style-sweep] START $classId/$styleId scenario=$scenarioId abilities=$($abilities -join ',') mobMode=$mobMode"
     $status = "PASS"
     $notes = ""
     try {

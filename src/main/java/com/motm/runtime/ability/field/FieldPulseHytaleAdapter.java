@@ -53,8 +53,10 @@ public final class FieldPulseHytaleAdapter {
                 }
             }
 
-            support.applyEffect(targetRef, store, impactEffectId);
-            applyTargetEffects(field, player, targetRef, store, support);
+            if (FieldRuntimeSpecs.shouldApplyRepeatingTargetTokens(field.ability())) {
+                support.applyEffect(targetRef, store, impactEffectId);
+                applyTargetEffects(field, player, targetRef, store, support);
+            }
         }
 
         if (totalDamage > 0.0) {

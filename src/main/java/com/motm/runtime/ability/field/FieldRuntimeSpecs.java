@@ -89,6 +89,24 @@ public final class FieldRuntimeSpecs {
                 || terrainEffect.contains("healing_rainbow");
     }
 
+    public static boolean shouldUseFieldVisualProxy(AbilityData ability) {
+        if (ability == null) {
+            return false;
+        }
+        String abilityId = lower(ability.getId());
+        String terrainEffect = lower(ability.getTerrainEffect());
+        return !"lava_pool".equals(abilityId) && !terrainEffect.contains("lava_pool");
+    }
+
+    public static boolean shouldApplyRepeatingTargetTokens(AbilityData ability) {
+        if (ability == null) {
+            return false;
+        }
+        String abilityId = lower(ability.getId());
+        String terrainEffect = lower(ability.getTerrainEffect());
+        return !"lava_pool".equals(abilityId) && !terrainEffect.contains("lava_pool");
+    }
+
     public static FieldTerrainRuntimeSpec terrainSpec(AbilityData ability) {
         if (ability == null) {
             return FieldTerrainRuntimeSpec.none();

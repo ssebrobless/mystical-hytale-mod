@@ -62,13 +62,7 @@ public final class TerrainPlacementHytaleAdapter {
                     terrain.primaryAssetIdArray(),
                     terrain.secondaryAssetIdArray(),
                     restoreAdapter);
-            case LAVA_POOL -> placeFluidDiscSelection(
-                    runtimePlayer.getWorld(),
-                    terrain.reason(),
-                    center,
-                    ability.getRadius(),
-                    expireAtMillis,
-                    terrain.primaryAssetIdArray());
+            case LAVA_POOL -> skipUnsafeTerrainSelection(terrain.reason(), "lava pool uses field VFX; temporary lava terrain crashes Hytale 0.5.3 client");
             case MUDPIT -> {
                 String fluid = placeGroundedFluidDiscSelection(
                         runtimePlayer.getWorld(),
@@ -133,6 +127,11 @@ public final class TerrainPlacementHytaleAdapter {
                     + (abilityId.isBlank() ? "<unknown>" : abilityId)
                     + " terrainEffect=" + terrainEffect);
         }
+    }
+
+    private String skipUnsafeTerrainSelection(String reason, String summary) {
+        logInfo("[MOTM] Temporary Terra terrain skipped: reason=" + reason + " summary=" + summary);
+        return summary;
     }
 
     public boolean startMovingTerrainTrail(World world,

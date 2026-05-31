@@ -57,8 +57,11 @@ public final class MotmProofRuntime {
                         "Plant_Roots_Cave",
                         "Plant_Roots_Cave_Small",
                         "Plant_Vine_Thick_Roots"));
-        runners.put("tempfluid-lava-ring",
-                (playerId, player, currentStore, forward) -> actions.runTempFluidProof(player, "tempfluid-lava-ring", 2, "Fluid_Lava", "Lava", "lava"));
+        runners.put("tempblock-lava-field",
+                (playerId, player, currentStore, forward) -> actions.runTempBlockProof(player, "tempblock-lava-field", 5, 1, 0,
+                        "Rock_Volcanic_Cracked_Lava",
+                        "Rock_Volcanic_Cracked_Incandescent",
+                        "Rock_Magma_Cooled"));
         runners.put("tempfluid-water-field",
                 (playerId, player, currentStore, forward) -> actions.runTempFluidProof(player, "tempfluid-water-field", 2, "Fluid_Water", "Water", "water"));
         runners.put("tempfluid-mud-field",
