@@ -1,28 +1,30 @@
 Group #Root {
   Anchor: (
-    Bottom: 32,
-    Width: 420,
-    Height: 248
+    Right: 24,
+    Top: 72,
+    Width: 360,
+    Height: 150
   );
 
   Group #StatusRoot {
     Anchor: (
-      Bottom: 154,
-      Width: 420,
-      Height: 34
+      Left: 0,
+      Top: 0,
+      Width: 360,
+      Height: 42
     );
 
     Label #StatusLine1 {
       Anchor: (
         Left: 0,
         Top: 0,
-        Width: 420,
-        Height: 14
+        Width: 360,
+        Height: 18
       );
       Visible: false;
       Style: (
         Alignment: Center,
-        FontSize: 11,
+        FontSize: 12,
         RenderBold: true,
         TextColor: #f2f3f8
       );
@@ -31,14 +33,14 @@ Group #Root {
     Label #StatusLine2 {
       Anchor: (
         Left: 0,
-        Top: 16,
-        Width: 420,
-        Height: 14
+        Top: 20,
+        Width: 360,
+        Height: 18
       );
       Visible: false;
       Style: (
         Alignment: Center,
-        FontSize: 10,
+        FontSize: 11,
         TextColor: #d6d9e5
       );
     }
@@ -1000,8 +1002,9 @@ Group #Root {
 
   Group #XpRoot {
     Anchor: (
-      Bottom: 126,
-      Width: 420,
+      Left: 0,
+      Top: 50,
+      Width: 360,
       Height: 24
     );
 
@@ -1009,7 +1012,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 0,
-        Width: 420,
+        Width: 360,
         Height: 8
       );
       BarTexturePath: "Assets/BarFill_Xp.png";
@@ -1019,7 +1022,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 10,
-        Width: 420,
+        Width: 360,
         Height: 12
       );
       Style: (
@@ -1033,7 +1036,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 22,
-        Width: 420,
+        Width: 360,
         Height: 12
       );
       Visible: false;
@@ -1046,8 +1049,9 @@ Group #Root {
 
   Group #ResourceRoot {
     Anchor: (
-      Bottom: 88,
-      Width: 420,
+      Left: 0,
+      Top: 82,
+      Width: 360,
       Height: 30
     );
     Visible: false;
@@ -1056,7 +1060,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 0,
-        Width: 420,
+        Width: 360,
         Height: 12
       );
       Style: (
@@ -1070,7 +1074,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 14,
-        Width: 420,
+        Width: 360,
         Height: 8
       );
       BarTexturePath: "Assets/BarFill_Terra.png";
@@ -1081,7 +1085,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 14,
-        Width: 420,
+        Width: 360,
         Height: 8
       );
       BarTexturePath: "Assets/BarFill_Hydro.png";
@@ -1092,7 +1096,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 14,
-        Width: 420,
+        Width: 360,
         Height: 8
       );
       BarTexturePath: "Assets/BarFill_Aero.png";
@@ -1103,7 +1107,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 14,
-        Width: 420,
+        Width: 360,
         Height: 8
       );
       BarTexturePath: "Assets/BarFill_Corruptus.png";
@@ -1114,7 +1118,7 @@ Group #Root {
       Anchor: (
         Left: 0,
         Top: 18,
-        Width: 420,
+        Width: 360,
         Height: 12
       );
       Style: (

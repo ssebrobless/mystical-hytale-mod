@@ -5,9 +5,9 @@ import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.motm.MenteesMod;
 import com.motm.model.AbilityData;
+import com.motm.model.Perk;
 import com.motm.model.PlayerData;
 import com.motm.model.StatusEffect;
-import com.motm.model.StyleData;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Persistent in-game HUD overlay for MOTM progression, class resources, and
- * always-on passive/buff/debuff state.
+ * Persistent in-game HUD overlay for MOTM progression and always-on
+ * passive/buff/debuff state.
  */
 public class MotmStatusHud extends CustomUIHud {
 
@@ -32,7 +32,7 @@ public class MotmStatusHud extends CustomUIHud {
     private final MenteesMod mod;
 
     public MotmStatusHud(PlayerRef playerRef, MenteesMod mod) {
-        super(playerRef);
+        super(playerRef, "motm_status_hud");
         this.mod = mod;
     }
 
@@ -52,7 +52,7 @@ public class MotmStatusHud extends CustomUIHud {
         PlayerData player = currentPlayer();
         renderStatusStrip(commands, player);
         renderXp(commands, player);
-        renderResource(commands, player);
+        hideResource(commands);
         renderAbilitySlots(commands, player);
     }
 
@@ -68,8 +68,8 @@ public class MotmStatusHud extends CustomUIHud {
         buffs.sort(Comparator.comparingInt(HudStatusEntry::priority).reversed());
         debuffs.sort(Comparator.comparingInt(HudStatusEntry::priority).reversed());
 
-        String primaryLine = buildStatusSummaryLine(buffs, 3);
-        String secondaryLine = buildStatusSummaryLine(debuffs, 3);
+        String primaryLine = buildPassiveSummaryLine(buffs);
+        String secondaryLine = buildPerkSummaryLine(player, debuffs);
         boolean visible = !primaryLine.isBlank() || !secondaryLine.isBlank();
 
         commands.set("#StatusRoot.Visible", visible);
@@ -81,6 +81,71 @@ public class MotmStatusHud extends CustomUIHud {
         // Hide the legacy icon-slot widgets; we now render a text-first status summary.
         renderStatusSlots(commands, "BuffStatus", List.of(), MAX_BUFF_SLOTS);
         renderStatusSlots(commands, "DebuffStatus", List.of(), MAX_DEBUFF_SLOTS);
+    }
+
+    private String buildPassiveSummaryLine(List<HudStatusEntry> buffs) {
+        if (buffs == null || buffs.isEmpty()) {
+            return "";
+        }
+        HudStatusEntry passive = buffs.get(0);
+        StringBuilder summary = new StringBuilder("Passive: ");
+        if (passive.label() != null && !passive.label().isBlank()) {
+            summary.append(passive.label());
+        } else {
+            summary.append(passive.tag());
+        }
+        if (passive.counter() != null && !passive.counter().isBlank()) {
+            summary.append(" ").append(passive.counter());
+        }
+        return summary.toString();
+    }
+
+    private String buildPerkSummaryLine(PlayerData player, List<HudStatusEntry> debuffs) {
+        String perkSummary = buildOwnedPerkSummary(player);
+        String debuffSummary = buildStatusSummaryLine(debuffs, 2);
+        if (!perkSummary.isBlank() && !debuffSummary.isBlank()) {
+            return perkSummary + "  |  " + debuffSummary;
+        }
+        if (!perkSummary.isBlank()) {
+            return perkSummary;
+        }
+        return debuffSummary;
+    }
+
+    private String buildOwnedPerkSummary(PlayerData player) {
+        if (player == null || player.getPlayerClass() == null
+                || player.getSelectedPerks() == null || player.getSelectedPerks().isEmpty()) {
+            return "Perks: none";
+        }
+
+        List<String> names = new ArrayList<>();
+        for (String perkId : player.getSelectedPerks()) {
+            if (perkId == null || perkId.isBlank()) {
+                continue;
+            }
+            Perk perk = mod.getDataLoader().getPerkById(perkId, player.getPlayerClass());
+            names.add(perk != null ? perk.getName() : perkId);
+            if (names.size() >= 3) {
+                break;
+            }
+        }
+
+        int remaining = Math.max(0, player.getSelectedPerks().size() - names.size());
+        StringBuilder summary = new StringBuilder("Perks: ");
+        if (names.isEmpty()) {
+            summary.append(player.getSelectedPerks().size()).append(" selected");
+        } else {
+            for (int i = 0; i < names.size(); i++) {
+                if (i > 0) {
+                    summary.append(", ");
+                }
+                summary.append(fitWord(names.get(i), 13));
+            }
+            if (remaining > 0) {
+                summary.append(" +").append(remaining);
+            }
+        }
+        return summary.toString();
     }
 
     private String buildStatusSummaryLine(List<HudStatusEntry> entries, int maxEntries) {
@@ -147,7 +212,7 @@ public class MotmStatusHud extends CustomUIHud {
                 boolean swimming = passiveManager.isHydroSwimming(playerId);
                 boolean underwater = passiveManager.isHydroUnderwater(playerId);
                 buffs.add(new HudStatusEntry(
-                        "Hydro",
+                        "Passive",
                         lowWaterMode
                                 ? "Low Water"
                                 : underwater
@@ -394,22 +459,18 @@ public class MotmStatusHud extends CustomUIHud {
         commands.set("#XpMilestone.Visible", false);
     }
 
-    private void renderResource(UICommandBuilder commands, PlayerData player) {
-        ResourceSnapshot snapshot = buildResourceSnapshot(player);
-
-        commands.set("#ResourceRoot.Visible", snapshot.visible);
-        commands.set("#ResourceTerraBar.Visible", snapshot.visible && "terra".equals(snapshot.classId));
-        commands.set("#ResourceHydroBar.Visible", snapshot.visible && "hydro".equals(snapshot.classId));
-        commands.set("#ResourceAeroBar.Visible", snapshot.visible && "aero".equals(snapshot.classId));
-        commands.set("#ResourceCorruptusBar.Visible", snapshot.visible && "corruptus".equals(snapshot.classId));
-
-        commands.set("#ResourceTerraBar.Value", snapshot.progress);
-        commands.set("#ResourceHydroBar.Value", snapshot.progress);
-        commands.set("#ResourceAeroBar.Value", snapshot.progress);
-        commands.set("#ResourceCorruptusBar.Value", snapshot.progress);
-
-        setText(commands, "#ResourceTitle.Text", snapshot.title);
-        setText(commands, "#ResourceLabel.Text", snapshot.label);
+    private void hideResource(UICommandBuilder commands) {
+        commands.set("#ResourceRoot.Visible", false);
+        commands.set("#ResourceTerraBar.Visible", false);
+        commands.set("#ResourceHydroBar.Visible", false);
+        commands.set("#ResourceAeroBar.Visible", false);
+        commands.set("#ResourceCorruptusBar.Visible", false);
+        commands.set("#ResourceTerraBar.Value", 0.0);
+        commands.set("#ResourceHydroBar.Value", 0.0);
+        commands.set("#ResourceAeroBar.Value", 0.0);
+        commands.set("#ResourceCorruptusBar.Value", 0.0);
+        setText(commands, "#ResourceTitle.Text", "");
+        setText(commands, "#ResourceLabel.Text", "");
     }
 
     private void renderAbilitySlots(UICommandBuilder commands, PlayerData player) {
@@ -629,69 +690,6 @@ public class MotmStatusHud extends CustomUIHud {
         return value == null ? "" : value.toLowerCase(Locale.ROOT);
     }
 
-    private ResourceSnapshot buildResourceSnapshot(PlayerData player) {
-        if (player == null || player.getPlayerClass() == null) {
-            return ResourceSnapshot.hidden();
-        }
-
-        String classId = player.getPlayerClass().toLowerCase(Locale.ROOT);
-        if ("aero".equals(classId)) {
-            return ResourceSnapshot.hidden();
-        }
-
-        StyleData selectedStyle = getSelectedStyle(player);
-        String resourceType = resolveResourceType(classId, selectedStyle);
-
-        if (resourceType == null) {
-            return new ResourceSnapshot(
-                    true,
-                    classId,
-                    "Style Resource",
-                    "Choose a style to track its ability resource.",
-                    0.0
-            );
-        }
-
-        int current = mod.getResourceManager().getAmount(player.getPlayerId(), resourceType);
-        int hudMax = Math.max(1, mod.getResourceManager().getHudDisplayMax(player.getPlayerId(), resourceType));
-        int actualMax = Math.max(hudMax, mod.getResourceManager().getMaxAmount(player.getPlayerId(), resourceType));
-        double progress = Math.max(0.0, Math.min(current / (double) hudMax, 1.0));
-
-        String displayName = mod.getResourceManager().getDisplayName(resourceType);
-        String title;
-        if ("hydro".equals(classId)) {
-            title = "Hydro Waterskin";
-        } else {
-            title = selectedStyle != null
-                    ? selectedStyle.getName() + " | " + displayName
-                    : displayName + " Resource";
-        }
-        String label = actualMax >= 999
-                ? displayName + ": " + current + " / " + hudMax + "+"
-                : displayName + ": " + current + " / " + actualMax;
-
-        return new ResourceSnapshot(true, classId, title, label, progress);
-    }
-
-    private String resolveResourceType(String classId, StyleData selectedStyle) {
-        if (selectedStyle != null && selectedStyle.getResourceType() != null && !selectedStyle.getResourceType().isBlank()) {
-            return selectedStyle.getResourceType();
-        }
-
-        return switch (classId) {
-            case "hydro" -> "water";
-            case "corruptus" -> "souls";
-            default -> null;
-        };
-    }
-
-    private StyleData getSelectedStyle(PlayerData player) {
-        if (player.getPlayerClass() == null || player.getSelectedStyles() == null || player.getSelectedStyles().isEmpty()) {
-            return null;
-        }
-        return mod.getDataLoader().getStyleById(player.getSelectedStyles().get(0), player.getPlayerClass());
-    }
-
     private PlayerData currentPlayer() {
         return mod.getPlayerDataManager().getOnlinePlayer(getPlayerRef().getUuid().toString());
     }
@@ -711,18 +709,6 @@ public class MotmStatusHud extends CustomUIHud {
 
     private void setText(UICommandBuilder commands, String selector, String value) {
         commands.set(selector, value != null ? value : "");
-    }
-
-    private record ResourceSnapshot(
-            boolean visible,
-            String classId,
-            String title,
-            String label,
-            double progress
-    ) {
-        private static ResourceSnapshot hidden() {
-            return new ResourceSnapshot(false, "", "", "", 0.0);
-        }
     }
 
     private record HudStatusEntry(
