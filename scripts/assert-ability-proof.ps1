@@ -125,8 +125,22 @@ function Test-MechanicalProof([string]$ScenarioName, $AllLines, $CastResultLine)
             return @("REVIEW", "Support cast exists but HP/stat proof is weak.")
         }
         "summon" {
+            $summonLines = @($AllLines | Where-Object {
+                $_ -match "summon combat .*ability=$escaped"
+            })
+            $spawn = @($summonLines | Where-Object { $_ -match "summon combat spawn:" } | Select-Object -First 1)
+            $target = @($summonLines | Where-Object { $_ -match "summon combat target:" } | Select-Object -First 1)
+            $attack = @($summonLines | Where-Object { $_ -match "summon combat attack:.*damage=[1-9]" } | Select-Object -First 1)
+            $despawn = @($summonLines | Where-Object { $_ -match "summon combat despawn:" } | Select-Object -First 1)
+            if ($spawn.Count -gt 0 -and $target.Count -gt 0 -and $attack.Count -gt 0) {
+                $cleanup = if ($despawn.Count -gt 0) { "despawn observed" } else { "despawn not observed in this window" }
+                return @("PASS", "Summon spawned, acquired a target, attacked with damage, and $cleanup.")
+            }
+            if ($spawn.Count -gt 0) {
+                return @("REVIEW", "Summon spawned, but target/attack proof is incomplete.")
+            }
             if ($resultText -match "summon|spawn") {
-                return @("REVIEW", "Summon runtime fired; visual/action proof still needed.")
+                return @("REVIEW", "Summon cast result exists; summon combat action proof still needed.")
             }
             return @("FAIL", "No summon/spawn proof in cast result.")
         }

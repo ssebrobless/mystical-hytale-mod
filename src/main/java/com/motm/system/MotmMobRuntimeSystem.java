@@ -73,6 +73,9 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
                     continue;
                 }
                 String roleName = npc.getRoleName();
+                if (mod.getGameplayPlaybackManager() != null && mod.getGameplayPlaybackManager().isActiveSummonRef(ref)) {
+                    continue;
+                }
                 if ("motm_summon".equalsIgnoreCase(roleName)
                         || "Empty_Role".equalsIgnoreCase(roleName)) {
                     continue;

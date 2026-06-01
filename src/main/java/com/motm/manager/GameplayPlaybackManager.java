@@ -2,10 +2,8 @@ package com.motm.manager;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.math.vector.Transform;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
@@ -32,6 +30,8 @@ import com.motm.model.StatusEffect;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.HytaleAssetResolver;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -168,13 +168,14 @@ public class GameplayPlaybackManager {
                 runtimePlayer, player, style, ability, playback);
         AbilitySpecificRuntimeResult specificRuntime = applySpecificCastRuntime(player, ability);
         SupportResolution support = applyCasterRuntime(runtimePlayer, player, ability);
-        CombatResolution combat = projectileLaunch.launched() > 0
+        boolean summonCast = isSummonCast(ability);
+        CombatResolution combat = projectileLaunch.launched() > 0 || summonCast
                 ? CombatResolution.none()
                 : applyCombat(runtimePlayer, player, ability, context);
-        double lifestealHealing = projectileLaunch.launched() > 0
+        double lifestealHealing = projectileLaunch.launched() > 0 || summonCast
                 ? 0.0
                 : applyLifesteal(runtimePlayer, player, combat.totalDamage());
-        EffectResolution targetEffects = projectileLaunch.launched() > 0
+        EffectResolution targetEffects = projectileLaunch.launched() > 0 || summonCast
                 ? EffectResolution.none()
                 : applyTargetEffects(runtimePlayer, player, ability, context);
         LineControlRuntimeResult lineControl = startLineControlRuntime(runtimePlayer, player, ability, context);
@@ -317,7 +318,7 @@ public class GameplayPlaybackManager {
                     && fractionalY < STOMP_LAND_TOLERANCE_BLOCKS
                     && dy <= 0.0;
             if (landed) {
-                fireArmedStomp(runtimePlayer, armed, transform.getTransform().getPosition().clone());
+                fireArmedStomp(runtimePlayer, armed, new Vector3d(transform.getTransform().getPosition()));
                 armedStompByPlayer.remove(playerId, armed);
                 continue;
             }
@@ -373,7 +374,7 @@ public class GameplayPlaybackManager {
 
         List<Vector3d> positions = buildAreaVisualPositions(center, ability);
         if (positions.isEmpty()) {
-            positions = List.of(center.clone());
+            positions = List.of(new Vector3d(center));
         }
 
         String effectId = "MOTM_Terra_Quake_Impact";
@@ -384,7 +385,7 @@ public class GameplayPlaybackManager {
             NPCEntity proxy = new NPCEntity(world);
             proxy.setRoleName(roleId);
             proxy.setDespawnTime(despawnSeconds);
-            world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
+            world.spawnEntity(proxy, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
 
             Ref<EntityStore> proxyRef = proxy.getReference();
             if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
@@ -587,7 +588,7 @@ public class GameplayPlaybackManager {
                     player.getPlayerClass(),
                     style.getId(),
                     ability,
-                    origin.clone(),
+                    new Vector3d(origin),
                     projectileDirection,
                     speedPerTick,
                     maxDistance,
@@ -753,7 +754,7 @@ public class GameplayPlaybackManager {
             thickness = Math.max(1.0, radius * 0.8);
             summary = humanize(terrainEffect.isBlank() ? abilityId : terrainEffect) + " trail";
         } else if (shouldCreatePersonalAuraField(ability)) {
-            centers.add(transform.getTransform().getPosition().clone());
+            centers.add(new Vector3d(transform.getTransform().getPosition()));
             radius = resolveAuraRadius(ability);
             halfWidth = radius;
             thickness = Math.max(1.1, radius * 0.9);
@@ -979,7 +980,7 @@ public class GameplayPlaybackManager {
         int count = Math.max(2, nodes);
         for (int index = 0; index < count; index++) {
             double factor = count == 1 ? 1.0 : index / (double) (count - 1);
-            centers.add(start.clone().addScaled(segment, factor));
+            centers.add(new Vector3d(start).fma(factor, segment));
         }
         return List.copyOf(centers);
     }
@@ -1018,10 +1019,10 @@ public class GameplayPlaybackManager {
             return false;
         }
 
-        Vector3d from = projectile.position().clone();
+        Vector3d from = new Vector3d(projectile.position());
         Vector3d stepDirection = normalize(projectile.direction());
         double stepDistance = Math.min(projectile.speedPerTick(), MAX_PROJECTILE_STEP_DISTANCE);
-        Vector3d to = from.clone().addScaled(stepDirection, stepDistance);
+        Vector3d to = new Vector3d(from).fma(stepDistance, stepDirection);
 
         projectile.position().x = to.x;
         projectile.position().y = to.y;
@@ -1114,7 +1115,7 @@ public class GameplayPlaybackManager {
             return;
         }
 
-        field.center = ownerPosition.clone();
+        field.center = new Vector3d(ownerPosition);
     }
 
     private Ref<EntityStore> resolveProjectileHit(ActiveProjectile projectile,
@@ -1134,7 +1135,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -1150,7 +1151,7 @@ public class GameplayPlaybackManager {
                 Vector3d targetPosition = transform.getTransform().getPosition();
                 double normalizedProjection = dot(subtract(targetPosition, from), segment) / segmentLengthSquared;
                 double clampedProjection = clamp(normalizedProjection, 0.0, 1.0);
-                Vector3d nearestPoint = from.clone().addScaled(segment, clampedProjection);
+                Vector3d nearestPoint = new Vector3d(from).fma(clampedProjection, segment);
                 double distanceToSegment = distance(nearestPoint, targetPosition);
                 if (distanceToSegment > projectile.collisionRadius()) {
                     continue;
@@ -1376,7 +1377,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -1414,7 +1415,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -1435,7 +1436,7 @@ public class GameplayPlaybackManager {
                 Vector3d targetPosition = transform.getTransform().getPosition();
                 double normalizedProjection = dot(subtract(targetPosition, from), segment) / segmentLengthSquared;
                 double clampedProjection = clamp(normalizedProjection, 0.0, 1.0);
-                Vector3d nearestPoint = from.clone().addScaled(segment, clampedProjection);
+                Vector3d nearestPoint = new Vector3d(from).fma(clampedProjection, segment);
                 if (distance(nearestPoint, targetPosition) <= projectile.collisionRadius()) {
                     targets.add(ref);
                 }
@@ -1501,7 +1502,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -1594,7 +1595,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -2183,8 +2184,8 @@ public class GameplayPlaybackManager {
 
         Vector3d relative = subtract(targetPosition, field.center());
         double pushSign = dot(relative, field.forwardDirection()) >= 0 ? 1.0 : -1.0;
-        Vector3d destination = targetPosition.clone()
-                .addScaled(field.forwardDirection(), pushSign * 1.8)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(pushSign * 1.8, field.forwardDirection())
                 .add(0.0, 0.2, 0.0);
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
@@ -2253,7 +2254,7 @@ public class GameplayPlaybackManager {
         NPCEntity proxy = new NPCEntity(world);
         proxy.setRoleName(roleId);
         proxy.setDespawnTime((float) Math.max(0.6, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5));
-        world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
+        world.spawnEntity(proxy, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
 
         Ref<EntityStore> proxyRef = proxy.getReference();
         if (proxyRef == null || !proxyRef.isValid() || proxyRef.getStore() == null) {
@@ -2295,7 +2296,7 @@ public class GameplayPlaybackManager {
             NPCEntity proxy = new NPCEntity(world);
             proxy.setRoleName(roleId);
             proxy.setDespawnTime(despawnTimeSeconds);
-            world.spawnEntity(proxy, position.clone(), new Vector3f(0f, 0f, 0f));
+            world.spawnEntity(proxy, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
 
             Ref<EntityStore> proxyRef = proxy.getReference();
             if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
@@ -2460,7 +2461,7 @@ public class GameplayPlaybackManager {
         }
 
         List<Vector3d> positions = new ArrayList<>();
-        positions.add(center.clone());
+        positions.add(new Vector3d(center));
         String castType = lower(ability.getCastType());
         if ("barrier".equals(castType) && lineDirection != null && lineDirection.isFinite()) {
             double span = Math.max(2.0, Math.min(Math.max(halfWidth, 0.0), 7.0));
@@ -2469,7 +2470,7 @@ public class GameplayPlaybackManager {
                 if (Math.abs(offset) < 0.3) {
                     continue;
                 }
-                positions.add(center.clone().addScaled(normalized, offset));
+                positions.add(new Vector3d(center).fma(offset, normalized));
             }
             return positions;
         }
@@ -2487,19 +2488,19 @@ public class GameplayPlaybackManager {
         }
 
         List<Vector3d> positions = new ArrayList<>();
-        positions.add(center.clone());
+        positions.add(new Vector3d(center));
         double radius = ability.getRadius() > 0 ? ability.getRadius() : DEFAULT_AREA_RADIUS;
         double ringRadius = Math.max(1.8, Math.min(radius * 0.62, 5.5));
-        positions.add(center.clone().add(ringRadius, 0.0, 0.0));
-        positions.add(center.clone().add(-ringRadius, 0.0, 0.0));
-        positions.add(center.clone().add(0.0, 0.0, ringRadius));
-        positions.add(center.clone().add(0.0, 0.0, -ringRadius));
+        positions.add(new Vector3d(center).add(ringRadius, 0.0, 0.0));
+        positions.add(new Vector3d(center).add(-ringRadius, 0.0, 0.0));
+        positions.add(new Vector3d(center).add(0.0, 0.0, ringRadius));
+        positions.add(new Vector3d(center).add(0.0, 0.0, -ringRadius));
         if (radius >= 4.5) {
             double diagonal = ringRadius * 0.72;
-            positions.add(center.clone().add(diagonal, 0.0, diagonal));
-            positions.add(center.clone().add(-diagonal, 0.0, diagonal));
-            positions.add(center.clone().add(diagonal, 0.0, -diagonal));
-            positions.add(center.clone().add(-diagonal, 0.0, -diagonal));
+            positions.add(new Vector3d(center).add(diagonal, 0.0, diagonal));
+            positions.add(new Vector3d(center).add(-diagonal, 0.0, diagonal));
+            positions.add(new Vector3d(center).add(diagonal, 0.0, -diagonal));
+            positions.add(new Vector3d(center).add(-diagonal, 0.0, -diagonal));
         }
         return positions;
     }
@@ -2527,7 +2528,7 @@ public class GameplayPlaybackManager {
         if (direction == null || !direction.isFinite()) {
             direction = new Vector3d(0.0, 0.0, 1.0);
         } else {
-            direction = direction.clone();
+            direction = new Vector3d(direction);
         }
 
         double horizontalDistance = resolveHorizontalMovement(ability, castType);
@@ -2556,9 +2557,9 @@ public class GameplayPlaybackManager {
             horizontalDirection.normalize();
         }
 
-        Vector3d start = currentTransform.getPosition().clone();
-        Vector3d target = start.clone()
-                .addScaled(horizontalDirection, horizontalDistance)
+        Vector3d start = new Vector3d(currentTransform.getPosition());
+        Vector3d target = new Vector3d(start)
+                .fma(horizontalDistance, horizontalDirection)
                 .add(0.0, verticalDistance, 0.0);
         runtimePlayer.moveTo(playerRef, target.x, target.y, target.z, store);
 
@@ -2567,7 +2568,7 @@ public class GameplayPlaybackManager {
                 horizontalDistance,
                 verticalDistance,
                 start,
-                target.clone(),
+                new Vector3d(target),
                 buildMovementSummary(castType, horizontalDistance, verticalDistance)
         );
     }
@@ -3056,7 +3057,7 @@ public class GameplayPlaybackManager {
         NPCEntity summon = new NPCEntity(world);
         summon.setRoleName(modelId);
         summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
-        world.spawnEntity(summon, spawnPosition, new Vector3f(0f, 0f, 0f));
+        world.spawnEntity(summon, spawnPosition, new Rotation3f(0f, 0f, 0f));
 
         Ref<EntityStore> summonRef = summon.getReference();
         if (summonRef == null || !summonRef.isValid()) {
@@ -3067,8 +3068,25 @@ public class GameplayPlaybackManager {
         applyEffectById(summonRef, summonRef.getStore(), resolveImpactEffectId(player.getPlayerClass(), style.getId(), ability));
 
         long expireAt = System.currentTimeMillis() + (long) (Math.max(2.0, ability.getDurationSeconds()) * 1000);
-        activeSummonsByOwner.computeIfAbsent(player.getPlayerId(), ignored -> new ArrayList<>())
-                .add(createActiveSummon(player, playerRef, summonRef, player.getPlayerClass(), style.getId(), ability, expireAt));
+        ActiveSummon activeSummon = createActiveSummon(
+                player,
+                playerRef,
+                summonRef,
+                player.getPlayerClass(),
+                style.getId(),
+                ability,
+                expireAt
+        );
+        activeSummonsByOwner.computeIfAbsent(player.getPlayerId(), ignored -> new ArrayList<>()).add(activeSummon);
+        LOG.info("[MOTM] summon combat spawn: owner=" + player.getPlayerName()
+                + " ability=" + ability.getId()
+                + " role=" + activeSummon.role
+                + " roleName=" + modelId
+                + " tracked=true"
+                + " model=" + modelId
+                + " pos=" + spawnPosition
+                + " attackRange=" + AbilityPresentation.formatDecimal(activeSummon.attackRange)
+                + " chaseRange=" + AbilityPresentation.formatDecimal(activeSummon.chaseRange));
 
         return new SummonRuntimeResult(1, 0, "summoned " + humanize(modelId));
     }
@@ -3151,6 +3169,9 @@ public class GameplayPlaybackManager {
         if (npc != null) {
             npc.setToDespawn();
         }
+        LOG.info("[MOTM] summon combat despawn: owner=" + summon.ownerPlayerId
+                + " ability=" + summon.abilityId()
+                + " role=" + summon.role);
         return true;
     }
 
@@ -3249,7 +3270,7 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d direction = normalize(subtract(ownerPosition, summonPosition));
-        Vector3d destination = ownerPosition.clone().addScaled(direction, -2.0);
+        Vector3d destination = new Vector3d(ownerPosition).fma(-2.0, direction);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
     }
 
@@ -3271,7 +3292,7 @@ public class GameplayPlaybackManager {
         Vector3d direction = normalize(subtract(targetPosition, summonPosition));
         double distance = distance(summonPosition, targetPosition);
         double travel = Math.max(0.4, Math.min(4.0, distance - desiredRange));
-        Vector3d destination = summonPosition.clone().addScaled(direction, travel);
+        Vector3d destination = new Vector3d(summonPosition).fma(travel, direction);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
     }
 
@@ -3293,7 +3314,7 @@ public class GameplayPlaybackManager {
         Vector3d direction = normalize(subtract(summonPosition, targetPosition));
         double distance = distance(summonPosition, targetPosition);
         double retreat = Math.max(0.5, Math.min(3.4, desiredDistance - distance));
-        Vector3d destination = summonPosition.clone().addScaled(direction, retreat);
+        Vector3d destination = new Vector3d(summonPosition).fma(retreat, direction);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
     }
 
@@ -3333,6 +3354,12 @@ public class GameplayPlaybackManager {
         summon.targetLockExpireAtMillis = targetRef == null
                 ? 0L
                 : now + ("tank".equals(summon.role) ? 2200L : 1400L);
+        if (targetRef != null && targetRef.isValid()) {
+            LOG.info("[MOTM] summon combat target: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " role=" + summon.role
+                    + " target=" + resolveEntityId(targetRef, store));
+        }
         return targetRef;
     }
 
@@ -3345,7 +3372,7 @@ public class GameplayPlaybackManager {
         }
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
-        if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+        if (npc == null || npc.isDespawning() || isMotmSummon(targetRef, npc)) {
             return false;
         }
 
@@ -3374,7 +3401,7 @@ public class GameplayPlaybackManager {
         Vector3d approach = ownerPosition != null
                 ? normalize(subtract(targetPosition, ownerPosition))
                 : new Vector3d(0.0, 0.0, 1.0);
-        Vector3d destination = targetPosition.clone().addScaled(approach, -1.15);
+        Vector3d destination = new Vector3d(targetPosition).fma(-1.15, approach);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
     }
 
@@ -3412,6 +3439,12 @@ public class GameplayPlaybackManager {
 
         applyEffectById(targetRef, store, resolveImpactEffectId(summon.classId, summon.styleId, summon.ability));
         applySummonAttackEffects(summon, owner, targetRef, store, now);
+        LOG.info("[MOTM] summon combat attack: owner=" + owner.getPlayerName()
+                + " ability=" + summon.abilityId()
+                + " role=" + summon.role
+                + " target=" + targetEntityId
+                + " damage=" + AbilityPresentation.formatDecimal(resolvedDamage)
+                + " ranged=" + summon.ranged);
         summon.nextAttackAtMillis = now + Math.max(450L, nowWithinBuffWindow(summon, now)
                 ? (long) (summon.attackIntervalMillis * 0.75)
                 : summon.attackIntervalMillis);
@@ -3804,7 +3837,7 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d previous = form.lastOwnerPosition();
-        form.lastOwnerPosition = origin.clone();
+        form.lastOwnerPosition = new Vector3d(origin);
         if (previous == null) {
             return;
         }
@@ -3921,7 +3954,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -3973,7 +4006,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -3989,7 +4022,7 @@ public class GameplayPlaybackManager {
                 Vector3d targetPosition = transform.getTransform().getPosition();
                 double normalizedProjection = dot(subtract(targetPosition, from), segment) / segmentLengthSquared;
                 double clampedProjection = clamp(normalizedProjection, 0.0, 1.0);
-                Vector3d nearestPoint = from.clone().addScaled(segment, clampedProjection);
+                Vector3d nearestPoint = new Vector3d(from).fma(clampedProjection, segment);
                 double candidateDistance = distance(nearestPoint, targetPosition);
                 if (candidateDistance <= radius) {
                     candidates.add(new SegmentTargetCandidate(ref, distance(from, nearestPoint)));
@@ -4192,7 +4225,7 @@ public class GameplayPlaybackManager {
 
         Store<EntityStore> store = playerRef.getStore();
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
-        if (npc == null || npc.isDespawning() || isMotmSummon(npc) || store.getComponent(targetRef, DeathComponent.getComponentType()) != null) {
+        if (npc == null || npc.isDespawning() || isMotmSummon(targetRef, npc) || store.getComponent(targetRef, DeathComponent.getComponentType()) != null) {
             return null;
         }
 
@@ -4762,7 +4795,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -4875,7 +4908,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
                     continue;
                 }
 
@@ -4919,7 +4952,7 @@ public class GameplayPlaybackManager {
         }
 
         NPCEntity npc = store.getComponent(explicitTargetRef, NPCEntity.getComponentType());
-        if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+        if (npc == null || npc.isDespawning() || isMotmSummon(explicitTargetRef, npc)) {
             return null;
         }
 
@@ -5015,7 +5048,7 @@ public class GameplayPlaybackManager {
             return null;
         }
 
-        Vector3d direction = transform.getTransform().getDirection().clone();
+        Vector3d direction = new Vector3d(transform.getTransform().getDirection());
         if (!direction.isFinite()) {
             return new Vector3d(0.0, 0.0, 1.0);
         }
@@ -5800,8 +5833,8 @@ public class GameplayPlaybackManager {
 
         double push = ability.getKnockbackForce() > 0 ? Math.min(ability.getKnockbackForce(), 5.0) : 2.5;
         double lift = ability.isKnockup() ? Math.max(0.6, ability.getLaunchHeight()) : 0.0;
-        Vector3d destination = targetPosition.clone()
-                .addScaled(direction, push)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(push, direction)
                 .add(0.0, lift, 0.0);
         boolean wallImpact = isSolidTerrainImpact(store, destination, direction);
 
@@ -5900,8 +5933,8 @@ public class GameplayPlaybackManager {
             return false;
         }
 
-        Vector3d destination = targetPosition.clone()
-                .addScaled(direction, dragStep)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(dragStep, direction)
                 .add(0.0, 0.15, 0.0);
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
@@ -5922,7 +5955,7 @@ public class GameplayPlaybackManager {
 
         World world = store.getExternalData().getWorld();
         double probeDistance = 0.9;
-        Vector3d ahead = destination.clone().addScaled(direction, probeDistance);
+        Vector3d ahead = new Vector3d(destination).fma(probeDistance, direction);
         return isSolidBlock(world, destination) || isSolidBlock(world, ahead);
     }
 
@@ -5992,8 +6025,8 @@ public class GameplayPlaybackManager {
             return false;
         }
 
-        Vector3d destination = targetPosition.clone()
-                .addScaled(direction, step)
+        Vector3d destination = new Vector3d(targetPosition)
+                .fma(step, direction)
                 .add(0.0, verticalLift, 0.0);
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
@@ -6055,12 +6088,51 @@ public class GameplayPlaybackManager {
         return LINE_CAST_TYPES.contains(castType) || MULTI_TARGET_CAST_TYPES.contains(castType);
     }
 
-    private boolean isMotmSummon(NPCEntity npc) {
+    private boolean isSummonCast(AbilityData ability) {
+        String castType = ability != null ? lower(ability.getCastType()) : "";
+        return "summon".equals(castType) || "summon_buff".equals(castType);
+    }
+
+    public synchronized boolean isActiveSummonRef(Ref<EntityStore> ref) {
+        if (ref == null) {
+            return false;
+        }
+        for (List<ActiveSummon> summons : activeSummonsByOwner.values()) {
+            for (ActiveSummon summon : summons) {
+                if (ref.equals(summon.ref())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public synchronized int clearActiveSummonsForOwner(String playerId) {
+        if (playerId == null || playerId.isBlank()) {
+            return 0;
+        }
+        List<ActiveSummon> summons = activeSummonsByOwner.remove(playerId);
+        if (summons == null || summons.isEmpty()) {
+            return 0;
+        }
+        int cleared = 0;
+        for (ActiveSummon summon : summons) {
+            if (summon != null) {
+                despawnSummon(summon);
+                cleared++;
+            }
+        }
+        return cleared;
+    }
+
+    private boolean isMotmSummon(Ref<EntityStore> ref, NPCEntity npc) {
+        if (isActiveSummonRef(ref)) {
+            return true;
+        }
         if (npc == null || npc.getRoleName() == null) {
             return false;
         }
-        return SUMMON_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
-                || PROJECTILE_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
+        return PROJECTILE_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
                 || FIELD_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName());
     }
 
@@ -6120,7 +6192,7 @@ public class GameplayPlaybackManager {
     }
 
     private Vector3d normalize(Vector3d vector) {
-        Vector3d normalized = vector.clone();
+        Vector3d normalized = new Vector3d(vector);
         if (normalized.length() < 0.0001) {
             return new Vector3d(0.0, 0.0, 1.0);
         }
@@ -6373,6 +6445,7 @@ public class GameplayPlaybackManager {
 
         public Ref<EntityStore> ownerRef() { return ownerRef; }
         public Ref<EntityStore> ref() { return ref; }
+        public String abilityId() { return ability != null ? ability.getId() : ""; }
         public long expireAtMillis() { return expireAtMillis; }
         public void extend(long extensionMillis) { expireAtMillis += extensionMillis; }
     }
@@ -6479,7 +6552,7 @@ public class GameplayPlaybackManager {
             this.weaponRiderToken = weaponRiderToken;
             this.locomotionTriggerDistance = locomotionTriggerDistance;
             this.collisionRadius = collisionRadius;
-            this.lastOwnerPosition = lastOwnerPosition != null ? lastOwnerPosition.clone() : null;
+            this.lastOwnerPosition = lastOwnerPosition != null ? new Vector3d(lastOwnerPosition) : null;
             this.summary = summary;
         }
 

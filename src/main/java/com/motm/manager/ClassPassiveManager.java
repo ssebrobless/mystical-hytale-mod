@@ -2,8 +2,8 @@ package com.motm.manager;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3i;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
 import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.ColorLight;
 import com.hypixel.hytale.protocol.BlockMaterial;
@@ -360,7 +360,7 @@ public class ClassPassiveManager {
         Vector3d previousPosition = lastPositionsByPlayer.get(playerId);
         boolean moved = hasMoved(previousPosition, position);
 
-        lastPositionsByPlayer.put(playerId, position.clone());
+        lastPositionsByPlayer.put(playerId, new Vector3d(position));
         if (moved) {
             stationaryTicksByPlayer.put(playerId, 0);
             terraShieldPrimedPlayers.remove(playerId);
@@ -397,7 +397,7 @@ public class ClassPassiveManager {
 
         Vector3d position = getPosition(playerRef, store);
         if (position != null) {
-            lastPositionsByPlayer.put(playerId, position.clone());
+            lastPositionsByPlayer.put(playerId, new Vector3d(position));
         }
     }
 
@@ -409,7 +409,7 @@ public class ClassPassiveManager {
 
         Vector3d position = getPosition(playerRef, playerRef.getStore());
         if (position != null) {
-            lastPositionsByPlayer.put(playerId, position.clone());
+            lastPositionsByPlayer.put(playerId, new Vector3d(position));
         }
     }
 
@@ -532,7 +532,7 @@ public class ClassPassiveManager {
             return BlockMaterial.Empty;
         }
 
-        long chunkIndex = ChunkUtil.indexChunkFromBlock(targetBlock.getX(), targetBlock.getZ());
+        long chunkIndex = ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z);
         WorldChunk chunk = world.getChunkIfLoaded(chunkIndex);
         if (chunk == null) {
             chunk = world.getChunkIfInMemory(chunkIndex);
@@ -541,9 +541,9 @@ public class ClassPassiveManager {
             return BlockMaterial.Empty;
         }
 
-        int localX = ChunkUtil.localCoordinate(targetBlock.getX());
-        int localZ = ChunkUtil.localCoordinate(targetBlock.getZ());
-        int y = targetBlock.getY();
+        int localX = ChunkUtil.localCoordinate(targetBlock.x);
+        int localZ = ChunkUtil.localCoordinate(targetBlock.z);
+        int y = targetBlock.y;
         var blockType = chunk.getBlockType(localX, y, localZ);
         if (blockType == null) {
             return BlockMaterial.Empty;
@@ -647,7 +647,7 @@ public class ClassPassiveManager {
         long packed = Player.getPackedMaterialAndFluidAtBreathingHeight(entityRef, store);
         BlockMaterial material = BlockMaterial.fromValue((int) (packed >>> 32));
         int fluidId = (int) packed;
-        return runtimePlayer.canBreathe(entityRef, material, fluidId, store);
+        return material == BlockMaterial.Empty && fluidId == 0;
     }
 
     private void maximizeOxygen(Ref<EntityStore> entityRef, Store<EntityStore> store) {

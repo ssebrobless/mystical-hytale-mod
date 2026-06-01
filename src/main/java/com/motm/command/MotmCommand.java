@@ -1,7 +1,7 @@
 package com.motm.command;
 
 import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.math.vector.Vector3i;
+import org.joml.Vector3i;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.MenteesMod;
@@ -767,6 +767,7 @@ public class MotmCommand {
             case "relocate", "unstuck" -> handleDevRelocate(player, args);
             case "daylight", "noon" -> mod.queueDaylightForTesting(player.getPlayerId());
             case "freecast" -> handleDevFreeCast(player, args);
+            case "audit" -> handleDevAudit(player, args);
             case "effects" -> handleDevEffects(player);
             case "clear" -> handleDevClear(player, args);
             case "level" -> handleDevLevel(player, args);
@@ -778,6 +779,15 @@ public class MotmCommand {
             case "reset" -> handleDevReset(player, args);
             default -> "[MOTM] Unknown dev subcommand.\n" + getDevHelpMessage();
         };
+    }
+
+    private String handleDevAudit(PlayerData player, String[] args) {
+        if (args.length >= 4 && "marker".equalsIgnoreCase(args[2])) {
+            String marker = args[3];
+            LOG.info("[MOTM] Dev audit marker: " + marker + " playerId=" + player.getPlayerId());
+            return "[MOTM] Dev audit marker: " + marker + ".";
+        }
+        return "[MOTM] Usage: /motm dev audit marker <id>";
     }
 
     private String handleDevBook(PlayerData player, Player runtimePlayer) {
@@ -1161,6 +1171,7 @@ public class MotmCommand {
                 + "  /motm dev relocate <up|flatlands>\n"
                 + "  /motm dev daylight\n"
                 + "  /motm dev freecast <on|off>\n"
+                + "  /motm dev audit marker <id>\n"
                 + "  /motm dev effects\n"
                 + "  /motm dev clear\n"
                 + "  /motm dev level set <n>\n"

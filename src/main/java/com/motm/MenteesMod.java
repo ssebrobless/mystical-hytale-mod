@@ -54,15 +54,15 @@ import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.protocol.BenchType;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.MouseButtonState;
 import com.hypixel.hytale.protocol.MouseButtonType;
 import com.hypixel.hytale.protocol.packets.interface_.HudComponent;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -183,6 +183,7 @@ public class MenteesMod extends JavaPlugin {
             "Test_Dummy_Stationary",
             "Bat",
             "Empty_Role",
+            "motm_summon",
             "Slug_Magma",
             "Spark_Living"
     );
@@ -1035,7 +1036,7 @@ public class MenteesMod extends JavaPlugin {
 
         player.giveItem(new ItemStack(DEFAULT_SPELLBOOK_ITEM_ID), entityRef, entityRef.getStore());
         LOG.info("[MOTM] Granted spellbook item: " + DEFAULT_SPELLBOOK_ITEM_ID);
-        player.sendMessage(Message.raw(
+        sendPlayerMessage(player, Message.raw(
                 "[MOTM] A Mentees spellbook has been placed in your inventory. "
                         + "Cast with Left Click / Right Click / Use while equipped. "
                         + "Ability 1 / 2 / 3 still work as alternate bindings. "
@@ -1079,7 +1080,7 @@ public class MenteesMod extends JavaPlugin {
             player.giveItem(new ItemStack(DEFAULT_SPELLBOOK_ITEM_ID), entityRef, entityRef.getStore());
         }
 
-        player.sendMessage(Message.raw(
+        sendPlayerMessage(player, Message.raw(
                 "[MOTM] Your legacy spellbook has been updated to the new casting focus. "
                         + "Cast with Left Click / Right Click / Use while equipped."
         ));
@@ -1104,7 +1105,7 @@ public class MenteesMod extends JavaPlugin {
         }
 
         player.giveItem(new ItemStack(DEFAULT_DEV_GRIMOIRE_ITEM_ID), entityRef, entityRef.getStore());
-        player.sendMessage(Message.raw(
+        sendPlayerMessage(player, Message.raw(
                 "[MOTM] A Dev Grimoire has been placed in your inventory. "
                         + "Use to open it, then Ability 1 / 2 / 3 to navigate."
         ));
@@ -1398,13 +1399,13 @@ public class MenteesMod extends JavaPlugin {
         String normalizedMode = normalizeStyleTestMobMode(mode);
         boolean closeGroundedTarget = "close".equals(normalizedMode) || "stationary".equals(normalizedMode);
         Vector3d groundPosition = closeGroundedTarget
-                ? basePosition.clone().addScaled(horizontalForward, 1.6)
-                : basePosition.clone()
-                        .addScaled(horizontalForward, 5.0)
-                        .addScaled(right, -8.0);
-        Vector3d floatingPosition = basePosition.clone()
-                .addScaled(horizontalForward, 5.0)
-                .addScaled(right, -5.0);
+                ? new Vector3d(basePosition).fma(1.6, horizontalForward)
+                : new Vector3d(basePosition)
+                        .fma(5.0, horizontalForward)
+                        .fma(-8.0, right);
+        Vector3d floatingPosition = new Vector3d(basePosition)
+                .fma(5.0, horizontalForward)
+                .fma(-5.0, right);
         floatingPosition.y += 3.0;
 
         World world = runtimePlayer.getWorld();
@@ -1440,9 +1441,13 @@ public class MenteesMod extends JavaPlugin {
     private String clearStyleTestMobsNow(String playerId, Store<EntityStore> currentStore, Player player) {
         int cleared = clearTrackedStyleTestTargets(playerId);
         int staleCleared = clearNearbyStyleTestTargets(currentStore, player);
-        String summary = "[MOTM] Style test mobs cleared: count=" + (cleared + staleCleared)
+        int summonCleared = gameplayPlaybackManager != null
+                ? gameplayPlaybackManager.clearActiveSummonsForOwner(playerId)
+                : 0;
+        String summary = "[MOTM] Style test mobs cleared: count=" + (cleared + staleCleared + summonCleared)
                 + " tracked=" + cleared
-                + " staleNearby=" + staleCleared;
+                + " staleNearby=" + staleCleared
+                + " summons=" + summonCleared;
         LOG.info(summary + " playerId=" + playerId);
         return summary;
     }
@@ -1559,7 +1564,7 @@ public class MenteesMod extends JavaPlugin {
             NPCEntity npc = new NPCEntity(world);
             npc.setRoleName(roleName);
             npc.setDespawnTime(240.0f);
-            world.spawnEntity(npc, position.clone(), new Vector3f(0f, 0f, 0f));
+            world.spawnEntity(npc, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
 
             Ref<EntityStore> ref = npc.getReference();
             if (ref == null || !ref.isValid() || ref.getStore() == null) {
@@ -1591,7 +1596,7 @@ public class MenteesMod extends JavaPlugin {
 
         MotmStatusHud hud = new MotmStatusHud(playerRef, this);
         statusHuds.put(playerId, hud);
-        player.getHudManager().setCustomHud(playerRef, hud);
+        player.getHudManager().addCustomHud(playerRef, hud);
         try {
             // Keep the native hotbar, but let the MOTM HUD own the right-side spell lane.
             player.getHudManager().hideHudComponents(
@@ -1711,7 +1716,7 @@ public class MenteesMod extends JavaPlugin {
 
     private void ensureFreeCastInvulnerability(Player player) {
         if (!setRuntimeInvulnerability(player, true) && player != null) {
-            player.sendMessage(Message.raw("[MOTM] Test Protection warning: native invulnerability did not attach. "
+            sendPlayerMessage(player, Message.raw("[MOTM] Test Protection warning: native invulnerability did not attach. "
                     + "Free-cast is still on, but arena mobs may still hit you."));
         }
     }
@@ -1798,7 +1803,7 @@ public class MenteesMod extends JavaPlugin {
             if ((request.notifyFailures() || isDevToolsEnabled())
                     && failureMessage != null
                     && !failureMessage.isBlank()) {
-                player.sendMessage(Message.raw(failureMessage));
+                sendPlayerMessage(player, Message.raw(failureMessage));
             }
             pendingAbilityCasts.remove(request);
         }
@@ -1855,7 +1860,7 @@ public class MenteesMod extends JavaPlugin {
 
             String mode = pendingStyleTestMobSpawns.get(playerId);
             String result = spawnStyleTestMobsNow(playerId, player, mode);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             pendingStyleTestMobSpawns.remove(playerId);
         }
     }
@@ -1872,7 +1877,7 @@ public class MenteesMod extends JavaPlugin {
             }
 
             String result = clearStyleTestMobsNow(playerId, currentStore, player);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             pendingStyleTestMobClears.remove(playerId);
         }
     }
@@ -1889,7 +1894,7 @@ public class MenteesMod extends JavaPlugin {
             }
 
             String result = countStyleTestMobsNow(playerId, currentStore, player);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
             pendingStyleTestMobCounts.remove(playerId);
         }
     }
@@ -1917,7 +1922,7 @@ public class MenteesMod extends JavaPlugin {
                 pendingProofRequests.remove(playerId);
             }
             LOG.info(result);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
         }
     }
 
@@ -1944,7 +1949,7 @@ public class MenteesMod extends JavaPlugin {
                 pendingDevRelocations.remove(playerId);
             }
             LOG.info(result);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
         }
     }
 
@@ -1981,7 +1986,7 @@ public class MenteesMod extends JavaPlugin {
                 pendingDaylightRequests.remove(playerId);
             }
             LOG.info(result);
-            player.sendMessage(Message.raw(result));
+            sendPlayerMessage(player, Message.raw(result));
         }
     }
 
@@ -1998,7 +2003,7 @@ public class MenteesMod extends JavaPlugin {
                 continue;
             }
             try {
-                proof.originalSelection().place(null, proof.world(), Vector3i.ZERO, BlockMask.EMPTY);
+                proof.originalSelection().place(null, proof.world(), new Vector3i(0, 0, 0), BlockMask.EMPTY);
                 LOG.info("[MOTM] Proof cleanup restored selection: proofId=" + proof.proofId()
                         + " anchor=" + proof.anchor());
             } catch (Throwable e) {
@@ -2154,18 +2159,18 @@ public class MenteesMod extends JavaPlugin {
         }
 
         Vector3i baseAnchor = proofAnchor(base, forward, 4.0);
-        Vector3i anchor = new Vector3i(baseAnchor.getX(), baseAnchor.getY() + yOffset, baseAnchor.getZ());
+        Vector3i anchor = new Vector3i(baseAnchor.x, baseAnchor.y + yOffset, baseAnchor.z);
         BlockSelection selection = new BlockSelection();
-        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
-        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setPosition(anchor.x, anchor.y, anchor.z);
+        selection.setAnchorAtWorldPos(anchor.x, anchor.y, anchor.z);
         Vector3i rightStep = proofHorizontalRightStep(forward);
         int half = width / 2;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int offset = x - half;
-                int wx = anchor.getX() + (rightStep.getX() * offset);
-                int wy = anchor.getY() + y;
-                int wz = anchor.getZ() + (rightStep.getZ() * offset);
+                int wx = anchor.x + (rightStep.x * offset);
+                int wy = anchor.y + y;
+                int wz = anchor.z + (rightStep.z * offset);
                 selection.addBlockAtWorldPos(wx, wy, wz, blockTypeId, 0, 0, 0);
             }
         }
@@ -2209,8 +2214,8 @@ public class MenteesMod extends JavaPlugin {
 
         Vector3i anchor = proofAnchor(base, forward, 5.0);
         BlockSelection selection = new BlockSelection();
-        selection.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
-        selection.setAnchorAtWorldPos(anchor.getX(), anchor.getY(), anchor.getZ());
+        selection.setPosition(anchor.x, anchor.y, anchor.z);
+        selection.setAnchorAtWorldPos(anchor.x, anchor.y, anchor.z);
         byte fluidLevel = (byte) Math.max(1, fluid.getMaxFluidLevel());
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
@@ -2218,7 +2223,7 @@ public class MenteesMod extends JavaPlugin {
                 if (dist > radius + 0.2) {
                     continue;
                 }
-                selection.addFluidAtWorldPos(anchor.getX() + x, anchor.getY(), anchor.getZ() + z, fluidTypeId, fluidLevel);
+                selection.addFluidAtWorldPos(anchor.x + x, anchor.y, anchor.z + z, fluidTypeId, fluidLevel);
             }
         }
         return placeTemporarySelection(proofId, world, anchor, selection, 4000L,
@@ -2271,7 +2276,7 @@ public class MenteesMod extends JavaPlugin {
                                            long lifetimeMillis,
                                            String summary) {
         try {
-            BlockSelection original = selection.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            BlockSelection original = selection.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
             activeProofSelections.add(new TemporaryProofSelection(
                     proofId,
                     world,
@@ -2296,11 +2301,11 @@ public class MenteesMod extends JavaPlugin {
         if (world == null || base == null || forward == null) {
             return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform.";
         }
-        Vector3d position = base.clone().addScaled(forward, distanceAhead);
+        Vector3d position = new Vector3d(base).fma(distanceAhead, forward);
         NPCEntity proxy = new NPCEntity(world);
         proxy.setRoleName(roleId);
         proxy.setDespawnTime(4.5f);
-        world.spawnEntity(proxy, position, new Vector3f(0f, 0f, 0f));
+        world.spawnEntity(proxy, position, new Rotation3f(0f, 0f, 0f));
 
         Ref<EntityStore> ref = proxy.getReference();
         boolean effectApplied = applyProofEffectToRef(ref, effectId);
@@ -2327,14 +2332,14 @@ public class MenteesMod extends JavaPlugin {
         if (transform == null || transform.getPosition() == null) {
             return "[MOTM] Proof " + proofId + " FAIL: missing TransformComponent.";
         }
-        Vector3d start = transform.getPosition().clone();
-        Vector3d destination = start.clone().addScaled(forward, distance);
+        Vector3d start = transform.getPosition();
+        Vector3d destination = new Vector3d(start).fma(distance, forward);
         if (surfaceRecovery) {
             destination.y = Math.max(start.y, destination.y);
         }
         Velocity velocity = currentStore.getComponent(ref, Velocity.getComponentType());
         if (velocity != null && !surfaceRecovery) {
-            velocity.addForce(forward.x * 1.8, 0.15, forward.z * 1.8);
+            velocity.addVelocity(forward.x * 1.8, 0.15, forward.z * 1.8);
         } else {
             transform.teleportPosition(destination);
         }
@@ -2345,7 +2350,7 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private Vector3i proofAnchor(Vector3d base, Vector3d forward, double distanceAhead) {
-        Vector3d anchor = base.clone().addScaled(forward, distanceAhead);
+        Vector3d anchor = new Vector3d(base).fma(distanceAhead, forward);
         return new Vector3i(
                 (int) Math.floor(anchor.x),
                 (int) Math.floor(base.y),
@@ -2375,7 +2380,7 @@ public class MenteesMod extends JavaPlugin {
             }
 
             if (test.nextAbilityIndex() >= test.abilityIds().size()) {
-                player.sendMessage(Message.raw("[MOTM] Live style test complete: "
+                sendPlayerMessage(player, Message.raw("[MOTM] Live style test complete: "
                         + humanize(test.classId()) + " > " + test.styleName() + "."));
                 activeStyleTests.remove(test.playerId());
                 continue;
@@ -2383,7 +2388,7 @@ public class MenteesMod extends JavaPlugin {
 
             AbilityData ability = styleManager.findAbility(playerData, test.abilityIds().get(test.nextAbilityIndex()));
             if (ability == null) {
-                player.sendMessage(Message.raw("[MOTM] Live style test skipped a missing ability at step "
+                sendPlayerMessage(player, Message.raw("[MOTM] Live style test skipped a missing ability at step "
                         + (test.nextAbilityIndex() + 1) + "."));
                 activeStyleTests.put(test.playerId(), test.advance(now + 1200L));
                 continue;
@@ -2391,7 +2396,7 @@ public class MenteesMod extends JavaPlugin {
 
             Ref<EntityStore> targetRef = findNearestStyleTestNpc(currentStore, player, 28.0);
             Vector3i targetBlock = resolveStyleTestTargetBlock(currentStore, player, targetRef);
-            player.sendMessage(Message.raw("[MOTM] Live test step "
+            sendPlayerMessage(player, Message.raw("[MOTM] Live test step "
                     + (test.nextAbilityIndex() + 1) + "/" + test.abilityIds().size()
                     + ": " + ability.getName()));
 
@@ -2417,7 +2422,7 @@ public class MenteesMod extends JavaPlugin {
                     + " granted=" + granted
                     + " nowHasSpellbook=" + playerHasSpellbook(player));
             if (!granted && playerHasSpellbook(player)) {
-                player.sendMessage(Message.raw("[MOTM] You already have a spellbook in your inventory."));
+                sendPlayerMessage(player, Message.raw("[MOTM] You already have a spellbook in your inventory."));
             }
             pendingSpellbookGrants.remove(playerId);
         }
@@ -2436,7 +2441,7 @@ public class MenteesMod extends JavaPlugin {
 
             boolean granted = ensureDevBookItem(player);
             if (!granted && playerHasDevBook(player)) {
-                player.sendMessage(Message.raw("[MOTM] You already have a Dev Grimoire in your inventory."));
+                sendPlayerMessage(player, Message.raw("[MOTM] You already have a Dev Grimoire in your inventory."));
             }
             pendingDevBookGrants.remove(playerId);
         }
@@ -2545,7 +2550,7 @@ public class MenteesMod extends JavaPlugin {
 
         player.giveItem(createHydroContainerStack(targetTier), entityRef, entityRef.getStore());
         if (notify) {
-            player.sendMessage(Message.raw(
+            sendPlayerMessage(player, Message.raw(
                     "[MOTM] Your Hydro waterskin is now "
                             + resourceManager.getWaterContainerInfo(playerData.getPlayerId())
                             + ". Keep it in your inventory like ammo while casting with your spellbook, then right-click a water source with your empty hand, spellbook, or waterskin to refill."
@@ -2861,7 +2866,7 @@ public class MenteesMod extends JavaPlugin {
             return "[MOTM] Dev relocate failed: TransformComponent missing.";
         }
 
-        Vector3d start = transform.getTransform().getPosition().clone();
+        Vector3d start = transform.getTransform().getPosition();
         String normalizedTarget = target == null ? "up" : target.toLowerCase(Locale.ROOT);
         Vector3d destination = switch (normalizedTarget) {
             case "flatlands", "lane" -> new Vector3d(start.x + 96.0, Math.max(start.y + 40.0, 160.0), start.z + 96.0);
@@ -2915,7 +2920,7 @@ public class MenteesMod extends JavaPlugin {
             }
         }
         try {
-            BlockSelection original = platform.place(null, world, Vector3i.ZERO, BlockMask.EMPTY);
+            BlockSelection original = platform.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
             activeProofSelections.add(new TemporaryProofSelection(
                     "dev-relocate-" + target,
                     world,
@@ -2987,6 +2992,13 @@ public class MenteesMod extends JavaPlugin {
             return entityRef.getStore().getComponent(entityRef, PlayerRef.getComponentType());
         } catch (IllegalStateException ignored) {
             return null;
+        }
+    }
+
+    private void sendPlayerMessage(Player player, Message message) {
+        PlayerRef playerRef = getUniversePlayerRef(player);
+        if (playerRef != null && message != null) {
+            playerRef.sendMessage(message);
         }
     }
 
@@ -3356,7 +3368,7 @@ public class MenteesMod extends JavaPlugin {
                 if (npc == null || npc.isDespawning()) {
                     continue;
                 }
-                if ("motm_summon".equalsIgnoreCase(npc.getRoleName())) {
+                if (gameplayPlaybackManager != null && gameplayPlaybackManager.isActiveSummonRef(ref)) {
                     continue;
                 }
                 if (chunk.getComponent(entityIndex, DeathComponent.getComponentType()) != null) {
@@ -3436,7 +3448,7 @@ public class MenteesMod extends JavaPlugin {
             return new Vector3d(0.0, 0.0, 1.0);
         }
 
-        Vector3d direction = transform.getTransform().getDirection().clone();
+        Vector3d direction = transform.getTransform().getDirection();
         if (!direction.isFinite() || direction.length() < 0.001) {
             return new Vector3d(0.0, 0.0, 1.0);
         }
@@ -3628,7 +3640,7 @@ public class MenteesMod extends JavaPlugin {
                 }
 
                 if (response != null && !response.isBlank()) {
-                    player.sendMessage(Message.raw(response));
+                    sendPlayerMessage(player, Message.raw(response));
                 }
                 return;
             }
@@ -3652,7 +3664,7 @@ public class MenteesMod extends JavaPlugin {
             if (playerData.getPlayerClass() == null
                     || playerData.getSelectedStyles() == null
                     || playerData.getSelectedStyles().isEmpty()) {
-                player.sendMessage(Message.raw("[MOTM] Select a style first with /motm style <styleId>."));
+                sendPlayerMessage(player, Message.raw("[MOTM] Select a style first with /motm style <styleId>."));
                 return;
             }
 
@@ -3665,7 +3677,7 @@ public class MenteesMod extends JavaPlugin {
                     event.getTargetBlock()
             );
             if (response != null && !response.isBlank()) {
-                player.sendMessage(Message.raw(response));
+                sendPlayerMessage(player, Message.raw(response));
             }
         } catch (Exception e) {
             LOG.severe("[MOTM] PlayerInteract handling failed safely: " + e.getMessage());
@@ -3703,7 +3715,7 @@ public class MenteesMod extends JavaPlugin {
         event.setCancelled(true);
 
         if (currentWater >= maxWater) {
-            player.sendMessage(Message.raw(
+            sendPlayerMessage(player, Message.raw(
                     "[MOTM] " + resourceManager.getWaterContainerInfo(playerId)
                             + " is already full (" + currentWater + "/" + maxWater + ")."
             ));
@@ -3714,7 +3726,7 @@ public class MenteesMod extends JavaPlugin {
         resourceManager.syncToPersistentState(playerData);
         playerDataManager.savePlayerData(playerData);
         refreshStatusHud(playerId);
-        player.sendMessage(Message.raw(
+        sendPlayerMessage(player, Message.raw(
                 "[MOTM] Refilled " + resourceManager.getWaterContainerInfo(playerId)
                         + " from the water source."
         ));
@@ -3731,17 +3743,17 @@ public class MenteesMod extends JavaPlugin {
             return false;
         }
 
-        WorldChunk chunk = world.getChunkIfLoaded(ChunkUtil.indexChunkFromBlock(targetBlock.getX(), targetBlock.getZ()));
+        WorldChunk chunk = world.getChunkIfLoaded(ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z));
         if (chunk == null) {
-            chunk = world.getChunkIfInMemory(ChunkUtil.indexChunkFromBlock(targetBlock.getX(), targetBlock.getZ()));
+            chunk = world.getChunkIfInMemory(ChunkUtil.indexChunkFromBlock(targetBlock.x, targetBlock.z));
         }
         if (chunk == null) {
             return false;
         }
 
-        int localX = ChunkUtil.localCoordinate(targetBlock.getX());
-        int localZ = ChunkUtil.localCoordinate(targetBlock.getZ());
-        int y = targetBlock.getY();
+        int localX = ChunkUtil.localCoordinate(targetBlock.x);
+        int localZ = ChunkUtil.localCoordinate(targetBlock.z);
+        int y = targetBlock.y;
         var blockType = chunk.getBlockType(localX, y, localZ);
         String blockId = blockType != null ? blockType.getId() : null;
         if (blockId != null) {
@@ -3754,7 +3766,7 @@ public class MenteesMod extends JavaPlugin {
             }
         }
 
-        return world.getFluidId(targetBlock.getX(), y, targetBlock.getZ()) != 0;
+        return world.getFluidId(targetBlock.x, y, targetBlock.z) != 0;
     }
 
     private void handlePlayerMouseButton(PlayerMouseButtonEvent event) {
@@ -3807,11 +3819,11 @@ public class MenteesMod extends JavaPlugin {
                             playerData,
                             slot,
                             "mouse:" + event.getMouseButton().mouseButtonType,
-                            event.getTargetEntity() != null ? event.getTargetEntity().getReference() : null,
+                            event.getTargetEntityRef(),
                             null
                     );
                     if (response != null && !response.isBlank()) {
-                        player.sendMessage(Message.raw(response));
+                        sendPlayerMessage(player, Message.raw(response));
                     }
                 }
                 return;
@@ -3829,18 +3841,18 @@ public class MenteesMod extends JavaPlugin {
                 return;
             }
 
-            if (event.getTargetEntity() == null || event.getTargetEntity().getReference() == null) {
+            if (event.getTargetEntityRef() == null) {
                 return;
             }
 
             String response = gameplayPlaybackManager.handleWeaponFollowUpHit(
                     player,
                     playerData,
-                    event.getTargetEntity().getReference(),
+                    event.getTargetEntityRef(),
                     itemId
             );
             if (response != null && !response.isBlank()) {
-                player.sendMessage(Message.raw(response));
+                sendPlayerMessage(player, Message.raw(response));
             }
         } catch (Exception e) {
             LOG.severe("[MOTM] PlayerMouseButton handling failed safely: " + e.getMessage());
@@ -3873,7 +3885,7 @@ public class MenteesMod extends JavaPlugin {
                 null
         );
         if (response != null && !response.isBlank()) {
-            runtimePlayer.sendMessage(com.hypixel.hytale.server.core.Message.raw(response));
+            sendPlayerMessage(runtimePlayer, com.hypixel.hytale.server.core.Message.raw(response));
         }
     }
 
@@ -3982,9 +3994,9 @@ public class MenteesMod extends JavaPlugin {
         }
 
         Vector3i targetBlock = event.getTargetBlock();
-        double targetX = targetBlock.getX() + 0.5;
-        double targetY = targetBlock.getY() + 0.5;
-        double targetZ = targetBlock.getZ() + 0.5;
+        double targetX = targetBlock.x + 0.5;
+        double targetY = targetBlock.y + 0.5;
+        double targetZ = targetBlock.z + 0.5;
 
         Player bestMatch = null;
         double bestDistance = Double.MAX_VALUE;

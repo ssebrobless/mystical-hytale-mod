@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Command", "Jump", "Stomp", "ThirdPerson", "Forward", "Back", "StrafeLeft", "StrafeRight", "ForwardJump", "FaceLeft", "FaceRight")]
+    [ValidateSet("Key", "Text", "LeftClick", "RightClick", "Command", "CommandNoClick", "Jump", "Stomp", "ThirdPerson", "Forward", "Back", "StrafeLeft", "StrafeRight", "ForwardJump", "FaceLeft", "FaceRight")]
     [string]$Action = "Key",
     [string]$Keys,
     [string]$Text,
@@ -186,6 +186,10 @@ switch ($Action) {
     "Command" {
         if ([string]::IsNullOrWhiteSpace($Text)) { throw "Text is required for Action=Command." }
         Click-HytaleCenter $hytaleWindow
+        Send-GameCommand $Text
+    }
+    "CommandNoClick" {
+        if ([string]::IsNullOrWhiteSpace($Text)) { throw "Text is required for Action=CommandNoClick." }
         Send-GameCommand $Text
     }
     "Jump" {

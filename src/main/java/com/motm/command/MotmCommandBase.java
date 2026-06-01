@@ -1,9 +1,11 @@
 package com.motm.command;
 
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.CommandBase;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.MenteesMod;
 import com.motm.manager.SpellbookManager;
 
@@ -36,7 +38,12 @@ public class MotmCommandBase extends CommandBase {
                 return;
             }
 
-            Player sender = context.senderAs(Player.class);
+            Ref<EntityStore> senderRef = context.senderAsPlayerRef();
+            Player sender = mod.getRuntimePlayer(senderRef);
+            if (sender == null) {
+                context.sendMessage(Message.raw("[MOTM] Runtime player context is unavailable."));
+                return;
+            }
             String input = context.getInputString();
             String[] args = parseArgs(input);
 

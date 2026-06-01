@@ -153,8 +153,23 @@ function Get-MechanicalProof($Scenario, $Lines, [string]$ResultLine, [string]$Ab
             return [pscustomobject]@{ Status = "REVIEW"; Note = "Support cast exists but HP/stat proof is weak." }
         }
         "summon" {
+            $escapedAbility = [regex]::Escape($AbilityId)
+            $summonLines = @($Lines | Where-Object {
+                $_ -match "summon combat .*ability=$escapedAbility"
+            })
+            $spawn = @($summonLines | Where-Object { $_ -match "summon combat spawn:" } | Select-Object -First 1)
+            $target = @($summonLines | Where-Object { $_ -match "summon combat target:" } | Select-Object -First 1)
+            $attack = @($summonLines | Where-Object { $_ -match "summon combat attack:.*damage=[1-9]" } | Select-Object -First 1)
+            $despawn = @($summonLines | Where-Object { $_ -match "summon combat despawn:" } | Select-Object -First 1)
+            if ($spawn.Count -gt 0 -and $target.Count -gt 0 -and $attack.Count -gt 0) {
+                $cleanup = if ($despawn.Count -gt 0) { "despawn observed" } else { "despawn not observed in this window" }
+                return [pscustomobject]@{ Status = "PASS"; Note = "Summon spawned, acquired a target, attacked with damage, and $cleanup." }
+            }
+            if ($spawn.Count -gt 0) {
+                return [pscustomobject]@{ Status = "REVIEW"; Note = "Summon spawned, but target/attack proof is incomplete." }
+            }
             if ($resultText -match "summon|spawn") {
-                return [pscustomobject]@{ Status = "REVIEW"; Note = "Summon runtime fired; visual/action proof still needed." }
+                return [pscustomobject]@{ Status = "REVIEW"; Note = "Summon cast result exists; summon combat action proof still needed." }
             }
             return [pscustomobject]@{ Status = "FAIL"; Note = "No summon/spawn proof in cast result." }
         }

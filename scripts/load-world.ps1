@@ -113,7 +113,7 @@ $result = "FAIL"
 $matched = $null
 $startedAt = Get-Date
 try {
-    $existing = Wait-OnPlayerConnect ([datetime]::MinValue) 1
+    $existing = Wait-OnPlayerConnect $startedAt 1
     if ($existing) {
         $matched = $existing
         Write-Step "Already in world: $($matched.Line)"
