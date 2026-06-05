@@ -8,7 +8,7 @@ already implements these details.
 
 Primary companion docs:
 
-- `docs/primitive-audit-2026-05-31.md`
+- `docs/primitive-status-2026-06-05.md`
 - `docs/current-canon-checklist.md`
 - `docs/ui-canon-2026-06-01.md`
 
