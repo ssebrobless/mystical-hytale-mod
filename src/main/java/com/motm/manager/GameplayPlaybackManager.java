@@ -134,8 +134,17 @@ public class GameplayPlaybackManager {
     private static final double DEFAULT_CHAIN_RADIUS = 3.0;
     private static final int DEFAULT_CHAIN_TARGETS = 6;
     private static final String SUMMON_ROLE_NAME = "motm_summon";
+    private static final String SNOW_SUMMON_DRIVER_ROLE_NAME = "MOTM_Summon_Driver";
+    private static final String FROSTY_SUMMON_ROLE_NAME = "Tamed_Frosty";
     private static final String PROJECTILE_VISUAL_ROLE_NAME = "motm_projectile";
     private static final String FIELD_VISUAL_ROLE_NAME = "motm_field";
+    private static final Set<String> MOTM_NON_TARGET_ROLE_NAMES = Set.of(
+            SUMMON_ROLE_NAME,
+            SNOW_SUMMON_DRIVER_ROLE_NAME,
+            FROSTY_SUMMON_ROLE_NAME,
+            PROJECTILE_VISUAL_ROLE_NAME,
+            FIELD_VISUAL_ROLE_NAME
+    );
     private static final long CHANNEL_PULSE_INTERVAL_MS = 700L;
     private static final long FORM_PULSE_INTERVAL_MS = 850L;
     private static final double DEFAULT_LIGHTNING_ARC_RADIUS = 5.5;
@@ -204,7 +213,7 @@ public class GameplayPlaybackManager {
                 this::applyEffectById,
                 (type, data) -> this.mod.recordClientIntent(type, null, data),
                 LOG,
-                Set.of(SUMMON_ROLE_NAME, PROJECTILE_VISUAL_ROLE_NAME, FIELD_VISUAL_ROLE_NAME),
+                MOTM_NON_TARGET_ROLE_NAMES,
                 DEFAULT_LIGHTNING_ARC_RADIUS,
                 createProjectileLaunchSupport(),
                 createProjectileImpactSupport(),
@@ -221,11 +230,7 @@ public class GameplayPlaybackManager {
                     }
                 }
         );
-        this.fieldTargetAdapter = new FieldTargetHytaleAdapter(Set.of(
-                SUMMON_ROLE_NAME,
-                PROJECTILE_VISUAL_ROLE_NAME,
-                FIELD_VISUAL_ROLE_NAME
-        ), this::isTargetGrounded);
+        this.fieldTargetAdapter = new FieldTargetHytaleAdapter(MOTM_NON_TARGET_ROLE_NAMES, this::isTargetGrounded);
         this.summonLifecycleAdapter = new SummonLifecycleHytaleAdapter(
                 summonState,
                 summonActivationRuntime,
@@ -2059,6 +2064,19 @@ public class GameplayPlaybackManager {
 
     private int removeSummonsForPlayer(String playerId) {
         return summonLifecycleAdapter.removeSummonsForPlayer(playerId);
+    }
+
+    public synchronized boolean shouldSuppressFriendlySummonDamage(Ref<EntityStore> sourceRef,
+                                                                   Ref<EntityStore> targetRef) {
+        if (sourceRef == null || targetRef == null || summonState == null) {
+            return false;
+        }
+        ActiveSummon sourceSummon = summonState.findSummonByRef(sourceRef);
+        ActiveSummon targetSummon = summonState.findSummonByRef(targetRef);
+        return sourceSummon != null
+                && targetSummon != null
+                && sourceSummon.ownerPlayerId() != null
+                && sourceSummon.ownerPlayerId().equals(targetSummon.ownerPlayerId());
     }
 
     private int despawnVisualProxiesForStore(Store<EntityStore> currentStore) {
@@ -4324,9 +4342,7 @@ public class GameplayPlaybackManager {
         if (npc == null || npc.getRoleName() == null) {
             return false;
         }
-        return SUMMON_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
-                || PROJECTILE_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
-                || FIELD_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName());
+        return MOTM_NON_TARGET_ROLE_NAMES.stream().anyMatch(role -> role.equalsIgnoreCase(npc.getRoleName()));
     }
 
     private boolean isMotmVisualProxy(Ref<EntityStore> ref) {

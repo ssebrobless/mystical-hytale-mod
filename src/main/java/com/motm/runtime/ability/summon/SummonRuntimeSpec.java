@@ -9,6 +9,7 @@ public record SummonRuntimeSpec(
         long hatchDelayMillis,
         double baseDamageMultiplier,
         String attackToken,
-        String modelId
+        String modelId,
+        String appearanceModelId
 ) {
 }

@@ -53,8 +53,8 @@ public final class SummonLifecycleHytaleAdapter {
             return Result.none();
         }
 
-        List<String> modelIds = resolveSummonModelIds(player.getPlayerClass(), style.getId(), ability);
-        if (modelIds.isEmpty()) {
+        List<SummonSpawnDescriptor> summons = resolveSummonSpawnDescriptors(player.getPlayerClass(), style.getId(), ability);
+        if (summons.isEmpty()) {
             support.logWarning("[MOTM] No summon model mapping for " + ability.getId());
             return Result.none();
         }
@@ -75,11 +75,11 @@ public final class SummonLifecycleHytaleAdapter {
         long now = System.currentTimeMillis();
         long expireAt = now + (long) (Math.max(2.0, ability.getDurationSeconds()) * 1000);
         int spawned = 0;
-        for (int index = 0; index < modelIds.size(); index++) {
-            String modelId = modelIds.get(index);
-            Vector3d spawnPosition = offsetSpawnPosition(baseSpawnPosition, forward, index, modelIds.size());
+        for (int index = 0; index < summons.size(); index++) {
+            SummonSpawnDescriptor descriptor = summons.get(index);
+            Vector3d spawnPosition = offsetSpawnPosition(baseSpawnPosition, forward, index, summons.size());
             NPCEntity summon = new NPCEntity(world);
-            summon.setRoleName(modelId);
+            summon.setRoleName(descriptor.roleId());
             summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
             world.spawnEntity(summon, spawnPosition, new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
 
@@ -88,7 +88,7 @@ public final class SummonLifecycleHytaleAdapter {
                 continue;
             }
 
-            NPCEntity.setAppearance(summonRef, modelId, summonRef.getStore());
+            NPCEntity.setAppearance(summonRef, descriptor.appearanceId(), summonRef.getStore());
             support.applyEffectById(summonRef, summonRef.getStore(),
                     support.resolveImpactEffectId(player.getPlayerClass(), style.getId(), ability));
 
@@ -110,7 +110,8 @@ public final class SummonLifecycleHytaleAdapter {
             spawned++;
 
             support.logInfo("[MOTM] Summon spawned: abilityId=" + ability.getId()
-                    + " model=" + modelId
+                    + " role=" + descriptor.roleId()
+                    + " appearance=" + descriptor.appearanceId()
                     + " position=" + formatVector(spawnPosition)
                     + " duration=" + AbilityPresentation.formatDecimal(Math.max(2.0, ability.getDurationSeconds())) + "s");
         }
@@ -119,7 +120,7 @@ public final class SummonLifecycleHytaleAdapter {
             return Result.none();
         }
 
-        return new Result(spawned, "summoned " + spawned + " " + humanize(modelIds.get(0)));
+        return new Result(spawned, "summoned " + spawned + " " + humanize(summons.get(0).appearanceId()));
     }
 
     public int removeSummonsForPlayer(String playerId) {
@@ -169,14 +170,24 @@ public final class SummonLifecycleHytaleAdapter {
         return HytaleAssetResolver.resolveModelId(classId, styleId, ability);
     }
 
-    private List<String> resolveSummonModelIds(String classId, String styleId, AbilityData ability) {
+    private List<SummonSpawnDescriptor> resolveSummonSpawnDescriptors(String classId, String styleId, AbilityData ability) {
         List<String> specModels = SummonRuntimeSpecs.modelIds(ability);
         if (!specModels.isEmpty()) {
-            return specModels;
+            return specModels.stream()
+                    .map(modelId -> new SummonSpawnDescriptor(modelId, resolveAppearanceModelId(modelId, ability)))
+                    .toList();
         }
 
         String modelId = resolveSummonModelId(classId, styleId, ability);
-        return modelId == null || modelId.isBlank() ? List.of() : List.of(modelId);
+        return modelId == null || modelId.isBlank()
+                ? List.of()
+                : List.of(new SummonSpawnDescriptor(modelId, resolveAppearanceModelId(modelId, ability)));
+    }
+
+    private String resolveAppearanceModelId(String roleModelId, AbilityData ability) {
+        SummonRuntimeSpec summonSpec = SummonRuntimeSpecs.resolve(ability);
+        String appearanceId = summonSpec.appearanceModelId();
+        return appearanceId == null || appearanceId.isBlank() ? roleModelId : appearanceId;
     }
 
     private static Vector3d offsetSpawnPosition(Vector3d basePosition, Vector3d forward, int index, int count) {
@@ -279,5 +290,8 @@ public final class SummonLifecycleHytaleAdapter {
         public static Result none() {
             return new Result(0, "");
         }
+    }
+
+    private record SummonSpawnDescriptor(String roleId, String appearanceId) {
     }
 }

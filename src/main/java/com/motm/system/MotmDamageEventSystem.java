@@ -135,6 +135,15 @@ public class MotmDamageEventSystem extends DamageEventSystem {
             return;
         }
 
+        if (mod.getGameplayPlaybackManager().shouldSuppressFriendlySummonDamage(sourceRef, targetRef)) {
+            float before = damage.getAmount();
+            damage.setAmount(0.0f);
+            if (before > 0.0f) {
+                LOG.info("[MOTM] Friendly summon damage suppressed: amount=" + before);
+            }
+            return;
+        }
+
         Player runtimePlayer = store.getComponent(sourceRef, Player.getComponentType());
         if (runtimePlayer == null || runtimePlayer.getInventory() == null) {
             return;

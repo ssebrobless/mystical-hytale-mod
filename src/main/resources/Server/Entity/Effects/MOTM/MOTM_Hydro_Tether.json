@@ -1,0 +1,20 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#e6fdff",
+    "EntityBottomTint": "#0782b9",
+    "Particles": [
+      {
+        "SystemId": "Water_Run"
+      },
+      {
+        "SystemId": "Water_Bubble_Stream"
+      },
+      {
+        "SystemId": "Water_Can_Splash"
+      }
+    ],
+    "ModelVFXId": "Dagger_Dash"
+  }
+}

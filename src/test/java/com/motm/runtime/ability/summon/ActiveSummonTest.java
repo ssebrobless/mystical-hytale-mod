@@ -103,9 +103,9 @@ class ActiveSummonTest {
         assertTrue(summon.nowWithinBuffWindow(5000L));
 
         summon.scheduleNextAttack(5000L);
-        assertEquals(5937L, summon.nextAttackAtMillis());
+        assertEquals(6387L, summon.nextAttackAtMillis());
         summon.scheduleNextAttack(7000L);
-        assertEquals(8250L, summon.nextAttackAtMillis());
+        assertEquals(8850L, summon.nextAttackAtMillis());
     }
 
     @Test

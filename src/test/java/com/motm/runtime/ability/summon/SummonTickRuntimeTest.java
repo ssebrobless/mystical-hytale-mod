@@ -113,7 +113,7 @@ class SummonTickRuntimeTest {
         RecordingHooks hooks = new RecordingHooks();
         hooks.summonPosition = new Vector3d(0.0, 0.0, 0.0);
         hooks.targetPosition = new Vector3d(1.0, 0.0, 0.0);
-        ActiveSummon summon = summon(new TestRef(), new TestRef(), "snow_imp", 0L, 10_000L, 0L, 500L, true);
+        ActiveSummon summon = summon(new TestRef(), new TestRef(), "skeleton_minion", 0L, 10_000L, 0L, 500L, true);
 
         assertFalse(runtime.process(summon, 1_000L, hooks));
 

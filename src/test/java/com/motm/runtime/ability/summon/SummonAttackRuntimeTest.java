@@ -40,12 +40,12 @@ class SummonAttackRuntimeTest {
         assertTrue(result.attacked());
         assertEquals("npc-1", result.targetEntityId());
         assertEquals(4.0, result.resolvedDamage(), 0.0001);
-        assertEquals(2_250L, summon.nextAttackAtMillis());
+        assertEquals(2_850L, summon.nextAttackAtMillis());
         assertEquals(List.of(
                 "entity",
                 "incoming:npc-1",
                 "absorb:npc-1:6.0",
-                "damage:4.0:true",
+                "damage:4.0:false",
                 "post:npc-1:4.0",
                 "lifesteal:4.0",
                 "impact",
@@ -78,7 +78,7 @@ class SummonAttackRuntimeTest {
     void movesCloneBeforeDamageAndExpiresAfterStrike() {
         RecordingHooks hooks = new RecordingHooks();
         hooks.targetEntityId = null;
-        ActiveSummon clone = summon("shadow_clone", false, 0L, 10_000L);
+        ActiveSummon clone = summon("shadow_clone", true, 0L, 10_000L);
 
         runtime.performAttack(clone, new TestRef(), 2_000L, hooks);
 

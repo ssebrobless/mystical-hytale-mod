@@ -24,7 +24,8 @@ public final class SummonRuntimeSpecs {
                 "hatchling".equals(role) ? HATCHLING_DELAY_MS : 0L,
                 baseDamageMultiplier(role),
                 attackToken(summonName, role),
-                modelId(summonName)
+                modelId(summonName),
+                appearanceModelId(summonName)
         );
     }
 
@@ -54,7 +55,8 @@ public final class SummonRuntimeSpecs {
     private static String role(String summonName) {
         return switch (summonName) {
             case "frosty_golem", "yeti_frosty" -> "tank";
-            case "snow_imp", "snowman_imp", "skeleton_minion" -> "skirmisher";
+            case "snow_imp", "snowman_imp" -> "ground_snowman";
+            case "skeleton_minion" -> "skirmisher";
             case "crawler_void", "void_spawn" -> "caster";
             case "swamp_monster", "crocodile_swamp_monster", "snapjaw_abyssal", "treant_sapling", "locust_queen" -> "bruiser";
             case "shadow_clone" -> "clone";
@@ -73,6 +75,7 @@ public final class SummonRuntimeSpecs {
     private static double attackRange(String role) {
         return switch (role) {
             case "tank" -> 2.8;
+            case "ground_snowman" -> 2.25;
             case "skirmisher", "clone" -> 7.5;
             case "artillery", "caster", "swarm" -> 9.5;
             default -> 3.2;
@@ -86,6 +89,7 @@ public final class SummonRuntimeSpecs {
     private static long attackIntervalMillis(String role) {
         return switch (role) {
             case "tank" -> 1700L;
+            case "ground_snowman" -> 1850L;
             case "clone" -> 900L;
             case "swarm" -> 1100L;
             case "artillery", "caster" -> 1400L;
@@ -121,6 +125,7 @@ public final class SummonRuntimeSpecs {
     private static String roleAttackToken(String role) {
         return switch (role) {
             case "tank", "skirmisher" -> "slow";
+            case "ground_snowman" -> "slow";
             case "caster" -> "curse";
             case "swarm", "hatchling" -> "dot";
             case "clone" -> "vulnerability";
@@ -131,9 +136,25 @@ public final class SummonRuntimeSpecs {
     private static String modelId(String summonName) {
         return switch (summonName) {
             case "treant_sapling" -> "Spirit_Root";
-            case "snow_imp", "snowman_imp" -> "Spirit_Frost";
-            case "frosty_golem" -> "Golem_Crystal_Frost";
-            case "yeti_frosty" -> "Yeti";
+            case "snow_imp", "snowman_imp" -> "MOTM_Summon_Driver";
+            case "frosty_golem", "yeti_frosty" -> "Tamed_Frosty";
+            case "swamp_monster" -> "Frog_Green";
+            case "crocodile_swamp_monster" -> "Crocodile";
+            case "snapjaw_abyssal" -> "Snapjaw";
+            case "skeleton_minion", "shadow_clone" -> "Shadow_Knight";
+            case "void_spawn" -> "Spawn_Void";
+            case "crawler_void" -> "Crawler_Void";
+            case "scarak_egg" -> "Scarak_Fighter";
+            case "locust_queen" -> "Scarak_Fighter";
+            default -> null;
+        };
+    }
+
+    private static String appearanceModelId(String summonName) {
+        return switch (summonName) {
+            case "snow_imp", "snowman_imp" -> "Snow_Imp_Snowman";
+            case "frosty_golem", "yeti_frosty" -> "Yeti";
+            case "treant_sapling" -> "Spirit_Root";
             case "swamp_monster" -> "Frog_Green";
             case "crocodile_swamp_monster" -> "Crocodile";
             case "snapjaw_abyssal" -> "Snapjaw";

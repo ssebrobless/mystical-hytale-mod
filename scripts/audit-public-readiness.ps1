@@ -164,7 +164,12 @@ Test-FileContains `
 Test-FileContains `
     "Snow Imp summon avoids item-only snowman role in live NPC spawning" `
     "src/main/java/com/motm/runtime/ability/summon/SummonRuntimeSpecs.java" `
-    'case "snow_imp", "snowman_imp" -> "Spirit_Frost"'
+    'case "snow_imp", "snowman_imp" -> "MOTM_Summon_Driver"'
+
+Test-FileContains `
+    "Snow Imp summon renders as snowman through appearance override" `
+    "src/main/java/com/motm/runtime/ability/summon/SummonRuntimeSpecs.java" `
+    'case "snow_imp", "snowman_imp" -> "Snow_Imp_Snowman"'
 
 Test-FileContains `
     "Locust Queen avoids crash-prone Scarak Broodmother NPC role" `
@@ -183,9 +188,9 @@ Test-FileContains `
     "FieldVisualHytaleAdapter\.configureRenderlessProxy"
 
 Test-FileContains `
-    "Quake one-shot impact visual strips fallback creature model" `
+    "Quake one-shot impact visual avoids fallback creature proxy" `
     "src/main/java/com/motm/manager/GameplayPlaybackManager.java" `
-    "FieldVisualHytaleAdapter\.configureRenderlessProxy"
+    'anchor=player'
 
 Test-NoMatches `
     "Normal style selection does not claim test protection is automatically enabled" `

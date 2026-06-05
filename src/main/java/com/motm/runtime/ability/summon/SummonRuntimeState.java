@@ -37,6 +37,23 @@ public final class SummonRuntimeState {
         return summons == null ? 0 : summons.size();
     }
 
+    public ActiveSummon findSummonByRef(Object ref) {
+        if (ref == null) {
+            return null;
+        }
+        for (List<ActiveSummon> summons : activeSummonsByOwner.values()) {
+            if (summons == null) {
+                continue;
+            }
+            for (ActiveSummon summon : summons) {
+                if (summon != null && ref.equals(summon.ref())) {
+                    return summon;
+                }
+            }
+        }
+        return null;
+    }
+
     public int removeSummonsForPlayer(String ownerPlayerId, Predicate<ActiveSummon> cleanup) {
         if (ownerPlayerId == null || ownerPlayerId.isBlank()) {
             return 0;

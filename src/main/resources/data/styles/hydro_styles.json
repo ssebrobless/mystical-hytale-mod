@@ -31,7 +31,7 @@
         {
           "id": "stalactite_crash",
           "name": "Stalactite Crash",
-          "description": "Auto-target the nearest enemies with fast downward calcite stalactites.",
+          "description": "Heavy ice impact with explosion",
           "damage_percent": 20,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.8,
@@ -48,30 +48,25 @@
           "radius": 3,
           "height": 6,
           "delay_seconds": 0.8,
-          "charges": 0,
-          "travel_type": "calcite_stalactite",
           "terrain_effect": "stalactite_crash"
         },
         {
           "id": "skate",
           "name": "Skate",
-          "description": "Toggle an icy skating stance: slippery momentum, 15% speed, and an ice trail.",
+          "description": "Gain 50% evasion for 2 turns",
           "damage_percent": 0,
-          "cooldown_seconds": 5,
+          "cooldown_seconds": 4,
           "cast_time_seconds": 0.2,
           "recovery_seconds": 0.16,
-          "effect": "speed",
+          "effect": "evasion_buff",
           "categories": [
-            "buff",
-            "movement",
-            "toggle"
+            "evasion"
           ],
-          "toggleable": true,
-          "toggle_cooldown_seconds": 2,
           "resource_cost": 0,
-          "cast_type": "self_buff",
+          "cast_type": "dash_buff",
           "target_type": "self",
-          "duration_seconds": 10,
+          "dash_distance": 8,
+          "duration_seconds": 4,
           "travel_type": "ice_slide",
           "terrain_effect": "ice_skate_trail"
         }
@@ -87,7 +82,7 @@
         {
           "id": "snow_imp",
           "name": "Snow Imp",
-          "description": "Summon an animated snowman ally that follows and attacks nearby enemies.",
+          "description": "Summon minion that attacks each turn",
           "damage_percent": 5,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.8,
@@ -101,14 +96,14 @@
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
-          "duration_seconds": 30,
-          "summon_name": "snowman_imp",
+          "duration_seconds": 120,
+          "summon_name": "snow_imp",
           "terrain_effect": "snow_imp_summon"
         },
         {
           "id": "snowstorm",
           "name": "Snowstorm",
-          "description": "Snow particles surround the caster, damaging and slowing enemies in the storm.",
+          "description": "Slow enemy attack speed for 3 turns",
           "damage_percent": 3,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.55,
@@ -120,17 +115,16 @@
           ],
           "resource_cost": 0,
           "cast_type": "ground_zone",
-          "target_type": "self",
-          "range": 0,
+          "target_type": "ground_target",
+          "range": 12,
           "radius": 5,
-          "height": 4,
           "duration_seconds": 6,
           "terrain_effect": "snowstorm"
         },
         {
           "id": "frosty",
           "name": "Frosty",
-          "description": "Summon a Yeti ally intended to be mountable and controllable when the API permits.",
+          "description": "Summon a yeti that taunts and absorbs damage",
           "damage_percent": 0,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.8,
@@ -143,9 +137,9 @@
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
-          "duration_seconds": 45,
-          "summon_name": "yeti_frosty",
-          "terrain_effect": "yeti_guardian"
+          "duration_seconds": 60,
+          "summon_name": "frosty_golem",
+          "terrain_effect": "frozen_guardian"
         }
       ]
     },
@@ -159,7 +153,7 @@
         {
           "id": "high_tide",
           "name": "High Tide",
-          "description": "Send out a broad water surge that pushes and slows enemies while briefly buffing allies it washes over.",
+          "description": "Push enemy back, gain speed",
           "damage_percent": 8,
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.35,
@@ -180,31 +174,28 @@
         {
           "id": "waverider",
           "name": "Waverider",
-          "description": "Ride a forward wave, leaving a water trail and knocking enemies aside.",
-          "damage_percent": 6,
+          "description": "Gain shield and speed for 2 turns",
+          "damage_percent": 0,
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "knockback+speed",
+          "effect": "shield+speed",
           "categories": [
-            "damage",
-            "movement",
-            "crowd_control"
+            "shielding",
+            "buff"
           ],
-          "shield_percent": 0,
+          "shield_percent": 20,
           "resource_cost": 0,
-          "cast_type": "dash_strike",
+          "cast_type": "self_buff",
           "target_type": "self",
           "duration_seconds": 5,
           "dash_distance": 10,
-          "knockback_force": 4,
-          "terrain_effect": "surf_ride",
           "travel_type": "surf_ride"
         },
         {
           "id": "riptide",
           "name": "Riptide",
-          "description": "Aim a directional current that displaces and weakens a target.",
+          "description": "Pull enemy in, increase damage taken",
           "damage_percent": 5,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.4,
@@ -233,7 +224,7 @@
         {
           "id": "piercing_rain",
           "name": "Piercing Rain",
-          "description": "A 5x5 rain cloud follows above the caster, raining up to 12 blocks down to damage enemies and buff allies.",
+          "description": "Acidic rain that damages over time and speeds attacks",
           "damage_percent": 8,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.55,
@@ -246,18 +237,16 @@
           ],
           "resource_cost": 0,
           "cast_type": "ground_zone",
-          "target_type": "self",
-          "range": 0,
-          "radius": 5,
-          "width": 5,
-          "height": 12,
+          "target_type": "ground_target",
+          "range": 14,
+          "radius": 6,
           "duration_seconds": 6,
           "terrain_effect": "piercing_rain"
         },
         {
           "id": "rainbow",
           "name": "Rainbow",
-          "description": "Create a rainbow-colored field around the caster that heals allies for 5% max HP per second, grants 10% damage, and 5% speed.",
+          "description": "Summon a healing rainbow that restores HP",
           "damage_percent": 0,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.55,
@@ -266,11 +255,11 @@
           "categories": [
             "healing"
           ],
-          "heal_percent": 5,
+          "heal_percent": 10,
           "resource_cost": 0,
           "cast_type": "support_zone",
-          "target_type": "self",
-          "range": 0,
+          "target_type": "ground_target",
+          "range": 12,
           "radius": 5,
           "duration_seconds": 6,
           "terrain_effect": "healing_rainbow"
@@ -353,14 +342,15 @@
         {
           "id": "overheat",
           "name": "Overheat",
-          "description": "Build boiling pressure for a temporary offensive speed buff without self-damage.",
+          "description": "Supercharge attacks but burn yourself",
           "damage_percent": 0,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "attack_buff+speed",
+          "effect": "attack_buff+self_burn",
           "categories": [
-            "buff"
+            "buff",
+            "self_damage"
           ],
           "resource_cost": 0,
           "cast_type": "self_buff",
@@ -398,17 +388,16 @@
         {
           "id": "dispersion",
           "name": "Dispersion",
-          "description": "Spend a charge to disperse through mist, reappearing with a slight enemy displacement and no damage.",
-          "damage_percent": 0,
+          "description": "Reform from vapor in a quick strike",
+          "damage_percent": 10,
           "cooldown_seconds": 3,
           "cast_time_seconds": 0.2,
           "recovery_seconds": 0.16,
           "effect": "",
           "categories": [
-            "movement",
-            "evasion"
+            "damage"
           ],
-          "charges": 4,
+          "charges": 3,
           "charge_recharge_seconds": 3.0,
           "resource_cost": 0,
           "cast_type": "dash",
@@ -447,7 +436,7 @@
         {
           "id": "ice_cap",
           "name": "Ice Cap",
-          "description": "Raise a 5 second ice tube around the caster; each punched block bursts and stacks a 30% slow for 3 seconds.",
+          "description": "Encase in ice for a shield and freeze attacker",
           "damage_percent": 0,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
@@ -461,13 +450,13 @@
           "resource_cost": 0,
           "cast_type": "self_buff",
           "target_type": "self",
-          "duration_seconds": 5,
-          "terrain_effect": "ice_cap_tube"
+          "duration_seconds": 6,
+          "terrain_effect": "ice_shell"
         },
         {
           "id": "glacier",
           "name": "Glacier",
-          "description": "Conjure a glacial wall; punched blocks burst and slow enemies by 30% for 3 seconds, then all blocks clear after 5 seconds.",
+          "description": "Conjure glacial armor for damage reduction",
           "damage_percent": 0,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.55,
@@ -482,14 +471,14 @@
           "range": 8,
           "width": 8,
           "height": 4,
-          "duration_seconds": 5,
+          "duration_seconds": 7,
           "terrain_effect": "glacier_wall"
         },
         {
           "id": "ice_shelf",
           "name": "Ice Shelf",
-          "description": "Create a 3 high by 2 wide ice wall; recast pushes it forward 4 blocks, displacing and slowing enemies.",
-          "damage_percent": 0,
+          "description": "Crush enemy with a massive ice shelf",
+          "damage_percent": 20,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.8,
           "recovery_seconds": 0.28,
@@ -500,14 +489,13 @@
             "debuff"
           ],
           "resource_cost": 0,
-          "cast_type": "barrier",
-          "target_type": "line",
-          "range": 4,
-          "width": 2,
-          "height": 3,
-          "duration_seconds": 5,
-          "knockback_force": 3,
-          "terrain_effect": "ice_shelf_wall"
+          "cast_type": "ground_strike",
+          "target_type": "ground_target",
+          "range": 14,
+          "width": 6,
+          "length": 8,
+          "delay_seconds": 0.8,
+          "terrain_effect": "ice_shelf_collapse"
         }
       ]
     },
@@ -521,67 +509,65 @@
         {
           "id": "tide_pool",
           "name": "Tide Pool",
-          "description": "Create a caster-centered 2-block-high radius 5 tide pool for 12 seconds; enemies inside take 20% more damage.",
+          "description": "Create a tide pool that speeds you and slows enemy",
           "damage_percent": 0,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.55,
           "recovery_seconds": 0.32,
-          "effect": "vulnerability",
+          "effect": "slow+attack_buff",
           "categories": [
             "buff",
             "debuff"
           ],
           "resource_cost": 0,
           "cast_type": "ground_zone",
-          "target_type": "self",
-          "range": 0,
-          "radius": 5,
-          "height": 2,
-          "duration_seconds": 12,
-          "toggleable": true,
-          "toggle_cooldown_seconds": 8,
+          "target_type": "ground_target",
+          "range": 10,
+          "radius": 4,
+          "duration_seconds": 6,
           "terrain_effect": "tide_pool"
         },
         {
           "id": "abyssal_assist",
           "name": "Abyssal Assist",
-          "description": "While Tide Pool is active, summon a friendly Snapjaw inside it to attack hostile mobs in the pool.",
-          "damage_percent": 0,
+          "description": "Call upon deep-sea pressure to stun and weaken",
+          "damage_percent": 12,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.25,
           "recovery_seconds": 0.18,
-          "effect": "summon",
+          "effect": "stun+vulnerability",
           "categories": [
-            "summon"
+            "damage",
+            "crowd_control",
+            "debuff"
           ],
           "resource_cost": 0,
-          "cast_type": "summon",
-          "target_type": "self",
-          "range": 0,
-          "radius": 5,
-          "duration_seconds": 12,
-          "summon_name": "snapjaw_abyssal",
-          "terrain_effect": "abyssal_assist"
+          "cast_type": "ground_burst",
+          "target_type": "enemy",
+          "range": 14,
+          "radius": 3,
+          "duration_seconds": 2.5,
+          "terrain_effect": "abyssal_pressure"
         },
         {
           "id": "rip_current",
           "name": "Rip Current",
-          "description": "Aim a water tether; drag the target with caster movement for 5s, or pull it into Tide Pool if cast from inside the pool.",
-          "damage_percent": 0,
-          "cooldown_seconds": 5,
+          "description": "Drag the enemy with a powerful current",
+          "damage_percent": 8,
+          "cooldown_seconds": 4,
           "cast_time_seconds": 0.4,
           "recovery_seconds": 0.24,
-          "effect": "slow+vulnerability",
+          "effect": "slow",
           "categories": [
-            "debuff",
-            "crowd_control"
+            "damage",
+            "debuff"
           ],
           "resource_cost": 0,
           "cast_type": "line_control",
           "target_type": "enemy",
           "range": 16,
-          "pull_force": 5,
-          "duration_seconds": 5,
+          "pull_force": 4,
+          "duration_seconds": 2,
           "travel_type": "undertow_stream"
         }
       ]
@@ -596,57 +582,52 @@
         {
           "id": "leap_frog",
           "name": "Leap Frog",
-          "description": "Arm the next jump: 40% higher, forward-upward frog boost, displaces enemies on takeoff and landing, and prevents fall damage from the leap.",
-          "damage_percent": 0,
+          "description": "Leap and strike, leaving the enemy vulnerable",
+          "damage_percent": 10,
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.2,
           "recovery_seconds": 0.16,
-          "effect": "knockback",
+          "effect": "vulnerability",
           "categories": [
-            "movement",
-            "crowd_control"
+            "damage",
+            "debuff",
+            "dash"
           ],
-          "charges": 4,
+          "charges": 2,
           "charge_recharge_seconds": 4.0,
           "resource_cost": 0,
-          "cast_type": "leap",
-          "target_type": "self",
+          "cast_type": "dash",
+          "target_type": "enemy",
           "range": 9,
-          "dash_distance": 6,
-          "launch_height": 2.8,
-          "trigger": "jump_land",
+          "dash_distance": 9,
+          "launch_height": 2,
           "travel_type": "river_leap"
         },
         {
           "id": "river_rapids",
           "name": "River Rapids",
-          "description": "Toggle a 7 second auto-propelled rapids ride: camera steers, side inputs strafe, backwards does nothing, cooldown is always 5 seconds.",
+          "description": "Ride the rapids to gain speed and momentum",
           "damage_percent": 0,
-          "cooldown_seconds": 5,
+          "cooldown_seconds": 6,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
           "effect": "attack_buff+speed",
           "categories": [
-            "buff",
-            "movement",
-            "toggle"
+            "buff"
           ],
-          "toggleable": true,
-          "toggle_cooldown_seconds": 5,
           "resource_cost": 0,
-          "cast_type": "dash_buff",
+          "cast_type": "self_buff",
           "target_type": "self",
-          "duration_seconds": 7,
+          "duration_seconds": 8,
           "dash_distance": 12,
-          "terrain_effect": "river_rapids",
           "travel_type": "rapids_ride"
         },
         {
           "id": "swamp_monster",
           "name": "Swamp Monster",
-          "description": "Summon a friendly Crocodile that follows the player and attacks nearby enemies until killed or cancelled.",
+          "description": "Summon a creature from the swamp to fight",
           "damage_percent": 0,
-          "cooldown_seconds": 20,
+          "cooldown_seconds": 8,
           "cast_time_seconds": 0.8,
           "recovery_seconds": 0.4,
           "effect": "summon",
@@ -657,8 +638,8 @@
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
-          "duration_seconds": 120,
-          "summon_name": "crocodile_swamp_monster",
+          "duration_seconds": 20,
+          "summon_name": "swamp_monster",
           "terrain_effect": "swamp_spawn"
         }
       ]
@@ -673,12 +654,12 @@
         {
           "id": "bilge_dump",
           "name": "Bilge Dump",
-          "description": "Spray tar-bilge filth; enemies take 1% caster max HP per second for 5s, slow 20%, and gain a 10s Toxic mark.",
-          "damage_percent": 0,
+          "description": "Dump foul bilge water that poisons and slows",
+          "damage_percent": 5,
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.25,
           "recovery_seconds": 0.18,
-          "effect": "dot+slow+toxic",
+          "effect": "dot+slow",
           "categories": [
             "dot",
             "debuff"
@@ -689,13 +670,12 @@
           "range": 10,
           "cone_angle": 70,
           "duration_seconds": 5,
-          "dot_percent_per_second": 1,
           "terrain_effect": "bilge_spray"
         },
         {
           "id": "anchor_haul",
           "name": "Anchor Haul",
-          "description": "Fire a 5 block chain at the crosshair, pulling the hit enemy to one block away; nearby Toxic-marked enemies are chained too and take 10% more damage.",
+          "description": "Haul an anchor across the enemy for heavy damage",
           "damage_percent": 15,
           "cooldown_seconds": 6,
           "cast_time_seconds": 0.35,
@@ -708,30 +688,29 @@
           "resource_cost": 0,
           "cast_type": "projectile_line",
           "target_type": "enemy",
-          "range": 5,
+          "range": 14,
           "width": 3,
-          "projectile_speed": 24,
-          "pull_force": 5,
-          "travel_type": "anchor_chain"
+          "projectile_speed": 18,
+          "knockback_force": 4,
+          "travel_type": "anchor_drag"
         },
         {
           "id": "oil_spill",
           "name": "Oil Spill",
-          "description": "Create a radius 4 tar pool around the caster. Enemies are slowed 60% and Toxic-marked; allies inside have a 40% chance to ignore incoming hits.",
+          "description": "Coat yourself in protective oil for defense",
           "damage_percent": 0,
           "cooldown_seconds": 7,
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
-          "effect": "defense_buff+toxic",
+          "effect": "defense_buff+attack_buff",
           "categories": [
             "buff"
           ],
           "resource_cost": 0,
-          "cast_type": "ground_zone",
+          "cast_type": "self_buff",
           "target_type": "self",
-          "radius": 4,
           "duration_seconds": 8,
-          "terrain_effect": "oil_spill_tar"
+          "terrain_effect": "oily_sheen"
         }
       ]
     }
