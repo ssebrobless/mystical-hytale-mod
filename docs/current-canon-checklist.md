@@ -52,9 +52,23 @@ Authored surface
 +-----------------+--------------------------------------------+
 | Style abilities | 120 abilities across 40 styles             |
 | Class passives  | 4 class identities                         |
-| Perks           | 800 authored, 560 loaded after tier filter |
+| Perks           | 20 shared passive choices, 10 chosen max   |
 +-----------------+--------------------------------------------+
 ```
+
+Perk source of truth:
+
+```
+Shared perk pool
+├─ Terra:      Heavyweight, Eco-friendly, Mole Man, Blacksmith, Toolsmith
+├─ Hydro:      Neptune's Grace, Semiaquatic, Big Lungs, Rainy Day, Freezing Winds
+├─ Aero:       Twinkletoes, Accelerate, Bunny Hop, Big Strides, Sharpshooter
+└─ Corruptus:  Ignite, Desperation, Haunting, Vampirism, Terror
+```
+
+- Players can choose any shared perk regardless of class.
+- Perks unlock one choice every 10 levels through level 100, for 10 total choices.
+- The old multi-tier perk JSON remains archived concept data only; runtime loading must retain only the shared 20-perk pool.
 
 The audit conclusion is that ability correctness should be proven through shared primitives, not one-off visual guesses.
 The implementation order and acceptance gates for those shared primitives live in `docs/primitive-implementation-plan-2026-06-01.md`.
@@ -112,7 +126,8 @@ P2:
 
 - Class passives are partial but real and need explicit verification against authored text.
 - Corruptus passive/resource behavior needs a focused audit; do not assume it is complete because generic resource plumbing exists.
-- Perks should not be treated as implemented as a full tree. Selection exists and some low-level stat/trigger hooks exist, but most authored perk fantasies need their own primitive plan.
+- Perks should be mapped only from the current shared 20-perk pool. Do not plan primitives from the archived tier-2+ perk tree.
+- Implemented perk hooks are tracked in `docs/PERK_RUNTIME_STATUS.md`; remaining perk primitive work should come from those 20 passives only.
 
 ## Working Rule
 

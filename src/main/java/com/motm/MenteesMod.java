@@ -1688,7 +1688,7 @@ public class MenteesMod extends JavaPlugin {
 
         LOG.info("========================================");
         LOG.info("  Mentees of the Mystical v1.0.0");
-        LOG.info("  4 Classes | 40 Styles | 800 Perks | Level 1-200");
+        LOG.info("  4 Classes | 40 Styles | 20 Shared Perks | Level 1-200");
         LOG.info("  Build Channel: " + MotmBuildInfo.BUILD_CHANNEL);
         LOG.info("========================================");
 

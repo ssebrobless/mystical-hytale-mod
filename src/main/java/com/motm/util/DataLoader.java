@@ -28,6 +28,8 @@ public class DataLoader {
             .registerTypeAdapter(Double.class, new LenientDoubleAdapter())
             .create();
     private static final Logger LOG = Logger.getLogger("MOTM");
+    private static final String[] CLASS_IDS = {"terra", "hydro", "aero", "corruptus"};
+    private static final int SHARED_PERKS_PER_THEME = 5;
 
     private final Path dataDirectory;
 
@@ -85,8 +87,7 @@ public class DataLoader {
     // --- Perk Data ---
 
     private void loadPerks() {
-        String[] classIds = {"terra", "hydro", "aero", "corruptus"};
-        for (String classId : classIds) {
+        for (String classId : CLASS_IDS) {
             JsonObject wrapper = loadJson("data/perks/" + classId + "_perks.json", JsonObject.class);
             if (wrapper != null && wrapper.has("perks")) {
                 Type listType = new TypeToken<List<Perk>>() {}.getType();
@@ -95,7 +96,7 @@ public class DataLoader {
                 LOG.info("[MOTM] Loaded " + perks.size() + " perks for class: " + classId);
             }
         }
-        filterUnimplementedPerks();
+        filterToSharedRuntimePerks();
         validateSharedPerkPoolShape();
     }
 
@@ -105,11 +106,10 @@ public class DataLoader {
 
     public List<Perk> getSharedPerkPool() {
         List<Perk> shared = new ArrayList<>();
-        String[] classIds = {"terra", "hydro", "aero", "corruptus"};
-        for (String classId : classIds) {
+        for (String classId : CLASS_IDS) {
             List<Perk> themed = getPerksForClass(classId).stream()
                     .filter(perk -> perk != null && perk.getTier() == 1)
-                    .limit(5)
+                    .limit(SHARED_PERKS_PER_THEME)
                     .toList();
             shared.addAll(themed);
         }
@@ -122,16 +122,17 @@ public class DataLoader {
             throw new IllegalStateException("Shared perk pool must contain exactly 20 perks, found " + shared.size());
         }
 
-        String[] classIds = {"terra", "hydro", "aero", "corruptus"};
-        for (String classId : classIds) {
+        for (String classId : CLASS_IDS) {
             long count = shared.stream()
                     .filter(perk -> perk != null && perk.getId() != null && perk.getId().startsWith(classId + "_"))
                     .count();
-            if (count != 5) {
-                throw new IllegalStateException("Shared perk pool must contain 5 " + classId + " perks, found " + count);
+            if (count != SHARED_PERKS_PER_THEME) {
+                throw new IllegalStateException("Shared perk pool must contain "
+                        + SHARED_PERKS_PER_THEME + " " + classId + " perks, found " + count);
             }
         }
-        LOG.info("[MOTM] Shared perk pool validated: 20 perks, 5 per class.");
+        LOG.info("[MOTM] Shared perk pool validated: 20 perks, "
+                + SHARED_PERKS_PER_THEME + " per class.");
     }
 
     public Perk getPerkById(String perkId, String classId) {
@@ -153,13 +154,6 @@ public class DataLoader {
                 return perk;
             }
         }
-        for (List<Perk> perks : perkCache.values()) {
-            for (Perk perk : perks) {
-                if (perk != null && perkId.equalsIgnoreCase(perk.getId())) {
-                    return perk;
-                }
-            }
-        }
         return null;
     }
 
@@ -167,15 +161,20 @@ public class DataLoader {
         return getPerkById(perkId, classId) != null;
     }
 
-    private void filterUnimplementedPerks() {
+    private void filterToSharedRuntimePerks() {
         int removed = 0;
         for (Map.Entry<String, List<Perk>> entry : perkCache.entrySet()) {
             int before = entry.getValue().size();
-            entry.getValue().removeIf(perk -> perk != null && perk.getTier() > 14);
+            List<Perk> sharedTheme = entry.getValue().stream()
+                    .filter(perk -> perk != null && perk.getTier() == 1)
+                    .limit(SHARED_PERKS_PER_THEME)
+                    .toList();
+            entry.setValue(new ArrayList<>(sharedTheme));
             removed += before - entry.getValue().size();
         }
         if (removed > 0) {
-            LOG.info("[MOTM] Filtered " + removed + " unimplemented high-tier perks (tier > 14)");
+            LOG.info("[MOTM] Filtered " + removed
+                    + " archived concept perks; runtime uses the shared 20-perk pool.");
         }
     }
 
