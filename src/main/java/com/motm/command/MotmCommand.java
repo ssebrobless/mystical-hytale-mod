@@ -672,6 +672,12 @@ public class MotmCommand {
             return "[MOTM] That ability is unavailable.";
         }
 
+        String summonWithdrawSummary = mod.getGameplayPlaybackManager().handleActiveSummonRecast(runtimePlayer, player, ability);
+        if (!summonWithdrawSummary.isBlank()) {
+            mod.refreshStatusHud(player.getPlayerId());
+            return "[MOTM] " + summonWithdrawSummary + ".";
+        }
+
         try {
             StyleManager styleManager = mod.getStyleManager();
             StyleManager.ActionState actionState = styleManager.getActionState(player.getPlayerId());
@@ -799,7 +805,7 @@ public class MotmCommand {
 
     private String handleDevTest(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 3) {
-            return "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";
+            return "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mount <frosty|tamed-horse>|dismount frosty|mobs|status|stop>";
         }
         if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
             return "[MOTM] Join a world and run this in-game to start a live style test.";
@@ -818,6 +824,26 @@ public class MotmCommand {
                 }
                 yield mod.startSingleAbilityTest(player.getPlayerId(), args[3]);
             }
+            case "mount" -> {
+                if (args.length < 4) {
+                    yield "[MOTM] Usage: /motm dev test mount <frosty|tamed-horse>";
+                }
+                Player resolvedRuntimePlayer = runtimePlayer != null ? runtimePlayer : mod.getRuntimePlayer(player.getPlayerId());
+                if ("frosty".equalsIgnoreCase(args[3])) {
+                    yield mod.getGameplayPlaybackManager().mountActiveFrostyForTesting(resolvedRuntimePlayer, player);
+                }
+                if ("tamed-horse".equalsIgnoreCase(args[3]) || "horse".equalsIgnoreCase(args[3])) {
+                    yield mod.getGameplayPlaybackManager().spawnTamedHorseMountBaselineForTesting(resolvedRuntimePlayer, player);
+                }
+                yield "[MOTM] Usage: /motm dev test mount <frosty|tamed-horse>";
+            }
+            case "dismount" -> {
+                if (args.length < 4 || !"frosty".equalsIgnoreCase(args[3])) {
+                    yield "[MOTM] Usage: /motm dev test dismount frosty";
+                }
+                Player resolvedRuntimePlayer = runtimePlayer != null ? runtimePlayer : mod.getRuntimePlayer(player.getPlayerId());
+                yield mod.getGameplayPlaybackManager().dismountActiveFrostyForTesting(resolvedRuntimePlayer, player);
+            }
             case "mobs" -> {
                 if (args.length >= 4 && "clear".equalsIgnoreCase(args[3])) {
                     yield mod.clearStyleTestMobs(player.getPlayerId());
@@ -828,12 +854,18 @@ public class MotmCommand {
                 if (args.length >= 4 && "stationary".equalsIgnoreCase(args[3])) {
                     yield mod.spawnStyleTestMobs(player.getPlayerId(), "stationary");
                 }
+                if (args.length >= 4 && "tether".equalsIgnoreCase(args[3])) {
+                    yield mod.spawnStyleTestMobs(player.getPlayerId(), "tether");
+                }
+                if (args.length >= 4 && "aggro".equalsIgnoreCase(args[3])) {
+                    yield mod.spawnStyleTestMobs(player.getPlayerId(), "aggro");
+                }
                 yield mod.spawnStyleTestMobs(player.getPlayerId(),
                         args.length >= 4 && "close".equalsIgnoreCase(args[3]));
             }
             case "status" -> mod.getStyleTestStatus(player.getPlayerId());
             case "stop" -> mod.stopStyleTest(player.getPlayerId());
-            default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mobs|status|stop>";
+            default -> "[MOTM] Usage: /motm dev test <style <styleId>|ability <abilityId>|mount <frosty|tamed-horse>|dismount frosty|mobs|status|stop>";
         };
     }
 
@@ -1163,7 +1195,10 @@ public class MotmCommand {
                 + "  /motm dev book\n"
                 + "  /motm dev test style <styleId>\n"
                 + "  /motm dev test ability <abilityId>\n"
-                + "  /motm dev test mobs [close|stationary|clear|count]\n"
+                + "  /motm dev test mount frosty\n"
+                + "  /motm dev test mount tamed-horse\n"
+                + "  /motm dev test dismount frosty\n"
+                + "  /motm dev test mobs [close|stationary|tether|aggro|clear|count]\n"
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
                 + "  /motm dev proof <proofId>\n"
@@ -1437,12 +1472,16 @@ public class MotmCommand {
     }
 
     private String performFullDevPlayerClear(PlayerData player) {
+        int summonCleared = mod.getGameplayPlaybackManager() != null
+                ? mod.getGameplayPlaybackManager().clearActiveSummonsForOwner(player.getPlayerId())
+                : 0;
         resetPlayerForDev(player);
         rebuildPlayerRuntime(player);
         mod.getPlayerDataManager().savePlayerData(player);
         mod.refreshStatusHud(player.getPlayerId());
         return "[MOTM] Dev: player cleared to a fresh state.\n"
-                + "Reset: class, race, style, perks, level, XP, resources, cooldowns, statuses, and marks.";
+                + "Reset: class, race, style, perks, level, XP, resources, cooldowns, statuses, and marks.\n"
+                + "Cleanup: summons=" + summonCleared;
     }
 
     private Integer parseInteger(String rawValue) {

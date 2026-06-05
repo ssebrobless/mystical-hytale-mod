@@ -1,0 +1,33 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Livestock",
+  "Modify": {
+    "Appearance": "Horse",
+    "AttitudeGroup": "PreyBig",
+    "FlockArray": [
+      "Horse"
+    ],
+    "AttractiveItemSet": [
+      "Tool_Feedbag"
+    ],
+    "FollowItemDistance": [ 2.5, 3 ],
+    "DropList": "Empty",
+    "MaxHealth": 40,
+    "MaxSpeed": 8,
+    "ViewRange": 8,
+    "ViewSector": 360,
+    "HearingRange": 8,
+    "AlertedRange": 8,
+    "AlertedActionRange": 2,
+    "AbsoluteDetectionRange": 1,
+    "AttackWhenStartled": false,
+    "IsMemory": false,
+    "NameTranslationKey": { "Compute": "NameTranslationKey" }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "motm.npcRoles.summonDriver.name",
+      "Description": "Translation key for MOTM hidden summon driver"
+    }
+  }
+}

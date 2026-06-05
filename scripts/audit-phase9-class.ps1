@@ -72,6 +72,14 @@ function Get-AbilityScenario($Ability) {
         $kind = "ground_target"
         $setup = "Aim at target block or target feet; wait delay_seconds when present."
         $proof = "Telegraph/delay if present, then hit/status/impact visual."
+    } elseif ($castType -eq "line_control" -and (
+            ($Ability.PSObject.Properties.Name -contains "pull_force" -and [double]$Ability.pull_force -gt 0) -or
+            ([string]$Ability.travel_type).ToLowerInvariant() -match "thorn_whip|anchor_drag|rip_current|undertow" -or
+            ([string]$Ability.id).ToLowerInvariant() -in @("vines", "anchor_haul", "rip_current", "riptide")
+        )) {
+        $kind = "pull_tether"
+        $setup = "Place grounded target in visible lane; keep source and target framed through pull pulses."
+        $proof = "Target movement/pull plus tether visual spawn/pulse/despawn evidence."
     } elseif ($castType -like "projectile*" -or $castType -in @("line_control", "wave_line", "chain")) {
         $kind = "projectile_line"
         $setup = "Place grounded target in visible lane and keep aim steady through impact window."
@@ -118,6 +126,28 @@ function Get-MechanicalProof($Scenario, $Lines, [string]$ResultLine, [string]$Ab
                 return [pscustomobject]@{ Status = "REVIEW"; Note = "Projectile launched; target-side impact still needs proof." }
             }
             return [pscustomobject]@{ Status = "FAIL"; Note = "No projectile launch or target-side hit/effect proof." }
+        }
+        "pull_tether" {
+            $escapedAbility = [regex]::Escape($AbilityId)
+            $tetherLines = @($Lines | Where-Object {
+                $_ -match "tether visual .*ability=$escapedAbility"
+            })
+            $traceLines = @($Lines | Where-Object {
+                $_ -match "tether trace .*ability=$escapedAbility"
+            })
+            $spawn = @($tetherLines | Where-Object { $_ -match "tether visual spawn:" } | Select-Object -First 1)
+            $pulse = @($tetherLines | Where-Object { $_ -match "tether visual pulse:" } | Select-Object -First 1)
+            $despawn = @($tetherLines | Where-Object { $_ -match "tether visual despawn:" } | Select-Object -First 1)
+            $traceSpawn = @($traceLines | Where-Object { $_ -match "tether trace spawn:" } | Select-Object -First 1)
+            $traceCleanup = @($traceLines | Where-Object { $_ -match "tether trace cleanup:" } | Select-Object -First 1)
+            if (($resultText -match "pulled [1-9] target|applied .* to [1-9] target") -and $spawn.Count -gt 0 -and $pulse.Count -gt 0 -and $traceSpawn.Count -gt 0) {
+                $cleanup = if ($despawn.Count -gt 0 -and $traceCleanup.Count -gt 0) { "visual and trace cleanup observed" } else { "cleanup not fully observed in this window" }
+                return [pscustomobject]@{ Status = "PASS"; Note = "Line-control effect plus tether visual spawn/pulse and water trace proof found; $cleanup." }
+            }
+            if ($resultText -match "pulled [1-9] target") {
+                return [pscustomobject]@{ Status = "REVIEW"; Note = "Pull movement exists, but tether visual/trace proof is incomplete." }
+            }
+            return [pscustomobject]@{ Status = "FAIL"; Note = "No line-control effect plus tether visual proof." }
         }
         "ground_zone" {
             if ($resultText -match "field active|field arms|radius .*m" -and $resultText -match "[1-9] hit|applied .* to [1-9] target") {

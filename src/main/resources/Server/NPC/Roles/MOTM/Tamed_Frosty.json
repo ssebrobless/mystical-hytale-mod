@@ -1,0 +1,40 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Livestock",
+  "Modify": {
+    "Appearance": "Yeti",
+    "AttitudeGroup": "PreyBig",
+    "FlockArray": [],
+    "AttractiveItemSet": [
+      "Tool_Feedbag"
+    ],
+    "FollowItemDistance": [ 2.5, 3 ],
+    "DropList": "Empty",
+    "MaxHealth": 180,
+    "MaxSpeed": 12,
+    "ViewRange": 18,
+    "ViewSector": 360,
+    "HearingRange": 14,
+    "AlertedRange": 20,
+    "AlertedActionRange": 4,
+    "AbsoluteDetectionRange": 2,
+    "DayTimePeriod": [ 0, 24 ],
+    "DayTimeNapWeight": 0,
+    "AttackWhenStartled": false,
+    "Attack": "Root_NPC_Yeti_Attack",
+    "AttackRange": 6.5,
+    "IsMountable": true,
+    "MountAnchorX": 0,
+    "MountAnchorY": 3.85,
+    "MountAnchorZ": -0.15,
+    "IsMemory": true,
+    "MemoriesNameOverride": "Frosty",
+    "NameTranslationKey": { "Compute": "NameTranslationKey" }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Yeti.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

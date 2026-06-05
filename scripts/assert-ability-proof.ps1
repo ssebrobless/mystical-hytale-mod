@@ -77,13 +77,34 @@ function Test-MechanicalProof([string]$ScenarioName, $AllLines, $CastResultLine)
             return @("FAIL", "No landing-resolution line with targets>=1.")
         }
         "projectile_line" {
-            if ($resultText -match "launched [1-9] projectile") {
-                return @("REVIEW", "Projectile launched; target-side impact still needs hit/effect proof.")
-            }
             if ($resultText -match "[1-9] hit|applied .* to [1-9] target") {
                 return @("PASS", "Cast result includes target-side hit/effect.")
             }
+            if ($resultText -match "launched [1-9] projectile") {
+                return @("REVIEW", "Projectile launched; target-side impact still needs hit/effect proof.")
+            }
             return @("FAIL", "No projectile launch or target-side hit/effect proof.")
+        }
+        "pull_tether" {
+            $tetherLines = @($AllLines | Where-Object {
+                $_ -match "tether visual .*ability=$escaped"
+            })
+            $traceLines = @($AllLines | Where-Object {
+                $_ -match "tether trace .*ability=$escaped"
+            })
+            $spawn = @($tetherLines | Where-Object { $_ -match "tether visual spawn:" } | Select-Object -First 1)
+            $pulse = @($tetherLines | Where-Object { $_ -match "tether visual pulse:" } | Select-Object -First 1)
+            $despawn = @($tetherLines | Where-Object { $_ -match "tether visual despawn:" } | Select-Object -First 1)
+            $traceSpawn = @($traceLines | Where-Object { $_ -match "tether trace spawn:" } | Select-Object -First 1)
+            $traceCleanup = @($traceLines | Where-Object { $_ -match "tether trace cleanup:" } | Select-Object -First 1)
+            if (($resultText -match "pulled [1-9] target|applied .* to [1-9] target") -and $spawn.Count -gt 0 -and $pulse.Count -gt 0 -and $traceSpawn.Count -gt 0) {
+                $cleanup = if ($despawn.Count -gt 0 -and $traceCleanup.Count -gt 0) { "visual and trace cleanup observed" } else { "cleanup not fully observed in this window" }
+                return @("PASS", "Line-control effect plus tether visual spawn/pulse and water trace proof found; $cleanup.")
+            }
+            if ($resultText -match "pulled [1-9] target") {
+                return @("REVIEW", "Pull movement exists, but tether visual/trace proof is incomplete.")
+            }
+            return @("FAIL", "No line-control effect plus tether visual proof.")
         }
         "ground_zone" {
             if ($resultText -match "field active|field arms|radius .*m" -and $resultText -match "applied .* to [1-9] target|[1-9] hit") {

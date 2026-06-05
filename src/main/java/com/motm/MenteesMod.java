@@ -10,6 +10,7 @@ import com.motm.model.PerkTriggerBinding;
 import com.motm.model.StyleData;
 import com.motm.system.MotmMobRuntimeSystem;
 import com.motm.system.MotmServerTickSystem;
+import com.motm.system.MotmSummonFriendlyDamageFilterSystem;
 import com.motm.ui.MotmStatusHud;
 import com.motm.ui.SpellbookPage;
 import com.motm.util.DataLoader;
@@ -157,7 +158,7 @@ public class MenteesMod extends JavaPlugin {
     private static final String SERVER_CONFIG_FILE_NAME = "motm-server.properties";
     private static final int HUD_REFRESH_INTERVAL_TICKS = 4;
     private static final int HUD_INSTALL_DELAY_TICKS = 4;
-    private static final long SPELLBOOK_INPUT_DEBOUNCE_MS = 150L;
+    private static final long SPELLBOOK_INPUT_DEBOUNCE_MS = 650L;
     private static final Set<String> LEGACY_NONWEAPON_SPELLBOOK_ITEM_IDS = Set.of(
             "Recipe_Book_Magic_Air",
             "Weapon_Spellbook_Grimoire_Brown",
@@ -184,6 +185,9 @@ public class MenteesMod extends JavaPlugin {
             "Bat",
             "Empty_Role",
             "motm_summon",
+            "Skeleton_Fighter",
+            "Golem_Crystal_Frost",
+            "Yeti",
             "Slug_Magma",
             "Spark_Living"
     );
@@ -485,6 +489,7 @@ public class MenteesMod extends JavaPlugin {
         getCommandRegistry().registerCommand(new MotmCommandBase(this));
         getEntityStoreRegistry().registerSystem(new MotmServerTickSystem(this));
         getEntityStoreRegistry().registerSystem(new MotmMobRuntimeSystem(this));
+        getEntityStoreRegistry().registerSystem(new MotmSummonFriendlyDamageFilterSystem(this));
     }
 
     private void registerSpellbookInteractionCodecs() {
@@ -1168,6 +1173,8 @@ public class MenteesMod extends JavaPlugin {
         if (playerId == null || playerId.isBlank() || abilityId == null || abilityId.isBlank()) {
             return;
         }
+        pendingAbilityCasts.removeIf(request ->
+                playerId.equals(request.playerId()) && abilityId.equalsIgnoreCase(request.abilityId()));
         LOG.info("[MOTM] Queue ability cast: playerId=" + playerId
                 + " abilityId=" + abilityId
                 + " notifyFailures=" + notifyFailures);
@@ -1371,7 +1378,7 @@ public class MenteesMod extends JavaPlugin {
     private String normalizeStyleTestMobMode(String mode) {
         String normalized = mode == null ? "" : mode.trim().toLowerCase(Locale.ROOT);
         return switch (normalized) {
-            case "close", "stationary", "standard" -> normalized;
+            case "aggro", "close", "stationary", "standard", "tether" -> normalized;
             default -> "standard";
         };
     }
@@ -1397,12 +1404,21 @@ public class MenteesMod extends JavaPlugin {
         Vector3d horizontalForward = normalizeHorizontal(forward);
         Vector3d right = new Vector3d(-horizontalForward.z, 0.0, horizontalForward.x);
         String normalizedMode = normalizeStyleTestMobMode(mode);
+        boolean aggroMode = "aggro".equals(normalizedMode);
         boolean closeGroundedTarget = "close".equals(normalizedMode) || "stationary".equals(normalizedMode);
-        Vector3d groundPosition = closeGroundedTarget
+        boolean tetherGroundedTarget = "tether".equals(normalizedMode);
+        Vector3d groundPosition = aggroMode
+                ? new Vector3d(basePosition).fma(3.2, horizontalForward)
+                : closeGroundedTarget
                 ? new Vector3d(basePosition).fma(1.6, horizontalForward)
+                : tetherGroundedTarget
+                        ? new Vector3d(basePosition).fma(5.5, horizontalForward)
                 : new Vector3d(basePosition)
                         .fma(5.0, horizontalForward)
                         .fma(-8.0, right);
+        Vector3d secondaryGroundPosition = new Vector3d(basePosition)
+                .fma(4.2, horizontalForward)
+                .fma(2.0, right);
         Vector3d floatingPosition = new Vector3d(basePosition)
                 .fma(5.0, horizontalForward)
                 .fma(-5.0, right);
@@ -1415,14 +1431,25 @@ public class MenteesMod extends JavaPlugin {
 
         int cleared = clearTrackedStyleTestTargets(playerId);
         List<Ref<EntityStore>> targets = new ArrayList<>();
-        Ref<EntityStore> grounded = spawnStyleTestNpc(world, groundPosition, "Test_Dummy_Stationary");
-        if (grounded != null) {
-            targets.add(grounded);
-        }
-        if (!"stationary".equals(normalizedMode)) {
-            Ref<EntityStore> floating = spawnStyleTestNpc(world, floatingPosition, "Bat");
-            if (floating != null) {
-                targets.add(floating);
+        if (aggroMode) {
+            Ref<EntityStore> primaryAggro = spawnStyleTestNpc(world, groundPosition, "Goblin_Scrapper");
+            if (primaryAggro != null) {
+                targets.add(primaryAggro);
+            }
+            Ref<EntityStore> secondaryAggro = spawnStyleTestNpc(world, secondaryGroundPosition, "Goblin_Scrapper");
+            if (secondaryAggro != null) {
+                targets.add(secondaryAggro);
+            }
+        } else {
+            Ref<EntityStore> grounded = spawnStyleTestNpc(world, groundPosition, "Test_Dummy_Stationary");
+            if (grounded != null) {
+                targets.add(grounded);
+            }
+            if (!"stationary".equals(normalizedMode) && !tetherGroundedTarget) {
+                Ref<EntityStore> floating = spawnStyleTestNpc(world, floatingPosition, "Bat");
+                if (floating != null) {
+                    targets.add(floating);
+                }
             }
         }
         styleTestTargetsByPlayer.put(playerId, targets);
@@ -1433,6 +1460,7 @@ public class MenteesMod extends JavaPlugin {
                 + " clearedPrevious=" + cleared
                 + " tracked=" + countValidRefs(targets)
                 + " grounded=" + formatVector(groundPosition)
+                + " secondaryGround=" + formatVector(secondaryGroundPosition)
                 + " floating=" + formatVector(floatingPosition);
         LOG.info(summary);
         return summary;
@@ -1571,12 +1599,21 @@ public class MenteesMod extends JavaPlugin {
                 LOG.warning("[MOTM] Style test NPC spawned without a valid entity reference: role=" + roleName);
                 return null;
             }
+            suppressStyleTestNpcDrops(npc, roleName);
             return ref;
         } catch (Exception e) {
             LOG.warning("[MOTM] Failed to spawn style test NPC role=" + roleName
                     + " at " + formatVector(position) + ": " + e.getMessage());
             return null;
         }
+    }
+
+    private void suppressStyleTestNpcDrops(NPCEntity npc, String roleName) {
+        if (npc == null || npc.getRole() == null) {
+            return;
+        }
+        npc.getRole().setDeathItemsDropped();
+        LOG.info("[MOTM] Style test NPC no-drop guard: role=" + roleName);
     }
 
     private void installStatusHud(Player player) {
@@ -3597,6 +3634,19 @@ public class MenteesMod extends JavaPlugin {
             boolean holdingDevBook = isDevBookItem(itemInHand);
             boolean crouching = isPlayerCrouching(player);
             InteractionType actionType = event.getActionType();
+            if (actionType == InteractionType.Use
+                    && gameplayPlaybackManager != null) {
+                String mountResponse = gameplayPlaybackManager.mountTargetedFrostyForTesting(
+                        player,
+                        playerData,
+                        event.getTargetRef()
+                );
+                if (mountResponse != null && !mountResponse.isBlank()) {
+                    event.setCancelled(true);
+                    sendPlayerMessage(player, Message.raw(mountResponse));
+                    return;
+                }
+            }
             int bookSlot = resolveSpellbookInteractSlot(actionType);
             String heldItemId = itemInHand != null ? itemInHand.getItemId() : "<none>";
             boolean hasSelectedStyle = playerData.getSelectedStyles() != null && !playerData.getSelectedStyles().isEmpty();
@@ -3788,6 +3838,20 @@ public class MenteesMod extends JavaPlugin {
             var playerData = playerId != null ? playerDataManager.getOnlinePlayer(playerId) : null;
             if (playerData == null) {
                 return;
+            }
+
+            if (event.getMouseButton().mouseButtonType == MouseButtonType.Right
+                    && gameplayPlaybackManager != null) {
+                String mountResponse = gameplayPlaybackManager.mountTargetedFrostyForTesting(
+                        player,
+                        playerData,
+                        event.getTargetEntityRef()
+                );
+                if (mountResponse != null && !mountResponse.isBlank()) {
+                    event.setCancelled(true);
+                    sendPlayerMessage(player, Message.raw(mountResponse));
+                    return;
+                }
             }
 
             var eventItemInHand = event.getItemInHand();

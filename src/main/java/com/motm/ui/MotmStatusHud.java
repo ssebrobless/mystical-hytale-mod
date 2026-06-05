@@ -53,7 +53,7 @@ public class MotmStatusHud extends CustomUIHud {
         renderStatusStrip(commands, player);
         renderXp(commands, player);
         hideResource(commands);
-        renderAbilitySlots(commands, player);
+        hideAbilitySlots(commands);
     }
 
     private void renderStatusStrip(UICommandBuilder commands, PlayerData player) {
@@ -206,25 +206,20 @@ public class MotmStatusHud extends CustomUIHud {
                 ));
             }
             case "hydro" -> {
-                int water = mod.getResourceManager().getAmount(playerId, "water");
-                int maxWater = Math.max(1, mod.getResourceManager().getMaxAmount(playerId, "water"));
-                boolean lowWaterMode = passiveManager.isHydroLowResourceMode(playerId);
                 boolean swimming = passiveManager.isHydroSwimming(playerId);
                 boolean underwater = passiveManager.isHydroUnderwater(playerId);
                 buffs.add(new HudStatusEntry(
                         "Passive",
-                        lowWaterMode
-                                ? "Low Water"
-                                : underwater
+                        underwater
                                 ? "Underwater"
                                 : swimming
                                 ? "Swimming"
                                 : "Tidal Flow",
-                        lowWaterMode ? StatusTone.BUFF : StatusTone.PASSIVE,
+                        StatusTone.PASSIVE,
                         StatusIcon.HEALTH,
-                        1.0 - Math.max(0.0, Math.min(water / (double) maxWater, 1.0)),
+                        underwater || swimming ? 1.0 : 0.0,
                         underwater ? "O2+" : swimming ? "SW" : "",
-                        lowWaterMode ? 100 : 85
+                        85
                 ));
             }
             case "aero" -> {
@@ -239,16 +234,14 @@ public class MotmStatusHud extends CustomUIHud {
                 ));
             }
             case "corruptus" -> {
-                int souls = mod.getResourceManager().getAmount(playerId, "souls");
-                int maxSouls = Math.max(1, mod.getResourceManager().getMaxAmount(playerId, "souls"));
                 buffs.add(new HudStatusEntry(
-                        "Souls",
-                        souls > 0 ? "Harvest" : "Empty",
-                        souls > 0 ? StatusTone.BUFF : StatusTone.PASSIVE,
+                        "Passive",
+                        "Soul Harvest",
+                        StatusTone.PASSIVE,
                         StatusIcon.MAGIC,
-                        Math.max(0.0, Math.min(souls / (double) maxSouls, 1.0)),
-                        souls > 0 ? Integer.toString(souls) : "",
-                        souls > 0 ? 100 : 84
+                        0.0,
+                        "",
+                        84
                 ));
             }
             default -> {
@@ -471,6 +464,20 @@ public class MotmStatusHud extends CustomUIHud {
         commands.set("#ResourceCorruptusBar.Value", 0.0);
         setText(commands, "#ResourceTitle.Text", "");
         setText(commands, "#ResourceLabel.Text", "");
+    }
+
+    private void hideAbilitySlots(UICommandBuilder commands) {
+        commands.set("#AbilitySlotsRoot.Visible", false);
+        for (int slot = 1; slot <= 3; slot++) {
+            String prefix = "#Ability" + slot;
+            commands.set(prefix + "Root.Visible", false);
+            setText(commands, prefix + "Name.Text", "");
+            setText(commands, prefix + "Timer.Text", "");
+            commands.set(prefix + "Timer.Visible", false);
+            commands.set(prefix + "ReadyBg.Visible", false);
+            commands.set(prefix + "CooldownBg.Visible", false);
+            renderAbilityIcon(commands, prefix, StatusIcon.MAGIC);
+        }
     }
 
     private void renderAbilitySlots(UICommandBuilder commands, PlayerData player) {

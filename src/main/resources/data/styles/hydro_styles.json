@@ -96,7 +96,7 @@
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
-          "duration_seconds": 18,
+          "duration_seconds": 120,
           "summon_name": "snow_imp",
           "terrain_effect": "snow_imp_summon"
         },
@@ -124,7 +124,7 @@
         {
           "id": "frosty",
           "name": "Frosty",
-          "description": "Summon golem that taunts and absorbs damage",
+          "description": "Summon a yeti that taunts and absorbs damage",
           "damage_percent": 0,
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.8,
@@ -137,7 +137,7 @@
           "cast_type": "summon",
           "target_type": "ground_target",
           "range": 10,
-          "duration_seconds": 20,
+          "duration_seconds": 60,
           "summon_name": "frosty_golem",
           "terrain_effect": "frozen_guardian"
         }

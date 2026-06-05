@@ -33,6 +33,17 @@ function Get-ScenarioKind($Ability) {
     if ($castType -in @("cone", "gaze")) { return "facing_cone" }
     if ($castType -in @("ground_zone", "support_zone")) { return "ground_zone" }
     if ($castType -in @("ground_target", "ground_strike", "barrier")) { return "ground_target" }
+    $pullForce = 0.0
+    if ($Ability.PSObject.Properties.Name -contains "pull_force") {
+        $pullForce = [double]$Ability.pull_force
+    }
+    $travelType = ([string]$Ability.travel_type).ToLowerInvariant()
+    $abilityId = ([string]$Ability.id).ToLowerInvariant()
+    if ($castType -eq "line_control" -and (
+            $pullForce -gt 0 -or
+            $travelType -match "thorn_whip|anchor_drag|rip_current|undertow" -or
+            $abilityId -in @("vines", "anchor_haul", "rip_current", "riptide")
+        )) { return "pull_tether" }
     if ($castType -like "projectile*" -or $castType -in @("line_control", "wave_line", "chain")) { return "projectile_line" }
     if ($castType -in @("summon", "summon_buff")) { return "summon" }
     if ($castType -in @("cleanse") -or $effect -match "cleanse|purify" -or $description -match "cleanse|purge|purify") { return "cleanse" }
@@ -85,6 +96,13 @@ switch ($scenario) {
         Invoke-Step "spawn close target, step back to create a movement lane, then face target" {
             Send-MotmCommand "motm dev test mobs close" 1200
             & (Join-Path $PSScriptRoot "send-input.ps1") -Action Back -HoldMilliseconds 700 -DelayMilliseconds 250 | Out-Host
+        }
+    }
+    "pull_tether" {
+        Invoke-Step "spawn target in a visible pull lane and offset camera to make tether readable" {
+            Send-MotmCommand "motm dev test mobs tether" 1200
+            & (Join-Path $PSScriptRoot "send-input.ps1") -Action Back -HoldMilliseconds 450 -DelayMilliseconds 250 | Out-Host
+            & (Join-Path $PSScriptRoot "send-input.ps1") -Action StrafeRight -HoldMilliseconds 450 -DelayMilliseconds 250 | Out-Host
         }
     }
     "jump_land" {

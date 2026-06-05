@@ -90,12 +90,9 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void bindNavigation(UIEventBuilder events) {
         bindSection(events, "#NavOverviewButton", SpellbookManager.Section.OVERVIEW);
-        bindSection(events, "#NavJourneyButton", SpellbookManager.Section.JOURNEY);
         bindSection(events, "#NavGrimoireButton", SpellbookManager.Section.GRIMOIRE);
         bindSection(events, "#NavPerksButton", SpellbookManager.Section.PERKS);
-        bindSection(events, "#NavResourcesButton", SpellbookManager.Section.RESOURCES);
         bindSection(events, "#NavCodexButton", SpellbookManager.Section.CODEX);
-        bindSection(events, "#NavJournalButton", SpellbookManager.Section.JOURNAL);
     }
 
     private void bindJourneyActions(UIEventBuilder events) {
@@ -163,9 +160,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         PlayerData player = currentPlayer();
         if (player != null && classId.equalsIgnoreCase(player.getPlayerClass())) {
             queuedPerkChoices.clear();
-            currentSection = player.getRace() == null
-                    ? SpellbookManager.Section.JOURNEY
-                    : SpellbookManager.Section.GRIMOIRE;
+            currentSection = SpellbookManager.Section.GRIMOIRE;
         }
     }
 
@@ -312,12 +307,15 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void applyNavigationState(UICommandBuilder commands) {
         setNavState(commands, SpellbookManager.Section.OVERVIEW, "#NavOverviewButton", "#NavOverviewSelected");
-        setNavState(commands, SpellbookManager.Section.JOURNEY, "#NavJourneyButton", "#NavJourneySelected");
+        commands.set("#NavJourneyButton.Visible", false);
+        commands.set("#NavJourneySelected.Visible", false);
         setNavState(commands, SpellbookManager.Section.GRIMOIRE, "#NavGrimoireButton", "#NavGrimoireSelected");
         setNavState(commands, SpellbookManager.Section.PERKS, "#NavPerksButton", "#NavPerksSelected");
-        setNavState(commands, SpellbookManager.Section.RESOURCES, "#NavResourcesButton", "#NavResourcesSelected");
+        commands.set("#NavResourcesButton.Visible", false);
+        commands.set("#NavResourcesSelected.Visible", false);
         setNavState(commands, SpellbookManager.Section.CODEX, "#NavCodexButton", "#NavCodexSelected");
-        setNavState(commands, SpellbookManager.Section.JOURNAL, "#NavJournalButton", "#NavJournalSelected");
+        commands.set("#NavJournalButton.Visible", false);
+        commands.set("#NavJournalSelected.Visible", false);
     }
 
     private void setNavState(UICommandBuilder commands,
@@ -334,10 +332,10 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void applySectionVisibility(UICommandBuilder commands) {
         commands.set("#OverviewPanel.Visible", currentSection == SpellbookManager.Section.OVERVIEW);
-        commands.set("#JourneyPanel.Visible", currentSection == SpellbookManager.Section.JOURNEY);
+        commands.set("#JourneyPanel.Visible", false);
         commands.set("#GrimoirePanel.Visible", currentSection == SpellbookManager.Section.GRIMOIRE);
         commands.set("#PerksPanel.Visible", currentSection == SpellbookManager.Section.PERKS);
-        commands.set("#ResourcesPanel.Visible", currentSection == SpellbookManager.Section.RESOURCES);
+        commands.set("#ResourcesPanel.Visible", false);
         commands.set("#CodexPanel.Visible", currentSection == SpellbookManager.Section.CODEX);
         commands.set("#JournalPanel.Visible", currentSection == SpellbookManager.Section.JOURNAL);
     }
@@ -366,8 +364,8 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#OverviewPathSynergyValue.Text", player != null
                 ? String.valueOf(player.getActiveSynergyBonuses().size())
                 : "0");
-        setText(commands, "#OverviewPathResourceValue.Text", currentResourceLine(player));
-        setText(commands, "#OverviewPathTipValue.Text", "Journey chooses class and race. Grimoire chooses style. Perk Web confirms 3 passive picks.");
+        setText(commands, "#OverviewPathResourceValue.Text", currentAbilityLine(player));
+        setText(commands, "#OverviewPathTipValue.Text", "Class shows identity and passives. Styles shows active abilities. Perks and Stats handle progression choices.");
     }
 
     private void applyJourney(UICommandBuilder commands, PlayerData player) {
@@ -446,24 +444,17 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
         commands.set("#GrimoireEmpty.Visible", !hasClass);
         commands.set("#GrimoireDetails.Visible", hasClass);
-        commands.set("#StyleButtonsContainer.Visible", hasClass);
+        commands.set("#StyleButtonsContainer.Visible", false);
 
-        setText(commands, "#GrimoireEmpty.Text", "Choose a class in Journey to awaken your grimoire.");
-        setText(commands, "#GrimoireStyleActionValue.Text", !hasClass
-                ? "Choose a class first."
-                : hasStyle
-                ? "Choose a different style here if you want to reshuffle your 3 active abilities."
-                : "Choose a style here. Styles grant all 3 active abilities immediately.");
-
-        if (hasClass) {
-            applyStyleButtons(commands, player);
-        } else {
-            hideStyleButtons(commands);
-        }
+        setText(commands, "#GrimoireEmpty.Text", "Choose a class to reveal styles and active abilities.");
+        setText(commands, "#GrimoireStyleActionValue.Text", hasStyle
+                ? "The selected style defines the three active abilities shown below."
+                : "Choose a style from commands or the dev/test spellbook controls to reveal active abilities.");
+        hideStyleButtons(commands);
 
         setText(commands, "#GrimoireStyleValue.Text", hasStyle ? safe(style.getName()) : "Unchosen");
         setText(commands, "#GrimoireThemeValue.Text", hasStyle ? safe(style.getTheme()) : "No theme yet");
-        setText(commands, "#GrimoireResourceValue.Text", hasStyle ? displayStyleResource(style) : "No class resource");
+        setText(commands, "#GrimoireResourceValue.Text", hasStyle ? displayAbilityLoadout(style) : "No active ability loadout yet");
         setText(commands, "#GrimoireAbilityRule.Text", "Styles grant all 3 active abilities immediately. Perks stay passive and modify those abilities later.");
 
         List<AbilityData> abilities = hasStyle && style.getAbilities() != null ? style.getAbilities() : Collections.emptyList();
@@ -516,7 +507,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         boolean hasStyle = player != null && !player.getSelectedStyles().isEmpty();
         boolean pending = hasPendingPerks(player);
 
-        setText(commands, "#PerksDesignValue.Text", "Perks are passive modifiers, triggers, and synergies. They never grant active abilities.");
+        setText(commands, "#PerksDesignValue.Text", "Token Count: " + perkTokenCount(player) + " | Perks are passive modifiers, triggers, and synergies.");
         setText(commands, "#PerksUnlockedValue.Text", player != null
                 ? perkManager().getCurrentTier(player.getLevel()) + " / " + PerkManager.TOTAL_TIERS
                 : "0 / " + PerkManager.TOTAL_TIERS);
@@ -568,19 +559,18 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     }
 
     private void applyResources(UICommandBuilder commands, PlayerData player) {
-        setText(commands, "#ResourcesCurrentValue.Text", currentResourceLine(player));
-        setText(commands, "#ResourcesRuleValue.Text", player != null && player.getPlayerClass() != null
-                ? resourceRule(player.getPlayerClass())
-                : "Choose a class to unlock its resource system.");
-        setText(commands, "#ResourcesPracticalValue.Text",
-                "Practical perks can improve sustain, movement, gathering, healing, and survival while playing Hytale normally.");
+        setText(commands, "#ResourcesCurrentValue.Text", "");
+        setText(commands, "#ResourcesRuleValue.Text", "");
+        setText(commands, "#ResourcesPracticalValue.Text", "");
     }
 
     private void applyCodex(UICommandBuilder commands, PlayerData player) {
-        setText(commands, "#CodexFlowValue.Text", "Class -> Style -> 3 abilities -> Level milestones -> Perk tiers -> Synergies");
-        setText(commands, "#CodexReactionsValue.Text", "Elemental reactions and status marks will live here as the combat execution layer grows.");
-        setText(commands, "#CodexScalingValue.Text", "Enemies scale with progression and may gain elite titles based on zone and conditions.");
-        setText(commands, "#CodexFocusValue.Text", "Current focus: spellbook UI, passive perk execution, ability controls, and real playback for the mapped Hytale animations/VFX/models.");
+        setText(commands, "#CodexFlowValue.Text", "Stat point selection belongs here.");
+        setText(commands, "#CodexReactionsValue.Text", player != null
+                ? "Current level: " + player.getLevel() + " | XP: " + player.getCurrentXp()
+                : "No player data loaded.");
+        setText(commands, "#CodexScalingValue.Text", "Planned stats: Vigor, Tenacity, Endurance, Agility, Luck.");
+        setText(commands, "#CodexFocusValue.Text", "Each stat will show current percentage buffs and use a click-then-accept confirmation flow.");
     }
 
     private void applyJournal(UICommandBuilder commands, PlayerData player) {
@@ -730,24 +720,21 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         return player != null && perkManager().hasPendingPerkSelection(player);
     }
 
-    private String currentResourceLine(PlayerData player) {
+    private String currentAbilityLine(PlayerData player) {
         if (player == null || player.getPlayerClass() == null) {
-            return "No class resource yet.";
+            return "No class path yet.";
         }
-        return mod.getResourceManager().getResourceDisplay(player.getPlayerId(), player.getPlayerClass());
-    }
+        StyleData style = getSelectedStyle(player);
+        if (style == null || style.getAbilities() == null || style.getAbilities().isEmpty()) {
+            return "Choose a style to reveal your three active abilities.";
+        }
 
-    private String resourceRule(String playerClass) {
-        if (playerClass == null) {
-            return "Choose a class to unlock a resource rule.";
-        }
-        return switch (playerClass.toLowerCase(Locale.ROOT)) {
-            case "terra" -> "Terra spends style-specific materials: stone blocks, seeds, dirt blocks, sand blocks, metal, and gems.";
-            case "hydro" -> "Hydro spends water from a crafted waterskin in inventory like ammo and refills it by right-clicking natural water sources.";
-            case "aero" -> "Aero has no class resource and fights through cooldowns, movement, and momentum.";
-            case "corruptus" -> "Corruptus earns souls from kills and burns them for power.";
-            default -> "Unknown class resource.";
-        };
+        return "Active abilities: " + style.getAbilities().stream()
+                .limit(MAX_ABILITY_ROWS)
+                .map(AbilityData::getName)
+                .filter(name -> name != null && !name.isBlank())
+                .reduce((left, right) -> left + " | " + right)
+                .orElse("Choose a style to reveal your three active abilities.");
     }
 
     private String buildAbilitySummary(AbilityData ability) {
@@ -766,11 +753,11 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         return classData.getPassiveAbility().getDescription() + " | " + summary;
     }
 
-    private String displayStyleResource(StyleData style) {
-        if (style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
-            return "None";
+    private String displayAbilityLoadout(StyleData style) {
+        if (style == null || style.getAbilities() == null || style.getAbilities().isEmpty()) {
+            return "No active ability loadout yet";
         }
-        return mod.getResourceManager().getDisplayName(style.getResourceType());
+        return style.getAbilities().size() + " active abilities ready from this style";
     }
 
     private String buildAbilityMeta(PlayerData player, StyleData style, AbilityData ability) {
@@ -785,8 +772,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 meta.append(visuals).append(" | ");
             }
         }
-        meta.append("Cost ").append(ability.getResourceCost())
-                .append(" | Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
+        meta.append("Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s")
                 .append(" | Ready in ").append(formatDecimal(getRemainingCooldown(player, ability))).append("s");
         return meta.toString();
     }
@@ -802,38 +788,46 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         return mod.getPerkManager();
     }
 
+    private int perkTokenCount(PlayerData player) {
+        if (player == null) {
+            return 0;
+        }
+        int earned = player.getLevel() / LevelingManager.MILESTONE_INTERVAL;
+        return Math.max(0, earned - player.getSelectedPerks().size());
+    }
+
     private String sectionTitle(SpellbookManager.Section section) {
         return switch (section) {
-            case OVERVIEW -> "Overview";
-            case JOURNEY -> "Journey";
-            case GRIMOIRE -> "Grimoire";
-            case PERKS -> "Perk Web";
+            case OVERVIEW -> "Class";
+            case JOURNEY -> "Class";
+            case GRIMOIRE -> "Styles + Abilities";
+            case PERKS -> "Perks";
             case RESOURCES -> "Resources";
-            case CODEX -> "Codex";
+            case CODEX -> "Stats";
             case JOURNAL -> "Journal";
         };
     }
 
     private String sectionSubtitle(SpellbookManager.Section section) {
         return switch (section) {
-            case OVERVIEW -> "Who you are, what you can do, and what comes next.";
-            case JOURNEY -> "Your class, race, style, and progression milestones.";
+            case OVERVIEW -> "Your class identity, passive abilities, and current path.";
+            case JOURNEY -> "Your class identity, passive abilities, and current path.";
             case GRIMOIRE -> "The three active abilities granted by your chosen style.";
             case PERKS -> "Passive modifiers, triggers, and synergies that shape your build.";
             case RESOURCES -> "How your class sustains spellcasting and practical power.";
-            case CODEX -> "Core system notes for reactions, scaling, and combat flow.";
+            case CODEX -> "Spend stat points and review current stat bonuses.";
             case JOURNAL -> "Reserved space for lore, chapters, quests, and discoveries.";
         };
     }
 
     private String sectionName(SpellbookManager.Section section) {
         return switch (section) {
-            case OVERVIEW -> "overview";
-            case JOURNEY -> "journey";
-            case GRIMOIRE -> "grimoire";
+            case OVERVIEW -> "class";
+            case JOURNEY -> "class";
+            case GRIMOIRE -> "styles";
             case PERKS -> "perks";
             case RESOURCES -> "resources";
-            case CODEX -> "codex";
+            case CODEX -> "stats";
             case JOURNAL -> "journal";
         };
     }

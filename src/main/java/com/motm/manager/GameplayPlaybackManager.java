@@ -2,27 +2,58 @@ package com.motm.manager;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.Holder;
+import com.hypixel.hytale.component.AddReason;
+import com.hypixel.hytale.component.RemoveReason;
+import com.hypixel.hytale.builtin.mounts.MountedComponent;
+import com.hypixel.hytale.builtin.mounts.MountedByComponent;
+import com.hypixel.hytale.builtin.mounts.MountPlugin;
+import com.hypixel.hytale.builtin.mounts.NPCMountComponent;
 import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.math.vector.Transform;
+import com.hypixel.hytale.protocol.MountController;
+import com.hypixel.hytale.protocol.packets.interaction.DismountNPC;
+import com.hypixel.hytale.protocol.packets.interaction.MountNPC;
+import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementConfig;
+import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
+import com.hypixel.hytale.server.core.asset.type.fluid.Fluid;
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.asset.type.model.config.ModelAsset;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.CollisionResultComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.EntityScaleComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.HiddenFromAdventurePlayers;
+import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
+import com.hypixel.hytale.server.core.modules.entity.item.PreventItemMerging;
+import com.hypixel.hytale.server.core.modules.entity.item.PreventPickup;
 import com.hypixel.hytale.server.core.modules.collision.BlockCollisionData;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageSystems;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
+import com.hypixel.hytale.server.core.modules.physics.component.PhysicsValues;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
+import com.hypixel.hytale.server.core.modules.entity.tracker.NetworkId;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.protocol.BlockMaterial;
+import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
+import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
+import com.hypixel.hytale.server.npc.NPCPlugin;
+import com.hypixel.hytale.server.npc.movement.NavState;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import com.hypixel.hytale.server.npc.role.support.MarkedEntitySupport;
+import com.hypixel.hytale.server.npc.systems.RoleChangeSystem;
 import com.motm.MenteesMod;
 import com.motm.model.AbilityData;
 import com.motm.model.PlayerData;
@@ -74,9 +105,19 @@ public class GameplayPlaybackManager {
     private static final double DEFAULT_CHAIN_RADIUS = 4.5;
     private static final int DEFAULT_CHAIN_TARGETS = 3;
     private static final int DEFAULT_PROJECTILE_CLUSTER_COUNT = 3;
-    private static final String SUMMON_ROLE_NAME = "motm_summon";
+    private static final String SUMMON_ROLE_NAME = "MOTM_Summon_Driver";
     private static final String PROJECTILE_VISUAL_ROLE_NAME = "motm_projectile";
     private static final String FIELD_VISUAL_ROLE_NAME = "motm_field";
+    private static final String MOTM_SNOW_IMP_MODEL_ASSET_ID = "Snow_Imp_Snowman";
+    private static final String SNOWMAN_MODEL_ASSET_ID = "Common/Items/Hypixel/Event_Decoration/Winter Holiday_Props/WinterHoliday_Snowman.blockymodel";
+    private static final String[] SNOWMAN_MODEL_ASSET_CANDIDATES = {
+            MOTM_SNOW_IMP_MODEL_ASSET_ID,
+            "MOTM/Summons/Snow_Imp_Snowman",
+            "WinterHoliday_Snowman",
+            "Common/Items/Hypixel/Event_Decoration/Winter Holiday_Props/WinterHoliday_Snowman",
+            SNOWMAN_MODEL_ASSET_ID
+    };
+    private static final String SNOWMAN_ITEM_ID = "WinterHoliday_Snowman";
     private static final long SUMMON_THINK_INTERVAL_MS = 450L;
     private static final long CHANNEL_PULSE_INTERVAL_MS = 700L;
     private static final long FORM_PULSE_INTERVAL_MS = 850L;
@@ -94,12 +135,80 @@ public class GameplayPlaybackManager {
     private static final long DEFAULT_BURST_STAGGER_MS = 22L;
     private static final long PROJECTILE_VISUAL_REFRESH_MS = 220L;
     private static final long FIELD_VISUAL_REFRESH_MS = 900L;
+    private static final long TETHER_VISUAL_REFRESH_MS = 250L;
+    private static final long TETHER_TRACE_CLEANUP_GRACE_MS = 350L;
     private static final long FIELD_PULSE_INTERVAL_MS = 900L;
     private static final double DEFAULT_FIELD_THICKNESS = 1.35;
     private static final double DEFAULT_PULL_STOP_DISTANCE = 1.25;
     private static final double MAX_PULL_STEP_DISTANCE = 5.5;
     private static final double DEFAULT_FIELD_DAMAGE_RATIO = 0.28;
     private static final double DEFAULT_SUPPORT_HEAL_RATIO = 0.16;
+    private static final double SUMMON_OWNER_RETURN_DISTANCE = 4.75;
+    private static final double SUMMON_OWNER_TARGET_RADIUS = 5.5;
+    private static final double SUMMON_OWNER_FOLLOW_STOP_DISTANCE = 2.3;
+    private static final double SUMMON_OWNER_FOLLOW_RELEASE_DISTANCE = 2.9;
+    private static final double SUMMON_OWNER_COMBAT_LEASH_DISTANCE = 4.35;
+    private static final double SUMMON_OWNER_COMBAT_READY_DISTANCE = 3.15;
+    private static final double SUMMON_OWNER_PATH_REISSUE_DISTANCE = 12.0;
+    private static final double SUMMON_OWNER_CATCHUP_WARP_DISTANCE = 8.5;
+    private static final double SNOW_SUMMON_OWNER_CATCHUP_WARP_DISTANCE = 36.0;
+    private static final double SUMMON_OWNER_DRAG_MIN_STEP_DISTANCE = 0.025;
+    private static final double SUMMON_OWNER_DRAG_STEP_DISTANCE = 0.22;
+    private static final double SUMMON_OWNER_DRAG_DAMPEN_RANGE = 2.5;
+    private static final double SNOW_SUMMON_OWNER_RADIUS_MULTIPLIER = 3.0;
+    private static final long SUMMON_OWNER_CATCHUP_WARP_INTERVAL_MS = 1600L;
+    private static final long SUMMON_SNOWMAN_ATTACK_ANIMATION_MS = 420L;
+    private static final double SUMMON_SNOWMAN_ATTACK_WINDUP_OFFSET = -0.18;
+    private static final double SUMMON_SNOWMAN_ATTACK_THRUST_OFFSET = 0.85;
+    private static final float FROSTY_MOUNT_ANCHOR_X = 0.0f;
+    private static final float FROSTY_MOUNT_ANCHOR_Y = 3.85f;
+    private static final float FROSTY_MOUNT_ANCHOR_Z = -0.15f;
+    private static final double FROSTY_MOUNT_CONTACT_RADIUS = 4.2;
+    private static final double FROSTY_MOUNT_CONTACT_FORWARD_REACH = 5.2;
+    private static final double FROSTY_MOUNT_CONTACT_REAR_GRACE = -0.35;
+    private static final double FROSTY_MOUNT_CONTACT_HALF_WIDTH = 2.65;
+    private static final double FROSTY_MOUNT_CONTACT_MIN_DOT = -0.05;
+    private static final double FROSTY_MOUNT_CONTACT_DAMAGE_RATIO = 0.55;
+    private static final double FROSTY_MOUNT_CONTACT_MIN_DAMAGE = 18.0;
+    private static final double FROSTY_MOUNT_CONTACT_PUSH_DISTANCE = 7.0;
+    private static final double FROSTY_MOUNT_CONTACT_VERTICAL_LIFT = 0.55;
+    private static final long FROSTY_MOUNT_CONTACT_COOLDOWN_MS = 850L;
+    private static final long FROSTY_MOUNT_NATIVE_DISMOUNT_GRACE_MS = 1_250L;
+    private static final long FROSTY_MOUNT_REQUEST_TIMEOUT_MS = 900L;
+    private static final double FROSTY_MOUNT_REQUEST_RANGE = 4.75;
+    private static final double SNOW_SUMMON_GROUND_VISUAL_LIFT = 0.22;
+    private static final long SMOOTH_KNOCKBACK_DURATION_MS = 260L;
+    private static final long SMOOTH_KNOCKBACK_STEP_INTERVAL_MS = 30L;
+    private static final double SMOOTH_KNOCKBACK_MIN_DISTANCE = 0.15;
+    private static final double SUMMON_ATTACK_MOVE_BUFFER = 0.35;
+    private static final double SUMMON_MOVE_DESTINATION_EPSILON = 0.7;
+    private static final double SUMMON_OWNER_MOVE_DESTINATION_EPSILON = 0.8;
+    private static final long SUMMON_MOVE_COMMAND_INTERVAL_MS = 450L;
+    private static final long SUMMON_OWNER_MOVE_COMMAND_INTERVAL_MS = 550L;
+    private static final long SNOW_SUMMON_LEASH_MOVE_COMMAND_INTERVAL_MS = 90L;
+    private static final double SNOW_SUMMON_LEASH_MOVE_DESTINATION_EPSILON = 0.08;
+    private static final long FROSTY_LEASH_MOVE_COMMAND_INTERVAL_MS = 240L;
+    private static final double FROSTY_LEASH_MOVE_DESTINATION_EPSILON = 0.35;
+    private static final long SNOW_SUMMON_LEASH_COMBAT_SUPPRESS_MS = 950L;
+    private static final long SUMMON_TARGET_ENGAGE_GRACE_MS = 650L;
+    private static final double SNOW_IMP_VISUAL_PROXY_HEIGHT = 0.08;
+    private static final double SNOW_IMP_VISUAL_FOLLOW_ALPHA = 0.42;
+    private static final double SNOW_IMP_VISUAL_MAX_STEP = 0.38;
+    private static final double SNOW_IMP_VISUAL_ATTACK_READY_DISTANCE = 2.65;
+    private static final double SNOW_SUMMON_ESCORT_MAX_DISTANCE = 7.0;
+    private static final double FROSTY_ESCORT_MAX_DELTA = 0.42;
+    private static final double FROSTY_GROUND_VISUAL_LIFT = 0.18;
+    private static final double FROSTY_NATIVE_YETI_ATTACK_DISTANCE = 3.25;
+    private static final long FROSTY_NATIVE_YETI_ATTACK_COOLDOWN_MS = 1_250L;
+    private static final long SNOW_SUMMON_ESCORT_COMBAT_GRACE_MS = 220L;
+    private static final double SNOW_SUMMON_ESCORT_COMBAT_MOTION_THRESHOLD = 0.12;
+    private static final double SUMMON_APPROACH_PAUSE_MAX_DISTANCE = 8.0;
+    private static final double SUMMON_APPROACH_PAUSE_MIN_DISTANCE = 0.85;
+    private static final double SUMMON_APPROACH_FACING_DOT = 0.82;
+    private static final double SUMMON_APPROACH_MOVEMENT_DOT = 0.55;
+    private static final double SUMMON_SEPARATION_PAUSE_DISTANCE = 2.15;
+    private static final double SUMMON_SEPARATION_MOVEMENT_DOT = -0.25;
+    private static final long FROSTY_POST_WITHDRAW_SPAWN_LOCKOUT_MS = 1_600L;
     private static final double DEFAULT_SUPPORT_SHIELD_RATIO = 0.12;
     private static final double VOLLEY_SPREAD_DEGREES = 8.0;
     private static final double BURST_SPREAD_DEGREES = 12.0;
@@ -112,6 +221,10 @@ public class GameplayPlaybackManager {
 
     private final MenteesMod mod;
     private final Map<String, List<ActiveSummon>> activeSummonsByOwner = new HashMap<>();
+    private final Map<String, PendingFrostyMountRequest> pendingFrostyMountsByOwner = new HashMap<>();
+    private final Set<String> pendingFrostyDismountsByOwner = new LinkedHashSet<>();
+    private final Map<String, ActiveSummon> activeFrostyByOwner = new HashMap<>();
+    private final Map<String, Long> frostySpawnBlockedUntilByOwner = new HashMap<>();
     private final Map<String, ActiveTransformation> activeTransformationsByPlayer = new HashMap<>();
     private final Map<String, Long> nextTransformationPulseAtByPlayer = new HashMap<>();
     private final Map<String, ActiveWeaponFollowUp> activeWeaponFollowUpsByPlayer = new HashMap<>();
@@ -120,6 +233,7 @@ public class GameplayPlaybackManager {
     private final List<ActiveField> activeFields = new ArrayList<>();
     private final List<ActiveChannel> activeChannels = new ArrayList<>();
     private final List<ActiveLineControl> activeLineControls = new ArrayList<>();
+    private final List<ActiveSmoothKnockback> activeSmoothKnockbacks = new ArrayList<>();
     private final Set<Ref<EntityStore>> visualProxyRefs = ConcurrentHashMap.newKeySet();
     private final Map<String, List<BuriedVictim>> buriedVictimsByField = new HashMap<>();
     private final Set<String> reportedAbilityKillEntityIds = ConcurrentHashMap.newKeySet();
@@ -175,10 +289,10 @@ public class GameplayPlaybackManager {
         double lifestealHealing = projectileLaunch.launched() > 0 || summonCast
                 ? 0.0
                 : applyLifesteal(runtimePlayer, player, combat.totalDamage());
+        LineControlRuntimeResult lineControl = startLineControlRuntime(runtimePlayer, player, ability, context);
         EffectResolution targetEffects = projectileLaunch.launched() > 0 || summonCast
                 ? EffectResolution.none()
                 : applyTargetEffects(runtimePlayer, player, ability, context);
-        LineControlRuntimeResult lineControl = startLineControlRuntime(runtimePlayer, player, ability, context);
         ChannelRuntimeResult channel = startChannelRuntime(runtimePlayer, player, ability, context);
         FormRuntimeResult form = applyTransformation(runtimePlayer, player, style, ability);
         SummonRuntimeResult summons = handleSummonRuntime(runtimePlayer, player, style, ability, context);
@@ -269,6 +383,8 @@ public class GameplayPlaybackManager {
                 belongsToCurrentStore(lineControl.ownerRef(), currentStore) && processLineControlTick(lineControl, now));
         activeChannels.removeIf(channel ->
                 belongsToCurrentStore(channel.ownerRef(), currentStore) && processChannelTick(channel, now));
+        activeSmoothKnockbacks.removeIf(knockback ->
+                belongsToCurrentStore(knockback.targetRef(), currentStore) && processSmoothKnockbackTick(knockback, now));
         activeTransformationsByPlayer.entrySet().removeIf(entry ->
                 belongsToCurrentStore(entry.getValue().ownerRef(), currentStore)
                         && processTransformationTick(entry.getValue(), now));
@@ -461,6 +577,7 @@ public class GameplayPlaybackManager {
             if (!playerId.equals(lineControl.ownerPlayerId()) || !normalizedAbilityId.equals(lower(lineControl.ability().getId()))) {
                 continue;
             }
+            despawnTetherVisual(lineControl, "manual-release");
             activeLineControls.remove(index);
             removedLineControls++;
         }
@@ -1130,7 +1247,7 @@ public class GameplayPlaybackManager {
         store.forEachChunk((chunk, commandBuffer) -> {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
-                if (ref == null || !ref.isValid()) {
+                if (ref == null || !ref.isValid() || isProtectedMotmTarget(ref)) {
                     continue;
                 }
 
@@ -1491,6 +1608,14 @@ public class GameplayPlaybackManager {
     }
 
     private Ref<EntityStore> findNearestNpc(Store<EntityStore> store, Vector3d center, double radius) {
+        return findNearestNpc(store, center, radius, null, 0.0);
+    }
+
+    private Ref<EntityStore> findNearestNpc(Store<EntityStore> store,
+                                            Vector3d center,
+                                            double radius,
+                                            Vector3d requiredOwnerCenter,
+                                            double ownerRadius) {
         final Ref<EntityStore>[] nearest = new Ref[]{null};
         final double[] bestDistance = {Double.MAX_VALUE};
 
@@ -1515,8 +1640,12 @@ public class GameplayPlaybackManager {
                     continue;
                 }
 
-                double candidateDistance = distance(center, transform.getTransform().getPosition());
-                if (candidateDistance <= radius && candidateDistance < bestDistance[0]) {
+                Vector3d candidatePosition = transform.getTransform().getPosition();
+                double candidateDistance = distance(center, candidatePosition);
+                boolean ownerAllowed = requiredOwnerCenter == null
+                        || ownerRadius <= 0.0
+                        || distance(requiredOwnerCenter, candidatePosition) <= ownerRadius;
+                if (ownerAllowed && candidateDistance <= radius && candidateDistance < bestDistance[0]) {
                     bestDistance[0] = candidateDistance;
                     nearest[0] = ref;
                 }
@@ -2452,6 +2581,361 @@ public class GameplayPlaybackManager {
         }
     }
 
+    private TetherVisualRuntime spawnTetherVisualProxy(Player runtimePlayer,
+                                                       String ownerPlayerId,
+                                                       String classId,
+                                                       String styleId,
+                                                       AbilityData ability,
+                                                       Ref<EntityStore> ownerRef,
+                                                       Ref<EntityStore> targetRef,
+                                                       long activateAtMillis,
+                                                       long expireAtMillis) {
+        String effectId = resolveTetherVisualEffectId(classId, styleId, ability);
+        if (runtimePlayer == null || ownerRef == null || targetRef == null || effectId == null || effectId.isBlank()) {
+            return TetherVisualRuntime.none();
+        }
+
+        Store<EntityStore> store = ownerRef.getStore();
+        if (store == null) {
+            return TetherVisualRuntime.none();
+        }
+
+        Vector3d ownerPosition = getPosition(ownerRef, store);
+        Vector3d targetPosition = getPosition(targetRef, store);
+        if (ownerPosition == null || targetPosition == null) {
+            return TetherVisualRuntime.none();
+        }
+
+        World world = runtimePlayer.getWorld();
+        if (world == null) {
+            return TetherVisualRuntime.none();
+        }
+
+        List<Vector3d> positions = buildTetherVisualPositions(ownerPosition, targetPosition);
+        if (positions.isEmpty()) {
+            return TetherVisualRuntime.none();
+        }
+
+        List<Ref<EntityStore>> refs = new ArrayList<>();
+        float despawnTimeSeconds = (float) Math.max(0.8, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5);
+        String roleId = HytaleAssetResolver.resolveFieldRoleId(classId, styleId, ability);
+        for (Vector3d position : positions) {
+            NPCEntity proxy = new NPCEntity(world);
+            proxy.setRoleName(roleId);
+            proxy.setDespawnTime(despawnTimeSeconds);
+            world.spawnEntity(proxy, new Vector3d(position), new Rotation3f(0f, 0f, 0f));
+
+            Ref<EntityStore> proxyRef = proxy.getReference();
+            if (proxyRef != null && proxyRef.isValid() && proxyRef.getStore() != null) {
+                visualProxyRefs.add(proxyRef);
+                refs.add(proxyRef);
+                applyEffectById(proxyRef, proxyRef.getStore(), effectId);
+            }
+        }
+
+        if (refs.isEmpty()) {
+            return TetherVisualRuntime.none();
+        }
+
+        LOG.info("[MOTM] tether visual spawn: owner=" + ownerPlayerId
+                + " ability=" + (ability != null ? ability.getId() : "")
+                + " effect=" + effectId
+                + " links=" + refs.size()
+                + " distance=" + AbilityPresentation.formatDecimal(distance(ownerPosition, targetPosition))
+                + " source=" + ownerPosition
+                + " target=" + targetPosition);
+        return new TetherVisualRuntime(List.copyOf(refs), effectId, activateAtMillis);
+    }
+
+    private TetherTraceRuntime spawnTetherTrace(Player runtimePlayer,
+                                                String ownerPlayerId,
+                                                String classId,
+                                                String styleId,
+                                                AbilityData ability,
+                                                Ref<EntityStore> ownerRef,
+                                                Ref<EntityStore> targetRef,
+                                                long expireAtMillis) {
+        if (!usesWaterTetherTrace(classId, styleId, ability) || runtimePlayer == null || ownerRef == null || targetRef == null) {
+            return TetherTraceRuntime.none();
+        }
+
+        Store<EntityStore> store = ownerRef.getStore();
+        World world = runtimePlayer.getWorld();
+        if (store == null || world == null) {
+            return TetherTraceRuntime.none();
+        }
+
+        Vector3d ownerPosition = getPosition(ownerRef, store);
+        Vector3d targetPosition = getPosition(targetRef, store);
+        if (ownerPosition == null || targetPosition == null) {
+            return TetherTraceRuntime.none();
+        }
+
+        FluidResolution fluid = resolveTetherFluidId("Fluid_Water", "Water", "water");
+        if (!fluid.isValid()) {
+            LOG.warning("[MOTM] tether trace unavailable: water fluid did not resolve for ability="
+                    + (ability != null ? ability.getId() : ""));
+            return TetherTraceRuntime.none();
+        }
+
+        BlockSelection selection = buildWaterTetherSelection(ownerPosition, targetPosition, fluid.fluidTypeId());
+        if (selection == null || selection.getFluidCount() <= 0) {
+            return TetherTraceRuntime.none();
+        }
+
+        try {
+            BlockSelection original = selection.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
+            Vector3i anchor = new Vector3i(
+                    (int) Math.floor(ownerPosition.x),
+                    resolveTetherTraceY(ownerPosition, targetPosition),
+                    (int) Math.floor(ownerPosition.z)
+            );
+            LOG.info("[MOTM] tether trace spawn: owner=" + ownerPlayerId
+                    + " ability=" + (ability != null ? ability.getId() : "")
+                    + " fluid=" + fluid.fluidId()
+                    + " fluids=" + selection.getFluidCount()
+                    + " distance=" + AbilityPresentation.formatDecimal(distance(ownerPosition, targetPosition))
+                    + " source=" + ownerPosition
+                    + " target=" + targetPosition);
+            return new TetherTraceRuntime(
+                    world,
+                    anchor,
+                    original,
+                    fluid.fluidId(),
+                    selection.getFluidCount(),
+                    expireAtMillis + TETHER_TRACE_CLEANUP_GRACE_MS
+            );
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] tether trace placement failed: ability="
+                    + (ability != null ? ability.getId() : "")
+                    + " error=" + e.getMessage());
+            return TetherTraceRuntime.none();
+        }
+    }
+
+    private boolean usesWaterTetherTrace(String classId, String styleId, AbilityData ability) {
+        if (ability == null || !"hydro".equals(lower(classId))) {
+            return false;
+        }
+        String abilityId = lower(ability.getId());
+        String travelType = lower(ability.getTravelType());
+        String style = lower(styleId);
+        return "saltwater".equals(style)
+                || travelType.contains("rip_current")
+                || travelType.contains("undertow")
+                || "rip_current".equals(abilityId)
+                || "riptide".equals(abilityId);
+    }
+
+    private BlockSelection buildWaterTetherSelection(Vector3d ownerPosition, Vector3d targetPosition, int fluidTypeId) {
+        Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
+        if (fluid == null || fluid.isUnknown()) {
+            return null;
+        }
+
+        Vector3d start = new Vector3d(ownerPosition);
+        Vector3d end = new Vector3d(targetPosition);
+        Vector3d segment = subtract(end, start);
+        segment.y = 0.0;
+        double length = length(segment);
+        if (length < 0.45) {
+            return null;
+        }
+
+        Vector3d direction = normalize(segment);
+        int samples = Math.max(4, Math.min(10, (int) Math.ceil(length / 0.8)));
+        int y = resolveTetherTraceY(ownerPosition, targetPosition);
+        byte fluidLevel = (byte) Math.max(1, fluid.getMaxFluidLevel());
+
+        BlockSelection selection = new BlockSelection();
+        Vector3i anchor = new Vector3i((int) Math.floor(start.x), y, (int) Math.floor(start.z));
+        selection.setPosition(anchor.x, anchor.y, anchor.z);
+        selection.setAnchorAtWorldPos(anchor.x, anchor.y, anchor.z);
+
+        Set<String> occupied = new LinkedHashSet<>();
+        for (int index = 1; index <= samples; index++) {
+            double factor = index / (double) (samples + 1);
+            Vector3d center = new Vector3d(start).fma(factor, segment);
+            addTetherFluid(selection, occupied, center, y, fluidTypeId, fluidLevel);
+        }
+        return selection;
+    }
+
+    private int resolveTetherTraceY(Vector3d ownerPosition, Vector3d targetPosition) {
+        return (int) Math.floor(Math.min(ownerPosition.y, targetPosition.y)) + 1;
+    }
+
+    private void addTetherFluid(BlockSelection selection,
+                                Set<String> occupied,
+                                Vector3d position,
+                                int y,
+                                int fluidTypeId,
+                                byte fluidLevel) {
+        int x = (int) Math.floor(position.x);
+        int z = (int) Math.floor(position.z);
+        String key = x + ":" + y + ":" + z;
+        if (!occupied.add(key)) {
+            return;
+        }
+        selection.addFluidAtWorldPos(x, y, z, fluidTypeId, fluidLevel);
+    }
+
+    private FluidResolution resolveTetherFluidId(String... fluidIds) {
+        for (String candidate : fluidIds) {
+            int directId = Fluid.getAssetMap().getIndexOrDefault(candidate, Fluid.UNKNOWN_ID);
+            if (isUsableTetherFluidId(directId)) {
+                return new FluidResolution(candidate, directId);
+            }
+        }
+        for (String candidate : fluidIds) {
+            int convertedId = Fluid.getFluidIdOrUnknown(candidate, "MOTM tether fluid resolution");
+            if (isUsableTetherFluidId(convertedId)) {
+                Fluid fluid = Fluid.getAssetMap().getAsset(convertedId);
+                return new FluidResolution(fluid != null ? fluid.getId() : candidate, convertedId);
+            }
+        }
+        return FluidResolution.none();
+    }
+
+    private boolean isUsableTetherFluidId(int fluidTypeId) {
+        if (fluidTypeId == Fluid.UNKNOWN_ID || fluidTypeId == Fluid.EMPTY_ID) {
+            return false;
+        }
+        Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
+        return fluid != null && !fluid.isUnknown();
+    }
+
+    private void cleanupTetherTrace(ActiveLineControl lineControl, String reason) {
+        if (lineControl == null || lineControl.trace() == null || !lineControl.trace().isActive()) {
+            return;
+        }
+
+        try {
+            lineControl.trace().originalSelection().place(null, lineControl.trace().world(), new Vector3i(0, 0, 0), BlockMask.EMPTY);
+            LOG.info("[MOTM] tether trace cleanup: owner=" + lineControl.ownerPlayerId()
+                    + " ability=" + lineControl.ability().getId()
+                    + " fluid=" + lineControl.trace().fluidId()
+                    + " fluids=" + lineControl.trace().fluidCount()
+                    + " reason=" + reason);
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] tether trace cleanup failed: owner=" + lineControl.ownerPlayerId()
+                    + " ability=" + lineControl.ability().getId()
+                    + " reason=" + reason
+                    + " error=" + e.getMessage());
+        }
+    }
+
+    private void syncTetherVisual(ActiveLineControl lineControl,
+                                  Vector3d ownerPosition,
+                                  Vector3d targetPosition,
+                                  long now) {
+        if (lineControl == null || lineControl.visualRefs() == null || lineControl.visualRefs().isEmpty()) {
+            return;
+        }
+
+        List<Vector3d> positions = buildTetherVisualPositions(ownerPosition, targetPosition);
+        int limit = Math.min(positions.size(), lineControl.visualRefs().size());
+        for (int index = 0; index < limit; index++) {
+            Ref<EntityStore> visualRef = lineControl.visualRefs().get(index);
+            if (visualRef == null || !visualRef.isValid()) {
+                continue;
+            }
+
+            Store<EntityStore> visualStore = visualRef.getStore();
+            if (visualStore == null) {
+                continue;
+            }
+
+            NPCEntity npc = visualStore.getComponent(visualRef, NPCEntity.getComponentType());
+            if (npc != null) {
+                Vector3d position = positions.get(index);
+                npc.moveTo(visualRef, position.x, position.y, position.z, visualStore);
+            }
+        }
+
+        refreshTetherVisual(lineControl, now);
+    }
+
+    private void refreshTetherVisual(ActiveLineControl lineControl, long now) {
+        if (lineControl == null
+                || lineControl.visualRefs() == null
+                || lineControl.visualRefs().isEmpty()
+                || lineControl.visualEffectId() == null
+                || lineControl.visualEffectId().isBlank()
+                || now < lineControl.nextVisualRefreshAtMillis()) {
+            return;
+        }
+
+        boolean refreshed = false;
+        for (Ref<EntityStore> visualRef : lineControl.visualRefs()) {
+            if (visualRef == null || !visualRef.isValid()) {
+                continue;
+            }
+
+            Store<EntityStore> visualStore = visualRef.getStore();
+            if (visualStore == null) {
+                continue;
+            }
+
+            refreshed |= applyEffectById(visualRef, visualStore, lineControl.visualEffectId());
+        }
+
+        if (refreshed) {
+            lineControl.nextVisualRefreshAtMillis = now + TETHER_VISUAL_REFRESH_MS;
+        }
+    }
+
+    private void despawnTetherVisual(ActiveLineControl lineControl, String reason) {
+        cleanupTetherTrace(lineControl, reason);
+        if (lineControl == null || lineControl.visualRefs() == null || lineControl.visualRefs().isEmpty()) {
+            return;
+        }
+
+        int despawned = 0;
+        for (Ref<EntityStore> visualRef : lineControl.visualRefs()) {
+            if (visualRef == null || !visualRef.isValid()) {
+                continue;
+            }
+
+            Store<EntityStore> visualStore = visualRef.getStore();
+            NPCEntity npc = visualStore != null
+                    ? visualStore.getComponent(visualRef, NPCEntity.getComponentType())
+                    : null;
+            if (npc != null) {
+                npc.setToDespawn();
+                despawned++;
+            }
+            visualProxyRefs.remove(visualRef);
+        }
+
+        LOG.info("[MOTM] tether visual despawn: owner=" + lineControl.ownerPlayerId()
+                + " ability=" + lineControl.ability().getId()
+                + " links=" + despawned
+                + " reason=" + reason);
+    }
+
+    private List<Vector3d> buildTetherVisualPositions(Vector3d ownerPosition, Vector3d targetPosition) {
+        if (ownerPosition == null || targetPosition == null) {
+            return List.of();
+        }
+
+        Vector3d source = new Vector3d(ownerPosition).add(0.0, 1.1, 0.0);
+        Vector3d target = new Vector3d(targetPosition).add(0.0, 0.8, 0.0);
+        Vector3d segment = subtract(target, source);
+        double length = length(segment);
+        if (length < 0.35) {
+            return List.of(new Vector3d(target));
+        }
+
+        int links = Math.max(5, Math.min(11, (int) Math.ceil(length / 0.75)));
+        List<Vector3d> positions = new ArrayList<>();
+        for (int index = 1; index <= links; index++) {
+            double factor = index / (double) (links + 1);
+            positions.add(new Vector3d(source).fma(factor, segment));
+        }
+        return positions;
+    }
+
     private List<Vector3d> buildFieldVisualPositions(Vector3d center,
                                                      Vector3d lineDirection,
                                                      AbilityData ability,
@@ -2843,7 +3327,7 @@ public class GameplayPlaybackManager {
                                                              PlayerData player,
                                                              AbilityData ability,
                                                              CastContext context) {
-        if (!"line_control".equals(lower(ability.getCastType())) || ability.getPullForce() <= 0.0) {
+        if (!isTetherLineControlAbility(ability)) {
             return LineControlRuntimeResult.none();
         }
 
@@ -2864,18 +3348,49 @@ public class GameplayPlaybackManager {
         }
 
         long now = System.currentTimeMillis();
-        activeLineControls.removeIf(lineControl -> lineControl.ownerPlayerId().equals(player.getPlayerId()));
+        activeLineControls.removeIf(lineControl -> {
+            if (!lineControl.ownerPlayerId().equals(player.getPlayerId())) {
+                return false;
+            }
+            despawnTetherVisual(lineControl, "replaced");
+            return true;
+        });
+        TetherVisualRuntime visual = spawnTetherVisualProxy(
+                runtimePlayer,
+                player.getPlayerId(),
+                player.getPlayerClass(),
+                currentStyleId(player),
+                ability,
+                ownerRef,
+                targetRef,
+                now,
+                now + (long) (durationSeconds * 1000)
+        );
+        TetherTraceRuntime trace = spawnTetherTrace(
+                runtimePlayer,
+                player.getPlayerId(),
+                player.getPlayerClass(),
+                currentStyleId(player),
+                ability,
+                ownerRef,
+                targetRef,
+                now + (long) (durationSeconds * 1000)
+        );
         activeLineControls.add(new ActiveLineControl(
                 player.getPlayerId(),
                 ownerRef,
                 targetRef,
                 ability,
                 now + (long) (durationSeconds * 1000),
-                now + LINE_CONTROL_PULSE_INTERVAL_MS
+                now + LINE_CONTROL_PULSE_INTERVAL_MS,
+                visual.visualRefs(),
+                visual.effectId(),
+                visual.nextRefreshAtMillis(),
+                trace
         ));
         return new LineControlRuntimeResult(
                 true,
-                "current pull "
+                (ability.getPullForce() > 0.0 ? "current pull " : "tether control ")
                         + AbilityPresentation.formatDecimal(durationSeconds)
                         + "s"
         );
@@ -2884,19 +3399,18 @@ public class GameplayPlaybackManager {
     private boolean processLineControlTick(ActiveLineControl lineControl, long now) {
         if (lineControl.ownerRef() == null || !lineControl.ownerRef().isValid()
                 || lineControl.targetRef() == null || !lineControl.targetRef().isValid()) {
+            despawnTetherVisual(lineControl, "invalid-ref");
             return true;
         }
 
         if (now >= lineControl.expireAtMillis()) {
+            despawnTetherVisual(lineControl, "expired");
             return true;
-        }
-
-        if (now < lineControl.nextPulseAtMillis()) {
-            return false;
         }
 
         Store<EntityStore> store = lineControl.ownerRef().getStore();
         if (store == null) {
+            despawnTetherVisual(lineControl, "missing-store");
             return true;
         }
 
@@ -2904,16 +3418,32 @@ public class GameplayPlaybackManager {
         Vector3d targetPosition = getPosition(lineControl.targetRef(), store);
         if (ownerPosition == null || targetPosition == null
                 || distance(ownerPosition, targetPosition) > resolveRange(lineControl.ability()) + 3.0) {
+            despawnTetherVisual(lineControl, "out-of-range");
             return true;
+        }
+
+        syncTetherVisual(lineControl, ownerPosition, targetPosition, now);
+
+        if (now < lineControl.nextPulseAtMillis()) {
+            return false;
         }
 
         PlayerData player = mod.getPlayerDataManager().getOnlinePlayer(lineControl.ownerPlayerId());
         if (player == null) {
+            despawnTetherVisual(lineControl, "missing-owner");
             return true;
         }
 
-        applyLineControlPull(lineControl.targetRef(), store, lineControl.ownerRef(), lineControl.ability());
+        boolean pulled = lineControl.ability().getPullForce() > 0.0
+                && applyLineControlPull(lineControl.targetRef(), store, lineControl.ownerRef(), lineControl.ability());
         applyRepeatingLineControlEffects(lineControl, player, store);
+        if (lineControl.visualRefs() != null && !lineControl.visualRefs().isEmpty()) {
+            LOG.info("[MOTM] tether visual pulse: owner=" + lineControl.ownerPlayerId()
+                    + " ability=" + lineControl.ability().getId()
+                    + " links=" + lineControl.visualRefs().size()
+                    + " pulled=" + pulled
+                    + " target=" + resolveEntityId(lineControl.targetRef(), store));
+        }
         lineControl.nextPulseAtMillis = now + LINE_CONTROL_PULSE_INTERVAL_MS;
         return false;
     }
@@ -2965,8 +3495,297 @@ public class GameplayPlaybackManager {
         if (ability.getSummonName() == null || ability.getSummonName().isBlank()) {
             return SummonRuntimeResult.none();
         }
-
         return spawnSummon(runtimePlayer, player, style, ability, context);
+    }
+
+    public synchronized String handleActiveSummonRecast(Player runtimePlayer, PlayerData player, AbilityData ability) {
+        if (player == null || ability == null || player.getPlayerId() == null || !isSummonCast(ability)) {
+            return "";
+        }
+        if (ability.getSummonName() == null || ability.getSummonName().isBlank()) {
+            return "";
+        }
+
+        long now = System.currentTimeMillis();
+        if (isFrostyAbility(ability)) {
+            List<ActiveSummon> existingFrosties = collectActiveFrostiesForOwner(player.getPlayerId());
+            boolean ownerMountedToFrosty = existingFrosties.stream()
+                    .anyMatch(this::isFrostyMountedByOwner);
+            if (!existingFrosties.isEmpty() && (runtimePlayer != null && isPlayerMounted(runtimePlayer) || ownerMountedToFrosty)) {
+                frostySpawnBlockedUntilByOwner.put(player.getPlayerId(), now + FROSTY_POST_WITHDRAW_SPAWN_LOCKOUT_MS);
+                return withdrawMatchingSummons(player, ability, existingFrosties);
+            }
+            if (existingFrosties.size() > 1) {
+                return withdrawMatchingSummons(player, ability, existingFrosties);
+            }
+            if (existingFrosties.size() == 1) {
+                ActiveSummon frosty = existingFrosties.get(0);
+                if (runtimePlayer != null
+                        && !isFrostyMountedByOwner(frosty)
+                        && isOwnerNearSummon(runtimePlayer, frosty, FROSTY_MOUNT_REQUEST_RANGE)) {
+                    pendingFrostyMountsByOwner.put(
+                            player.getPlayerId(),
+                            new PendingFrostyMountRequest(player.getPlayerId(), frosty.ref(), now + FROSTY_MOUNT_REQUEST_TIMEOUT_MS, "spellbook_recast_near_frosty")
+                    );
+                    LOG.info("[MOTM] frosty recast resolved existing Frosty as mount request: owner="
+                            + player.getPlayerId()
+                            + " ability=" + ability.getId()
+                            + " target=" + frosty.ref());
+                    return "Mounting Frosty";
+                }
+                return withdrawMatchingSummons(player, ability, existingFrosties);
+            }
+        }
+        if (isFrostyAbility(ability) && runtimePlayer != null && isPlayerMounted(runtimePlayer)) {
+            ActiveSummon indexedFrosty = resolveIndexedFrosty(player.getPlayerId());
+            if (indexedFrosty != null && isSameSummonAbility(indexedFrosty, ability)) {
+                return withdrawMatchingSummons(player, ability, new ArrayList<>(List.of(indexedFrosty)));
+            }
+            List<ActiveSummon> mountedFrosties = activeSummonsByOwner
+                    .getOrDefault(player.getPlayerId(), List.of())
+                    .stream()
+                    .filter(this::isFrostySummon)
+                    .toList();
+            if (!mountedFrosties.isEmpty()) {
+                return withdrawMatchingSummons(player, ability, new ArrayList<>(mountedFrosties));
+            }
+            LOG.info("[MOTM] frosty recast blocked spawn while mounted: owner=" + player.getPlayerId()
+                    + " ability=" + ability.getId());
+            return "Frosty is already mounted";
+        }
+
+        List<ActiveSummon> summons = activeSummonsByOwner.get(player.getPlayerId());
+        if (summons == null || summons.isEmpty()) {
+            ActiveSummon indexedFrosty = resolveIndexedFrosty(player.getPlayerId());
+            if (isFrostyAbility(ability) && indexedFrosty != null) {
+                summons = new ArrayList<>();
+                summons.add(indexedFrosty);
+            } else {
+                return "";
+            }
+        }
+
+        List<ActiveSummon> matchingSummons = new ArrayList<>();
+        for (ActiveSummon summon : new ArrayList<>(summons)) {
+            if (isSameSummonAbility(summon, ability)) {
+                matchingSummons.add(summon);
+            }
+        }
+        ActiveSummon indexedFrosty = resolveIndexedFrosty(player.getPlayerId());
+        if (isFrostyAbility(ability)
+                && indexedFrosty != null
+                && isSameSummonAbility(indexedFrosty, ability)
+                && !matchingSummons.contains(indexedFrosty)) {
+            matchingSummons.add(indexedFrosty);
+        }
+        if (matchingSummons.isEmpty()) {
+            return "";
+        }
+
+        String label = ability.getName() != null && !ability.getName().isBlank()
+                ? ability.getName()
+                : humanize(ability.getSummonName());
+        if (matchingSummons.size() == 1) {
+            ActiveSummon summon = matchingSummons.get(0);
+            if (runtimePlayer != null
+                    && isFrostySummon(summon)
+                    && !isFrostyMountedByOwner(summon)
+                    && isOwnerNearSummon(runtimePlayer, summon, FROSTY_MOUNT_REQUEST_RANGE)) {
+                pendingFrostyMountsByOwner.put(
+                        player.getPlayerId(),
+                        new PendingFrostyMountRequest(player.getPlayerId(), summon.ref(), System.currentTimeMillis() + FROSTY_MOUNT_REQUEST_TIMEOUT_MS, "spellbook_recast_near_frosty")
+                );
+                LOG.info("[MOTM] summon recast mount queued: owner=" + player.getPlayerId()
+                        + " ability=" + ability.getId()
+                        + " summon=" + ability.getSummonName()
+                        + " target=" + summon.ref());
+                return "Mounting " + label;
+            }
+        }
+
+        return withdrawMatchingSummons(player, ability, matchingSummons);
+    }
+
+    private List<ActiveSummon> collectActiveFrostiesForOwner(String ownerPlayerId) {
+        List<ActiveSummon> frosties = new ArrayList<>();
+        if (ownerPlayerId == null) {
+            return frosties;
+        }
+        ActiveSummon indexed = resolveIndexedFrosty(ownerPlayerId);
+        if (indexed != null) {
+            frosties.add(indexed);
+        }
+        for (ActiveSummon summon : activeSummonsByOwner.getOrDefault(ownerPlayerId, List.of())) {
+            if (summon == null || !isFrostySummon(summon) || frosties.contains(summon)) {
+                continue;
+            }
+            if (summon.ref() != null && summon.ref().isValid()) {
+                frosties.add(summon);
+            }
+        }
+        return frosties;
+    }
+
+    private String withdrawMatchingSummons(PlayerData player, AbilityData ability, List<ActiveSummon> matchingSummons) {
+        if (player == null || ability == null || matchingSummons == null || matchingSummons.isEmpty()) {
+            return "";
+        }
+
+        List<ActiveSummon> summons = activeSummonsByOwner.get(player.getPlayerId());
+        String label = ability.getName() != null && !ability.getName().isBlank()
+                ? ability.getName()
+                : humanize(ability.getSummonName());
+        int withdrawn = 0;
+        for (ActiveSummon summon : matchingSummons) {
+            if (summons != null) {
+                summons.remove(summon);
+            }
+            despawnSummon(summon);
+            withdrawn++;
+        }
+        pendingFrostyMountsByOwner.remove(player.getPlayerId());
+        pendingFrostyDismountsByOwner.remove(player.getPlayerId());
+        if (summons != null && summons.isEmpty()) {
+            activeSummonsByOwner.remove(player.getPlayerId());
+        }
+
+        LOG.info("[MOTM] summon recast withdraw: owner=" + player.getPlayerId()
+                + " ability=" + ability.getId()
+                + " summon=" + ability.getSummonName()
+                + " count=" + withdrawn);
+        return "Withdrew " + label + (withdrawn > 1 ? " x" + withdrawn : "");
+    }
+
+    private boolean isFrostyAbility(AbilityData ability) {
+        return ability != null
+                && ("frosty".equalsIgnoreCase(ability.getId())
+                || "frosty_golem".equals(lower(ability.getSummonName())));
+    }
+
+    private ActiveSummon resolveIndexedFrosty(String ownerPlayerId) {
+        if (ownerPlayerId == null || ownerPlayerId.isBlank()) {
+            return null;
+        }
+        ActiveSummon frosty = activeFrostyByOwner.get(ownerPlayerId);
+        if (frosty == null) {
+            return null;
+        }
+        if (frosty.ref() == null || !frosty.ref().isValid()) {
+            activeFrostyByOwner.remove(ownerPlayerId);
+            return null;
+        }
+        return frosty;
+    }
+
+    private ActiveSummon findFirstActiveFrosty(String ownerPlayerId) {
+        if (ownerPlayerId == null || ownerPlayerId.isBlank()) {
+            return null;
+        }
+        List<ActiveSummon> summons = activeSummonsByOwner.get(ownerPlayerId);
+        if (summons == null || summons.isEmpty()) {
+            return null;
+        }
+        for (ActiveSummon summon : new ArrayList<>(summons)) {
+            if (isFrostySummon(summon)
+                    && summon.ref() != null
+                    && summon.ref().isValid()) {
+                return summon;
+            }
+        }
+        return null;
+    }
+
+    private boolean isPlayerMounted(Player runtimePlayer) {
+        if (runtimePlayer == null || runtimePlayer.getReference() == null || !runtimePlayer.getReference().isValid()) {
+            return false;
+        }
+        Store<EntityStore> store = runtimePlayer.getReference().getStore();
+        if (store == null || store.isShutdown()) {
+            return false;
+        }
+        Player ownerPlayer = store.getComponent(runtimePlayer.getReference(), Player.getComponentType());
+        if (ownerPlayer != null && ownerPlayer.getMountEntityId() != 0) {
+            return true;
+        }
+        return store.getComponent(runtimePlayer.getReference(), MountedComponent.getComponentType()) != null;
+    }
+
+    private boolean isFrostyMountedByOwner(ActiveSummon summon) {
+        if (!isFrostySummon(summon) || summon.ref() == null || !summon.ref().isValid()) {
+            return false;
+        }
+        if (summon.mountedByOwner) {
+            return true;
+        }
+
+        Store<EntityStore> store = summon.ref().getStore();
+        if (store == null || store.isShutdown()) {
+            return false;
+        }
+        Player ownerPlayer = summon.ownerRef() != null && summon.ownerRef().isValid()
+                ? store.getComponent(summon.ownerRef(), Player.getComponentType())
+                : null;
+        NetworkId networkId = store.getComponent(summon.ref(), NetworkId.getComponentType());
+        return isOwnerMountedToFrosty(summon, store, ownerPlayer, networkId);
+    }
+
+    private void clearNpcMotionController(Ref<EntityStore> ref, Store<EntityStore> store) {
+        if (ref == null || !ref.isValid() || store == null || store.isShutdown()) {
+            return;
+        }
+        NPCEntity npc = store.getComponent(ref, NPCEntity.getComponentType());
+        if (npc == null || npc.getRole() == null || npc.getRole().getActiveMotionController() == null) {
+            return;
+        }
+        npc.getRole().getActiveMotionController().clearOverrides();
+        npc.getRole().getActiveMotionController().setForceRecomputePath(false);
+        npc.getRole().getActiveMotionController().setNavState(NavState.ABORTED, 0.0, 0.0);
+    }
+
+    private void clearSummonNativeMotionIfNeeded(ActiveSummon summon, Store<EntityStore> store) {
+        if (summon == null || summon.mountedByOwner) {
+            return;
+        }
+        if (isFrostySummon(summon) && summon.movementState != SummonMovementState.COMBAT) {
+            clearNpcMotionController(summon.ref(), store);
+        }
+    }
+
+    private boolean isOwnerNearSummon(Player runtimePlayer, ActiveSummon summon, double maxDistance) {
+        if (runtimePlayer == null || summon == null || summon.ref() == null || !summon.ref().isValid()) {
+            return false;
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return false;
+        }
+        Store<EntityStore> store = playerRef.getStore();
+        Vector3d ownerPosition = getPosition(playerRef, store);
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        return ownerPosition != null && summonPosition != null && distance(ownerPosition, summonPosition) <= maxDistance;
+    }
+
+    private boolean isOwnerNearSummonRef(ActiveSummon summon, Store<EntityStore> store, double maxDistance) {
+        if (summon == null || store == null || store.isShutdown()
+                || summon.ownerRef() == null || !summon.ownerRef().isValid()
+                || summon.ref() == null || !summon.ref().isValid()) {
+            return false;
+        }
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        return ownerPosition != null && summonPosition != null && distance(ownerPosition, summonPosition) <= maxDistance;
+    }
+
+    private boolean isSameSummonAbility(ActiveSummon summon, AbilityData ability) {
+        if (summon == null || ability == null) {
+            return false;
+        }
+        if (summon.abilityId().equalsIgnoreCase(ability.getId())) {
+            return true;
+        }
+        String activeSummonName = lower(summon.ability != null ? summon.ability.getSummonName() : "");
+        String requestedSummonName = lower(ability.getSummonName());
+        return !activeSummonName.isBlank() && activeSummonName.equals(requestedSummonName);
     }
 
     private SummonRuntimeResult buffOwnedSummons(Player runtimePlayer,
@@ -3041,33 +3860,119 @@ public class GameplayPlaybackManager {
         if (store == null) {
             return SummonRuntimeResult.none();
         }
+        if (isFrostyAbility(ability)) {
+            long blockedUntil = frostySpawnBlockedUntilByOwner.getOrDefault(player.getPlayerId(), 0L);
+            if (System.currentTimeMillis() < blockedUntil) {
+                LOG.info("[MOTM] frosty spawn prevented by post-withdraw lockout: owner="
+                        + player.getPlayerId()
+                        + " ability=" + ability.getId()
+                        + " remainingMs=" + (blockedUntil - System.currentTimeMillis()));
+                return SummonRuntimeResult.none();
+            }
+            if (isPlayerMounted(runtimePlayer)) {
+                LOG.info("[MOTM] frosty spawn prevented because owner is already mounted: owner="
+                        + player.getPlayerId()
+                        + " ability=" + ability.getId());
+                return SummonRuntimeResult.none();
+            }
+            List<ActiveSummon> existingFrosties = collectActiveFrostiesForOwner(player.getPlayerId());
+            ActiveSummon existingFrosty = existingFrosties.isEmpty() ? null : existingFrosties.get(0);
+            if (existingFrosty != null) {
+                activeFrostyByOwner.put(player.getPlayerId(), existingFrosty);
+                LOG.info("[MOTM] frosty spawn prevented because owner already has indexed Frosty: owner="
+                        + player.getPlayerId()
+                        + " ability=" + ability.getId()
+                        + " existing=" + existingFrosty.ref());
+                return SummonRuntimeResult.none();
+            }
+        }
 
-        String modelId = resolveSummonModelId(player.getPlayerClass(), style.getId(), ability);
-        if (modelId == null || modelId.isBlank()) {
+        String roleNameId = resolveSummonRoleNameId(player.getPlayerClass(), style.getId(), ability);
+        if (roleNameId == null || roleNameId.isBlank()) {
             LOG.warning("[MOTM] No summon model mapping for " + ability.getId());
             return SummonRuntimeResult.none();
         }
+        String appearanceModelId = resolveSummonAppearanceModelId(player.getPlayerClass(), style.getId(), ability, roleNameId);
+        ModelAsset appearanceModelAsset = resolveSummonAppearanceModelAsset(ability);
 
         Vector3d spawnPosition = resolveSummonPosition(playerRef, store, ability, context);
         if (spawnPosition == null) {
             return SummonRuntimeResult.none();
         }
+        if (isSnowStyleSummonAbility(style, ability)) {
+            spawnPosition = new Vector3d(spawnPosition);
+            spawnPosition.y += SNOW_SUMMON_GROUND_VISUAL_LIFT;
+        }
 
         World world = runtimePlayer.getWorld();
         NPCEntity summon = new NPCEntity(world);
-        summon.setRoleName(modelId);
-        summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
-        world.spawnEntity(summon, spawnPosition, new Rotation3f(0f, 0f, 0f));
+        summon.setRoleName(roleNameId);
+        double summonDurationSeconds = resolveSummonDurationSeconds(ability);
+        summon.setDespawnTime((float) Math.max(240.0, summonDurationSeconds + 30.0));
+        try {
+            world.spawnEntity(summon, spawnPosition, new Rotation3f(0f, 0f, 0f));
+        } catch (Throwable t) {
+            LOG.warning("[MOTM] summon spawn failed for role=" + roleNameId
+                    + " ability=" + ability.getId()
+                    + " error=" + t.getClass().getName() + ": " + t.getMessage());
+            if ("Tamed_Frosty".equals(roleNameId)) {
+                NPCEntity fallbackSummon = new NPCEntity(world);
+                fallbackSummon.setRoleName("Yeti");
+                fallbackSummon.setDespawnTime((float) Math.max(240.0, summonDurationSeconds + 30.0));
+                world.spawnEntity(fallbackSummon, spawnPosition, new Rotation3f(0f, 0f, 0f));
+                summon = fallbackSummon;
+                roleNameId = "Yeti";
+                LOG.info("[MOTM] summon spawn fallback used: ability=" + ability.getId() + " role=Yeti");
+            } else {
+                return SummonRuntimeResult.none();
+            }
+        }
 
         Ref<EntityStore> summonRef = summon.getReference();
         if (summonRef == null || !summonRef.isValid()) {
-            return SummonRuntimeResult.none();
+            if ("Tamed_Frosty".equals(roleNameId)) {
+                LOG.warning("[MOTM] summon spawn produced invalid ref for Tamed_Frosty; falling back to Yeti");
+                NPCEntity fallbackSummon = new NPCEntity(world);
+                fallbackSummon.setRoleName("Yeti");
+                fallbackSummon.setDespawnTime((float) Math.max(240.0, summonDurationSeconds + 30.0));
+                try {
+                    world.spawnEntity(fallbackSummon, spawnPosition, new Rotation3f(0f, 0f, 0f));
+                } catch (Throwable t) {
+                    LOG.warning("[MOTM] summon fallback spawn failed for role=Yeti ability=" + ability.getId()
+                            + " error=" + t.getClass().getName() + ": " + t.getMessage());
+                    return SummonRuntimeResult.none();
+                }
+                summon = fallbackSummon;
+                roleNameId = "Yeti";
+                summonRef = summon.getReference();
+                if (summonRef == null || !summonRef.isValid()) {
+                    return SummonRuntimeResult.none();
+                }
+                LOG.info("[MOTM] summon spawn fallback used after invalid ref: ability=" + ability.getId() + " role=Yeti");
+            } else {
+                return SummonRuntimeResult.none();
+            }
+        }
+        suppressSummonDrops(summonRef, summonRef.getStore(), "spawn");
+
+        boolean itemModelProxyRequired = isItemModelSummon(ability);
+        if (appearanceModelAsset != null && !itemModelProxyRequired) {
+            summon.setAppearance(summonRef, appearanceModelAsset, summonRef.getStore());
+            LOG.info("[MOTM] summon custom model asset applied: ability=" + ability.getId()
+                    + " modelAsset=" + appearanceModelAsset.getId()
+                    + " model=" + appearanceModelAsset.getModel()
+                    + " texture=" + appearanceModelAsset.getTexture()
+                    + " route=custom_model_asset");
+        } else {
+            NPCEntity.setAppearance(summonRef, appearanceModelId, summonRef.getStore());
+        }
+        if (itemModelProxyRequired) {
+            suppressSummonCombatDriverVisual(summonRef, summonRef.getStore(), ability);
+        } else {
+            applyEffectById(summonRef, summonRef.getStore(), resolveImpactEffectId(player.getPlayerClass(), style.getId(), ability));
         }
 
-        NPCEntity.setAppearance(summonRef, modelId, summonRef.getStore());
-        applyEffectById(summonRef, summonRef.getStore(), resolveImpactEffectId(player.getPlayerClass(), style.getId(), ability));
-
-        long expireAt = System.currentTimeMillis() + (long) (Math.max(2.0, ability.getDurationSeconds()) * 1000);
+        long expireAt = System.currentTimeMillis() + (long) (summonDurationSeconds * 1000);
         ActiveSummon activeSummon = createActiveSummon(
                 player,
                 playerRef,
@@ -3077,18 +3982,974 @@ public class GameplayPlaybackManager {
                 ability,
                 expireAt
         );
+        if (itemModelProxyRequired) {
+            activeSummon.visualProxyRef = spawnSummonModelVisualProxy(
+                    activeSummon,
+                    runtimePlayer.getWorld(),
+                    summonRef.getStore(),
+                    appearanceModelAsset,
+                    appearanceModelId
+            );
+            if (activeSummon.visualProxyRef == null) {
+                LOG.warning("[MOTM] Snow Imp visual model proxy failed; block visual fallback intentionally skipped to avoid block-step movement."
+                        + " owner=" + player.getPlayerId()
+                        + " ability=" + ability.getId()
+                        + " fallbackAppearance=" + appearanceModelId);
+            }
+            syncSummonVisualProxy(activeSummon, summonRef.getStore());
+        }
         activeSummonsByOwner.computeIfAbsent(player.getPlayerId(), ignored -> new ArrayList<>()).add(activeSummon);
+        if (isFrostySummon(activeSummon)) {
+            activeFrostyByOwner.put(player.getPlayerId(), activeSummon);
+        }
         LOG.info("[MOTM] summon combat spawn: owner=" + player.getPlayerName()
                 + " ability=" + ability.getId()
                 + " role=" + activeSummon.role
-                + " roleName=" + modelId
+                + " roleName=" + roleNameId
                 + " tracked=true"
-                + " model=" + modelId
+                + " model=" + appearanceModelId
+                + " modelAsset=" + (appearanceModelAsset != null ? appearanceModelAsset.getId() : "")
+                + " itemModelProxyRequired=" + itemModelProxyRequired
                 + " pos=" + spawnPosition
+                + " duration=" + AbilityPresentation.formatDecimal(summonDurationSeconds)
                 + " attackRange=" + AbilityPresentation.formatDecimal(activeSummon.attackRange)
                 + " chaseRange=" + AbilityPresentation.formatDecimal(activeSummon.chaseRange));
 
-        return new SummonRuntimeResult(1, 0, "summoned " + humanize(modelId));
+        return new SummonRuntimeResult(1, 0, "summoned " + humanize(appearanceModelId));
+    }
+
+    private double resolveSummonDurationSeconds(AbilityData ability) {
+        double configuredDuration = Math.max(2.0, ability != null ? ability.getDurationSeconds() : 0.0);
+        String summonName = lower(ability != null ? ability.getSummonName() : "");
+        if ("frosty_golem".equals(summonName)) {
+            return Math.max(60.0, configuredDuration);
+        }
+        return configuredDuration;
+    }
+
+    public synchronized String mountActiveFrostyForTesting(Player runtimePlayer, PlayerData player) {
+        LOG.info("[MOTM] frosty mount command entered: runtimePlayer=" + runtimePlayer
+                + " playerId=" + (player != null ? player.getPlayerId() : "<null>"));
+        if (runtimePlayer == null || player == null || player.getPlayerId() == null) {
+            return "[MOTM] Join a world and run this in-game to mount Frosty.";
+        }
+
+        pendingFrostyMountsByOwner.put(
+                player.getPlayerId(),
+                new PendingFrostyMountRequest(player.getPlayerId(), null, System.currentTimeMillis() + 4_000L, "command")
+        );
+        LOG.info("[MOTM] frosty mount request queued: owner=" + player.getPlayerId() + " source=command");
+        return "[MOTM] Mounting Frosty. Stand near your active Frosty/Yeti.";
+    }
+
+    public synchronized String mountTargetedFrostyForTesting(Player runtimePlayer,
+                                                             PlayerData player,
+                                                             Ref<EntityStore> targetRef) {
+        LOG.info("[MOTM] frosty mount right-click entered: runtimePlayer=" + runtimePlayer
+                + " playerId=" + (player != null ? player.getPlayerId() : "<null>")
+                + " target=" + targetRef);
+        if (runtimePlayer == null || player == null || player.getPlayerId() == null) {
+            return "[MOTM] Join a world and run this in-game to mount Frosty.";
+        }
+
+        ActiveSummon targetedFrosty = findActiveFrostySummon(player.getPlayerId(), targetRef);
+        if (targetedFrosty == null) {
+            targetedFrosty = findNearestFrostySummonInFront(player.getPlayerId(), runtimePlayer, 7.0, 0.2);
+        }
+        if (targetedFrosty == null) {
+            targetedFrosty = findNearestFrostySummon(player.getPlayerId(), runtimePlayer, 3.75);
+        }
+        if (targetedFrosty != null) {
+            if (targetedFrosty.mountedByOwner) {
+                pendingFrostyMountsByOwner.remove(player.getPlayerId());
+                pendingFrostyDismountsByOwner.add(player.getPlayerId());
+                LOG.info("[MOTM] frosty right-click dismount request queued: owner=" + player.getPlayerId()
+                        + " target=" + targetRef);
+                return "[MOTM] Dismounting Frosty.";
+            }
+            pendingFrostyMountsByOwner.put(
+                    player.getPlayerId(),
+                    new PendingFrostyMountRequest(player.getPlayerId(), targetedFrosty.ref(), System.currentTimeMillis() + 4_000L, "right_click_frosty")
+            );
+            LOG.info("[MOTM] frosty right-click mount request queued: owner=" + player.getPlayerId()
+                    + " target=" + targetRef
+                    + " resolvedTarget=" + targetedFrosty.ref());
+            return "[MOTM] Mounting Frosty.";
+        }
+
+        LOG.info("[MOTM] frosty right-click ignored: no active Frosty resolved owner=" + player.getPlayerId()
+                + " target=" + targetRef);
+        return "";
+    }
+
+    public synchronized String dismountActiveFrostyForTesting(Player runtimePlayer, PlayerData player) {
+        LOG.info("[MOTM] frosty dismount command entered: runtimePlayer=" + runtimePlayer
+                + " playerId=" + (player != null ? player.getPlayerId() : "<null>"));
+        if (runtimePlayer == null || player == null || player.getPlayerId() == null) {
+            return "[MOTM] Join a world and run this in-game to dismount Frosty.";
+        }
+
+        pendingFrostyMountsByOwner.remove(player.getPlayerId());
+        pendingFrostyDismountsByOwner.add(player.getPlayerId());
+        LOG.info("[MOTM] frosty dismount request queued: owner=" + player.getPlayerId() + " source=command");
+        return "[MOTM] Dismounting Frosty.";
+    }
+
+    public synchronized String spawnTamedHorseMountBaselineForTesting(Player runtimePlayer, PlayerData player) {
+        if (runtimePlayer == null || player == null || player.getPlayerId() == null) {
+            return "[MOTM] Join a world and run this in-game to spawn the tamed horse mount baseline.";
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return "[MOTM] Tamed horse baseline failed: player entity is unavailable.";
+        }
+        World world = runtimePlayer.getWorld();
+        if (world == null) {
+            return "[MOTM] Tamed horse baseline failed: world is unavailable.";
+        }
+
+        Store<EntityStore> store = playerRef.getStore();
+        Vector3d playerPosition = getPosition(playerRef, store);
+        Vector3d forward = getDirection(playerRef, store);
+        if (playerPosition == null) {
+            return "[MOTM] Tamed horse baseline failed: player position is unavailable.";
+        }
+        if (forward == null || !forward.isFinite() || forward.length() < 0.001) {
+            forward = new Vector3d(0.0, 0.0, 1.0);
+        } else {
+            forward = new Vector3d(forward.x, 0.0, forward.z);
+            if (forward.length() < 0.001) {
+                forward.set(0.0, 0.0, 1.0);
+            } else {
+                forward.normalize();
+            }
+        }
+
+        Vector3d spawnPosition = new Vector3d(playerPosition).fma(3.0, forward);
+        NPCEntity horse = new NPCEntity(world);
+        horse.setRoleName("Tamed_Horse");
+        horse.setDespawnTime(120.0f);
+        world.spawnEntity(horse, spawnPosition, new Rotation3f(0f, 0f, 0f));
+
+        Ref<EntityStore> horseRef = horse.getReference();
+        LOG.info("[MOTM] tamed horse mount baseline spawned: owner=" + player.getPlayerId()
+                + " role=Tamed_Horse"
+                + " ref=" + horseRef
+                + " pos=" + spawnPosition);
+        return "[MOTM] Spawned a real Tamed_Horse baseline. Right-click it and test turning/steering.";
+    }
+
+    private ActiveSummon findActiveFrostySummon(String playerId) {
+        List<ActiveSummon> summons = activeSummonsByOwner.getOrDefault(playerId, List.of());
+        for (ActiveSummon summon : summons) {
+            if (summon != null && "frosty_golem".equals(lower(summon.ability != null ? summon.ability.getSummonName() : ""))) {
+                return summon;
+            }
+            if (summon != null && "frosty".equalsIgnoreCase(summon.abilityId())) {
+                return summon;
+            }
+        }
+        return null;
+    }
+
+    private ActiveSummon findActiveFrostySummon(String playerId, Ref<EntityStore> targetRef) {
+        if (targetRef == null || !targetRef.isValid()) {
+            return null;
+        }
+
+        List<ActiveSummon> summons = activeSummonsByOwner.getOrDefault(playerId, List.of());
+        for (ActiveSummon summon : summons) {
+            if (summon == null || summon.ref() == null || !summon.ref().isValid()) {
+                continue;
+            }
+            if (!summon.ref().equals(targetRef)) {
+                continue;
+            }
+            if ("frosty_golem".equals(lower(summon.ability != null ? summon.ability.getSummonName() : ""))
+                    || "frosty".equalsIgnoreCase(summon.abilityId())) {
+                return summon;
+            }
+        }
+        return null;
+    }
+
+    private ActiveSummon findNearestFrostySummon(String playerId,
+                                                 Player runtimePlayer,
+                                                 double maxDistance) {
+        if (runtimePlayer == null || playerId == null || playerId.isBlank()) {
+            return null;
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return null;
+        }
+
+        Store<EntityStore> store = playerRef.getStore();
+        Vector3d playerPosition = getPosition(playerRef, store);
+        if (playerPosition == null) {
+            return null;
+        }
+
+        ActiveSummon best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (ActiveSummon summon : activeSummonsByOwner.getOrDefault(playerId, List.of())) {
+            if (!isFrostySummon(summon) || summon.ref() == null || !summon.ref().isValid()) {
+                continue;
+            }
+            Vector3d summonPosition = getPosition(summon.ref(), store);
+            if (summonPosition == null) {
+                continue;
+            }
+            double distance = distance(playerPosition, summonPosition);
+            if (distance <= maxDistance && distance < bestDistance) {
+                best = summon;
+                bestDistance = distance;
+            }
+        }
+        if (best != null) {
+            LOG.info("[MOTM] frosty close-range fallback resolved nearest Frosty: owner=" + playerId
+                    + " distance=" + AbilityPresentation.formatDecimal(bestDistance));
+        }
+        return best;
+    }
+
+    private ActiveSummon findNearestFrostySummonInFront(String playerId,
+                                                        Player runtimePlayer,
+                                                        double maxDistance,
+                                                        double minDot) {
+        if (runtimePlayer == null || playerId == null || playerId.isBlank()) {
+            return null;
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() == null) {
+            return null;
+        }
+
+        Store<EntityStore> store = playerRef.getStore();
+        Vector3d playerPosition = getPosition(playerRef, store);
+        Vector3d playerForward = getDirection(playerRef, store);
+        if (playerPosition == null || playerForward == null) {
+            return null;
+        }
+        playerForward = normalize(new Vector3d(playerForward.x, 0.0, playerForward.z));
+
+        ActiveSummon best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (ActiveSummon summon : activeSummonsByOwner.getOrDefault(playerId, List.of())) {
+            if (!isFrostySummon(summon) || summon.ref() == null || !summon.ref().isValid()) {
+                continue;
+            }
+            Vector3d summonPosition = getPosition(summon.ref(), store);
+            if (summonPosition == null) {
+                continue;
+            }
+
+            Vector3d offset = subtract(summonPosition, playerPosition);
+            offset.y = 0.0;
+            double distance = length(offset);
+            if (distance > maxDistance || distance < 0.001) {
+                continue;
+            }
+            double facingDot = dot(normalize(offset), playerForward);
+            if (facingDot < minDot) {
+                continue;
+            }
+            if (distance < bestDistance) {
+                best = summon;
+                bestDistance = distance;
+            }
+        }
+        if (best != null) {
+            LOG.info("[MOTM] frosty right-click fallback resolved nearest Frosty: owner=" + playerId
+                    + " distance=" + AbilityPresentation.formatDecimal(bestDistance));
+        }
+        return best;
+    }
+
+    private boolean processPendingFrostyDismountRequest(ActiveSummon summon, Store<EntityStore> store) {
+        if (summon == null || !pendingFrostyDismountsByOwner.contains(summon.ownerPlayerId)) {
+            return false;
+        }
+        if (!isFrostySummon(summon)) {
+            return false;
+        }
+
+        pendingFrostyDismountsByOwner.remove(summon.ownerPlayerId);
+        try {
+            return detachFrostyMountOnTick(summon, store, "command");
+        } catch (Throwable t) {
+            LOG.warning("[MOTM] frosty dismount request failed with exception: owner=" + summon.ownerPlayerId
+                    + " error=" + t.getClass().getName() + ": " + t.getMessage());
+            return false;
+        }
+    }
+
+    private boolean processPendingFrostyMountRequest(ActiveSummon summon, Store<EntityStore> store, long now) {
+        PendingFrostyMountRequest request = pendingFrostyMountsByOwner.get(summon.ownerPlayerId);
+        if (request == null) {
+            return false;
+        }
+        if (now > request.expireAtMillis()) {
+            pendingFrostyMountsByOwner.remove(summon.ownerPlayerId);
+            LOG.info("[MOTM] frosty mount request expired: owner=" + summon.ownerPlayerId
+                    + " source=" + request.source());
+            return false;
+        }
+        if (!isFrostySummon(summon)) {
+            return false;
+        }
+        if (request.targetRef() != null && request.targetRef().isValid() && !request.targetRef().equals(summon.ref())) {
+            return false;
+        }
+        if (!isOwnerNearSummonRef(summon, store, FROSTY_MOUNT_REQUEST_RANGE)) {
+            pendingFrostyMountsByOwner.remove(summon.ownerPlayerId);
+            LOG.info("[MOTM] frosty mount request cancelled: owner=" + summon.ownerPlayerId
+                    + " source=" + request.source()
+                    + " reason=owner_not_near");
+            return false;
+        }
+
+        pendingFrostyMountsByOwner.remove(summon.ownerPlayerId);
+        try {
+            return attachFrostyMountOnTick(summon, store, request);
+        } catch (Throwable t) {
+            LOG.warning("[MOTM] frosty mount request failed with exception: owner=" + summon.ownerPlayerId
+                    + " source=" + request.source()
+                    + " error=" + t.getClass().getName() + ": " + t.getMessage());
+            return false;
+        }
+    }
+
+    private boolean attachFrostyMountOnTick(ActiveSummon frosty,
+                                            Store<EntityStore> store,
+                                            PendingFrostyMountRequest request) {
+        if (frosty == null || frosty.ref() == null || !frosty.ref().isValid() || store == null || store.isShutdown()) {
+            LOG.info("[MOTM] frosty mount attach skipped: invalid summon/store owner="
+                    + (frosty != null ? frosty.ownerPlayerId : "<null>"));
+            return false;
+        }
+        if (frosty.ownerRef() == null || !frosty.ownerRef().isValid()) {
+            LOG.info("[MOTM] frosty mount attach skipped: invalid owner ref owner=" + frosty.ownerPlayerId);
+            return false;
+        }
+
+        Player ownerPlayer = store.getComponent(frosty.ownerRef(), Player.getComponentType());
+        PlayerRef ownerPlayerRef = store.getComponent(frosty.ownerRef(), PlayerRef.getComponentType());
+        NetworkId networkId = store.getComponent(frosty.ref(), NetworkId.getComponentType());
+        if (ownerPlayer == null || ownerPlayerRef == null || ownerPlayerRef.getPacketHandler() == null) {
+            LOG.info("[MOTM] frosty mount attach skipped: owner components unavailable owner=" + frosty.ownerPlayerId);
+            return false;
+        }
+        if (networkId == null || networkId.getId() == 0) {
+            LOG.info("[MOTM] frosty mount attach skipped: network id unavailable owner=" + frosty.ownerPlayerId
+                    + " ref=" + frosty.ref());
+            return false;
+        }
+
+        LOG.info("[MOTM] frosty mount attach step: owner=" + frosty.ownerPlayerId
+                + " source=" + request.source()
+                + " networkId=" + networkId.getId()
+                + " step=begin");
+
+        if (ownerPlayer.getMountEntityId() == networkId.getId()) {
+            frosty.currentTargetRef = null;
+            frosty.targetLockExpireAtMillis = 0L;
+            frosty.returningToOwner = false;
+            frosty.mountedByOwner = true;
+            frosty.mountedAtMillis = System.currentTimeMillis();
+            frosty.lastMountedSignalAtMillis = frosty.mountedAtMillis;
+            frosty.nativeDismountSuspectAtMillis = 0L;
+            setSummonMovementState(frosty, SummonMovementState.FOLLOW);
+            LOG.info("[MOTM] frosty mount attach skipped: owner already mounted to frosty owner="
+                    + frosty.ownerPlayerId + " mountNetworkId=" + networkId.getId());
+            return true;
+        }
+
+        if (ownerPlayer.getMountEntityId() != 0) {
+            ownerPlayer.setMountEntityId(0);
+        }
+        store.tryRemoveComponent(frosty.ownerRef(), MountedComponent.getComponentType());
+        store.tryRemoveComponent(frosty.ref(), NPCMountComponent.getComponentType());
+
+        NPCMountComponent mountComponent = store.ensureAndGetComponent(frosty.ref(), NPCMountComponent.getComponentType());
+        NPCEntity frostyNpc = store.getComponent(frosty.ref(), NPCEntity.getComponentType());
+        if (frostyNpc != null && frostyNpc.getRole() != null) {
+            mountComponent.setOriginalRoleIndex(NPCPlugin.get().getIndex(frostyNpc.getRole().getRoleName()));
+        }
+        mountComponent.setOwnerPlayerRef(ownerPlayerRef);
+        mountComponent.setAnchor(FROSTY_MOUNT_ANCHOR_X, FROSTY_MOUNT_ANCHOR_Y, FROSTY_MOUNT_ANCHOR_Z);
+        LOG.info("[MOTM] frosty mount attach step: owner=" + frosty.ownerPlayerId + " step=npc_mount_component");
+
+        ownerPlayer.setMountEntityId(networkId.getId());
+        ownerPlayerRef.getPacketHandler().write(new MountNPC(
+                FROSTY_MOUNT_ANCHOR_X,
+                FROSTY_MOUNT_ANCHOR_Y,
+                FROSTY_MOUNT_ANCHOR_Z,
+                networkId.getId()
+        ));
+        applyFrostyMountMovementConfig(frosty, store, ownerPlayer, ownerPlayerRef);
+
+        frosty.currentTargetRef = null;
+        frosty.targetLockExpireAtMillis = 0L;
+        frosty.returningToOwner = false;
+        frosty.mountedByOwner = true;
+        frosty.mountedAtMillis = System.currentTimeMillis();
+        frosty.lastMountedSignalAtMillis = frosty.mountedAtMillis;
+        frosty.nativeDismountSuspectAtMillis = 0L;
+        setSummonMovementState(frosty, SummonMovementState.FOLLOW);
+
+        LOG.info("[MOTM] frosty mount test started: owner=" + frosty.ownerPlayerId
+                + " ability=" + frosty.abilityId()
+                + " source=" + request.source()
+                + " mountNetworkId=" + networkId.getId()
+                + " mountedComponent=false"
+                + " anchor=" + FROSTY_MOUNT_ANCHOR_X + "," + FROSTY_MOUNT_ANCHOR_Y + "," + FROSTY_MOUNT_ANCHOR_Z);
+        return true;
+    }
+
+    private void applyFrostyMountMovementConfig(ActiveSummon frosty,
+                                                Store<EntityStore> store,
+                                                Player ownerPlayer,
+                                                PlayerRef ownerPlayerRef) {
+        try {
+            MovementConfig mountConfig = MovementConfig.getAssetMap().getAsset("Mount");
+            if (mountConfig == null) {
+                LOG.info("[MOTM] frosty mount movement config skipped: Mount asset unavailable owner=" + frosty.ownerPlayerId);
+                return;
+            }
+            MovementManager movementManager = store.getComponent(frosty.ownerRef(), MovementManager.getComponentType());
+            PhysicsValues physicsValues = store.getComponent(frosty.ownerRef(), PhysicsValues.getComponentType());
+            if (movementManager == null || physicsValues == null) {
+                LOG.info("[MOTM] frosty mount movement config skipped: missing components owner=" + frosty.ownerPlayerId
+                        + " movementManager=" + (movementManager != null)
+                        + " physicsValues=" + (physicsValues != null));
+                return;
+            }
+
+            movementManager.setDefaultSettings(mountConfig.toPacket(), physicsValues, ownerPlayer.getGameMode());
+            movementManager.applyDefaultSettings();
+            movementManager.update(ownerPlayerRef.getPacketHandler());
+            LOG.info("[MOTM] frosty mount movement config applied: owner=" + frosty.ownerPlayerId
+                    + " movementConfig=Mount");
+        } catch (Throwable t) {
+            LOG.warning("[MOTM] frosty mount movement config failed safely: owner=" + frosty.ownerPlayerId
+                    + " error=" + t.getClass().getName() + ": " + t.getMessage());
+        }
+    }
+
+    private boolean detachFrostyMountOnTick(ActiveSummon frosty, Store<EntityStore> store, String source) {
+        if (frosty == null || store == null || store.isShutdown()) {
+            return false;
+        }
+        if (frosty.ownerRef() == null || !frosty.ownerRef().isValid()) {
+            frosty.mountedByOwner = false;
+            return false;
+        }
+
+        Player ownerPlayer = store.getComponent(frosty.ownerRef(), Player.getComponentType());
+        NetworkId networkId = frosty.ref() != null && frosty.ref().isValid()
+                ? store.getComponent(frosty.ref(), NetworkId.getComponentType())
+                : null;
+        NPCMountComponent mountComponent = frosty.ref() != null && frosty.ref().isValid()
+                ? store.getComponent(frosty.ref(), NPCMountComponent.getComponentType())
+                : null;
+        int mountNetworkId = networkId != null ? networkId.getId() : 0;
+        PlayerRef ownerPlayerRef = store.getComponent(frosty.ownerRef(), PlayerRef.getComponentType());
+        if (ownerPlayer != null && (mountNetworkId == 0 || ownerPlayer.getMountEntityId() == mountNetworkId)) {
+            ownerPlayer.setMountEntityId(0);
+        }
+        if (ownerPlayerRef != null && ownerPlayerRef.getPacketHandler() != null) {
+            ownerPlayerRef.getPacketHandler().write(new DismountNPC());
+        }
+
+        store.tryRemoveComponent(frosty.ownerRef(), MountedComponent.getComponentType());
+        if (frosty.ref() != null && frosty.ref().isValid()) {
+            restoreFrostyMountRoleOnTick(frosty, store, mountComponent);
+            store.tryRemoveComponent(frosty.ref(), NPCMountComponent.getComponentType());
+        }
+        MountPlugin.resetOriginalPlayerMovementSettings(frosty.ownerRef(), store);
+
+        frosty.mountedByOwner = false;
+        frosty.mountedAtMillis = 0L;
+        frosty.lastMountedSignalAtMillis = 0L;
+        frosty.nativeDismountSuspectAtMillis = 0L;
+        frosty.currentTargetRef = null;
+        frosty.targetLockExpireAtMillis = 0L;
+        frosty.returningToOwner = false;
+        setSummonMovementState(frosty, SummonMovementState.FOLLOW);
+
+        LOG.info("[MOTM] frosty dismount completed: owner=" + frosty.ownerPlayerId
+                + " ability=" + frosty.abilityId()
+                + " source=" + source
+                + " mountNetworkId=" + mountNetworkId);
+        return true;
+    }
+
+    private void restoreFrostyMountRoleOnTick(ActiveSummon frosty,
+                                              Store<EntityStore> store,
+                                              NPCMountComponent mountComponent) {
+        if (frosty == null || frosty.ref() == null || !frosty.ref().isValid() || mountComponent == null) {
+            return;
+        }
+
+        NPCEntity frostyNpc = store.getComponent(frosty.ref(), NPCEntity.getComponentType());
+        if (frostyNpc == null || frostyNpc.getRole() == null || mountComponent.getOriginalRoleIndex() <= 0) {
+            return;
+        }
+        if (!"Empty_Role".equalsIgnoreCase(frostyNpc.getRole().getRoleName())) {
+            return;
+        }
+
+        RoleChangeSystem.requestRoleChange(
+                frosty.ref(),
+                frostyNpc.getRole(),
+                mountComponent.getOriginalRoleIndex(),
+                false,
+                "Idle",
+                null,
+                store
+        );
+        LOG.info("[MOTM] frosty dismount role restore queued: owner=" + frosty.ownerPlayerId
+                + " originalRoleIndex=" + mountComponent.getOriginalRoleIndex());
+    }
+
+    private boolean isFrostySummon(ActiveSummon summon) {
+        return summon != null
+                && ("frosty_golem".equals(lower(summon.ability != null ? summon.ability.getSummonName() : ""))
+                || "frosty".equalsIgnoreCase(summon.abilityId()));
+    }
+
+    private void syncFrostyInteractableState(ActiveSummon summon, Store<EntityStore> store) {
+        if (!isFrostySummon(summon)
+                || summon.ref() == null
+                || !summon.ref().isValid()
+                || store == null
+                || store.isShutdown()) {
+            return;
+        }
+
+        // Frosty inherits Template_Livestock's native InteractionInstruction:
+        // SetInteractable -> HasInteracted -> Mount. Manually putting the raw
+        // Interactable component creates the prompt but can bypass that role
+        // interaction pipeline, so leave interaction ownership to the role.
+    }
+
+    private boolean updateMountedSummonForTesting(ActiveSummon summon, Store<EntityStore> store, long now) {
+        if (summon.ownerRef() == null || !summon.ownerRef().isValid()) {
+            summon.mountedByOwner = false;
+            return false;
+        }
+
+        Player ownerPlayer = store.getComponent(summon.ownerRef(), Player.getComponentType());
+        NetworkId networkId = store.getComponent(summon.ref(), NetworkId.getComponentType());
+        boolean ownerMountedToSummon = isOwnerMountedToFrosty(summon, store, ownerPlayer, networkId);
+        if (!summon.mountedByOwner && ownerMountedToSummon && isFrostySummon(summon)) {
+            summon.mountedByOwner = true;
+            summon.mountedAtMillis = now;
+            summon.lastMountedSignalAtMillis = now;
+            summon.nativeDismountSuspectAtMillis = 0L;
+            LOG.info("[MOTM] frosty native mount detected: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " mountNetworkId=" + (networkId != null ? networkId.getId() : 0));
+        }
+        if (!summon.mountedByOwner) {
+            return false;
+        }
+        if (ownerMountedToSummon) {
+            summon.lastMountedSignalAtMillis = now;
+            summon.nativeDismountSuspectAtMillis = 0L;
+        } else {
+            if (summon.nativeDismountSuspectAtMillis <= 0L) {
+                summon.nativeDismountSuspectAtMillis = now;
+            }
+            long mountedAge = summon.mountedAtMillis > 0L ? now - summon.mountedAtMillis : Long.MAX_VALUE;
+            long missingSignalAge = now - summon.nativeDismountSuspectAtMillis;
+            if (mountedAge >= FROSTY_MOUNT_NATIVE_DISMOUNT_GRACE_MS
+                    && missingSignalAge >= FROSTY_MOUNT_NATIVE_DISMOUNT_GRACE_MS) {
+                detachFrostyMountOnTick(summon, store, "native_f_dismount_detected");
+                LOG.info("[MOTM] frosty native/F dismount detected: owner=" + summon.ownerPlayerId
+                        + " ability=" + summon.abilityId());
+                return false;
+            }
+        }
+
+        summon.currentTargetRef = null;
+        summon.targetLockExpireAtMillis = 0L;
+        summon.returningToOwner = false;
+        summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+        if (ownerMountedToSummon) {
+            applyMountedFrostyContactImpact(summon, store, now);
+        }
+        return true;
+    }
+
+    private boolean isOwnerMountedToFrosty(ActiveSummon summon,
+                                           Store<EntityStore> store,
+                                           Player ownerPlayer,
+                                           NetworkId networkId) {
+        if (summon == null || store == null || store.isShutdown()) {
+            return false;
+        }
+        if (ownerPlayer != null && networkId != null && ownerPlayer.getMountEntityId() == networkId.getId()) {
+            return true;
+        }
+
+        MountedComponent ownerMounted = summon.ownerRef() != null && summon.ownerRef().isValid()
+                ? store.getComponent(summon.ownerRef(), MountedComponent.getComponentType())
+                : null;
+        if (ownerMounted != null && summon.ref() != null && summon.ref().equals(ownerMounted.getMountedToEntity())) {
+            return true;
+        }
+
+        MountedByComponent mountedBy = summon.ref() != null && summon.ref().isValid()
+                ? store.getComponent(summon.ref(), MountedByComponent.getComponentType())
+                : null;
+        return mountedBy != null
+                && summon.ownerRef() != null
+                && mountedBy.getPassengers() != null
+                && mountedBy.getPassengers().contains(summon.ownerRef());
+    }
+
+    private void applyMountedFrostyContactImpact(ActiveSummon summon, Store<EntityStore> store, long now) {
+        Player ownerPlayer = summon.ownerRef() != null && summon.ownerRef().isValid()
+                ? store.getComponent(summon.ownerRef(), Player.getComponentType())
+                : null;
+        NetworkId networkId = summon.ref() != null && summon.ref().isValid()
+                ? store.getComponent(summon.ref(), NetworkId.getComponentType())
+                : null;
+        if (!isOwnerMountedToFrosty(summon, store, ownerPlayer, networkId)) {
+            summon.mountedByOwner = false;
+            return;
+        }
+
+        Vector3d frostyPosition = getPosition(summon.ref(), store);
+        if (frostyPosition == null) {
+            return;
+        }
+
+        PlayerData owner = mod.getPlayerDataManager().getOnlinePlayer(summon.ownerPlayerId);
+        Vector3d controlledForward = getDirection(summon.ownerRef(), store);
+        if (controlledForward == null || controlledForward.length() < 0.001) {
+            controlledForward = getDirection(summon.ref(), store);
+        }
+        if (controlledForward == null || controlledForward.length() < 0.001) {
+            controlledForward = new Vector3d(0.0, 0.0, 1.0);
+        }
+        controlledForward = normalize(new Vector3d(controlledForward.x, 0.0, controlledForward.z));
+
+        List<Ref<EntityStore>> contactTargets = collectMountedFrostyContactTargets(
+                store,
+                frostyPosition,
+                controlledForward,
+                FROSTY_MOUNT_CONTACT_RADIUS,
+                3
+        );
+        if (contactTargets.isEmpty()) {
+            return;
+        }
+        for (Ref<EntityStore> targetRef : contactTargets) {
+            String targetEntityId = resolveEntityId(targetRef, store);
+            if (targetEntityId == null) {
+                continue;
+            }
+
+            long nextAllowedAt = summon.mountedContactCooldownByTarget.getOrDefault(targetEntityId, 0L);
+            if (now < nextAllowedAt) {
+                continue;
+            }
+            summon.mountedContactCooldownByTarget.put(targetEntityId, now + FROSTY_MOUNT_CONTACT_COOLDOWN_MS);
+
+            double damageAmount = Math.max(FROSTY_MOUNT_CONTACT_MIN_DAMAGE, summon.baseDamage * FROSTY_MOUNT_CONTACT_DAMAGE_RATIO);
+            if (owner != null) {
+                damageAmount *= resolveOutgoingDamageMultiplier(owner);
+                damageAmount *= resolveIncomingDamageMultiplier(targetEntityId);
+                damageAmount = mod.getStatusEffectManager().absorbDamage(targetEntityId, damageAmount);
+            }
+            if (damageAmount > 0.0) {
+                Damage damage = new Damage(new Damage.EntitySource(summon.ref()), DamageCause.PHYSICAL, (float) damageAmount);
+                DamageSystems.executeDamage(targetRef, store, damage);
+                if (owner != null) {
+                    applyPostDamageClassPassives(owner, summon.ownerRef(), targetEntityId, damageAmount, true);
+                    owner.getStatistics().setTotalDamageDealt(owner.getStatistics().getTotalDamageDealt() + damageAmount);
+                }
+            }
+
+            boolean knockedBack = applyVelocityKnockback(
+                    targetRef,
+                    store,
+                    controlledForward,
+                    FROSTY_MOUNT_CONTACT_PUSH_DISTANCE,
+                    FROSTY_MOUNT_CONTACT_VERTICAL_LIFT
+            );
+            boolean smoothShove = startSmoothKnockback(
+                    targetRef,
+                    store,
+                    controlledForward,
+                    FROSTY_MOUNT_CONTACT_PUSH_DISTANCE,
+                    FROSTY_MOUNT_CONTACT_VERTICAL_LIFT,
+                    now,
+                    "frosty_mount_contact"
+            );
+            applyEffectById(targetRef, store, resolveImpactEffectId(summon.classId, summon.styleId, summon.ability));
+            LOG.info("[MOTM] frosty mounted contact impact: owner=" + summon.ownerPlayerId
+                    + " target=" + targetEntityId
+                    + " damage=" + AbilityPresentation.formatDecimal(damageAmount)
+                    + " velocityKnockback=" + knockedBack
+                    + " smoothShove=" + smoothShove
+                    + " force=" + AbilityPresentation.formatDecimal(FROSTY_MOUNT_CONTACT_PUSH_DISTANCE)
+                    + " lift=" + AbilityPresentation.formatDecimal(FROSTY_MOUNT_CONTACT_VERTICAL_LIFT));
+        }
+    }
+
+    private List<Ref<EntityStore>> collectMountedFrostyContactTargets(Store<EntityStore> store,
+                                                                      Vector3d center,
+                                                                      Vector3d forward,
+                                                                      double radius,
+                                                                      int maxTargets) {
+        if (store == null || center == null || forward == null || radius <= 0.0) {
+            return List.of();
+        }
+        Vector3d horizontalForward = normalize(new Vector3d(forward.x, 0.0, forward.z));
+
+        List<NearbyTargetCandidate> candidates = new ArrayList<>();
+        store.forEachChunk((chunk, commandBuffer) -> {
+            for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
+                Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
+                if (ref == null || !ref.isValid() || isProtectedMotmTarget(ref)) {
+                    continue;
+                }
+
+                NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
+                if (npc == null || npc.isDespawning() || isMotmSummon(ref, npc)) {
+                    continue;
+                }
+                if (chunk.getComponent(entityIndex, DeathComponent.getComponentType()) != null) {
+                    continue;
+                }
+
+                TransformComponent transform = chunk.getComponent(entityIndex, TransformComponent.getComponentType());
+                if (transform == null || transform.getTransform() == null || transform.getTransform().getPosition() == null) {
+                    continue;
+                }
+
+                Vector3d targetPosition = transform.getTransform().getPosition();
+                Vector3d offset = subtract(targetPosition, center);
+                offset.y = 0.0;
+                double candidateDistance = length(offset);
+                if (candidateDistance < 0.001 || candidateDistance > FROSTY_MOUNT_CONTACT_FORWARD_REACH) {
+                    continue;
+                }
+
+                double forwardDistance = dot(offset, horizontalForward);
+                if (forwardDistance < FROSTY_MOUNT_CONTACT_REAR_GRACE
+                        || forwardDistance > FROSTY_MOUNT_CONTACT_FORWARD_REACH) {
+                    continue;
+                }
+
+                Vector3d lateral = new Vector3d(offset).fma(-forwardDistance, horizontalForward);
+                if (length(lateral) > FROSTY_MOUNT_CONTACT_HALF_WIDTH) {
+                    continue;
+                }
+
+                double facingDot = dot(normalize(offset), horizontalForward);
+                if (facingDot >= FROSTY_MOUNT_CONTACT_MIN_DOT && candidateDistance <= radius + forwardDistance) {
+                    candidates.add(new NearbyTargetCandidate(ref, candidateDistance));
+                }
+            }
+        });
+
+        candidates.sort((left, right) -> Double.compare(left.distance(), right.distance()));
+        List<Ref<EntityStore>> targets = new ArrayList<>();
+        for (NearbyTargetCandidate candidate : candidates) {
+            targets.add(candidate.ref());
+            if (maxTargets > 0 && targets.size() >= maxTargets) {
+                break;
+            }
+        }
+        return List.copyOf(targets);
+    }
+
+    private boolean displaceNpcAlongDirection(Ref<EntityStore> targetRef,
+                                              Store<EntityStore> store,
+                                              Vector3d direction,
+                                              double pushDistance) {
+        Vector3d targetPosition = getPosition(targetRef, store);
+        if (targetPosition == null || direction == null) {
+            return false;
+        }
+
+        Vector3d horizontalDirection = new Vector3d(direction.x, 0.0, direction.z);
+        if (horizontalDirection.length() < 0.001) {
+            horizontalDirection.set(0.0, 0.0, 1.0);
+        }
+        horizontalDirection = normalize(horizontalDirection);
+
+        Vector3d destination = new Vector3d(targetPosition).fma(pushDistance, horizontalDirection);
+        NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
+        if (npc == null) {
+            return false;
+        }
+
+        npc.moveTo(targetRef, destination.x, destination.y, destination.z, store);
+        return true;
+    }
+
+    private boolean applyVelocityKnockback(Ref<EntityStore> targetRef,
+                                           Store<EntityStore> store,
+                                           Vector3d direction,
+                                           double horizontalForce,
+                                           double verticalForce) {
+        if (targetRef == null || !targetRef.isValid() || store == null || store.isShutdown() || direction == null) {
+            return false;
+        }
+
+        Vector3d horizontalDirection = new Vector3d(direction.x, 0.0, direction.z);
+        if (horizontalDirection.length() < 0.001) {
+            horizontalDirection.set(0.0, 0.0, 1.0);
+        } else {
+            horizontalDirection.normalize();
+        }
+
+        Velocity velocity = store.getComponent(targetRef, Velocity.getComponentType());
+        if (velocity == null) {
+            LOG.info("[MOTM] velocity knockback unavailable: target=" + resolveEntityId(targetRef, store)
+                    + " reason=missing_velocity_component");
+            return false;
+        }
+        clearNpcMotionController(targetRef, store);
+
+        double resolvedHorizontal = Math.max(0.0, horizontalForce);
+        double resolvedVertical = Math.max(0.0, verticalForce);
+        velocity.addVelocity(
+                horizontalDirection.x * resolvedHorizontal,
+                resolvedVertical,
+                horizontalDirection.z * resolvedHorizontal
+        );
+        return true;
+    }
+
+    private boolean startSmoothKnockback(Ref<EntityStore> targetRef,
+                                         Store<EntityStore> store,
+                                         Vector3d direction,
+                                         double horizontalDistance,
+                                         double verticalLift,
+                                         long now,
+                                         String source) {
+        if (targetRef == null || !targetRef.isValid() || store == null || store.isShutdown() || direction == null) {
+            return false;
+        }
+
+        Vector3d start = getPosition(targetRef, store);
+        if (start == null) {
+            return false;
+        }
+
+        Vector3d horizontalDirection = new Vector3d(direction.x, 0.0, direction.z);
+        if (horizontalDirection.length() < 0.001) {
+            horizontalDirection.set(0.0, 0.0, 1.0);
+        } else {
+            horizontalDirection.normalize();
+        }
+
+        double distance = Math.max(0.0, horizontalDistance);
+        if (distance < SMOOTH_KNOCKBACK_MIN_DISTANCE) {
+            return false;
+        }
+
+        Vector3d end = new Vector3d(start).fma(distance, horizontalDirection);
+        String targetId = resolveEntityId(targetRef, store);
+        activeSmoothKnockbacks.removeIf(knockback ->
+                targetId != null
+                        ? targetId.equals(knockback.targetEntityId())
+                        : knockback.targetRef().equals(targetRef));
+        activeSmoothKnockbacks.add(new ActiveSmoothKnockback(
+                targetRef,
+                targetId,
+                new Vector3d(start),
+                end,
+                Math.max(0.0, verticalLift),
+                now,
+                now + SMOOTH_KNOCKBACK_DURATION_MS,
+                now,
+                source != null ? source : "unknown"
+        ));
+        clearNpcMotionController(targetRef, store);
+        LOG.info("[MOTM] smooth knockback started: target=" + targetId
+                + " source=" + source
+                + " start=" + start
+                + " end=" + end
+                + " distance=" + AbilityPresentation.formatDecimal(distance)
+                + " lift=" + AbilityPresentation.formatDecimal(verticalLift));
+        return true;
+    }
+
+    private boolean processSmoothKnockbackTick(ActiveSmoothKnockback knockback, long now) {
+        if (knockback == null || knockback.targetRef() == null || !knockback.targetRef().isValid()) {
+            return true;
+        }
+
+        Store<EntityStore> store = knockback.targetRef().getStore();
+        if (store == null || store.isShutdown()) {
+            return true;
+        }
+        if (store.getComponent(knockback.targetRef(), DeathComponent.getComponentType()) != null) {
+            return true;
+        }
+        if (now < knockback.nextStepAtMillis()) {
+            return false;
+        }
+
+        TransformComponent transform = store.getComponent(knockback.targetRef(), TransformComponent.getComponentType());
+        if (transform == null) {
+            return true;
+        }
+
+        double duration = Math.max(1.0, knockback.endAtMillis() - knockback.startAtMillis());
+        double t = clamp((now - knockback.startAtMillis()) / duration, 0.0, 1.0);
+        double eased = 1.0 - Math.pow(1.0 - t, 2.0);
+        Vector3d destination = lerp(knockback.startPosition(), knockback.endPosition(), eased);
+        if (knockback.verticalLift() > 0.0) {
+            destination.y += Math.sin(Math.PI * t) * knockback.verticalLift();
+        }
+
+        clearNpcMotionController(knockback.targetRef(), store);
+        transform.teleportPosition(destination);
+        transform.markChunkDirty(store);
+        knockback.nextStepAtMillis(now + SMOOTH_KNOCKBACK_STEP_INTERVAL_MS);
+
+        if (t >= 1.0) {
+            LOG.info("[MOTM] smooth knockback completed: target=" + knockback.targetEntityId()
+                    + " source=" + knockback.source()
+                    + " end=" + destination);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean displaceNpcAwayFrom(Ref<EntityStore> targetRef,
+                                        Store<EntityStore> store,
+                                        Vector3d sourcePosition,
+                                        double pushDistance) {
+        Vector3d targetPosition = getPosition(targetRef, store);
+        if (targetPosition == null || sourcePosition == null) {
+            return false;
+        }
+
+        Vector3d direction = subtract(targetPosition, sourcePosition);
+        direction.y = 0.0;
+        if (direction.length() < 0.001) {
+            direction.set(0.0, 0.0, 1.0);
+        }
+        direction = normalize(direction);
+
+        Vector3d destination = new Vector3d(targetPosition).fma(pushDistance, direction);
+        NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
+        if (npc == null) {
+            return false;
+        }
+
+        npc.moveTo(targetRef, destination.x, destination.y, destination.z, store);
+        return true;
     }
 
     private boolean processSummonTick(ActiveSummon summon, long now) {
@@ -3100,22 +4961,25 @@ public class GameplayPlaybackManager {
             return despawnSummon(summon);
         }
 
-        if (now < summon.nextThinkAtMillis) {
-            return false;
-        }
-
         Store<EntityStore> store = summon.ref().getStore();
         if (store == null) {
             return true;
         }
+        if (store.getComponent(summon.ref(), DeathComponent.getComponentType()) != null) {
+            suppressSummonDrops(summon.ref(), store, "death");
+            return despawnSummon(summon);
+        }
+        syncSummonVisualProxy(summon, store);
 
         PlayerData owner = mod.getPlayerDataManager().getOnlinePlayer(summon.ownerPlayerId);
         if (owner == null) {
             return despawnSummon(summon);
         }
+        clearSummonFriendlyMarkedTargets(summon, store);
+        syncFrostyInteractableState(summon, store);
 
         if (now < summon.hatchAtMillis) {
-            summon.nextThinkAtMillis = now + SUMMON_THINK_INTERVAL_MS;
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
             return false;
         }
 
@@ -3123,8 +4987,64 @@ public class GameplayPlaybackManager {
             awakenSummon(summon, store, now);
         }
 
+        if (processPendingFrostyMountRequest(summon, store, now)) {
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+            return false;
+        }
+
+        if (processPendingFrostyDismountRequest(summon, store)) {
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+            return false;
+        }
+
+        if (updateMountedSummonForTesting(summon, store, now)) {
+            return false;
+        }
+
+        syncFrostyEscortBubble(summon, store);
+
+        if (now < summon.nextThinkAtMillis) {
+            return false;
+        }
+        clearSummonNativeMotionIfNeeded(summon, store);
+
         if (summon.ownerRef() == null || !summon.ownerRef().isValid()) {
             return despawnSummon(summon);
+        }
+        if (shouldWarpSummonToOwner(summon, store, now)) {
+            summon.currentTargetRef = null;
+            summon.targetLockExpireAtMillis = 0L;
+            summon.returningToOwner = false;
+            clearSummonNativeTargeting(summon, store);
+            setSummonMovementState(summon, SummonMovementState.LEASH);
+            syncSummonOwnerLeashPoint(summon, store);
+            warpSummonNearOwner(summon, store, now);
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+            return false;
+        }
+
+        if (shouldSummonReturnToOwner(summon, store)) {
+            summon.currentTargetRef = null;
+            summon.targetLockExpireAtMillis = 0L;
+            summon.returningToOwner = true;
+            clearSummonNativeTargeting(summon, store);
+            suppressSummonCombatBriefly(summon, now, "owner_return");
+            setSummonMovementState(summon, SummonMovementState.LEASH);
+            syncSummonOwnerLeashPoint(summon, store);
+            if (isFrostySummon(summon)) {
+                moveSummonKinematicallyTowardOwner(summon, store, now);
+            } else if (isSnowStyleSummon(summon)) {
+                moveSummonTowardOwner(summon, store, now);
+            } else {
+                moveSummonKinematicallyTowardOwner(summon, store, now);
+            }
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+            return false;
+        }
+
+        if (updateSummonAttackAnimation(summon, store, now)) {
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+            return false;
         }
 
         Ref<EntityStore> targetRef = resolveSummonTarget(summon, store, now);
@@ -3132,22 +5052,68 @@ public class GameplayPlaybackManager {
         if (targetRef == null || !targetRef.isValid()) {
             summon.currentTargetRef = null;
             summon.targetLockExpireAtMillis = 0L;
-            moveSummonTowardOwner(summon, store);
-            summon.nextThinkAtMillis = now + SUMMON_THINK_INTERVAL_MS;
+            summon.returningToOwner = false;
+            clearSummonNativeTargeting(summon, store);
+            setSummonMovementState(summon, SummonMovementState.FOLLOW);
+            syncSummonOwnerLeashPoint(summon, store);
+            if (isFrostySummon(summon)) {
+                moveSummonKinematicallyTowardOwner(summon, store, now);
+            } else {
+                moveSummonTowardOwner(summon, store, now);
+            }
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
             return false;
         }
 
         Vector3d summonPosition = getPosition(summon.ref(), store);
         Vector3d targetPosition = getPosition(targetRef, store);
         if (summonPosition == null || targetPosition == null) {
-            summon.nextThinkAtMillis = now + SUMMON_THINK_INTERVAL_MS;
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+            return false;
+        }
+        Vector3d combatPosition = isSnowImpSummon(summon)
+                ? getSnowImpVisualPosition(summon, store)
+                : summonPosition;
+        if (combatPosition == null) {
+            combatPosition = summonPosition;
+        }
+
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        if (ownerPosition != null && distance(summonPosition, ownerPosition) > resolveSummonOwnerCombatLeashDistance(summon)) {
+            summon.currentTargetRef = null;
+            summon.targetLockExpireAtMillis = 0L;
+            summon.returningToOwner = true;
+            clearSummonNativeTargeting(summon, store);
+            suppressSummonCombatBriefly(summon, now, "combat_leash");
+            setSummonMovementState(summon, SummonMovementState.LEASH);
+            syncSummonOwnerLeashPoint(summon, store);
+            if (isFrostySummon(summon)) {
+                moveSummonKinematicallyTowardOwner(summon, store, now);
+            } else if (isSnowStyleSummon(summon)) {
+                moveSummonTowardOwner(summon, store, now);
+            } else {
+                moveSummonKinematicallyTowardOwner(summon, store, now);
+            }
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
             return false;
         }
 
-        double distanceToTarget = distance(summonPosition, targetPosition);
-        if (distanceToTarget > summon.attackRange) {
-            moveSummonTowardTarget(summon, targetRef, store, summon.attackRange * 0.8);
-            summon.nextThinkAtMillis = now + SUMMON_THINK_INTERVAL_MS;
+        setSummonMovementState(summon, SummonMovementState.COMBAT);
+        double distanceToTarget = distance(combatPosition, targetPosition);
+        if (commandFrostyNativeYetiCombat(summon, targetRef, store, distanceToTarget, now)) {
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+            return false;
+        }
+        if (distanceToTarget > summon.attackRange + SUMMON_ATTACK_MOVE_BUFFER) {
+            moveSummonTowardTarget(summon, targetRef, store, summon.attackRange * 0.8, now);
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
+            return false;
+        }
+
+        if (summon.targetAcquiredAtMillis > 0L
+                && now - summon.targetAcquiredAtMillis < SUMMON_TARGET_ENGAGE_GRACE_MS) {
+            moveSummonTowardTarget(summon, targetRef, store, summon.attackRange * 0.75, now);
+            summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
             return false;
         }
 
@@ -3159,12 +5125,26 @@ public class GameplayPlaybackManager {
             performSummonAttack(summon, owner, targetRef, store, now);
         }
 
-        summon.nextThinkAtMillis = now + SUMMON_THINK_INTERVAL_MS;
+        summon.nextThinkAtMillis = now + resolveSummonThinkIntervalMillis(summon);
         return false;
     }
 
     private boolean despawnSummon(ActiveSummon summon) {
         Store<EntityStore> store = summon.ref() != null ? summon.ref().getStore() : null;
+        if (summon.mountedByOwner && isFrostySummon(summon)) {
+            detachFrostyMountOnTick(summon, store, "summon_despawn");
+        }
+        if (isFrostySummon(summon)) {
+            ActiveSummon indexed = activeFrostyByOwner.get(summon.ownerPlayerId);
+            if (indexed == summon) {
+                activeFrostyByOwner.remove(summon.ownerPlayerId);
+            }
+            pendingFrostyMountsByOwner.remove(summon.ownerPlayerId);
+            pendingFrostyDismountsByOwner.remove(summon.ownerPlayerId);
+        }
+        removeSummonVisualProxy(summon, store);
+        removeSummonBlockVisualProxy(summon);
+        suppressSummonDrops(summon.ref(), store, "despawn");
         NPCEntity npc = store != null ? store.getComponent(summon.ref(), NPCEntity.getComponentType()) : null;
         if (npc != null) {
             npc.setToDespawn();
@@ -3173,6 +5153,422 @@ public class GameplayPlaybackManager {
                 + " ability=" + summon.abilityId()
                 + " role=" + summon.role);
         return true;
+    }
+
+    private void suppressSummonDrops(Ref<EntityStore> summonRef, Store<EntityStore> store, String reason) {
+        if (summonRef == null || store == null || store.isShutdown() || !summonRef.isValid()) {
+            return;
+        }
+
+        NPCEntity npc = store.getComponent(summonRef, NPCEntity.getComponentType());
+        if (npc == null || npc.getRole() == null) {
+            return;
+        }
+
+        npc.getRole().setDeathItemsDropped();
+        LOG.info("[MOTM] summon no-drop guard: ref=" + summonRef
+                + " roleName=" + npc.getRoleName()
+                + " reason=" + reason);
+    }
+
+    private void suppressSummonCombatDriverVisual(Ref<EntityStore> summonRef,
+                                                  Store<EntityStore> store,
+                                                  AbilityData ability) {
+        if (summonRef == null || !summonRef.isValid() || store == null || store.isShutdown()) {
+            return;
+        }
+        store.putComponent(summonRef, EntityScaleComponent.getComponentType(), new EntityScaleComponent(0.05f));
+        store.putComponent(summonRef, HiddenFromAdventurePlayers.getComponentType(), HiddenFromAdventurePlayers.INSTANCE);
+        NPCEntity npc = store.getComponent(summonRef, NPCEntity.getComponentType());
+        if (npc != null) {
+            npc.setInitialModelScale(0.05f);
+        }
+        LOG.info("[MOTM] summon combat driver suppressed: ability="
+                + (ability != null ? ability.getId() : "")
+                + " ref=" + summonRef
+                + " scale=0.05 hiddenFromAdventurePlayers=true");
+    }
+
+    private boolean spawnSummonBlockVisualProxy(ActiveSummon summon,
+                                                World world,
+                                                Store<EntityStore> store,
+                                                String itemId) {
+        if (summon == null || world == null || store == null || store.isShutdown()) {
+            return false;
+        }
+
+        Item item = Item.getAssetMap().getAsset(itemId);
+        String blockId = item != null ? item.getBlockId() : "";
+        if (blockId == null || blockId.isBlank()) {
+            return false;
+        }
+
+        int blockTypeId = BlockType.getAssetMap().getIndexOrDefault(blockId, BlockType.UNKNOWN_ID);
+        if (blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            LOG.warning("[MOTM] summon visual block proxy failed: ability=" + summon.abilityId()
+                    + " item=" + itemId
+                    + " blockId=" + blockId
+                    + " reason=unknown-block");
+            return false;
+        }
+
+        summon.visualBlockWorld = world;
+        summon.visualBlockId = blockId;
+        summon.visualBlockTypeId = blockTypeId;
+        return syncSummonBlockVisualProxy(summon);
+    }
+
+    private boolean syncSummonBlockVisualProxy(ActiveSummon summon) {
+        if (summon == null || summon.visualBlockWorld == null || summon.visualBlockTypeId <= 0) {
+            return false;
+        }
+        Store<EntityStore> store = summon.ref() != null ? summon.ref().getStore() : null;
+        if (store == null || store.isShutdown()) {
+            return false;
+        }
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        if (summonPosition == null) {
+            return false;
+        }
+
+        Vector3i anchor = resolveSummonBlockVisualAnchor(summon, summonPosition);
+        if (anchor.equals(summon.visualBlockAnchor)) {
+            return true;
+        }
+
+        removeSummonBlockVisualProxy(summon);
+
+        BlockSelection selection = new BlockSelection();
+        selection.setPosition(anchor.x, anchor.y, anchor.z);
+        selection.setAnchorAtWorldPos(anchor.x, anchor.y, anchor.z);
+        selection.addBlockAtWorldPos(anchor.x, anchor.y, anchor.z, summon.visualBlockTypeId, 0, 0, 0);
+        try {
+            summon.visualBlockOriginalSelection = selection.place(null, summon.visualBlockWorld, new Vector3i(0, 0, 0), BlockMask.EMPTY);
+            summon.visualBlockAnchor = anchor;
+            LOG.info("[MOTM] summon visual block proxy place: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " blockId=" + summon.visualBlockId
+                    + " blockTypeId=" + summon.visualBlockTypeId
+                    + " anchor=" + anchor
+                    + " driverRef=" + summon.ref());
+            return true;
+        } catch (Throwable e) {
+            summon.visualBlockOriginalSelection = null;
+            summon.visualBlockAnchor = null;
+            LOG.warning("[MOTM] summon visual block proxy failed: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " blockId=" + summon.visualBlockId
+                    + " error=" + e.getMessage());
+            return false;
+        }
+    }
+
+    private Vector3i resolveSummonBlockVisualAnchor(ActiveSummon summon, Vector3d summonPosition) {
+        int x = (int) Math.floor(summonPosition.x);
+        int z = (int) Math.floor(summonPosition.z);
+        int y = (int) Math.floor(summonPosition.y);
+        if (summon != null
+                && summon.visualBlockAnchor != null
+                && summon.visualBlockAnchor.x == x
+                && summon.visualBlockAnchor.z == z) {
+            y = summon.visualBlockAnchor.y;
+        }
+        return new Vector3i(
+                x,
+                y,
+                z
+        );
+    }
+
+    private void removeSummonBlockVisualProxy(ActiveSummon summon) {
+        if (summon == null || summon.visualBlockWorld == null || summon.visualBlockOriginalSelection == null) {
+            return;
+        }
+        try {
+            summon.visualBlockOriginalSelection.place(null, summon.visualBlockWorld, new Vector3i(0, 0, 0), BlockMask.EMPTY);
+            LOG.info("[MOTM] summon visual block proxy restore: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " blockId=" + summon.visualBlockId
+                    + " anchor=" + summon.visualBlockAnchor);
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] summon visual block proxy restore failed: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " error=" + e.getMessage());
+        } finally {
+            summon.visualBlockOriginalSelection = null;
+            summon.visualBlockAnchor = null;
+        }
+    }
+
+    private Ref<EntityStore> spawnSummonModelVisualProxy(ActiveSummon summon,
+                                                         World world,
+                                                         Store<EntityStore> store,
+                                                         ModelAsset modelAsset,
+                                                         String fallbackAppearanceId) {
+        if (summon == null || world == null || store == null || store.isShutdown()) {
+            return null;
+        }
+
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        if (summonPosition == null) {
+            return null;
+        }
+
+        Vector3d proxyPosition = new Vector3d(summonPosition).add(0.0, SNOW_IMP_VISUAL_PROXY_HEIGHT, 0.0);
+        NPCEntity proxy = new NPCEntity(world);
+        proxy.setRoleName(SUMMON_ROLE_NAME);
+        proxy.setDespawnTime((float) Math.max(3.0, ((summon.expireAtMillis() - System.currentTimeMillis()) / 1000.0) + 2.0));
+        try {
+            world.spawnEntity(proxy, proxyPosition, new Rotation3f(0f, 0f, 0f));
+            Ref<EntityStore> proxyRef = proxy.getReference();
+            if (proxyRef == null || !proxyRef.isValid() || proxyRef.getStore() == null) {
+                LOG.warning("[MOTM] summon visual model proxy failed: owner=" + summon.ownerPlayerId
+                        + " ability=" + summon.abilityId()
+                        + " reason=invalid-proxy-ref"
+                        + " role=" + SUMMON_ROLE_NAME);
+                return null;
+            }
+            if (modelAsset != null) {
+                proxy.setAppearance(proxyRef, modelAsset, proxyRef.getStore());
+            } else if (fallbackAppearanceId != null && !fallbackAppearanceId.isBlank()) {
+                NPCEntity.setAppearance(proxyRef, fallbackAppearanceId, proxyRef.getStore());
+            }
+            suppressSummonDrops(proxyRef, proxyRef.getStore(), "visual-proxy");
+            visualProxyRefs.add(proxyRef);
+            summon.visualPosition = new Vector3d(proxyPosition);
+            summon.visualTargetPosition = new Vector3d(proxyPosition);
+            LOG.info("[MOTM] summon visual model proxy spawn: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " modelAsset=" + (modelAsset != null ? modelAsset.getId() : "")
+                    + " fallbackAppearance=" + fallbackAppearanceId
+                    + " proxyRef=" + proxyRef
+                    + " anchorRef=" + summon.ref());
+            return proxyRef;
+        } catch (Throwable e) {
+            LOG.warning("[MOTM] summon visual model proxy failed: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " error=" + e.getClass().getName() + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    private Ref<EntityStore> spawnSummonItemVisualProxy(ActiveSummon summon,
+                                                        Store<EntityStore> store,
+                                                        String itemId) {
+        if (summon == null || store == null || store.isShutdown() || itemId == null || itemId.isBlank()) {
+            return null;
+        }
+
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        if (summonPosition == null) {
+            return null;
+        }
+
+        Vector3d proxyPosition = new Vector3d(summonPosition).add(0.0, SNOW_IMP_VISUAL_PROXY_HEIGHT, 0.0);
+        if (isSnowImpSummon(summon)) {
+            summon.visualPosition = new Vector3d(proxyPosition);
+            summon.visualTargetPosition = new Vector3d(proxyPosition);
+        }
+        Item item = Item.getAssetMap().getAsset(itemId);
+        LOG.info("[MOTM] summon visual proxy item asset: ability=" + summon.abilityId()
+                + " item=" + itemId
+                + " resolved=" + (item != null)
+                + " model=" + (item != null ? item.getModel() : "")
+                + " blockId=" + (item != null ? item.getBlockId() : "")
+                + " scale=" + (item != null ? AbilityPresentation.formatDecimal(item.getScale()) : ""));
+        Holder<EntityStore> holder = ItemComponent.generateItemDrop(
+                store,
+                new ItemStack(itemId, 1),
+                proxyPosition,
+                Rotation3f.IDENTITY,
+                0f,
+                0f,
+                0f
+        );
+        if (holder == null) {
+            LOG.warning("[MOTM] summon visual proxy failed: holder missing ability=" + summon.abilityId()
+                    + " item=" + itemId);
+            return null;
+        }
+
+        ItemComponent itemComponent = holder.getComponent(ItemComponent.getComponentType());
+        if (itemComponent != null) {
+            itemComponent.setPickupDelay(Float.MAX_VALUE);
+        }
+        holder.putComponent(PreventPickup.getComponentType(), PreventPickup.INSTANCE);
+        holder.putComponent(PreventItemMerging.getComponentType(), PreventItemMerging.INSTANCE);
+
+        Ref<EntityStore> proxyRef = store.addEntity(holder, AddReason.SPAWN);
+        if (proxyRef != null && proxyRef.isValid()) {
+            visualProxyRefs.add(proxyRef);
+            LOG.info("[MOTM] summon visual proxy spawn: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " item=" + itemId
+                    + " proxyRef=" + proxyRef
+                    + " anchorRef=" + summon.ref());
+        }
+        return proxyRef;
+    }
+
+    private void syncSummonVisualProxy(ActiveSummon summon, Store<EntityStore> store) {
+        syncSummonBlockVisualProxy(summon);
+        if (summon == null || summon.visualProxyRef == null || store == null || store.isShutdown()
+                || !summon.visualProxyRef.isValid()) {
+            return;
+        }
+
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        if (summonPosition == null) {
+            return;
+        }
+
+        TransformComponent transform = store.getComponent(summon.visualProxyRef, TransformComponent.getComponentType());
+        if (transform == null) {
+            return;
+        }
+        Vector3d targetPosition = resolveSnowImpVisualTargetPosition(summon, store, summonPosition, transform);
+        Vector3d proxyPosition = isSnowImpSummon(summon)
+                ? resolveSnowImpVisualPosition(summon, transform, targetPosition)
+                : targetPosition;
+        transform.teleportPosition(proxyPosition);
+        transform.markChunkDirty(store);
+    }
+
+    private Vector3d resolveSnowImpVisualTargetPosition(ActiveSummon summon,
+                                                        Store<EntityStore> store,
+                                                        Vector3d summonPosition,
+                                                        TransformComponent transform) {
+        Vector3d fallback = new Vector3d(summonPosition).add(0.0, SNOW_IMP_VISUAL_PROXY_HEIGHT, 0.0);
+        if (!isSnowImpSummon(summon)) {
+            return fallback;
+        }
+
+        Vector3d visualPosition = summon.visualPosition != null
+                ? new Vector3d(summon.visualPosition)
+                : transform.getPosition() != null
+                        ? new Vector3d(transform.getPosition())
+                        : fallback;
+        Vector3d ownerPosition = resolveSnowSummonEscortAnchorPosition(summon, store);
+        if (ownerPosition == null) {
+            return fallback;
+        }
+
+        Vector3d escortPosition = resolveSnowImpEscortPosition(summon, store, summonPosition, visualPosition, ownerPosition);
+        boolean ownerLeashActive = summon.movementState == SummonMovementState.LEASH
+                || distance(summonPosition, ownerPosition) > resolveSummonOwnerFollowStopDistance(summon);
+        if (ownerLeashActive || summon.currentTargetRef == null || !summon.currentTargetRef.isValid()) {
+            return escortPosition.add(0.0, SNOW_IMP_VISUAL_PROXY_HEIGHT, 0.0);
+        }
+
+        Vector3d targetPosition = getPosition(summon.currentTargetRef, store);
+        if (targetPosition == null) {
+            return fallback;
+        }
+        Vector3d approachDirection = subtract(targetPosition, visualPosition);
+        approachDirection.y = 0.0;
+        if (!approachDirection.isFinite() || approachDirection.length() < 0.001) {
+            return new Vector3d(targetPosition).add(0.0, SNOW_IMP_VISUAL_PROXY_HEIGHT, 0.0);
+        }
+        approachDirection.normalize();
+        Vector3d destination = new Vector3d(targetPosition).fma(-Math.max(0.65, summon.attackRange * 0.75), approachDirection);
+        destination = resolveSnowSummonGroundedDestination(summon, summonPosition, destination, targetPosition);
+        return destination.add(0.0, SNOW_IMP_VISUAL_PROXY_HEIGHT, 0.0);
+    }
+
+    private Vector3d resolveSnowImpEscortPosition(ActiveSummon summon,
+                                                  Store<EntityStore> store,
+                                                  Vector3d summonPosition,
+                                                  Vector3d visualPosition,
+                                                  Vector3d ownerPosition) {
+        Vector3d groundVisualPosition = new Vector3d(visualPosition);
+        groundVisualPosition.y -= SNOW_IMP_VISUAL_PROXY_HEIGHT;
+
+        if (summon.lastOwnerPosition == null || !summon.lastOwnerPosition.isFinite()) {
+            summon.lastOwnerPosition = new Vector3d(ownerPosition);
+        }
+        if (summon.escortOffset == null || !summon.escortOffset.isFinite()) {
+            summon.escortOffset = subtract(groundVisualPosition, ownerPosition);
+            summon.escortOffset.y = 0.0;
+        }
+
+        Vector3d ownerDelta = subtract(ownerPosition, summon.lastOwnerPosition);
+        ownerDelta.y = 0.0;
+        boolean approachPaused = shouldPauseEscortForOwnerApproach(summon, store, groundVisualPosition, ownerPosition, ownerDelta);
+        if (!approachPaused && ownerDelta.isFinite() && ownerDelta.length() > 0.001) {
+            groundVisualPosition.add(ownerDelta);
+            if (ownerDelta.length() >= SNOW_SUMMON_ESCORT_COMBAT_MOTION_THRESHOLD) {
+                summon.lastEscortMotionAtMillis = System.currentTimeMillis();
+            }
+        }
+
+        Vector3d offset = subtract(groundVisualPosition, ownerPosition);
+        offset.y = 0.0;
+        if (!offset.isFinite() || offset.length() < 0.001) {
+            offset = new Vector3d(summon.escortOffset);
+        }
+        if (!offset.isFinite() || offset.length() < 0.001) {
+            offset.set(1.8, 0.0, 0.0);
+        }
+
+        double maxOffset = Math.max(resolveSummonOwnerFollowStopDistance(summon), SNOW_SUMMON_ESCORT_MAX_DISTANCE);
+        if (offset.length() > maxOffset) {
+            offset.normalize().mul(maxOffset);
+        }
+        summon.escortOffset = new Vector3d(offset);
+        summon.lastOwnerPosition = new Vector3d(ownerPosition);
+
+        Vector3d destination = new Vector3d(ownerPosition).add(offset);
+        double groundReferenceY = summonPosition != null
+                ? summonPosition.y + SNOW_SUMMON_GROUND_VISUAL_LIFT
+                : groundVisualPosition.y;
+        double targetY = Math.max(groundReferenceY, groundVisualPosition.y - 0.18);
+        double currentY = groundVisualPosition.y;
+        destination.y = clamp(targetY, currentY - 0.18, currentY + 0.28);
+        return destination;
+    }
+
+    private Vector3d resolveSnowImpVisualPosition(ActiveSummon summon,
+                                                  TransformComponent transform,
+                                                  Vector3d targetPosition) {
+        Vector3d currentPosition = summon.visualPosition != null
+                ? new Vector3d(summon.visualPosition)
+                : transform.getPosition() != null
+                        ? new Vector3d(transform.getPosition())
+                        : new Vector3d(targetPosition);
+        if (!currentPosition.isFinite()) {
+            currentPosition = new Vector3d(targetPosition);
+        }
+
+        summon.visualTargetPosition = new Vector3d(targetPosition);
+        Vector3d delta = subtract(targetPosition, currentPosition);
+        double distance = delta.length();
+        Vector3d nextPosition;
+        if (distance <= 0.001) {
+            nextPosition = new Vector3d(targetPosition);
+        } else {
+            double step = Math.min(distance * SNOW_IMP_VISUAL_FOLLOW_ALPHA, SNOW_IMP_VISUAL_MAX_STEP);
+            nextPosition = new Vector3d(currentPosition).fma(step / distance, delta);
+        }
+
+        nextPosition.y = targetPosition.y;
+        summon.visualPosition = new Vector3d(nextPosition);
+        return nextPosition;
+    }
+
+    private void removeSummonVisualProxy(ActiveSummon summon, Store<EntityStore> store) {
+        if (summon == null || summon.visualProxyRef == null) {
+            return;
+        }
+        Ref<EntityStore> proxyRef = summon.visualProxyRef;
+        summon.visualProxyRef = null;
+        visualProxyRefs.remove(proxyRef);
+        if (store == null || store.isShutdown() || !proxyRef.isValid()) {
+            return;
+        }
+        store.removeEntity(proxyRef, RemoveReason.REMOVE);
+        LOG.info("[MOTM] summon visual proxy despawn: owner=" + summon.ownerPlayerId
+                + " ability=" + summon.abilityId()
+                + " proxyRef=" + proxyRef);
     }
 
     private ActiveSummon createActiveSummon(PlayerData player,
@@ -3190,6 +5586,7 @@ public class GameplayPlaybackManager {
             default -> false;
         };
         double attackRange = switch (role) {
+            case "ground_snowman" -> 2.25;
             case "tank" -> 2.8;
             case "skirmisher", "clone" -> 7.5;
             case "artillery", "caster", "swarm" -> 9.5;
@@ -3197,6 +5594,7 @@ public class GameplayPlaybackManager {
         };
         double chaseRange = Math.max(10.0, ability.getRange() > 0 ? ability.getRange() + 4.0 : 12.0);
         long attackIntervalMillis = switch (role) {
+            case "ground_snowman" -> 1850L;
             case "tank" -> 1700L;
             case "clone" -> 900L;
             case "swarm" -> 1100L;
@@ -3233,7 +5631,8 @@ public class GameplayPlaybackManager {
     private String resolveSummonRole(String summonName) {
         return switch (summonName) {
             case "frosty_golem" -> "tank";
-            case "snow_imp", "skeleton_minion" -> "skirmisher";
+            case "snow_imp" -> "ground_snowman";
+            case "skeleton_minion" -> "skirmisher";
             case "void_spawn" -> "caster";
             case "swamp_monster", "treant_sapling" -> "bruiser";
             case "locust_queen" -> "swarm";
@@ -3241,6 +5640,95 @@ public class GameplayPlaybackManager {
             case "scarak_egg" -> "hatchling";
             default -> "bruiser";
         };
+    }
+
+    private long resolveSummonThinkIntervalMillis(ActiveSummon summon) {
+        if (summon != null && summon.movementState == SummonMovementState.LEASH) {
+            return 35L;
+        }
+        if (summon != null && isSnowStyleSummon(summon)) {
+            return 70L;
+        }
+        if (summon != null && "tank".equals(summon.role)) {
+            return 110L;
+        }
+        return SUMMON_THINK_INTERVAL_MS;
+    }
+
+    private boolean isSnowStyleSummon(ActiveSummon summon) {
+        if (summon == null) {
+            return false;
+        }
+        String summonName = lower(summon.ability != null ? summon.ability.getSummonName() : "");
+        return "snow".equalsIgnoreCase(summon.styleId)
+                || "snow_imp".equalsIgnoreCase(summon.abilityId())
+                || "frosty".equalsIgnoreCase(summon.abilityId())
+                || "snow_imp".equals(summonName)
+                || "frosty_golem".equals(summonName);
+    }
+
+    private boolean isSnowImpSummon(ActiveSummon summon) {
+        if (summon == null) {
+            return false;
+        }
+        String summonName = lower(summon.ability != null ? summon.ability.getSummonName() : "");
+        return "ground_snowman".equals(summon.role)
+                || "snow_imp".equalsIgnoreCase(summon.abilityId())
+                || "snow_imp".equals(summonName);
+    }
+
+    private boolean isSnowStyleSummonAbility(StyleData style, AbilityData ability) {
+        if (ability == null) {
+            return false;
+        }
+        String summonName = lower(ability.getSummonName());
+        return (style != null && "snow".equalsIgnoreCase(style.getId()))
+                || "snow_imp".equalsIgnoreCase(ability.getId())
+                || "frosty".equalsIgnoreCase(ability.getId())
+                || "snow_imp".equals(summonName)
+                || "frosty_golem".equals(summonName);
+    }
+
+    private double resolveSummonOwnerRadiusMultiplier(ActiveSummon summon) {
+        return isSnowStyleSummon(summon) ? SNOW_SUMMON_OWNER_RADIUS_MULTIPLIER : 1.0;
+    }
+
+    private double resolveSummonOwnerReturnDistance(ActiveSummon summon) {
+        return SUMMON_OWNER_RETURN_DISTANCE * resolveSummonOwnerRadiusMultiplier(summon);
+    }
+
+    private double resolveSummonOwnerTargetRadius(ActiveSummon summon) {
+        return SUMMON_OWNER_TARGET_RADIUS * resolveSummonOwnerRadiusMultiplier(summon);
+    }
+
+    private double resolveSummonOwnerFollowStopDistance(ActiveSummon summon) {
+        return SUMMON_OWNER_FOLLOW_STOP_DISTANCE * resolveSummonOwnerRadiusMultiplier(summon);
+    }
+
+    private double resolveSummonOwnerFollowReleaseDistance(ActiveSummon summon) {
+        return SUMMON_OWNER_FOLLOW_RELEASE_DISTANCE * resolveSummonOwnerRadiusMultiplier(summon);
+    }
+
+    private double resolveSummonOwnerCombatLeashDistance(ActiveSummon summon) {
+        return SUMMON_OWNER_COMBAT_LEASH_DISTANCE * resolveSummonOwnerRadiusMultiplier(summon);
+    }
+
+    private double resolveSummonOwnerCombatReadyDistance(ActiveSummon summon) {
+        if (isSnowStyleSummon(summon)) {
+            return resolveSummonOwnerTargetRadius(summon);
+        }
+        return SUMMON_OWNER_COMBAT_READY_DISTANCE * resolveSummonOwnerRadiusMultiplier(summon);
+    }
+
+    private double resolveSummonOwnerCatchupWarpDistance(ActiveSummon summon) {
+        if (isSnowStyleSummon(summon)) {
+            return SNOW_SUMMON_OWNER_CATCHUP_WARP_DISTANCE;
+        }
+        return SUMMON_OWNER_CATCHUP_WARP_DISTANCE * resolveSummonOwnerRadiusMultiplier(summon);
+    }
+
+    private double resolveSummonOwnerPathReissueDistance(ActiveSummon summon) {
+        return SUMMON_OWNER_PATH_REISSUE_DISTANCE * resolveSummonOwnerRadiusMultiplier(summon);
     }
 
     private double resolveSummonBaseDamage(PlayerData player, AbilityData ability, String role) {
@@ -3257,10 +5745,293 @@ public class GameplayPlaybackManager {
         };
     }
 
-    private void moveSummonTowardOwner(ActiveSummon summon, Store<EntityStore> store) {
+    private boolean shouldSummonReturnToOwner(ActiveSummon summon, Store<EntityStore> store) {
         Vector3d summonPosition = getPosition(summon.ref(), store);
         Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
-        if (summonPosition == null || ownerPosition == null || distance(summonPosition, ownerPosition) <= 4.5) {
+        if (summonPosition == null || ownerPosition == null) {
+            return false;
+        }
+
+        double ownerDistance = distance(summonPosition, ownerPosition);
+        if (summon.returningToOwner && ownerDistance > resolveSummonOwnerFollowReleaseDistance(summon)) {
+            return true;
+        }
+        if (summon.returningToOwner) {
+            summon.returningToOwner = false;
+            suppressSummonCombatBriefly(summon, System.currentTimeMillis(), "leash_release");
+        }
+        return ownerDistance > resolveSummonOwnerReturnDistance(summon);
+    }
+
+    private void suppressSummonCombatBriefly(ActiveSummon summon, long now, String reason) {
+        if (summon == null || !isSnowImpSummon(summon)) {
+            return;
+        }
+        long suppressUntil = now + SNOW_SUMMON_LEASH_COMBAT_SUPPRESS_MS;
+        if (summon.combatSuppressedUntilMillis < suppressUntil) {
+            summon.combatSuppressedUntilMillis = suppressUntil;
+        }
+        summon.currentTargetRef = null;
+        summon.targetLockExpireAtMillis = 0L;
+        LOG.info("[MOTM] snow summon combat suppressed: owner=" + summon.ownerPlayerId
+                + " ability=" + summon.abilityId()
+                + " reason=" + reason
+                + " suppressedMs=" + SNOW_SUMMON_LEASH_COMBAT_SUPPRESS_MS);
+    }
+
+    private void syncSummonOwnerLeashPoint(ActiveSummon summon, Store<EntityStore> store) {
+        if (summon == null || store == null || store.isShutdown()) {
+            return;
+        }
+
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        if (ownerPosition == null) {
+            return;
+        }
+
+        NPCEntity npc = store.getComponent(summon.ref(), NPCEntity.getComponentType());
+        if (npc == null) {
+            return;
+        }
+
+        npc.setLeashPoint(new Vector3d(ownerPosition));
+    }
+
+    private void setSummonMovementState(ActiveSummon summon, SummonMovementState state) {
+        if (summon == null || state == null || summon.movementState == state) {
+            return;
+        }
+
+        SummonMovementState previous = summon.movementState;
+        summon.movementState = state;
+        summon.lastMoveDestination = null;
+        summon.nextMoveCommandAtMillis = 0L;
+        LOG.info("[MOTM] summon movement state: owner=" + summon.ownerPlayerId
+                + " ability=" + summon.abilityId()
+                + " role=" + summon.role
+                + " from=" + previous
+                + " to=" + state);
+    }
+
+    private boolean shouldWarpSummonToOwner(ActiveSummon summon, Store<EntityStore> store, long now) {
+        if (summon == null || now < summon.nextOwnerCatchupWarpAtMillis) {
+            return false;
+        }
+
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        return summonPosition != null
+                && ownerPosition != null
+                && distance(summonPosition, ownerPosition) > resolveSummonOwnerCatchupWarpDistance(summon);
+    }
+
+    private void warpSummonNearOwner(ActiveSummon summon, Store<EntityStore> store, long now) {
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        if (summonPosition == null || ownerPosition == null) {
+            return;
+        }
+
+        TransformComponent transform = store.getComponent(summon.ref(), TransformComponent.getComponentType());
+        NPCEntity npc = store.getComponent(summon.ref(), NPCEntity.getComponentType());
+        if (transform == null || npc == null) {
+            return;
+        }
+
+        Vector3d offsetDirection = subtract(summonPosition, ownerPosition);
+        offsetDirection.y = 0.0;
+        if (!offsetDirection.isFinite() || offsetDirection.length() < 0.001) {
+            offsetDirection.set(1.0, 0.0, 0.0);
+        } else {
+            offsetDirection.normalize();
+        }
+
+        Vector3d destination = new Vector3d(ownerPosition).fma(resolveSummonOwnerFollowStopDistance(summon), offsetDirection);
+        destination = resolveSnowSummonGroundedDestination(summon, summonPosition, destination, ownerPosition);
+        transform.teleportPosition(destination);
+        transform.markChunkDirty(store);
+        npc.setLeashPoint(new Vector3d(ownerPosition));
+        summon.lastMoveDestination = null;
+        summon.nextMoveCommandAtMillis = 0L;
+        summon.nextOwnerCatchupWarpAtMillis = now + SUMMON_OWNER_CATCHUP_WARP_INTERVAL_MS;
+        applyEffectById(summon.ref(), store, resolveImpactEffectId(summon.classId, summon.styleId, summon.ability));
+        LOG.info("[MOTM] summon follow catchup warp: owner=" + summon.ownerPlayerId
+                + " ability=" + summon.abilityId()
+                + " role=" + summon.role
+                + " from=" + summonPosition
+                + " to=" + destination
+                + " ownerDistance=" + AbilityPresentation.formatDecimal(distance(summonPosition, ownerPosition)));
+    }
+
+    private void moveSummonKinematicallyTowardOwner(ActiveSummon summon, Store<EntityStore> store, long now) {
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        if (summonPosition == null || ownerPosition == null) {
+            return;
+        }
+
+        double ownerDistance = distance(summonPosition, ownerPosition);
+        if (ownerDistance <= resolveSummonOwnerFollowReleaseDistance(summon)) {
+            summon.returningToOwner = false;
+            return;
+        }
+
+        TransformComponent transform = store.getComponent(summon.ref(), TransformComponent.getComponentType());
+        NPCEntity npc = store.getComponent(summon.ref(), NPCEntity.getComponentType());
+        if (transform == null || npc == null) {
+            return;
+        }
+
+        if (npc.getRole() != null && npc.getRole().getActiveMotionController() != null) {
+            npc.getRole().getActiveMotionController().clearOverrides();
+            npc.getRole().getActiveMotionController().setForceRecomputePath(false);
+            npc.getRole().getActiveMotionController().setNavState(NavState.ABORTED, 0.0, 0.0);
+        }
+
+        Vector3d direction = subtract(ownerPosition, summonPosition);
+        direction.y = 0.0;
+        if (!direction.isFinite() || direction.length() < 0.001) {
+            return;
+        }
+        direction.normalize();
+
+        double travel = resolveSummonOwnerDragStep(summon, ownerDistance);
+        if (travel <= 0.001) {
+            summon.returningToOwner = false;
+            return;
+        }
+
+        Vector3d destination = new Vector3d(summonPosition).fma(travel, direction);
+        double verticalDeltaToOwner = ownerPosition.y - summonPosition.y;
+        if (verticalDeltaToOwner > 0.45 && verticalDeltaToOwner <= 2.25) {
+            destination.y = ownerPosition.y;
+        } else if (verticalDeltaToOwner > 2.25) {
+            destination.y = summonPosition.y + 1.0;
+        }
+        destination = resolveSnowSummonGroundedDestination(summon, summonPosition, destination, ownerPosition);
+        transform.teleportPosition(destination);
+        transform.markChunkDirty(store);
+        npc.setLeashPoint(new Vector3d(ownerPosition));
+        summon.lastMoveDestination = null;
+        summon.nextMoveCommandAtMillis = now + SUMMON_OWNER_MOVE_COMMAND_INTERVAL_MS;
+        LOG.info("[MOTM] summon dragged kinematic follow: owner=" + summon.ownerPlayerId
+                + " ability=" + summon.abilityId()
+                + " role=" + summon.role
+                + " distance=" + AbilityPresentation.formatDecimal(ownerDistance)
+                + " step=" + AbilityPresentation.formatDecimal(travel)
+                + " destination=" + destination);
+    }
+
+    private void syncFrostyEscortBubble(ActiveSummon summon, Store<EntityStore> store) {
+        if (summon == null || !isFrostySummon(summon) || store == null || store.isShutdown()) {
+            return;
+        }
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        if (ownerPosition != null) {
+            summon.lastOwnerPosition = new Vector3d(ownerPosition);
+        }
+    }
+
+    private Vector3d resolveSnowSummonEscortAnchorPosition(ActiveSummon summon, Store<EntityStore> store) {
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        if (summon == null || store == null || store.isShutdown() || !isSnowStyleSummon(summon) || isFrostySummon(summon)) {
+            return ownerPosition;
+        }
+
+        for (ActiveSummon frosty : collectActiveFrostiesForOwner(summon.ownerPlayerId)) {
+            if (frosty == null || frosty.ref() == null || !frosty.ref().isValid()) {
+                continue;
+            }
+            Player ownerPlayer = frosty.ownerRef() != null && frosty.ownerRef().isValid()
+                    ? store.getComponent(frosty.ownerRef(), Player.getComponentType())
+                    : null;
+            NetworkId networkId = store.getComponent(frosty.ref(), NetworkId.getComponentType());
+            if (isOwnerMountedToFrosty(frosty, store, ownerPlayer, networkId)) {
+                Vector3d frostyPosition = getPosition(frosty.ref(), store);
+                if (frostyPosition != null) {
+                    return frostyPosition;
+                }
+            }
+        }
+
+        return ownerPosition;
+    }
+
+    private boolean shouldPauseEscortForOwnerApproach(ActiveSummon summon,
+                                                      Store<EntityStore> store,
+                                                      Vector3d summonPosition,
+                                                      Vector3d ownerPosition,
+                                                      Vector3d ownerDelta) {
+        if (summon == null
+                || store == null
+                || store.isShutdown()
+                || summonPosition == null
+                || ownerPosition == null
+                || ownerDelta == null
+                || !ownerDelta.isFinite()
+                || ownerDelta.length() < 0.035) {
+            return false;
+        }
+
+        Vector3d toSummon = subtract(summonPosition, ownerPosition);
+        toSummon.y = 0.0;
+        double summonDistance = toSummon.length();
+        if (!toSummon.isFinite()
+                || summonDistance < SUMMON_APPROACH_PAUSE_MIN_DISTANCE
+                || summonDistance > SUMMON_APPROACH_PAUSE_MAX_DISTANCE) {
+            return false;
+        }
+        toSummon.normalize();
+
+        Vector3d movementDirection = new Vector3d(ownerDelta.x, 0.0, ownerDelta.z);
+        if (!movementDirection.isFinite() || movementDirection.length() < 0.001) {
+            return false;
+        }
+        movementDirection.normalize();
+        double movementTowardSummon = dot(movementDirection, toSummon);
+        if (summonDistance <= SUMMON_SEPARATION_PAUSE_DISTANCE
+                && movementTowardSummon <= SUMMON_SEPARATION_MOVEMENT_DOT) {
+            return true;
+        }
+
+        Vector3d ownerForward = getDirection(summon.ownerRef(), store);
+        if (ownerForward == null || !ownerForward.isFinite()) {
+            return false;
+        }
+        ownerForward = new Vector3d(ownerForward.x, 0.0, ownerForward.z);
+        if (ownerForward.length() < 0.001) {
+            return false;
+        }
+        ownerForward.normalize();
+
+        return dot(ownerForward, toSummon) >= SUMMON_APPROACH_FACING_DOT
+                && movementTowardSummon >= SUMMON_APPROACH_MOVEMENT_DOT;
+    }
+
+    private double resolveSummonOwnerDragStep(ActiveSummon summon, double ownerDistance) {
+        double remaining = ownerDistance - resolveSummonOwnerFollowStopDistance(summon);
+        if (remaining <= 0.0) {
+            return 0.0;
+        }
+
+        double dampStart = resolveSummonOwnerFollowReleaseDistance(summon);
+        double dampEnd = dampStart + SUMMON_OWNER_DRAG_DAMPEN_RANGE;
+        double t = clamp((ownerDistance - dampStart) / Math.max(0.001, dampEnd - dampStart), 0.0, 1.0);
+        double smooth = t * t * (3.0 - (2.0 * t));
+        double desiredStep = SUMMON_OWNER_DRAG_MIN_STEP_DISTANCE
+                + ((SUMMON_OWNER_DRAG_STEP_DISTANCE - SUMMON_OWNER_DRAG_MIN_STEP_DISTANCE) * smooth);
+        return Math.min(desiredStep, remaining);
+    }
+
+    private void moveSummonTowardOwner(ActiveSummon summon, Store<EntityStore> store, long now) {
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
+        if (summonPosition == null || ownerPosition == null) {
+            return;
+        }
+
+        double ownerDistance = distance(summonPosition, ownerPosition);
+        if (ownerDistance <= resolveSummonOwnerFollowStopDistance(summon)) {
             return;
         }
 
@@ -3270,14 +6041,48 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d direction = normalize(subtract(ownerPosition, summonPosition));
-        Vector3d destination = new Vector3d(ownerPosition).fma(-2.0, direction);
+        Vector3d destination = new Vector3d(ownerPosition).fma(-resolveSummonOwnerFollowStopDistance(summon), direction);
+        destination = resolveSnowSummonGroundedDestination(summon, summonPosition, destination, ownerPosition);
+        boolean snowFollow = isSnowImpSummon(summon);
+        boolean frostyFollow = isFrostySummon(summon) && summon.movementState == SummonMovementState.LEASH;
+        boolean customFollow = snowFollow || frostyFollow;
+        boolean alreadyPathing = !customFollow && npc.getPathManager() != null && npc.getPathManager().isFollowingPath();
+        if (alreadyPathing && ownerDistance < resolveSummonOwnerPathReissueDistance(summon)) {
+            return;
+        }
+        boolean shouldIssue = snowFollow
+                ? shouldIssueSummonMoveCommand(
+                        summon,
+                        destination,
+                        now,
+                        SNOW_SUMMON_LEASH_MOVE_COMMAND_INTERVAL_MS,
+                        SNOW_SUMMON_LEASH_MOVE_DESTINATION_EPSILON
+                )
+                : frostyFollow
+                ? shouldIssueSummonMoveCommand(
+                        summon,
+                        destination,
+                        now,
+                        FROSTY_LEASH_MOVE_COMMAND_INTERVAL_MS,
+                        FROSTY_LEASH_MOVE_DESTINATION_EPSILON
+                )
+                : shouldIssueSummonOwnerMoveCommand(summon, destination, now);
+        if (!shouldIssue) {
+            return;
+        }
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
+        LOG.info("[MOTM] summon follow owner: owner=" + summon.ownerPlayerId
+                + " ability=" + summon.abilityId()
+                + " role=" + summon.role
+                + " distance=" + AbilityPresentation.formatDecimal(ownerDistance)
+                + " destination=" + destination);
     }
 
     private void moveSummonTowardTarget(ActiveSummon summon,
                                         Ref<EntityStore> targetRef,
                                         Store<EntityStore> store,
-                                        double desiredRange) {
+                                        double desiredRange,
+                                        long now) {
         Vector3d summonPosition = getPosition(summon.ref(), store);
         Vector3d targetPosition = getPosition(targetRef, store);
         if (summonPosition == null || targetPosition == null) {
@@ -3290,10 +6095,55 @@ public class GameplayPlaybackManager {
         }
 
         Vector3d direction = normalize(subtract(targetPosition, summonPosition));
-        double distance = distance(summonPosition, targetPosition);
-        double travel = Math.max(0.4, Math.min(4.0, distance - desiredRange));
-        Vector3d destination = new Vector3d(summonPosition).fma(travel, direction);
+        Vector3d destination = new Vector3d(targetPosition).fma(-desiredRange, direction);
+        destination = resolveSnowSummonGroundedDestination(summon, summonPosition, destination, targetPosition);
+        if (!shouldIssueSummonMoveCommand(summon, destination, now)) {
+            return;
+        }
+        if (isFrostySummon(summon)) {
+            clearNpcMotionController(summon.ref(), store);
+        }
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
+    }
+
+    private boolean shouldIssueSummonMoveCommand(ActiveSummon summon, Vector3d destination, long now) {
+        return shouldIssueSummonMoveCommand(
+                summon,
+                destination,
+                now,
+                SUMMON_MOVE_COMMAND_INTERVAL_MS,
+                SUMMON_MOVE_DESTINATION_EPSILON
+        );
+    }
+
+    private boolean shouldIssueSummonOwnerMoveCommand(ActiveSummon summon, Vector3d destination, long now) {
+        return shouldIssueSummonMoveCommand(
+                summon,
+                destination,
+                now,
+                SUMMON_OWNER_MOVE_COMMAND_INTERVAL_MS,
+                SUMMON_OWNER_MOVE_DESTINATION_EPSILON
+        );
+    }
+
+    private boolean shouldIssueSummonMoveCommand(ActiveSummon summon,
+                                                 Vector3d destination,
+                                                 long now,
+                                                 long intervalMillis,
+                                                 double destinationEpsilon) {
+        if (summon == null || destination == null) {
+            return false;
+        }
+        if (now < summon.nextMoveCommandAtMillis) {
+            return false;
+        }
+        if (summon.lastMoveDestination != null
+                && distance(summon.lastMoveDestination, destination) < destinationEpsilon) {
+            return false;
+        }
+        summon.lastMoveDestination = new Vector3d(destination);
+        summon.nextMoveCommandAtMillis = now + intervalMillis;
+        return true;
     }
 
     private void moveSummonAwayFromTarget(ActiveSummon summon,
@@ -3315,7 +6165,192 @@ public class GameplayPlaybackManager {
         double distance = distance(summonPosition, targetPosition);
         double retreat = Math.max(0.5, Math.min(3.4, desiredDistance - distance));
         Vector3d destination = new Vector3d(summonPosition).fma(retreat, direction);
+        destination = resolveSnowSummonGroundedDestination(summon, summonPosition, destination, targetPosition);
         npc.moveTo(summon.ref(), destination.x, destination.y, destination.z, store);
+    }
+
+    private Vector3d resolveSnowSummonGroundedDestination(ActiveSummon summon,
+                                                          Vector3d currentPosition,
+                                                          Vector3d destination,
+                                                          Vector3d anchorPosition) {
+        if (!isSnowStyleSummon(summon) || currentPosition == null || destination == null) {
+            return destination;
+        }
+
+        Vector3d resolved = new Vector3d(destination);
+        double lift = isSnowImpSummon(summon)
+                ? SNOW_SUMMON_GROUND_VISUAL_LIFT
+                : isFrostySummon(summon) ? FROSTY_GROUND_VISUAL_LIFT : 0.0;
+        double currentGroundY = currentPosition.y - lift;
+        double destinationGroundY = destination.y - lift;
+        double anchorGroundY = anchorPosition != null ? anchorPosition.y : destinationGroundY;
+        double anchorDelta = anchorGroundY - currentGroundY;
+        double desiredGroundY;
+        if (Math.abs(anchorDelta) <= 1.25) {
+            desiredGroundY = Math.max(destinationGroundY, anchorGroundY);
+        } else if (destinationGroundY < currentGroundY) {
+            desiredGroundY = Math.max(destinationGroundY, currentGroundY - 0.32);
+        } else {
+            desiredGroundY = currentGroundY;
+        }
+        double desiredY = desiredGroundY + lift;
+        double minimumY = currentPosition.y - 0.34;
+        double maximumStepUpY = currentPosition.y + 1.15;
+        if (anchorPosition != null && anchorDelta > 0.35 && anchorDelta <= 1.25) {
+            maximumStepUpY = Math.max(maximumStepUpY, Math.min(anchorGroundY + lift, currentPosition.y + 1.35));
+        }
+        resolved.y = clamp(desiredY, minimumY, maximumStepUpY);
+        return resolved;
+    }
+
+    private void startSummonAttackAnimation(ActiveSummon summon,
+                                            Ref<EntityStore> targetRef,
+                                            Store<EntityStore> store,
+                                            long now) {
+        if (summon == null || !"ground_snowman".equals(summon.role)) {
+            return;
+        }
+
+        Vector3d summonPosition = getSnowImpVisualPosition(summon, store);
+        Vector3d targetPosition = getPosition(targetRef, store);
+        if (summonPosition == null || targetPosition == null) {
+            return;
+        }
+
+        Vector3d attackDirection = subtract(targetPosition, summonPosition);
+        attackDirection.y = 0.0;
+        if (!attackDirection.isFinite() || attackDirection.length() < 0.001) {
+            return;
+        }
+        attackDirection.normalize();
+
+        summon.attackAnimationStartAtMillis = now;
+        summon.attackAnimationOrigin = new Vector3d(summonPosition);
+        summon.attackAnimationDirection = attackDirection;
+        summon.lastMoveDestination = null;
+        summon.nextMoveCommandAtMillis = now + SUMMON_SNOWMAN_ATTACK_ANIMATION_MS;
+        LOG.info("[MOTM] summon attack animation start: owner=" + summon.ownerPlayerId
+                + " ability=" + summon.abilityId()
+                + " role=" + summon.role
+                + " origin=" + summonPosition
+                + " target=" + targetPosition);
+    }
+
+    private boolean updateSummonAttackAnimation(ActiveSummon summon, Store<EntityStore> store, long now) {
+        if (summon == null
+                || summon.attackAnimationStartAtMillis <= 0L
+                || summon.attackAnimationOrigin == null
+                || summon.attackAnimationDirection == null) {
+            return false;
+        }
+
+        Ref<EntityStore> animationRef = isSnowImpSummon(summon) && summon.visualProxyRef != null
+                ? summon.visualProxyRef
+                : summon.ref();
+        if (animationRef == null || !animationRef.isValid()) {
+            clearSummonAttackAnimation(summon);
+            return false;
+        }
+
+        TransformComponent transform;
+        try {
+            transform = store.getComponent(animationRef, TransformComponent.getComponentType());
+        } catch (IllegalStateException ex) {
+            clearSummonAttackAnimation(summon);
+            LOG.info("[MOTM] summon attack animation cleared invalid ref: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " ref=" + animationRef);
+            return false;
+        }
+        if (transform == null) {
+            clearSummonAttackAnimation(summon);
+            return false;
+        }
+
+        double progress = clamp(
+                (now - summon.attackAnimationStartAtMillis) / (double) SUMMON_SNOWMAN_ATTACK_ANIMATION_MS,
+                0.0,
+                1.0
+        );
+
+        if (progress >= 1.0) {
+            Vector3d resetPosition = isSnowImpSummon(summon)
+                    ? new Vector3d(summon.attackAnimationOrigin)
+                    : resolveSnowSummonGroundedDestination(
+                            summon,
+                            transform.getPosition() != null ? transform.getPosition() : summon.attackAnimationOrigin,
+                            new Vector3d(summon.attackAnimationOrigin),
+                            summon.attackAnimationOrigin
+                    );
+            transform.teleportPosition(resetPosition);
+            transform.markChunkDirty(store);
+            if (isSnowImpSummon(summon)) {
+                summon.visualPosition = new Vector3d(resetPosition);
+            }
+            clearSummonAttackAnimation(summon);
+            return false;
+        }
+
+        double offset;
+        if (progress < 0.22) {
+            double phase = smoothstep(progress / 0.22);
+            offset = SUMMON_SNOWMAN_ATTACK_WINDUP_OFFSET * phase;
+        } else if (progress < 0.48) {
+            double phase = smoothstep((progress - 0.22) / 0.26);
+            offset = SUMMON_SNOWMAN_ATTACK_WINDUP_OFFSET
+                    + ((SUMMON_SNOWMAN_ATTACK_THRUST_OFFSET - SUMMON_SNOWMAN_ATTACK_WINDUP_OFFSET) * phase);
+        } else {
+            double phase = smoothstep((progress - 0.48) / 0.52);
+            offset = SUMMON_SNOWMAN_ATTACK_THRUST_OFFSET * (1.0 - phase);
+        }
+
+        Vector3d animatedPosition = new Vector3d(summon.attackAnimationOrigin)
+                .fma(offset, summon.attackAnimationDirection);
+        if (!isSnowImpSummon(summon)) {
+            animatedPosition = resolveSnowSummonGroundedDestination(
+                    summon,
+                    summon.attackAnimationOrigin,
+                    animatedPosition,
+                    summon.attackAnimationOrigin
+            );
+        }
+        transform.teleportPosition(animatedPosition);
+        transform.markChunkDirty(store);
+        if (isSnowImpSummon(summon)) {
+            summon.visualPosition = new Vector3d(animatedPosition);
+        }
+        return true;
+    }
+
+    private Vector3d getSnowImpVisualPosition(ActiveSummon summon, Store<EntityStore> store) {
+        if (summon == null || store == null || store.isShutdown()) {
+            return null;
+        }
+        if (summon.visualPosition != null) {
+            return new Vector3d(summon.visualPosition);
+        }
+        if (summon.visualProxyRef != null && summon.visualProxyRef.isValid()) {
+            Vector3d proxyPosition = getPosition(summon.visualProxyRef, store);
+            if (proxyPosition != null) {
+                summon.visualPosition = new Vector3d(proxyPosition);
+                return proxyPosition;
+            }
+        }
+        Vector3d driverPosition = getPosition(summon.ref(), store);
+        return driverPosition != null
+                ? new Vector3d(driverPosition).add(0.0, SNOW_IMP_VISUAL_PROXY_HEIGHT, 0.0)
+                : null;
+    }
+
+    private void clearSummonAttackAnimation(ActiveSummon summon) {
+        summon.attackAnimationStartAtMillis = 0L;
+        summon.attackAnimationOrigin = null;
+        summon.attackAnimationDirection = null;
+    }
+
+    private double smoothstep(double value) {
+        double t = clamp(value, 0.0, 1.0);
+        return t * t * (3.0 - (2.0 * t));
     }
 
     private void awakenSummon(ActiveSummon summon,
@@ -3333,27 +6368,69 @@ public class GameplayPlaybackManager {
         Vector3d summonPosition = getPosition(summon.ref(), store);
         Vector3d ownerPosition = getPosition(summon.ownerRef(), store);
         Vector3d summonAnchor = summonPosition != null ? summonPosition : ownerPosition;
+        double ownerTargetRadius = resolveSummonOwnerTargetRadius(summon);
 
+        if (isSnowStyleSummon(summon)
+                && summon.movementState == SummonMovementState.LEASH
+                && summon.lastEscortMotionAtMillis > 0L
+                && now - summon.lastEscortMotionAtMillis < SNOW_SUMMON_ESCORT_COMBAT_GRACE_MS) {
+            summon.currentTargetRef = null;
+            summon.targetLockExpireAtMillis = 0L;
+            clearSummonNativeTargeting(summon, store);
+            return null;
+        }
+
+        if (isSnowImpSummon(summon) && now < summon.combatSuppressedUntilMillis) {
+            summon.currentTargetRef = null;
+            summon.targetLockExpireAtMillis = 0L;
+            clearSummonNativeTargeting(summon, store);
+            return null;
+        }
+
+        if (summonPosition == null
+                || ownerPosition == null
+                || distance(summonPosition, ownerPosition) > resolveSummonOwnerCombatReadyDistance(summon)) {
+            clearSummonNativeTargeting(summon, store);
+            return null;
+        }
         if (summon.currentTargetRef != null
                 && now < summon.targetLockExpireAtMillis
-                && isValidNpcTarget(summon.currentTargetRef, store, summonAnchor, summon.chaseRange + 2.0)) {
+                && isValidSummonTarget(summon, summon.currentTargetRef, store, summonAnchor, ownerPosition, summon.chaseRange + 2.0, ownerTargetRadius)) {
             return summon.currentTargetRef;
         }
 
         Ref<EntityStore> targetRef = switch (summon.role) {
             case "tank" -> findNearestNpc(store,
                     ownerPosition != null ? ownerPosition : summonAnchor,
-                    Math.max(8.0, summon.chaseRange));
+                    Math.min(ownerTargetRadius, Math.max(6.0, summon.chaseRange)),
+                    ownerPosition,
+                    ownerTargetRadius);
             case "clone" -> findNearestNpc(store,
                     ownerPosition != null ? ownerPosition : summonAnchor,
-                    Math.max(8.0, summon.attackRange + 3.0));
-            default -> findNearestNpc(store, summonAnchor, summon.chaseRange);
+                    Math.min(ownerTargetRadius, Math.max(6.0, summon.attackRange + 3.0)),
+                    ownerPosition,
+                    ownerTargetRadius);
+            default -> findNearestNpc(store,
+                    summonAnchor,
+                    Math.min(summon.chaseRange, ownerTargetRadius),
+                    ownerPosition,
+                    ownerTargetRadius);
         };
 
+        Ref<EntityStore> previousTargetRef = summon.currentTargetRef;
+        boolean targetChanged = targetRef != null
+                && targetRef.isValid()
+                && (previousTargetRef == null || !previousTargetRef.equals(targetRef));
         summon.currentTargetRef = targetRef;
         summon.targetLockExpireAtMillis = targetRef == null
                 ? 0L
                 : now + ("tank".equals(summon.role) ? 2200L : 1400L);
+        if (targetChanged) {
+            summon.targetAcquiredAtMillis = now;
+            summon.nextAttackAtMillis = Math.max(summon.nextAttackAtMillis, now + SUMMON_TARGET_ENGAGE_GRACE_MS);
+        } else if (targetRef == null) {
+            summon.targetAcquiredAtMillis = 0L;
+        }
         if (targetRef != null && targetRef.isValid()) {
             LOG.info("[MOTM] summon combat target: owner=" + summon.ownerPlayerId
                     + " ability=" + summon.abilityId()
@@ -3363,11 +6440,31 @@ public class GameplayPlaybackManager {
         return targetRef;
     }
 
+    private boolean isValidSummonTarget(ActiveSummon summon,
+                                        Ref<EntityStore> targetRef,
+                                        Store<EntityStore> store,
+                                        Vector3d summonAnchor,
+                                        Vector3d ownerPosition,
+                                        double summonRadius,
+                                        double ownerRadius) {
+        if (isProtectedSummonTarget(summon, targetRef, store)) {
+            return false;
+        }
+        if (!isValidNpcTarget(targetRef, store, summonAnchor, summonRadius)) {
+            return false;
+        }
+        if (ownerPosition == null) {
+            return false;
+        }
+        Vector3d targetPosition = getPosition(targetRef, store);
+        return targetPosition != null && distance(ownerPosition, targetPosition) <= ownerRadius;
+    }
+
     private boolean isValidNpcTarget(Ref<EntityStore> targetRef,
                                      Store<EntityStore> store,
                                      Vector3d anchor,
                                      double radius) {
-        if (targetRef == null || !targetRef.isValid() || anchor == null || store == null) {
+        if (targetRef == null || !targetRef.isValid() || anchor == null || store == null || isProtectedMotmTarget(targetRef)) {
             return false;
         }
 
@@ -3382,6 +6479,132 @@ public class GameplayPlaybackManager {
 
         Vector3d targetPosition = getPosition(targetRef, store);
         return targetPosition != null && distance(anchor, targetPosition) <= radius;
+    }
+
+    private void clearSummonFriendlyMarkedTargets(ActiveSummon summon, Store<EntityStore> store) {
+        if (summon == null || store == null || store.isShutdown()) {
+            return;
+        }
+
+        NPCEntity npc = store.getComponent(summon.ref(), NPCEntity.getComponentType());
+        if (npc == null || npc.getRole() == null || npc.getRole().getMarkedEntitySupport() == null) {
+            return;
+        }
+
+        var markedEntitySupport = npc.getRole().getMarkedEntitySupport();
+        int slots = markedEntitySupport.getMarkedEntitySlotCount();
+        for (int slot = 0; slot < slots; slot++) {
+            if (!markedEntitySupport.hasMarkedEntityInSlot(slot)) {
+                continue;
+            }
+            Ref<EntityStore> markedTarget = markedEntitySupport.getMarkedEntityRef(slot);
+            if (markedTarget == null || !markedTarget.isValid()
+                    || !isProtectedSummonTarget(summon, markedTarget, store)) {
+                continue;
+            }
+            markedEntitySupport.clearMarkedEntity(slot);
+            summon.currentTargetRef = null;
+            summon.targetLockExpireAtMillis = 0L;
+            LOG.info("[MOTM] summon friendly marked target cleared: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " role=" + summon.role
+                    + " slot=" + slot
+                    + " target=" + resolveEntityId(markedTarget, store));
+        }
+    }
+
+    private void clearSummonNativeTargeting(ActiveSummon summon, Store<EntityStore> store) {
+        if (!isFrostySummon(summon) || store == null || store.isShutdown()) {
+            return;
+        }
+
+        NPCEntity npc = store.getComponent(summon.ref(), NPCEntity.getComponentType());
+        if (npc == null || npc.getRole() == null || npc.getRole().getMarkedEntitySupport() == null) {
+            return;
+        }
+
+        var markedEntitySupport = npc.getRole().getMarkedEntitySupport();
+        for (int slot = 0; slot < markedEntitySupport.getMarkedEntitySlotCount(); slot++) {
+            if (markedEntitySupport.hasMarkedEntityInSlot(slot)) {
+                markedEntitySupport.clearMarkedEntity(slot);
+            }
+        }
+        npc.getRole().getStateSupport().setState(summon.ref(), "Idle", null, store);
+    }
+
+    private boolean commandFrostyNativeYetiCombat(ActiveSummon summon,
+                                                  Ref<EntityStore> targetRef,
+                                                  Store<EntityStore> store,
+                                                  double distanceToTarget,
+                                                  long now) {
+        if (!isFrostySummon(summon)) {
+            return false;
+        }
+        if (summon.mountedByOwner || targetRef == null || !targetRef.isValid()
+                || isProtectedSummonTarget(summon, targetRef, store)) {
+            summon.currentTargetRef = null;
+            summon.targetLockExpireAtMillis = 0L;
+            clearSummonNativeTargeting(summon, store);
+            return true;
+        }
+
+        NPCEntity npc = store.getComponent(summon.ref(), NPCEntity.getComponentType());
+        if (npc == null || npc.getRole() == null || npc.getRole().getMarkedEntitySupport() == null) {
+            return true;
+        }
+
+        var role = npc.getRole();
+
+        if (distanceToTarget > FROSTY_NATIVE_YETI_ATTACK_DISTANCE + SUMMON_ATTACK_MOVE_BUFFER) {
+            clearSummonNativeTargeting(summon, store);
+            moveSummonTowardTarget(summon, targetRef, store, FROSTY_NATIVE_YETI_ATTACK_DISTANCE * 0.75, now);
+            return true;
+        }
+
+        if (now >= summon.nextAttackAtMillis) {
+            clearNpcMotionController(summon.ref(), store);
+            faceFrostyTowardTarget(summon, targetRef, store);
+            role.getMarkedEntitySupport().setMarkedEntity(MarkedEntitySupport.DEFAULT_TARGET_SLOT, targetRef);
+            role.getMarkedEntitySupport().setMarkedEntity("LockedTarget", targetRef);
+            role.getStateSupport().setState(summon.ref(), "Flee", "Attack", store);
+            summon.nextAttackAtMillis = now + FROSTY_NATIVE_YETI_ATTACK_COOLDOWN_MS;
+            LOG.info("[MOTM] frosty native yeti attack commanded: owner=" + summon.ownerPlayerId
+                    + " target=" + resolveEntityId(targetRef, store)
+                    + " distance=" + AbilityPresentation.formatDecimal(distanceToTarget));
+        }
+        return true;
+    }
+
+    private void faceFrostyTowardTarget(ActiveSummon summon,
+                                        Ref<EntityStore> targetRef,
+                                        Store<EntityStore> store) {
+        if (summon == null || summon.ref() == null || !summon.ref().isValid()
+                || targetRef == null || !targetRef.isValid()
+                || store == null || store.isShutdown()) {
+            return;
+        }
+
+        Vector3d summonPosition = getPosition(summon.ref(), store);
+        Vector3d targetPosition = getPosition(targetRef, store);
+        if (summonPosition == null || targetPosition == null) {
+            return;
+        }
+
+        Vector3d facing = subtract(targetPosition, summonPosition);
+        facing.y = 0.0;
+        if (!facing.isFinite() || facing.length() < 0.001) {
+            return;
+        }
+        facing.normalize();
+
+        TransformComponent transform = store.getComponent(summon.ref(), TransformComponent.getComponentType());
+        if (transform == null) {
+            return;
+        }
+
+        Rotation3f rotation = Rotation3f.lookAt(facing);
+        transform.teleportRotation(rotation);
+        transform.markChunkDirty(store);
     }
 
     private void moveSummonBesideTarget(ActiveSummon summon,
@@ -3413,12 +6636,31 @@ public class GameplayPlaybackManager {
         if (targetRef == null || !targetRef.isValid()) {
             return;
         }
+        if (isProtectedSummonTarget(summon, targetRef, store)) {
+            summon.currentTargetRef = null;
+            summon.targetLockExpireAtMillis = 0L;
+            summon.targetAcquiredAtMillis = 0L;
+            LOG.info("[MOTM] summon friendly target blocked: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " role=" + summon.role
+                    + " target=" + resolveEntityId(targetRef, store));
+            return;
+        }
 
         if ("clone".equals(summon.role)) {
             moveSummonBesideTarget(summon, targetRef, store);
         }
 
         String targetEntityId = resolveEntityId(targetRef, store);
+        if (isSnowImpSummon(summon) && !isSnowImpVisualInAttackRange(summon, targetRef, store)) {
+            summon.nextAttackAtMillis = now + 160L;
+            moveSummonTowardTarget(summon, targetRef, store, summon.attackRange * 0.75, now);
+            LOG.info("[MOTM] snow imp visual attack delayed: owner=" + summon.ownerPlayerId
+                    + " ability=" + summon.abilityId()
+                    + " target=" + targetEntityId);
+            return;
+        }
+
         double resolvedDamage = summon.baseDamage;
         if (nowWithinBuffWindow(summon, now)) {
             resolvedDamage *= 1.35;
@@ -3437,6 +6679,7 @@ public class GameplayPlaybackManager {
             applyLifesteal(summon.ownerRef(), owner.getPlayerId(), resolvedDamage);
         }
 
+        startSummonAttackAnimation(summon, targetRef, store, now);
         applyEffectById(targetRef, store, resolveImpactEffectId(summon.classId, summon.styleId, summon.ability));
         applySummonAttackEffects(summon, owner, targetRef, store, now);
         LOG.info("[MOTM] summon combat attack: owner=" + owner.getPlayerName()
@@ -3454,11 +6697,29 @@ public class GameplayPlaybackManager {
         }
     }
 
+    private boolean isSnowImpVisualInAttackRange(ActiveSummon summon,
+                                                 Ref<EntityStore> targetRef,
+                                                 Store<EntityStore> store) {
+        Vector3d visualPosition = getSnowImpVisualPosition(summon, store);
+        Vector3d targetPosition = getPosition(targetRef, store);
+        if (visualPosition == null || targetPosition == null) {
+            return false;
+        }
+        return distance(visualPosition, targetPosition) <= Math.max(
+                SNOW_IMP_VISUAL_ATTACK_READY_DISTANCE,
+                summon.attackRange + SUMMON_ATTACK_MOVE_BUFFER
+        );
+    }
+
     private void applySummonAttackEffects(ActiveSummon summon,
                                           PlayerData owner,
                                           Ref<EntityStore> targetRef,
                                           Store<EntityStore> store,
                                           long now) {
+        if (isProtectedSummonTarget(summon, targetRef, store)) {
+            return;
+        }
+
         String token = resolveSummonAttackToken(summon);
 
         applyTokenToTarget(token, targetRef, store, summon.ref(), summon.ownerPlayerId, summon.ability);
@@ -3569,7 +6830,10 @@ public class GameplayPlaybackManager {
         }
 
         for (Ref<EntityStore> splashTarget : collectNearbyNpcTargets(store, center, radius, maxTargets + 1)) {
-            if (splashTarget == null || !splashTarget.isValid() || splashTarget.equals(primaryTargetRef)) {
+            if (splashTarget == null
+                    || !splashTarget.isValid()
+                    || splashTarget.equals(primaryTargetRef)
+                    || isProtectedSummonTarget(summon, splashTarget, store)) {
                 continue;
             }
             applyTokenToTarget(token, splashTarget, store, summon.ref(), summon.ownerPlayerId, summon.ability);
@@ -3589,7 +6853,10 @@ public class GameplayPlaybackManager {
         }
 
         for (Ref<EntityStore> splashTarget : collectNearbyNpcTargets(store, center, radius, maxTargets + 1)) {
-            if (splashTarget == null || !splashTarget.isValid() || splashTarget.equals(primaryTargetRef)) {
+            if (splashTarget == null
+                    || !splashTarget.isValid()
+                    || splashTarget.equals(primaryTargetRef)
+                    || isProtectedSummonTarget(summon, splashTarget, store)) {
                 continue;
             }
 
@@ -5058,13 +8325,13 @@ public class GameplayPlaybackManager {
         return normalize(direction);
     }
 
-    private String resolveSummonModelId(String classId, String styleId, AbilityData ability) {
+    private String resolveSummonRoleNameId(String classId, String styleId, AbilityData ability) {
         String summonName = lower(ability.getSummonName());
         if (!summonName.isBlank()) {
             return switch (summonName) {
                 case "treant_sapling" -> "Spirit_Root";
-                case "snow_imp" -> "Spirit_Frost";
-                case "frosty_golem" -> "Golem_Crystal_Frost";
+                case "snow_imp" -> "MOTM_Summon_Driver";
+                case "frosty_golem" -> "Tamed_Frosty";
                 case "swamp_monster" -> "Frog_Green";
                 case "skeleton_minion", "shadow_clone" -> "Shadow_Knight";
                 case "void_spawn" -> "Spawn_Void";
@@ -5075,6 +8342,57 @@ public class GameplayPlaybackManager {
         }
 
         return HytaleAssetResolver.resolveModelId(classId, styleId, ability);
+    }
+
+    private String resolveSummonAppearanceModelId(String classId,
+                                                  String styleId,
+                                                  AbilityData ability,
+                                                  String roleNameId) {
+        String summonName = lower(ability.getSummonName());
+        if (!summonName.isBlank()) {
+            return switch (summonName) {
+                case "snow_imp" -> MOTM_SNOW_IMP_MODEL_ASSET_ID;
+                case "frosty_golem" -> "Yeti";
+                default -> roleNameId;
+            };
+        }
+
+        return roleNameId;
+    }
+
+    private ModelAsset resolveSummonAppearanceModelAsset(AbilityData ability) {
+        String summonName = lower(ability != null ? ability.getSummonName() : "");
+        if (!"snow_imp".equals(summonName)) {
+            return null;
+        }
+
+        for (String candidate : SNOWMAN_MODEL_ASSET_CANDIDATES) {
+            ModelAsset modelAsset = ModelAsset.getAssetMap().getAsset(candidate);
+            if (modelAsset != null) {
+                return modelAsset;
+            }
+        }
+
+        for (ModelAsset modelAsset : ModelAsset.getAssetMap().getAssetMap().values()) {
+            if (modelAsset == null) {
+                continue;
+            }
+            if (SNOWMAN_MODEL_ASSET_ID.equals(modelAsset.getId())
+                    || SNOWMAN_MODEL_ASSET_ID.equals(modelAsset.getModel())
+                    || "WinterHoliday_Snowman".equals(modelAsset.getId())) {
+                return modelAsset;
+            }
+        }
+
+        LOG.warning("[MOTM] Snow Imp snowman model asset did not resolve from loaded ModelAsset map: "
+                + SNOWMAN_MODEL_ASSET_ID
+                + " candidates=" + String.join(",", SNOWMAN_MODEL_ASSET_CANDIDATES)
+                + " loadedModelAssets=" + ModelAsset.getAssetMap().getAssetCount());
+        return null;
+    }
+
+    private boolean isItemModelSummon(AbilityData ability) {
+        return "snow_imp".equals(lower(ability != null ? ability.getSummonName() : ""));
     }
 
     private String resolveTransformationEffectId(String abilityId) {
@@ -5166,6 +8484,52 @@ public class GameplayPlaybackManager {
             return travel;
         }
         return null;
+    }
+
+    private String resolveTetherVisualEffectId(String classId,
+                                               String styleId,
+                                               AbilityData ability) {
+        if (ability == null) {
+            return null;
+        }
+
+        String abilityId = lower(ability.getId());
+        String style = lower(styleId);
+        String travelType = lower(ability.getTravelType());
+        String terrainEffect = lower(ability.getTerrainEffect());
+
+        if ("hydro".equals(lower(classId))) {
+            if ("bilgewater".equals(style) || "anchor_haul".equals(abilityId) || travelType.contains("anchor")) {
+                return "MOTM_Hydro_Wave_Move";
+            }
+            if (travelType.contains("rip_current")
+                    || travelType.contains("undertow")
+                    || "rip_current".equals(abilityId)
+                    || "riptide".equals(abilityId)) {
+                return "MOTM_Hydro_Tether";
+            }
+            return "MOTM_Hydro_Move";
+        }
+
+        if ("terra".equals(lower(classId))) {
+            if ("arbor".equals(style) || "vines".equals(abilityId)) {
+                return "MOTM_Terra_Move";
+            }
+            return "MOTM_Terra_Impact";
+        }
+
+        if ("corruptus".equals(lower(classId))) {
+            if ("void".equals(style) || terrainEffect.contains("void") || "rift".equals(abilityId)) {
+                return "MOTM_Corruptus_Void_Move";
+            }
+            return "MOTM_Corruptus_Move";
+        }
+
+        if ("aero".equals(lower(classId))) {
+            return "MOTM_Aero_Move";
+        }
+
+        return resolveProjectileVisualEffectId(classId, styleId, ability);
     }
 
     private String resolveEffectId(String classId,
@@ -5838,12 +9202,11 @@ public class GameplayPlaybackManager {
                 .add(0.0, lift, 0.0);
         boolean wallImpact = isSolidTerrainImpact(store, destination, direction);
 
-        NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
-        if (npc == null) {
+        boolean applied = applyVelocityKnockback(targetRef, store, direction, push, lift);
+        if (!applied) {
             return KnockbackResult.none();
         }
 
-        npc.moveTo(targetRef, destination.x, destination.y, destination.z, store);
         return new KnockbackResult(true, wallImpact);
     }
 
@@ -5854,6 +9217,9 @@ public class GameplayPlaybackManager {
                                      String sourcePlayerId,
                                      AbilityData ability) {
         if (token == null || token.isBlank()) {
+            return false;
+        }
+        if (isProtectedMotmTarget(targetRef)) {
             return false;
         }
 
@@ -6004,6 +9370,10 @@ public class GameplayPlaybackManager {
                                           double stopDistance,
                                           double scale,
                                           double verticalLift) {
+        if (isProtectedMotmTarget(targetRef)) {
+            return false;
+        }
+
         Vector3d targetPosition = getPosition(targetRef, store);
         if (targetPosition == null || anchor == null) {
             return false;
@@ -6093,6 +9463,26 @@ public class GameplayPlaybackManager {
         return "summon".equals(castType) || "summon_buff".equals(castType);
     }
 
+    private boolean isTetherLineControlAbility(AbilityData ability) {
+        if (ability == null || !"line_control".equals(lower(ability.getCastType()))) {
+            return false;
+        }
+        if (ability.getPullForce() > 0.0) {
+            return true;
+        }
+
+        String abilityId = lower(ability.getId());
+        String travelType = lower(ability.getTravelType());
+        return travelType.contains("thorn_whip")
+                || travelType.contains("anchor_drag")
+                || travelType.contains("rip_current")
+                || travelType.contains("undertow")
+                || "vines".equals(abilityId)
+                || "anchor_haul".equals(abilityId)
+                || "rip_current".equals(abilityId)
+                || "riptide".equals(abilityId);
+    }
+
     public synchronized boolean isActiveSummonRef(Ref<EntityStore> ref) {
         if (ref == null) {
             return false;
@@ -6105,6 +9495,36 @@ public class GameplayPlaybackManager {
             }
         }
         return false;
+    }
+
+    private boolean isProtectedMotmTarget(Ref<EntityStore> targetRef) {
+        return isActiveSummonRef(targetRef) || isMotmVisualProxy(targetRef);
+    }
+
+    private boolean isProtectedSummonTarget(ActiveSummon summon,
+                                            Ref<EntityStore> targetRef,
+                                            Store<EntityStore> store) {
+        if (targetRef == null || !targetRef.isValid() || isProtectedMotmTarget(targetRef)) {
+            return true;
+        }
+        if (summon != null && targetRef.equals(summon.ownerRef())) {
+            return true;
+        }
+        if (isPlayerRef(targetRef, store)) {
+            return true;
+        }
+
+        NPCEntity npc = store != null && !store.isShutdown()
+                ? store.getComponent(targetRef, NPCEntity.getComponentType())
+                : null;
+        return isMotmSummon(targetRef, npc);
+    }
+
+    private boolean isPlayerRef(Ref<EntityStore> ref, Store<EntityStore> store) {
+        if (ref == null || !ref.isValid() || store == null || store.isShutdown()) {
+            return false;
+        }
+        return store.getComponent(ref, Player.getComponentType()) != null;
     }
 
     public synchronized int clearActiveSummonsForOwner(String playerId) {
@@ -6125,6 +9545,59 @@ public class GameplayPlaybackManager {
         return cleared;
     }
 
+    public synchronized boolean shouldCancelFriendlySummonDamage(Ref<EntityStore> sourceRef,
+                                                                 Ref<EntityStore> targetRef,
+                                                                 Store<EntityStore> store) {
+        if (sourceRef == null
+                || targetRef == null
+                || !sourceRef.isValid()
+                || !targetRef.isValid()
+                || sourceRef.equals(targetRef)
+                || store == null
+                || store.isShutdown()) {
+            return false;
+        }
+
+        ActiveSummon sourceSummon = findSummonForCombatRef(sourceRef);
+        ActiveSummon targetSummon = findSummonForCombatRef(targetRef);
+        if (sourceSummon == null || targetSummon == null) {
+            return false;
+        }
+        if (!sourceSummon.ownerPlayerId.equals(targetSummon.ownerPlayerId)) {
+            return false;
+        }
+
+        clearSummonFriendlyMarkedTargets(sourceSummon, store);
+        clearSummonFriendlyMarkedTargets(targetSummon, store);
+        sourceSummon.currentTargetRef = null;
+        sourceSummon.targetLockExpireAtMillis = 0L;
+        targetSummon.currentTargetRef = null;
+        targetSummon.targetLockExpireAtMillis = 0L;
+        LOG.info("[MOTM] summon friendly damage cancelled: owner=" + sourceSummon.ownerPlayerId
+                + " sourceAbility=" + sourceSummon.abilityId()
+                + " targetAbility=" + targetSummon.abilityId()
+                + " source=" + resolveEntityId(sourceRef, store)
+                + " target=" + resolveEntityId(targetRef, store));
+        return true;
+    }
+
+    private ActiveSummon findSummonForCombatRef(Ref<EntityStore> ref) {
+        if (ref == null || !ref.isValid()) {
+            return null;
+        }
+        for (List<ActiveSummon> summons : activeSummonsByOwner.values()) {
+            for (ActiveSummon summon : summons) {
+                if (summon == null) {
+                    continue;
+                }
+                if (ref.equals(summon.ref()) || ref.equals(summon.visualProxyRef)) {
+                    return summon;
+                }
+            }
+        }
+        return null;
+    }
+
     private boolean isMotmSummon(Ref<EntityStore> ref, NPCEntity npc) {
         if (isActiveSummonRef(ref)) {
             return true;
@@ -6133,7 +9606,9 @@ public class GameplayPlaybackManager {
             return false;
         }
         return PROJECTILE_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
-                || FIELD_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName());
+                || FIELD_VISUAL_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
+                || SUMMON_ROLE_NAME.equalsIgnoreCase(npc.getRoleName())
+                || "Tamed_Frosty".equalsIgnoreCase(npc.getRoleName());
     }
 
     private boolean isMotmVisualProxy(Ref<EntityStore> ref) {
@@ -6181,6 +9656,15 @@ public class GameplayPlaybackManager {
 
     private double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    private Vector3d lerp(Vector3d start, Vector3d end, double t) {
+        double clamped = clamp(t, 0.0, 1.0);
+        return new Vector3d(
+                start.x + ((end.x - start.x) * clamped),
+                start.y + ((end.y - start.y) * clamped),
+                start.z + ((end.z - start.z) * clamped)
+        );
     }
 
     private String formatDistance(double distance) {
@@ -6237,6 +9721,11 @@ public class GameplayPlaybackManager {
                               long expireAtMillis,
                               double previousY,
                               boolean wasAirborne) {}
+
+    private record PendingFrostyMountRequest(String ownerPlayerId,
+                                             Ref<EntityStore> targetRef,
+                                             long expireAtMillis,
+                                             String source) {}
 
     private record BuriedVictim(Ref<EntityStore> targetRef,
                                 Float originalScale,
@@ -6336,6 +9825,49 @@ public class GameplayPlaybackManager {
         }
     }
 
+    private static final class ActiveSmoothKnockback {
+        private final Ref<EntityStore> targetRef;
+        private final String targetEntityId;
+        private final Vector3d startPosition;
+        private final Vector3d endPosition;
+        private final double verticalLift;
+        private final long startAtMillis;
+        private final long endAtMillis;
+        private long nextStepAtMillis;
+        private final String source;
+
+        private ActiveSmoothKnockback(Ref<EntityStore> targetRef,
+                                      String targetEntityId,
+                                      Vector3d startPosition,
+                                      Vector3d endPosition,
+                                      double verticalLift,
+                                      long startAtMillis,
+                                      long endAtMillis,
+                                      long nextStepAtMillis,
+                                      String source) {
+            this.targetRef = targetRef;
+            this.targetEntityId = targetEntityId;
+            this.startPosition = startPosition;
+            this.endPosition = endPosition;
+            this.verticalLift = verticalLift;
+            this.startAtMillis = startAtMillis;
+            this.endAtMillis = endAtMillis;
+            this.nextStepAtMillis = nextStepAtMillis;
+            this.source = source;
+        }
+
+        private Ref<EntityStore> targetRef() { return targetRef; }
+        private String targetEntityId() { return targetEntityId; }
+        private Vector3d startPosition() { return startPosition; }
+        private Vector3d endPosition() { return endPosition; }
+        private double verticalLift() { return verticalLift; }
+        private long startAtMillis() { return startAtMillis; }
+        private long endAtMillis() { return endAtMillis; }
+        private long nextStepAtMillis() { return nextStepAtMillis; }
+        private void nextStepAtMillis(long value) { nextStepAtMillis = value; }
+        private String source() { return source; }
+    }
+
     private record ProjectileLaunchResult(int launched, String summary) {
         private static ProjectileLaunchResult none() {
             return new ProjectileLaunchResult(0, "");
@@ -6379,6 +9911,12 @@ public class GameplayPlaybackManager {
             List<TargetCandidate> candidates
     ) {}
 
+    private enum SummonMovementState {
+        FOLLOW,
+        COMBAT,
+        LEASH
+    }
+
     private static final class ActiveSummon {
         private final String ownerPlayerId;
         private final Ref<EntityStore> ownerRef;
@@ -6398,8 +9936,34 @@ public class GameplayPlaybackManager {
         private long expireAtMillis;
         private final double baseDamage;
         private Ref<EntityStore> currentTargetRef;
+        private long targetAcquiredAtMillis;
+        private Ref<EntityStore> visualProxyRef;
+        private Vector3d visualPosition;
+        private Vector3d visualTargetPosition;
+        private Vector3d escortOffset;
+        private Vector3d lastOwnerPosition;
+        private long lastEscortMotionAtMillis;
+        private World visualBlockWorld;
+        private String visualBlockId;
+        private int visualBlockTypeId;
+        private Vector3i visualBlockAnchor;
+        private BlockSelection visualBlockOriginalSelection;
         private long targetLockExpireAtMillis;
+        private Vector3d lastMoveDestination;
+        private long nextMoveCommandAtMillis;
+        private long nextOwnerCatchupWarpAtMillis;
+        private long attackAnimationStartAtMillis;
+        private Vector3d attackAnimationOrigin;
+        private Vector3d attackAnimationDirection;
+        private long combatSuppressedUntilMillis;
+        private final Map<String, Long> mountedContactCooldownByTarget = new HashMap<>();
+        private SummonMovementState movementState = SummonMovementState.FOLLOW;
+        private boolean returningToOwner;
         private boolean awakened;
+        private boolean mountedByOwner;
+        private long mountedAtMillis;
+        private long lastMountedSignalAtMillis;
+        private long nativeDismountSuspectAtMillis;
 
         private ActiveSummon(String ownerPlayerId,
                              Ref<EntityStore> ref,
@@ -6487,19 +10051,31 @@ public class GameplayPlaybackManager {
         private final AbilityData ability;
         private final long expireAtMillis;
         private long nextPulseAtMillis;
+        private final List<Ref<EntityStore>> visualRefs;
+        private final String visualEffectId;
+        private long nextVisualRefreshAtMillis;
+        private final TetherTraceRuntime trace;
 
         private ActiveLineControl(String ownerPlayerId,
                                   Ref<EntityStore> ownerRef,
                                   Ref<EntityStore> targetRef,
                                   AbilityData ability,
                                   long expireAtMillis,
-                                  long nextPulseAtMillis) {
+                                  long nextPulseAtMillis,
+                                  List<Ref<EntityStore>> visualRefs,
+                                  String visualEffectId,
+                                  long nextVisualRefreshAtMillis,
+                                  TetherTraceRuntime trace) {
             this.ownerPlayerId = ownerPlayerId;
             this.ownerRef = ownerRef;
             this.targetRef = targetRef;
             this.ability = ability;
             this.expireAtMillis = expireAtMillis;
             this.nextPulseAtMillis = nextPulseAtMillis;
+            this.visualRefs = visualRefs != null ? List.copyOf(visualRefs) : List.of();
+            this.visualEffectId = visualEffectId;
+            this.nextVisualRefreshAtMillis = nextVisualRefreshAtMillis;
+            this.trace = trace != null ? trace : TetherTraceRuntime.none();
         }
 
         public String ownerPlayerId() { return ownerPlayerId; }
@@ -6508,6 +10084,10 @@ public class GameplayPlaybackManager {
         public AbilityData ability() { return ability; }
         public long expireAtMillis() { return expireAtMillis; }
         public long nextPulseAtMillis() { return nextPulseAtMillis; }
+        public List<Ref<EntityStore>> visualRefs() { return visualRefs; }
+        public String visualEffectId() { return visualEffectId; }
+        public long nextVisualRefreshAtMillis() { return nextVisualRefreshAtMillis; }
+        public TetherTraceRuntime trace() { return trace; }
     }
 
     private static final class ActiveTransformation {
@@ -6590,6 +10170,39 @@ public class GameplayPlaybackManager {
                                       long nextRefreshAtMillis) {
         private static FieldVisualRuntime none() {
             return new FieldVisualRuntime(List.of(), null, Long.MAX_VALUE);
+        }
+    }
+
+    private record TetherVisualRuntime(List<Ref<EntityStore>> visualRefs,
+                                       String effectId,
+                                       long nextRefreshAtMillis) {
+        private static TetherVisualRuntime none() {
+            return new TetherVisualRuntime(List.of(), null, Long.MAX_VALUE);
+        }
+    }
+
+    private record TetherTraceRuntime(World world,
+                                      Vector3i anchor,
+                                      BlockSelection originalSelection,
+                                      String fluidId,
+                                      int fluidCount,
+                                      long cleanupAtMillis) {
+        private static TetherTraceRuntime none() {
+            return new TetherTraceRuntime(null, null, null, "", 0, Long.MAX_VALUE);
+        }
+
+        private boolean isActive() {
+            return world != null && originalSelection != null && fluidCount > 0;
+        }
+    }
+
+    private record FluidResolution(String fluidId, int fluidTypeId) {
+        private static FluidResolution none() {
+            return new FluidResolution("", Fluid.UNKNOWN_ID);
+        }
+
+        private boolean isValid() {
+            return fluidTypeId != Fluid.UNKNOWN_ID && fluidTypeId != Fluid.EMPTY_ID;
         }
     }
 

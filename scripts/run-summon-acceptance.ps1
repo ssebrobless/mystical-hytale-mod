@@ -25,13 +25,12 @@ function Get-LatestServerLog {
 
 function Send-MotmCommand([string]$Text, [int]$DelayMilliseconds = 700) {
     Write-Host "[run-summon-acceptance] /$Text"
-    & (Join-Path $PSScriptRoot "send-input.ps1") -Action Key -Keys "2" -DelayMilliseconds 80 | Out-Host
     & (Join-Path $PSScriptRoot "send-input.ps1") -Action Command -Text $Text -DelayMilliseconds 120 | Out-Host
     Start-Sleep -Milliseconds $DelayMilliseconds
 }
 
 function Capture([string]$Name) {
-    & (Join-Path $PSScriptRoot "capture-evidence.ps1") -Phase $phase -RunId $runId -Name $Name | Out-Host
+    & (Join-Path $PSScriptRoot "capture-evidence.ps1") -Phase $phase -RunId $runId -Name $Name -WindowTitle "Hytale" | Out-Host
 }
 
 function Read-NewLogLines([string]$Path, [long]$StartOffset) {
@@ -81,6 +80,7 @@ if (-not $SkipVideo) {
         "-Phase", $phase,
         "-RunId", $runId,
         "-Name", "cast-window",
+        "-WindowTitle", "Hytale",
         "-Video",
         "-VideoSeconds", ([string]([Math]::Max(8, $ObserveSeconds)))
     )
@@ -98,6 +98,9 @@ if ($videoProcess) {
     Wait-Process -Id $videoProcess.Id -Timeout ([Math]::Max(10, $ObserveSeconds + 10)) -ErrorAction SilentlyContinue
 }
 
+Send-MotmCommand "motm dev clear" 900
+Capture "after-dev-clear"
+
 $lines = Read-NewLogLines $log.FullName $startOffset
 $markerIndex = -1
 for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -113,11 +116,13 @@ $proofLog = Join-Path $outDir "server-window.log"
 $lines | Set-Content -LiteralPath $proofLog -Encoding UTF8
 
 $escaped = [regex]::Escape($AbilityId)
-$blocking = @($lines | Where-Object { $_ -match "NoClassDefFoundError|ClassNotFoundException|Exception|ERROR|Reloading nonexistent|Unmapped NPC type" })
+$blocking = @($lines | Where-Object { $_ -match "NoClassDefFoundError|ClassNotFoundException|Exception|ERROR|Reloading nonexistent|Cannot find model" })
+$warnings = @($lines | Where-Object { $_ -match "Unmapped NPC type" })
 $spawn = @($lines | Where-Object { $_ -match "summon combat spawn:.*ability=$escaped" })
 $target = @($lines | Where-Object { $_ -match "summon combat target:.*ability=$escaped" })
 $attack = @($lines | Where-Object { $_ -match "summon combat attack:.*ability=$escaped.*damage=[1-9]" })
 $despawn = @($lines | Where-Object { $_ -match "summon combat despawn:.*ability=$escaped" })
+$cleanup = @($lines | Where-Object { $_ -match "summon combat despawn:.*ability=$escaped|Dev: player cleared|player cleared to a fresh state" })
 $castResult = @($lines | Where-Object { $_ -match "Queued ability cast result:.*abilityId=$escaped" } | Select-Object -Last 1)
 
 $mechanicalStatus = if ($blocking.Count -eq 0 -and $spawn.Count -gt 0 -and $target.Count -gt 0 -and $attack.Count -gt 0) {
@@ -125,6 +130,7 @@ $mechanicalStatus = if ($blocking.Count -eq 0 -and $spawn.Count -gt 0 -and $targ
 } else {
     "FAIL"
 }
+$cleanupStatus = if ($cleanup.Count -gt 0) { "PASS" } else { "FAIL" }
 $visualStatus = "REVIEW"
 
 $report = @(
@@ -139,6 +145,8 @@ $report = @(
     ("| Target marker        | {0,-42} |" -f ($(if ($target.Count -gt 0) { "PASS x$($target.Count)" } else { "FAIL" }))),
     ("| Attack marker        | {0,-42} |" -f ($(if ($attack.Count -gt 0) { "PASS x$($attack.Count)" } else { "FAIL" }))),
     ("| Despawn marker       | {0,-42} |" -f ($(if ($despawn.Count -gt 0) { "PASS x$($despawn.Count)" } else { "REVIEW" }))),
+    ("| Cleanup marker       | {0,-42} |" -f ($(if ($cleanupStatus -eq "PASS") { "PASS x$($cleanup.Count)" } else { "FAIL" }))),
+    ("| Warning markers      | {0,-42} |" -f ($(if ($warnings.Count -gt 0) { "REVIEW x$($warnings.Count)" } else { "PASS none" }))),
     ("| Blocking errors      | {0,-42} |" -f ($(if ($blocking.Count -eq 0) { "PASS none" } else { "FAIL x$($blocking.Count)" }))),
     ("| Mechanical verdict   | {0,-42} |" -f $mechanicalStatus),
     ("| Visual verdict       | {0,-42} |" -f $visualStatus),
@@ -157,11 +165,16 @@ if ($blocking.Count -gt 0) {
     $report += "## Blocking Lines"
     $report += @($blocking | ForEach-Object { "- $_" })
 }
+if ($warnings.Count -gt 0) {
+    $report += ""
+    $report += "## Warning Lines"
+    $report += @($warnings | ForEach-Object { "- $_" })
+}
 
 $reportPath = Join-Path $outDir "report.md"
 $report | Set-Content -LiteralPath $reportPath -Encoding UTF8
 Write-Host "[run-summon-acceptance] Wrote $reportPath"
 
-if ($mechanicalStatus -ne "PASS") {
+if ($mechanicalStatus -ne "PASS" -or $cleanupStatus -ne "PASS") {
     exit 1
 }

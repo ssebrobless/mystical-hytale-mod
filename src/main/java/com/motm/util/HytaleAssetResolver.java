@@ -68,6 +68,8 @@ public final class HytaleAssetResolver {
     private static final String MODEL_FROST_SPIRIT = "Common/NPC/Elemental/Spirit_Frost/Models/Model.blockymodel";
     private static final String MODEL_THUNDER_SPIRIT = "Common/NPC/Elemental/Spirit_Thunder/Models/Model.blockymodel";
     private static final String MODEL_FROST_GOLEM = "Common/NPC/Elemental/Golem_Crystal/Models/Model.blockymodel";
+    private static final String MODEL_YETI = "Common/NPC/Beast/Yeti/Models/Model.blockymodel";
+    private static final String MODEL_SNOWMAN = "Common/Items/Hypixel/Event_Decoration/Winter Holiday_Props/WinterHoliday_Snowman.blockymodel";
     private static final String MODEL_FIRE_GOLEM = "Common/NPC/Elemental/Golem_Firesteel/Models/Model.blockymodel";
     private static final String MODEL_SCARAK = "Common/NPC/Beast/Scarak_Fighter/Models/Model.blockymodel";
     private static final String MODEL_SCARAK_BROODMOTHER = "Common/NPC/Beast/Scarak_Broodmother/Models/Model.blockymodel";
@@ -472,8 +474,8 @@ public final class HytaleAssetResolver {
         if (!summonName.isBlank()) {
             return switch (summonName) {
                 case "treant_sapling" -> MODEL_ROOT_SPIRIT;
-                case "snow_imp" -> MODEL_FROST_SPIRIT;
-                case "frosty_golem" -> MODEL_FROST_GOLEM;
+                case "snow_imp" -> MODEL_SNOWMAN;
+                case "frosty_golem" -> MODEL_YETI;
                 case "swamp_monster" -> MODEL_FROG;
                 case "skeleton_minion", "shadow_clone" -> MODEL_SHADOW_KNIGHT;
                 case "void_spawn" -> MODEL_VOID_SPAWN;

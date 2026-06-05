@@ -69,24 +69,23 @@ public class SpellbookManager {
 
         String normalized = rawValue.trim().toLowerCase(Locale.ROOT);
         return switch (normalized) {
-            case "overview", "home", "hub" -> Section.OVERVIEW;
-            case "journey", "identity", "path" -> Section.JOURNEY;
-            case "grimoire", "abilities", "spells", "style" -> Section.GRIMOIRE;
+            case "overview", "home", "hub", "class", "classes" -> Section.OVERVIEW;
+            case "journey", "identity", "path" -> Section.OVERVIEW;
+            case "grimoire", "abilities", "spells", "style", "styles" -> Section.GRIMOIRE;
             case "perks", "web" -> Section.PERKS;
-            case "resources", "resource" -> Section.RESOURCES;
-            case "codex", "guide", "reactions" -> Section.CODEX;
-            case "journal", "story", "lore" -> Section.JOURNAL;
+            case "stats", "stat", "attributes" -> Section.CODEX;
+            case "resources", "resource", "codex", "guide", "reactions", "journal", "story", "lore" -> Section.OVERVIEW;
             default -> null;
         };
     }
 
     public String getSectionList() {
-        return "overview, journey, grimoire, perks, resources, codex, journal";
+        return "class, styles, perks, stats";
     }
 
     private String renderOverview(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Overview ===\n");
+        sb.append("[MOTM Spellbook] === Class ===\n");
         sb.append("+--------------------------------------+\n");
         sb.append("| Identity                             |\n");
         sb.append("+--------------------------------------+\n");
@@ -103,9 +102,9 @@ public class SpellbookManager {
         sb.append("Next Step: ").append(getNextStep(player)).append("\n");
         sb.append("Pending Perks: ").append(perkManager.hasPendingPerkSelection(player) ? "Yes" : "No").append("\n");
         sb.append("Active Synergies: ").append(player.getActiveSynergyBonuses().size()).append("\n");
-        sb.append("Resources: ").append(player.getPlayerClass() != null
-                ? resourceManager.getResourceDisplay(player.getPlayerId(), player.getPlayerClass())
-                : "No class selected").append("\n");
+        sb.append("Abilities: ").append(player.getSelectedStyles().isEmpty()
+                ? "Choose a style to reveal active abilities"
+                : displayStyle(player)).append("\n");
         sb.append("+--------------------------------------+\n");
         sb.append("Sections: ").append(getSectionList()).append("\n");
         sb.append("Use: /motm spellbook <section>");
@@ -153,9 +152,9 @@ public class SpellbookManager {
 
     private String renderGrimoire(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Grimoire ===\n");
+        sb.append("[MOTM Spellbook] === Styles + Abilities ===\n");
         if (player.getPlayerClass() == null) {
-            sb.append("Choose a class to awaken your grimoire.\n");
+            sb.append("Choose a class to reveal style choices.\n");
             sb.append("Use: /motm class <id>");
             return sb.toString();
         }
@@ -169,7 +168,6 @@ public class SpellbookManager {
 
         sb.append("Style: ").append(style.getName()).append("\n");
         sb.append("Theme: ").append(style.getTheme()).append("\n");
-        sb.append("Resource: ").append(displayStyleResource(style)).append("\n");
         sb.append("Abilities:\n");
         for (AbilityData ability : style.getAbilities()) {
             double cooldown = styleManager.getRemainingCooldownSeconds(player.getPlayerId(), ability.getId());
@@ -183,8 +181,7 @@ public class SpellbookManager {
             if (!visuals.isBlank()) {
                 sb.append("    ").append(visuals).append("\n");
             }
-            sb.append("    Cost ").append(ability.getResourceCost())
-                    .append(" | Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s");
+            sb.append("    Cooldown ").append(formatDecimal(ability.getCooldownSeconds())).append("s");
             if (cooldown > 0) {
                 sb.append(" | Ready in ").append(formatDecimal(cooldown)).append("s");
             }
@@ -196,7 +193,7 @@ public class SpellbookManager {
 
     private String renderPerks(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Perk Web ===\n");
+        sb.append("[MOTM Spellbook] === Perks ===\n");
         sb.append("Design: styles grant active abilities; perks modify your build.\n");
 
         if (player.getPlayerClass() == null) {
@@ -255,17 +252,11 @@ public class SpellbookManager {
 
     private String renderCodex(PlayerData player) {
         StringBuilder sb = new StringBuilder();
-        sb.append("[MOTM Spellbook] === Codex ===\n");
-        sb.append("Elemental Flow:\n");
-        sb.append("  class -> style -> 3 abilities -> level -> perks -> synergies\n");
-        sb.append("Reaction System:\n");
-        sb.append("  marks, status effects, and elemental cross-effects live here.\n");
-        sb.append("Action Presentation:\n");
-        sb.append("  every style ability now resolves to built-in Hytale animation, VFX, and optional model assets.\n");
-        sb.append("Mob Scaling:\n");
-        sb.append("  enemies scale from player progression and may gain elite titles.\n");
-        sb.append("Current Focus:\n");
-        sb.append("  spellbook UI, real perk effect hooks, input binding, and stronger ability execution.\n");
+        sb.append("[MOTM Spellbook] === Stats ===\n");
+        sb.append("Stat point selection belongs here.\n");
+        sb.append("Current level: ").append(player.getLevel()).append("\n");
+        sb.append("Growth: ").append(levelingManager.describePlayerStatGrowth(player.getLevel())).append("\n");
+        sb.append("Planned stats: Vigor, Tenacity, Endurance, Agility, Luck.\n");
         return sb.toString();
     }
 
