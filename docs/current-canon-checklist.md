@@ -4,10 +4,10 @@ Purpose: prevent implementation drift. This file is the working checklist for de
 
 Primary canon source:
 
-- `docs/primitive-audit-2026-05-31.md`
 - `docs/ui-canon-2026-06-01.md`
 - `docs/style-ability-intent-canon-2026-06-01.md`
 - `docs/primitive-implementation-plan-2026-06-01.md`
+- `docs/primitive-status-2026-06-05.md`
 
 ## Current Layout Canon
 
@@ -133,7 +133,7 @@ P2:
 
 Before changing any ability, passive, perk, summon, tether, field, or HUD behavior:
 
-1. Cite the relevant row/category from this checklist or `docs/primitive-audit-2026-05-31.md`.
+1. Cite the relevant row/category from this checklist or `docs/primitive-status-2026-06-05.md`.
 2. Check `docs/primitive-implementation-plan-2026-06-01.md` for the matching primitive contract.
 3. State the intended visual/mechanical contract.
 4. Implement only the mismatch.
