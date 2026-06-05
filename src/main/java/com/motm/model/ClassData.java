@@ -13,7 +13,6 @@ public class ClassData {
     private String theme;
     private String element;
     private String description;
-    private String lore;
     @SerializedName("color_primary")
     private String colorPrimary;
     @SerializedName("color_secondary")
@@ -43,7 +42,6 @@ public class ClassData {
     public String getTheme() { return theme; }
     public String getElement() { return element; }
     public String getDescription() { return description; }
-    public String getLore() { return lore; }
     public String getIcon() { return icon; }
     public Map<String, Double> getStartingStats() { return startingStats; }
     public Map<String, Double> getStatGrowthPerLevel() { return statGrowthPerLevel; }

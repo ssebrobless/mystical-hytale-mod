@@ -91,10 +91,10 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void bindNavigation(UIEventBuilder events) {
         bindSection(events, "#NavOverviewButton", SpellbookManager.Section.OVERVIEW);
-        bindSection(events, "#NavJourneyButton", SpellbookManager.Section.CLASS);
-        bindSection(events, "#NavGrimoireButton", SpellbookManager.Section.ABILITIES);
+        bindSection(events, "#NavClassButton", SpellbookManager.Section.CLASS);
+        bindSection(events, "#NavAbilitiesButton", SpellbookManager.Section.ABILITIES);
         bindSection(events, "#NavPerksButton", SpellbookManager.Section.PERKS);
-        bindSection(events, "#NavResourcesButton", SpellbookManager.Section.PROGRESSION);
+        bindSection(events, "#NavStatsButton", SpellbookManager.Section.PROGRESSION);
     }
 
     private void bindClassActions(UIEventBuilder events) {
@@ -317,10 +317,10 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void applyNavigationState(UICommandBuilder commands) {
         setNavState(commands, SpellbookManager.Section.OVERVIEW, "#NavOverviewButton", "#NavOverviewSelected");
-        setNavState(commands, SpellbookManager.Section.CLASS, "#NavJourneyButton", "#NavJourneySelected");
-        setNavState(commands, SpellbookManager.Section.ABILITIES, "#NavGrimoireButton", "#NavGrimoireSelected");
+        setNavState(commands, SpellbookManager.Section.CLASS, "#NavClassButton", "#NavClassSelected");
+        setNavState(commands, SpellbookManager.Section.ABILITIES, "#NavAbilitiesButton", "#NavAbilitiesSelected");
         setNavState(commands, SpellbookManager.Section.PERKS, "#NavPerksButton", "#NavPerksSelected");
-        setNavState(commands, SpellbookManager.Section.PROGRESSION, "#NavResourcesButton", "#NavResourcesSelected");
+        setNavState(commands, SpellbookManager.Section.PROGRESSION, "#NavStatsButton", "#NavStatsSelected");
     }
 
     private void setNavState(UICommandBuilder commands,
@@ -337,11 +337,11 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
 
     private void applySectionVisibility(UICommandBuilder commands) {
         commands.set("#OverviewPanel.Visible", currentSection == SpellbookManager.Section.OVERVIEW);
-        commands.set("#JourneyPanel.Visible", currentSection == SpellbookManager.Section.CLASS);
-        commands.set("#GrimoirePanel.Visible", currentSection == SpellbookManager.Section.STYLE
+        commands.set("#ClassPanel.Visible", currentSection == SpellbookManager.Section.CLASS);
+        commands.set("#AbilitiesPanel.Visible", currentSection == SpellbookManager.Section.STYLE
                 || currentSection == SpellbookManager.Section.ABILITIES);
         commands.set("#PerksPanel.Visible", currentSection == SpellbookManager.Section.PERKS);
-        commands.set("#ResourcesPanel.Visible", currentSection == SpellbookManager.Section.PROGRESSION);
+        commands.set("#StatsPanel.Visible", currentSection == SpellbookManager.Section.PROGRESSION);
     }
 
     private void applyHero(UICommandBuilder commands, PlayerData player) {
@@ -368,7 +368,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#OverviewPathSynergyValue.Text", player != null
                 ? String.valueOf(player.getActiveSynergyBonuses().size())
                 : "0");
-        setText(commands, "#OverviewPathResourceValue.Text", buildCastingAndStatsLine(player));
+        setText(commands, "#OverviewPathCastingValue.Text", buildCastingAndStatsLine(player));
         setText(commands, "#OverviewPathTipValue.Text", "Choose a class, choose one style, use its three abilities, then shape the build with perks.");
     }
 
@@ -377,34 +377,34 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 ? mod.getDataLoader().getClassData(pendingClassId)
                 : getClassData(player);
 
-        setText(commands, "#JourneyClassValue.Text", classData != null ? safe(classData.getDisplayName()) : displayClass(player));
-        setText(commands, "#JourneyThemeValue.Text", classData != null ? safe(classData.getTheme()) : "Choose a class to define your path.");
-        setText(commands, "#JourneyElementValue.Text", classData != null ? safe(classData.getElement()) : "Unchosen");
-        setText(commands, "#JourneyPassiveNameValue.Text", classData != null && classData.getPassiveAbility() != null
+        setText(commands, "#ClassInfoClassValue.Text", classData != null ? safe(classData.getDisplayName()) : displayClass(player));
+        setText(commands, "#ClassInfoThemeValue.Text", classData != null ? safe(classData.getTheme()) : "Choose a class to define your path.");
+        setText(commands, "#ClassInfoElementValue.Text", classData != null ? safe(classData.getElement()) : "Unchosen");
+        setText(commands, "#ClassInfoPassiveNameValue.Text", classData != null && classData.getPassiveAbility() != null
                 ? safe(classData.getPassiveAbility().getName())
                 : "Unawakened");
-        setText(commands, "#JourneyPassiveDescValue.Text", classData != null && classData.getPassiveAbility() != null
+        setText(commands, "#ClassInfoPassiveDescValue.Text", classData != null && classData.getPassiveAbility() != null
                 ? compactText(buildPassiveDetails(classData), 220)
                 : "Your class passive will appear here.");
-        setText(commands, "#JourneyClassActionValue.Text", player != null && player.getPlayerClass() != null
+        setText(commands, "#ClassInfoClassActionValue.Text", player != null && player.getPlayerClass() != null
                 ? "Class is currently locked to " + displayClass(player) + ". Use dev reset or dev class clear if you need to change it while testing."
                 : "Click once to read a class, then press Choose to confirm.");
         commands.set("#ClassChooseButton.Visible", player == null || player.getPlayerClass() == null);
         setText(commands, "#ClassChooseButton.Text", "Choose");
         applyClassButtons(commands, player);
 
-        setText(commands, "#JourneyStyleIntroValue.Text", "Style");
-        setText(commands, "#JourneyStyleRuleValue.Text", "Styles are the only source of active abilities.");
-        setText(commands, "#JourneyAbilityRuleValue.Text", "Each style grants three cooldown-based abilities.");
-        setText(commands, "#JourneyStyleActionValue.Text", "Choose a style on the Style page after selecting a class.");
+        setText(commands, "#ClassInfoStyleIntroValue.Text", "Style");
+        setText(commands, "#ClassInfoStyleRuleValue.Text", "Styles are the only source of active abilities.");
+        setText(commands, "#ClassInfoAbilityRuleValue.Text", "Each style grants three cooldown-based abilities.");
+        setText(commands, "#ClassInfoStyleActionValue.Text", "Choose a style on the Style page after selecting a class.");
         hideRemovedOptionButtons(commands);
 
-        setText(commands, "#JourneyStyleValue.Text", displayStyle(player));
-        setText(commands, "#JourneyProgressValue.Text", player != null
+        setText(commands, "#ClassInfoStyleValue.Text", displayStyle(player));
+        setText(commands, "#ClassInfoProgressValue.Text", player != null
                 ? "Total XP: " + player.getTotalXpEarned() + " | Achievements: " + player.getAchievements().size()
-                : "No journey data");
-        setText(commands, "#JourneyMilestoneValue.Text", milestoneLine(player));
-        setText(commands, "#JourneyPromptValue.Text", getNextStep(player));
+                : "No progression data");
+        setText(commands, "#ClassInfoMilestoneValue.Text", milestoneLine(player));
+        setText(commands, "#ClassInfoPromptValue.Text", getNextStep(player));
     }
 
     private void applyClassButtons(UICommandBuilder commands, PlayerData player) {
@@ -431,12 +431,12 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         boolean hasClass = player != null && player.getPlayerClass() != null;
         boolean hasStyle = style != null;
 
-        commands.set("#GrimoireEmpty.Visible", !hasClass);
-        commands.set("#GrimoireDetails.Visible", hasClass);
+        commands.set("#AbilitiesEmpty.Visible", !hasClass);
+        commands.set("#AbilitiesDetails.Visible", hasClass);
         commands.set("#StyleButtonsContainer.Visible", hasClass);
 
-        setText(commands, "#GrimoireEmpty.Text", "Choose a class first to unlock style abilities.");
-        setText(commands, "#GrimoireStyleActionValue.Text", !hasClass
+        setText(commands, "#AbilitiesEmpty.Text", "Choose a class first to unlock style abilities.");
+        setText(commands, "#AbilitiesStyleActionValue.Text", !hasClass
                 ? "Choose a class first."
                 : hasStyle
                 ? "Click once to preview a style, then press Choose to confirm."
@@ -450,10 +450,10 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             hideStyleButtons(commands);
         }
 
-        setText(commands, "#GrimoireStyleValue.Text", hasStyle ? safe(style.getName()) : "Unchosen");
-        setText(commands, "#GrimoireThemeValue.Text", hasStyle ? safe(style.getTheme()) : "No theme yet");
-        setText(commands, "#GrimoireResourceValue.Text", hasStyle ? "Cooldown-based" : "Choose a style");
-        setText(commands, "#GrimoireAbilityRule.Text", "Styles grant all 3 active abilities immediately. Perks stay passive and modify those abilities later.");
+        setText(commands, "#AbilitiesStyleValue.Text", hasStyle ? safe(style.getName()) : "Unchosen");
+        setText(commands, "#AbilitiesThemeValue.Text", hasStyle ? safe(style.getTheme()) : "No theme yet");
+        setText(commands, "#AbilitiesCastingValue.Text", hasStyle ? "Cooldown-based" : "Choose a style");
+        setText(commands, "#AbilitiesRuleValue.Text", "Styles grant all 3 active abilities immediately. Perks stay passive and modify those abilities later.");
 
         List<AbilityData> abilities = hasStyle && style.getAbilities() != null ? style.getAbilities() : Collections.emptyList();
         for (int index = 0; index < MAX_ABILITY_ROWS; index++) {
@@ -557,9 +557,9 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
     }
 
     private void applyProgression(UICommandBuilder commands, PlayerData player) {
-        setText(commands, "#ResourcesCurrentValue.Text", buildXpLine(player));
-        setText(commands, "#ResourcesRuleValue.Text", buildStatTableLine(player));
-        setText(commands, "#ResourcesPracticalValue.Text", buildStatBonusLine(player));
+        setText(commands, "#StatsCurrentValue.Text", buildXpLine(player));
+        setText(commands, "#StatsRuleValue.Text", buildStatTableLine(player));
+        setText(commands, "#StatsPracticalValue.Text", buildStatBonusLine(player));
     }
 
     private String displayClass(PlayerData player) {
@@ -708,7 +708,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         if (player == null || player.getPlayerClass() == null) {
             return "Choose a class and style to unlock cooldown-based casting.";
         }
-        return "Casting: no class resources. " + mod.getLevelingManager().describePlayerStatGrowth(player);
+        return "Casting: cooldown-based. " + mod.getLevelingManager().describePlayerStatGrowth(player);
     }
 
     private String buildStatTableLine(PlayerData player) {
