@@ -277,7 +277,7 @@ public final class SummonControlHytaleAdapter {
         }
 
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
-        if (npc == null || npc.isDespawning() || support.isMotmSummon(npc)) {
+        if (npc == null || npc.isDespawning() || support.isFriendlyOwned(targetRef, store)) {
             return false;
         }
 
@@ -303,7 +303,7 @@ public final class SummonControlHytaleAdapter {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || support.isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || support.isFriendlyOwned(ref, store)) {
                     continue;
                 }
 
@@ -379,7 +379,7 @@ public final class SummonControlHytaleAdapter {
                     Store<EntityStore> store,
                     long now);
 
-        boolean isMotmSummon(NPCEntity npc);
+        boolean isFriendlyOwned(Ref<EntityStore> ref, Store<EntityStore> store);
     }
 
     public record BuffResult(int buffed, String summary) {

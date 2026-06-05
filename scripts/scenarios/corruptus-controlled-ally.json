@@ -1,0 +1,33 @@
+{
+  "id": "corruptus-controlled-ally",
+  "description": "Controlled Ally primitive scenario for Dominate ownership, Mind Shatter controlled-center behavior, and Hivemind multi-target control evidence.",
+  "styleId": "mentokinesis",
+  "abilities": ["dominate", "mind_shatter", "hivemind"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker controlled-ally-start",
+    "motm dev observe snapshot initial",
+    "motm dev position",
+    "motm dev effects",
+    "motm dev freecast on",
+    "motm dev test mobs cluster",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-controlled-target-setup"
+  ],
+  "commands": [
+    "motm dev observe snapshot before-controlled-casts"
+  ],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-controlled-ally-proof",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker controlled-ally-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:runtime_task_executed",
+    "client-intent:entity_effect_add",
+    "server-truth:snapshot"
+  ]
+}

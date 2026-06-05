@@ -40,6 +40,9 @@ import com.motm.runtime.ability.channel.ChannelActivationRuntime;
 import com.motm.runtime.ability.channel.ChannelHytaleAdapter;
 import com.motm.runtime.ability.channel.ChannelRuntimeState;
 import com.motm.runtime.ability.combat.CombatRuntimeState;
+import com.motm.runtime.ability.control.ActiveControlledAlly;
+import com.motm.runtime.ability.control.ControlledAllyHytaleAdapter;
+import com.motm.runtime.ability.control.ControlledAllyRuntimeState;
 import com.motm.runtime.ability.field.ActiveField;
 import com.motm.runtime.ability.field.FieldActivationHytaleAdapter;
 import com.motm.runtime.ability.field.FieldActivationRuntime;
@@ -159,10 +162,12 @@ public class GameplayPlaybackManager {
 
     private final MenteesMod mod;
     private final SummonRuntimeState summonState = new SummonRuntimeState();
+    private final ControlledAllyRuntimeState controlledAllyState = new ControlledAllyRuntimeState();
     private final SummonActivationRuntime summonActivationRuntime = new SummonActivationRuntime();
     private final SummonLifecycleHytaleAdapter summonLifecycleAdapter;
     private final SummonControlHytaleAdapter summonControlAdapter;
     private final SummonAttackHytaleAdapter summonAttackAdapter;
+    private final ControlledAllyHytaleAdapter controlledAllyAdapter;
     private final TransformationRuntimeState transformationState = new TransformationRuntimeState();
     private final TransformationHytaleAdapter transformationAdapter;
     private final WeaponFollowUpRuntimeState weaponFollowUps = new WeaponFollowUpRuntimeState();
@@ -294,8 +299,8 @@ public class GameplayPlaybackManager {
                     }
 
                     @Override
-                    public boolean isMotmSummon(NPCEntity npc) {
-                        return GameplayPlaybackManager.this.isMotmSummon(npc);
+                    public boolean isFriendlyOwned(Ref<EntityStore> ref, Store<EntityStore> store) {
+                        return GameplayPlaybackManager.this.isMotmFriendlyOwned(ref, store);
                     }
                 }
         );
@@ -412,6 +417,36 @@ public class GameplayPlaybackManager {
                                                                           double radius,
                                                                           int maxTargets) {
                         return GameplayPlaybackManager.this.collectNearbyNpcTargets(store, center, radius, maxTargets);
+                    }
+
+                    @Override
+                    public void logInfo(String message) {
+                        LOG.info(message);
+                    }
+                }
+        );
+        this.controlledAllyAdapter = new ControlledAllyHytaleAdapter(
+                controlledAllyState,
+                new ControlledAllyHytaleAdapter.Support() {
+                    @Override
+                    public boolean applyEffectById(Ref<EntityStore> ref, Store<EntityStore> store, String effectId) {
+                        return GameplayPlaybackManager.this.applyEffectById(ref, store, effectId);
+                    }
+
+                    @Override
+                    public boolean removeEffectById(Ref<EntityStore> ref, Store<EntityStore> store, String effectId) {
+                        return GameplayPlaybackManager.this.removeEffectById(ref, store, effectId);
+                    }
+
+                    @Override
+                    public boolean isFriendlyOwned(Ref<EntityStore> ref, Store<EntityStore> store) {
+                        return GameplayPlaybackManager.this.friendlyOwnerForRef(ref, store) != null;
+                    }
+
+                    @Override
+                    public double controlledAllyDamage(AbilityData ability) {
+                        PlayerData owner = null;
+                        return AbilityRuntimeMath.damageAmount(owner, ability, 1.0);
                     }
 
                     @Override
@@ -1618,6 +1653,7 @@ public class GameplayPlaybackManager {
                 context == null ? null : context.targetBlock(),
                 playback.movementApplied()
         );
+        ControlledAllyHytaleAdapter.Result controlledAlly = applyControlledAllyRuntime(runtimePlayer, player, ability, context);
         SupportResolution support = applyCasterRuntime(runtimePlayer, player, ability);
         CombatResolution combat = projectileLaunch.launched() > 0
                 ? CombatResolution.none()
@@ -1625,7 +1661,7 @@ public class GameplayPlaybackManager {
         double lifestealHealing = projectileLaunch.launched() > 0
                 ? 0.0
                 : applyLifesteal(runtimePlayer, player, combat.totalDamage());
-        EffectResolution targetEffects = projectileLaunch.launched() > 0
+        EffectResolution targetEffects = projectileLaunch.launched() > 0 || controlledAlly.controlled() > 0
                 ? EffectResolution.none()
                 : applyTargetEffects(runtimePlayer, player, ability, context);
         LineControlRuntimeResult lineControl = startLineControlRuntime(runtimePlayer, player, ability, context);
@@ -1649,6 +1685,7 @@ public class GameplayPlaybackManager {
         if (!fieldRuntime.summary().isBlank()) summaryParts.add(fieldRuntime.summary());
         if (!supplementalTerrain.summary().isBlank()) summaryParts.add(supplementalTerrain.summary());
         if (!specificRuntime.summary().isBlank()) summaryParts.add(specificRuntime.summary());
+        if (!controlledAlly.summary().isBlank()) summaryParts.add(controlledAlly.summary());
         if (!support.summary().isBlank()) summaryParts.add(support.summary());
         if (!combat.summary().isBlank()) summaryParts.add(combat.summary());
         if (lifestealHealing > 0) summaryParts.add("lifesteal " + AbilityPresentation.formatDecimal(lifestealHealing));
@@ -1669,6 +1706,7 @@ public class GameplayPlaybackManager {
                         + " projectiles=" + projectileLaunch.launched()
                         + " field=" + fieldRuntime.activated()
                         + " terrain=" + supplementalTerrain.activated()
+                        + " controlledAllies=" + controlledAlly.controlled()
                         + " summons=" + summons.spawned()
                         + " form=" + form.applied());
         mod.recordCausality("ability_cast_end", traceId, MotmObservability.mapOf(
@@ -1681,6 +1719,7 @@ public class GameplayPlaybackManager {
                 "projectiles", projectileLaunch.launched(),
                 "fieldActivated", fieldRuntime.activated(),
                 "terrainActivated", supplementalTerrain.activated(),
+                "controlledAllies", controlledAlly.controlled(),
                 "summonsSpawned", summons.spawned(),
                 "summonsBuffed", summons.buffed(),
                 "formApplied", form.applied()
@@ -1759,6 +1798,7 @@ public class GameplayPlaybackManager {
             }
         }
         summonControlAdapter.processForStore(currentStore, now);
+        controlledAllyAdapter.processForStore(currentStore, now);
     }
 
     public synchronized void tickArmedStomps(Store<EntityStore> currentStore) {
@@ -1967,6 +2007,7 @@ public class GameplayPlaybackManager {
         int transformations = transformationState.removeTransformation(playerId) != null ? 1 : 0;
         int followUps = weaponFollowUps.remove(playerId) != null ? 1 : 0;
         int summons = removeSummonsForPlayer(playerId);
+        int controlledAllies = removeControlledAlliesForPlayer(playerId);
         int terrain = terrainHytaleAdapter.restoreSelectionsForWorld(terrainState, currentWorld, "review reset");
         int proxies = despawnVisualProxiesForStore(currentStore);
 
@@ -1991,6 +2032,7 @@ public class GameplayPlaybackManager {
                 + " transformations=" + transformations
                 + " followUps=" + followUps
                 + " summons=" + summons
+                + " controlledAllies=" + controlledAllies
                 + " terrain=" + terrain
                 + " proxies=" + proxies;
         LOG.info("[MOTM] Style review runtime reset: playerId=" + playerId + " " + summary);
@@ -2014,12 +2056,15 @@ public class GameplayPlaybackManager {
         snapshot.put("activeWeaponFollowUps", weaponFollowUps.size());
         snapshot.put("activeSummonOwners", summonState.activeOwnerCount());
         snapshot.put("activeSummons", summonState.activeSummonCount());
+        snapshot.put("activeControlledAllyOwners", controlledAllyState.activeOwnerCount());
+        snapshot.put("activeControlledAllies", controlledAllyState.activeAllyCount());
         if (playerId != null && !playerId.isBlank()) {
             snapshot.put("player", MotmObservability.mapOf(
                     "armedStomp", stompState.contains(playerId),
                     "activeTransformation", transformationState.containsTransformation(playerId),
                     "activeWeaponFollowUp", weaponFollowUps.contains(playerId),
                     "activeSummons", summonState.summonCountForOwner(playerId),
+                    "activeControlledAllies", controlledAllyState.alliesForOwner(playerId).size(),
                     "lavaPoolMovementBoosted", lavaHazardState.isMovementBoosted(playerId),
                     "magmaHazardProtectionUntil", lavaHazardState.protectionUntil(playerId)
             ));
@@ -2066,17 +2111,42 @@ public class GameplayPlaybackManager {
         return summonLifecycleAdapter.removeSummonsForPlayer(playerId);
     }
 
+    private int removeControlledAlliesForPlayer(String playerId) {
+        return controlledAllyAdapter.removeAlliesForPlayer(playerId);
+    }
+
     public synchronized boolean shouldSuppressFriendlySummonDamage(Ref<EntityStore> sourceRef,
                                                                    Ref<EntityStore> targetRef) {
-        if (sourceRef == null || targetRef == null || summonState == null) {
+        Store<EntityStore> store = sourceRef != null && sourceRef.isValid() ? sourceRef.getStore() : null;
+        if (sourceRef == null || targetRef == null || store == null) {
             return false;
         }
-        ActiveSummon sourceSummon = summonState.findSummonByRef(sourceRef);
-        ActiveSummon targetSummon = summonState.findSummonByRef(targetRef);
-        return sourceSummon != null
-                && targetSummon != null
-                && sourceSummon.ownerPlayerId() != null
-                && sourceSummon.ownerPlayerId().equals(targetSummon.ownerPlayerId());
+        String sourceOwner = friendlyOwnerForRef(sourceRef, store);
+        String targetOwner = friendlyOwnerForRef(targetRef, store);
+        return sourceOwner != null && sourceOwner.equals(targetOwner);
+    }
+
+    private String friendlyOwnerForRef(Ref<EntityStore> ref, Store<EntityStore> store) {
+        if (ref == null || !ref.isValid() || store == null) {
+            return null;
+        }
+
+        ActiveSummon summon = summonState.findSummonByRef(ref);
+        if (summon != null) {
+            return summon.ownerPlayerId();
+        }
+
+        ActiveControlledAlly controlledAlly = controlledAllyState.findByRef(ref);
+        if (controlledAlly != null) {
+            return controlledAlly.ownerPlayerId();
+        }
+
+        Player player = store.getComponent(ref, Player.getComponentType());
+        return player != null ? mod.getRuntimePlayerId(player) : null;
+    }
+
+    private boolean isMotmFriendlyOwned(Ref<EntityStore> ref, Store<EntityStore> store) {
+        return friendlyOwnerForRef(ref, store) != null;
     }
 
     private int despawnVisualProxiesForStore(Store<EntityStore> currentStore) {
@@ -2484,7 +2554,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(npc) || isMotmFriendlyOwned(ref, store)) {
                     continue;
                 }
 
@@ -2979,6 +3049,36 @@ public class GameplayPlaybackManager {
         );
     }
 
+    private ControlledAllyHytaleAdapter.Result applyControlledAllyRuntime(Player runtimePlayer,
+                                                                          PlayerData player,
+                                                                          AbilityData ability,
+                                                                          CastContext context) {
+        if (runtimePlayer == null || player == null || ability == null || controlledAllyAdapter == null) {
+            return ControlledAllyHytaleAdapter.Result.none();
+        }
+        String abilityId = lower(ability.getId());
+        if (!"dominate".equals(abilityId) && !"hivemind".equals(abilityId)) {
+            return ControlledAllyHytaleAdapter.Result.none();
+        }
+
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef != null && playerRef.isValid() ? playerRef.getStore() : null;
+        if (store == null) {
+            return ControlledAllyHytaleAdapter.Result.none();
+        }
+
+        if ("dominate".equals(abilityId) && context != null && context.explicitTargetRef() != null) {
+            ControlledAllyHytaleAdapter.Result released =
+                    controlledAllyAdapter.releaseOwnedTarget(player, context.explicitTargetRef());
+            if (!released.summary().isBlank()) {
+                return released;
+            }
+        }
+
+        List<Ref<EntityStore>> targets = resolveTargets(playerRef, store, ability, context);
+        return controlledAllyAdapter.activate(player, playerRef, ability, targets);
+    }
+
     private LineControlRuntimeResult startLineControlRuntime(Player runtimePlayer,
                                                              PlayerData player,
                                                              AbilityData ability,
@@ -3057,7 +3157,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(npc) || isMotmFriendlyOwned(ref, store)) {
                     continue;
                 }
 
@@ -3109,7 +3209,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(npc) || isMotmFriendlyOwned(ref, store)) {
                     continue;
                 }
 
@@ -3199,7 +3299,8 @@ public class GameplayPlaybackManager {
 
         Store<EntityStore> store = playerRef.getStore();
         NPCEntity npc = store.getComponent(targetRef, NPCEntity.getComponentType());
-        if (npc == null || npc.isDespawning() || isMotmSummon(npc) || store.getComponent(targetRef, DeathComponent.getComponentType()) != null) {
+        if (npc == null || npc.isDespawning() || isMotmSummon(npc) || isMotmFriendlyOwned(targetRef, store)
+                || store.getComponent(targetRef, DeathComponent.getComponentType()) != null) {
             return null;
         }
 
@@ -3589,7 +3690,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(npc) || isMotmFriendlyOwned(ref, store)) {
                     continue;
                 }
 
@@ -3692,7 +3793,12 @@ public class GameplayPlaybackManager {
 
         String ownerPlayerId = resolveEntityId(playerRef, store);
         Vector3d gemAnchor = terrainGemAdapter.resolveActiveLapidaryGemCenter(ownerPlayerId, ability, store);
-        Vector3d areaCenter = gemAnchor != null
+        Vector3d controlledAllyAnchor = "mind_shatter".equals(lower(ability.getId()))
+                ? controlledAllyAdapter.firstControlledPosition(ownerPlayerId, store)
+                : null;
+        Vector3d areaCenter = controlledAllyAnchor != null
+                ? controlledAllyAnchor
+                : gemAnchor != null
                 ? gemAnchor
                 : resolveAreaCenter(origin, forward, context, range, ability);
         Ref<EntityStore> explicitTarget = resolveExplicitTarget(store, context.explicitTargetRef(), range, origin);
@@ -3706,7 +3812,7 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(npc) || isMotmFriendlyOwned(ref, store)) {
                     continue;
                 }
 
@@ -3750,7 +3856,7 @@ public class GameplayPlaybackManager {
         }
 
         NPCEntity npc = store.getComponent(explicitTargetRef, NPCEntity.getComponentType());
-        if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+        if (npc == null || npc.isDespawning() || isMotmFriendlyOwned(explicitTargetRef, store) || isMotmSummon(npc)) {
             return null;
         }
 
