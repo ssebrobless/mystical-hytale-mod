@@ -35,8 +35,8 @@ class SummonActivationRuntimeTest {
         assertEquals("player", summon.ownerPlayerId());
         assertEquals("hydro", summon.classId());
         assertEquals("snow", summon.styleId());
-        assertEquals("skirmisher", summon.role());
-        assertTrue(summon.ranged());
+        assertEquals("ground_snowman", summon.role());
+        assertFalse(summon.ranged());
         assertTrue(summon.awakened());
         assertEquals(1_000L, summon.hatchAtMillis());
         assertEquals(1_000L, summon.nextThinkAtMillis());

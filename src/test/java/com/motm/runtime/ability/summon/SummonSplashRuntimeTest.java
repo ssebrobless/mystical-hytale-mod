@@ -90,6 +90,7 @@ class SummonSplashRuntimeTest {
                 0L,
                 1.0,
                 "slow",
+                null,
                 null
         );
         return new ActiveSummon(

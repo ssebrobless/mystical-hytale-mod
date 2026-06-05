@@ -41,18 +41,22 @@ class SummonRuntimeSpecsTest {
         assertFalse(golem.ranged());
         assertEquals(2.8, golem.attackRange(), 0.0001);
         assertEquals("root", golem.attackToken());
-        assertEquals("Golem_Crystal_Frost", golem.modelId());
+        assertEquals("Tamed_Frosty", golem.modelId());
+        assertEquals("Yeti", golem.appearanceModelId());
 
-        assertEquals("skirmisher", imp.role());
-        assertTrue(imp.ranged());
-        assertEquals(7.5, imp.attackRange(), 0.0001);
+        assertEquals("ground_snowman", imp.role());
+        assertFalse(imp.ranged());
+        assertEquals(2.25, imp.attackRange(), 0.0001);
         assertEquals("slow", imp.attackToken());
+        assertEquals("MOTM_Summon_Driver", imp.modelId());
+        assertEquals("Snow_Imp_Snowman", imp.appearanceModelId());
 
         assertEquals("clone", clone.role());
         assertTrue(clone.ranged());
         assertEquals(900L, clone.attackIntervalMillis());
         assertEquals(1.25, clone.baseDamageMultiplier(), 0.0001);
         assertEquals("Shadow_Knight", clone.modelId());
+        assertEquals("Shadow_Knight", clone.appearanceModelId());
     }
 
     @Test
