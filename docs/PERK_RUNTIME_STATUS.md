@@ -17,6 +17,8 @@ This document records the current gameplay contract for the 20 shared perk choic
 +------------+-----------------------------------------------------------+
 ```
 
+Archived perk data note: the historical tier-2+ perk JSON entries are not part of current canon. Runtime loading filters them out and exposes only these 20 shared choices.
+
 ## Implemented Runtime Hooks
 
 | Perk | Runtime behavior |

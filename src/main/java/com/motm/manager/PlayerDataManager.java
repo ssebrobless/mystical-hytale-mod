@@ -386,9 +386,9 @@ public class PlayerDataManager {
             }
             case "perks_selected" -> {
                 int perkCount = player.getSelectedPerks().size();
-                if (perkCount == 3) unlockAchievement(player, "first_perks");
-                if (perkCount >= 30) unlockAchievement(player, "perk_collector");
-                if (perkCount >= 60) unlockAchievement(player, "fully_perked");
+                if (perkCount >= 1) unlockAchievement(player, "first_perks");
+                if (perkCount >= 5) unlockAchievement(player, "perk_collector");
+                if (perkCount >= PerkManager.MAX_TOTAL_PERKS) unlockAchievement(player, "fully_perked");
             }
         }
     }
