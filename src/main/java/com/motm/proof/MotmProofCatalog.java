@@ -33,7 +33,19 @@ public final class MotmProofCatalog {
             new ProofDefinition("proxy-debris-wave", ProofKind.PROXY, EnumSet.of(EvidenceStream.CLIENT_INTENT)),
             new ProofDefinition("movement-burrow", ProofKind.MOVEMENT, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
             new ProofDefinition("movement-tunnel", ProofKind.MOVEMENT, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
-            new ProofDefinition("movement-dust-devil", ProofKind.MOVEMENT, EnumSet.of(EvidenceStream.SERVER_TRUTH))
+            new ProofDefinition("movement-dust-devil", ProofKind.MOVEMENT, EnumSet.of(EvidenceStream.SERVER_TRUTH)),
+            new ProofDefinition("gate-r6-particle-world", ProofKind.CAPABILITY_GATE,
+                    EnumSet.of(EvidenceStream.CLIENT_INTENT, EvidenceStream.SERVER_TRUTH)),
+            new ProofDefinition("gate-r7-entity-scale", ProofKind.CAPABILITY_GATE,
+                    EnumSet.of(EvidenceStream.CLIENT_INTENT, EvidenceStream.SERVER_TRUTH)),
+            new ProofDefinition("gate-r8-custom-particle", ProofKind.CAPABILITY_GATE,
+                    EnumSet.of(EvidenceStream.CLIENT_INTENT, EvidenceStream.SERVER_TRUTH)),
+            new ProofDefinition("gate-r9-dynamic-light", ProofKind.CAPABILITY_GATE,
+                    EnumSet.of(EvidenceStream.CLIENT_INTENT, EvidenceStream.SERVER_TRUTH)),
+            new ProofDefinition("gate-r10-intangible", ProofKind.CAPABILITY_GATE,
+                    EnumSet.of(EvidenceStream.CLIENT_INTENT, EvidenceStream.SERVER_TRUTH)),
+            new ProofDefinition("gate-r11-player-clone", ProofKind.CAPABILITY_GATE,
+                    EnumSet.of(EvidenceStream.CLIENT_INTENT, EvidenceStream.SERVER_TRUTH))
     );
     private static final List<String> PROOF_IDS =
             DEFINITIONS.stream().map(ProofDefinition::id).toList();
@@ -75,7 +87,8 @@ public final class MotmProofCatalog {
         TEMPORARY_FLUID,
         NATIVE_PROJECTILE,
         PROXY,
-        MOVEMENT
+        MOVEMENT,
+        CAPABILITY_GATE
     }
 
     public enum EvidenceStream {

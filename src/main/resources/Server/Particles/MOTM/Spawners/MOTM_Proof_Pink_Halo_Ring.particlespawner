@@ -1,0 +1,78 @@
+{
+  "RenderMode": "BlendAdd",
+  "Shape": "Sphere",
+  "EmitOffset": {
+    "X": {
+      "Min": -0.08,
+      "Max": 0.08
+    },
+    "Y": {
+      "Min": -0.04,
+      "Max": 0.04
+    },
+    "Z": {
+      "Min": -0.08,
+      "Max": 0.08
+    }
+  },
+  "ParticleRotationInfluence": "Billboard",
+  "ParticleRotateWithSpawner": false,
+  "MaxConcurrentParticles": 24,
+  "SpawnRate": {
+    "Min": 4,
+    "Max": 6
+  },
+  "TotalParticles": {
+    "Min": -1,
+    "Max": -1
+  },
+  "ParticleLifeSpan": {
+    "Min": 1,
+    "Max": 1
+  },
+  "Particle": {
+    "Texture": "Particles/Textures/Circles/Ring_Green.png",
+    "FrameSize": {
+      "Width": 128,
+      "Height": 128
+    },
+    "ScaleRatioConstraint": "OneToOne",
+    "UVOption": "RandomFlipU",
+    "InitialAnimationFrame": {
+      "FrameIndex": {
+        "Min": 0,
+        "Max": 0
+      },
+      "Scale": {
+        "X": {
+          "Min": 0.25,
+          "Max": 0.35
+        },
+        "Y": {
+          "Min": 0.25,
+          "Max": 0.35
+        }
+      },
+      "Opacity": 1,
+      "Color": "#ff3fd1"
+    },
+    "Animation": {
+      "0": {
+        "Opacity": 0,
+        "Color": "#ff3fd1"
+      },
+      "15": {
+        "Opacity": 1,
+        "Color": "#ff3fd1"
+      },
+      "60": {
+        "Opacity": 0.8,
+        "Color": "#ff8bea"
+      },
+      "100": {
+        "Opacity": 0,
+        "Color": "#ff3fd1"
+      }
+    }
+  }
+}

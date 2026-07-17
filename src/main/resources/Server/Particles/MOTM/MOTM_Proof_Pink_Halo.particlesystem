@@ -1,0 +1,16 @@
+{
+  "Spawners": [
+    {
+      "SpawnerId": "MOTM_Proof_Pink_Halo_Ring",
+      "PositionOffset": {
+        "X": 0,
+        "Y": 1.0,
+        "Z": 0
+      }
+    }
+  ],
+  "LifeSpan": 2.0,
+  "CullDistance": 50.0,
+  "BoundingRadius": 2.0,
+  "IsImportant": false
+}

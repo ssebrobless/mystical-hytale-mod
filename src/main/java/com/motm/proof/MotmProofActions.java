@@ -19,6 +19,16 @@ import com.hypixel.hytale.server.core.prefab.selection.mask.BlockMask;
 import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.protocol.ColorLight;
+import com.hypixel.hytale.server.core.asset.type.particle.config.ParticleSystem;
+import com.hypixel.hytale.server.core.modules.entity.component.EntityScaleComponent;
+import com.hypixel.hytale.server.core.asset.type.model.config.Model;
+import com.hypixel.hytale.server.core.modules.entity.component.Intangible;
+import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.PersistentDynamicLight;
+import com.hypixel.hytale.server.core.universe.world.ParticleUtil;
+import com.motm.runtime.ability.field.FieldVisualHytaleAdapter;
+
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.motm.runtime.state.ProofCleanupRuntimeState;
 import com.motm.runtime.state.TemporaryProofProxy;
@@ -32,6 +42,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -260,6 +272,361 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
                 + " effect=" + effectId
                 + " effectApplied=" + effectApplied
                 + " position=" + formatVector(position);
+    }
+
+    @Override
+    public String runParticleWorldProof(Player player,
+                                        Store<EntityStore> currentStore,
+                                        String proofId,
+                                        String systemId,
+                                        double distanceAhead) {
+        World world = player == null ? null : player.getWorld();
+        Vector3d base = playerPosition(player);
+        Vector3d forward = normalizeHorizontal(playerForward(player));
+        if (world == null || currentStore == null || base == null || forward == null) {
+            recordGateFailure(proofId, "missing world/player transform/store");
+            return "[MOTM] Proof " + proofId + " FAIL: missing world/player transform/store.";
+        }
+        Vector3d point = com.motm.util.MotmVectors.addScaled(base, forward, distanceAhead);
+        int before = countEntitiesNear(currentStore, point, 1.75);
+        boolean assetMapAccessible = true;
+        boolean assetResolved = true;
+        if ("MOTM_Proof_Pink_Halo".equals(systemId)) {
+            try {
+                var assetMap = ParticleSystem.getAssetMap();
+                assetMapAccessible = assetMap != null;
+                assetResolved = assetMapAccessible && assetMap.getAsset(systemId) != null;
+            } catch (Throwable error) {
+                assetMapAccessible = false;
+                assetResolved = false;
+            }
+        }
+        boolean requested = false;
+        String failure = null;
+        try {
+            ParticleUtil.spawnParticleEffect(systemId, point, currentStore);
+            requested = true;
+        } catch (Throwable error) {
+            failure = error.getClass().getSimpleName() + ": " + error.getMessage();
+        }
+        int after = countEntitiesNear(currentStore, point, 1.75);
+        int entityDelta = after - before;
+        boolean customParticle = "MOTM_Proof_Pink_Halo".equals(systemId);
+        boolean passed = requested && entityDelta == 0 && (!customParticle || !assetMapAccessible || assetResolved);
+        hooks.recordClientIntent("proof_capability_gate_particle", MotmObservability.mapOf(
+                "proofId", proofId,
+                "systemId", systemId,
+                "position", formatVector(point),
+                "particleRequested", requested,
+                "assetMapAccessible", assetMapAccessible,
+                "assetResolved", assetResolved,
+                "visualCheckRequired", "MOTM_Proof_Pink_Halo".equals(systemId),
+                "failure", failure
+        ));
+        hooks.recordServerTruth("proof_capability_gate_particle", MotmObservability.mapOf(
+                "proofId", proofId,
+                "systemId", systemId,
+                "entityCountBefore", before,
+                "entityCountAfter", after,
+                "entityDelta", entityDelta,
+                "noEntityCreated", entityDelta == 0,
+                "particleRequested", requested,
+                "failure", failure
+        ));
+        return "[MOTM] Proof " + proofId + " " + (passed ? "PASS" : "FAIL")
+                + ": particle system=" + systemId
+                + " requested=" + requested
+                + " entityCountBefore=" + before
+                + " entityCountAfter=" + after
+                + " noEntityCreated=" + (entityDelta == 0)
+                + ("MOTM_Proof_Pink_Halo".equals(systemId)
+                ? " assetMapAccessible=" + assetMapAccessible
+                + " assetResolved=" + assetResolved
+                + " visualCheckRequired=true"
+                : "")
+                + (failure == null ? "" : " failure=" + failure);
+    }
+
+    @Override
+    public String runEntityScaleProof(Player player,
+                                      Store<EntityStore> currentStore,
+                                      String proofId,
+                                      Vector3d forward,
+                                      double distanceAhead) {
+        GateProxy proxy = spawnGateProxy(player, proofId, forward, distanceAhead, 4.5f, false);
+        if (proxy == null) {
+            recordGateFailure(proofId, "could not spawn Spark_Living proxy");
+            return "[MOTM] Proof " + proofId + " FAIL: could not spawn Spark_Living proxy.";
+        }
+        Store<EntityStore> store = proxy.ref().getStore();
+        EntityScaleComponent scale = new EntityScaleComponent(2.5f);
+        store.putComponent(proxy.ref(), EntityScaleComponent.getComponentType(), scale);
+        EntityScaleComponent observed = store.getComponent(proxy.ref(), EntityScaleComponent.getComponentType());
+        boolean enlarged = observed != null && Math.abs(observed.getScale() - 2.5f) < 0.01f;
+        scheduleOnWorld(proxy.world(), 2000L, () -> {
+            if (proxy.ref().isValid()) {
+                store.putComponent(proxy.ref(), EntityScaleComponent.getComponentType(), new EntityScaleComponent(1.0f));
+                EntityScaleComponent restored = store.getComponent(proxy.ref(), EntityScaleComponent.getComponentType());
+                hooks.recordServerTruth("proof_capability_gate_entity_scale_restore", MotmObservability.mapOf(
+                        "proofId", proofId,
+                        "scaleApplied", restored != null ? restored.getScale() : null,
+                        "restored", restored != null && Math.abs(restored.getScale() - 1.0f) < 0.01f
+                ));
+            }
+        });
+        hooks.recordClientIntent("proof_capability_gate_entity_scale", MotmObservability.mapOf(
+                "proofId", proofId,
+                "entityIndex", proxy.ref().getIndex(),
+                "scaleBeforeRestore", 2.5f,
+                "scaleAfterRestore", 1.0f,
+                "restoreScheduled", true
+        ));
+        hooks.recordServerTruth("proof_capability_gate_entity_scale", MotmObservability.mapOf(
+                "proofId", proofId,
+                "entityIndex", proxy.ref().getIndex(),
+                "scaleApplied", enlarged ? observed.getScale() : null,
+                "scaleAppliedExpected", 2.5f,
+                "restoreScheduled", true
+        ));
+        return "[MOTM] Proof " + proofId + " " + (enlarged ? "PASS" : "FAIL")
+                + ": Spark_Living scale=2.5 for 2s then 1.0 for 2s; entityIndex=" + proxy.ref().getIndex();
+    }
+
+    @Override
+    public String runDynamicLightProof(Player player,
+                                       Store<EntityStore> currentStore,
+                                       String proofId,
+                                       Vector3d forward,
+                                       double distanceAhead) {
+        GateProxy proxy = spawnGateProxy(player, proofId, forward, distanceAhead, 4.5f, true);
+        if (proxy == null) {
+            recordGateFailure(proofId, "could not spawn renderless proxy");
+            return "[MOTM] Proof " + proofId + " FAIL: could not spawn renderless proxy.";
+        }
+        Store<EntityStore> store = proxy.ref().getStore();
+        ColorLight colorLight = new ColorLight((byte) 15, (byte) 0, (byte) 220, (byte) 255);
+        store.putComponent(proxy.ref(), PersistentDynamicLight.getComponentType(),
+                new PersistentDynamicLight(colorLight));
+        boolean applied = store.getComponent(proxy.ref(), PersistentDynamicLight.getComponentType()) != null;
+        scheduleOnWorld(proxy.world(), 4000L, () -> {
+            if (proxy.ref().isValid()) {
+                store.removeComponentIfExists(proxy.ref(), PersistentDynamicLight.getComponentType());
+                hooks.recordServerTruth("proof_capability_gate_dynamic_light_removed", MotmObservability.mapOf(
+                        "proofId", proofId,
+                        "removed", store.getComponent(proxy.ref(), PersistentDynamicLight.getComponentType()) == null
+                ));
+            }
+        });
+        hooks.recordClientIntent("proof_capability_gate_dynamic_light", MotmObservability.mapOf(
+                "proofId", proofId,
+                "entityIndex", proxy.ref().getIndex(),
+                "attachedToPlayer", false,
+                "radius", 15,
+                "red", 0,
+                "green", 220,
+                "blue", 255,
+                "durationMs", 4000
+        ));
+        hooks.recordServerTruth("proof_capability_gate_dynamic_light", MotmObservability.mapOf(
+                "proofId", proofId,
+                "entityIndex", proxy.ref().getIndex(),
+                "componentApplied", applied
+        ));
+        return "[MOTM] Proof " + proofId + " " + (applied ? "PASS" : "FAIL")
+                + ": cyan PersistentDynamicLight on renderless proxy for 4s; attachedToPlayer=false.";
+    }
+
+    @Override
+    public String runIntangibleProof(Player player,
+                                     Store<EntityStore> currentStore,
+                                     String proofId,
+                                     Vector3d forward,
+                                     double distanceAhead) {
+        GateProxy proxy = spawnGateProxy(player, proofId, forward, distanceAhead, 5.5f, false);
+        if (proxy == null) {
+            recordGateFailure(proofId, "could not spawn visible proxy");
+            return "[MOTM] Proof " + proofId + " FAIL: could not spawn visible proxy.";
+        }
+        Store<EntityStore> store = proxy.ref().getStore();
+        store.putComponent(proxy.ref(), Intangible.getComponentType(), Intangible.INSTANCE);
+        boolean present = store.getComponent(proxy.ref(), Intangible.getComponentType()) != null;
+        scheduleOnWorld(proxy.world(), 5000L, () -> {
+            if (proxy.ref().isValid()) {
+                store.removeComponentIfExists(proxy.ref(), Intangible.getComponentType());
+                hooks.recordServerTruth("proof_capability_gate_intangible_removed", MotmObservability.mapOf(
+                        "proofId", proofId,
+                        "componentPresent", store.getComponent(proxy.ref(), Intangible.getComponentType()) != null
+                ));
+            }
+        });
+        hooks.recordClientIntent("proof_capability_gate_intangible", MotmObservability.mapOf(
+                "proofId", proofId,
+                "entityIndex", proxy.ref().getIndex(),
+                "durationMs", 5000,
+                "walkThroughCheckRequired", true
+        ));
+        hooks.recordServerTruth("proof_capability_gate_intangible", MotmObservability.mapOf(
+                "proofId", proofId,
+                "entityIndex", proxy.ref().getIndex(),
+                "componentPresent", present
+        ));
+        return "[MOTM] Proof " + proofId + " " + (present ? "PASS" : "FAIL")
+                + ": visible proxy Intangible=" + present + " for 5s; walk through it now.";
+    }
+
+    @Override
+    public String runPlayerCloneProof(Player player,
+                                       Store<EntityStore> currentStore,
+                                       String proofId,
+                                       Vector3d forward,
+                                       double distanceAhead) {
+        if (player == null || currentStore == null) {
+            recordGateFailure(proofId, "missing player/store");
+            return "[MOTM] Proof " + proofId + " FAIL: missing player/store.";
+        }
+        Ref<EntityStore> playerRef = player.getReference();
+        ModelComponent playerModelComponent = playerRef == null || !playerRef.isValid()
+                ? null : currentStore.getComponent(playerRef, ModelComponent.getComponentType());
+        Model playerModel = playerModelComponent == null ? null : playerModelComponent.getModel();
+        String modelId = playerModel == null ? null : playerModel.getModelAssetId();
+        GateProxy proxy = spawnGateProxy(player, proofId, forward, distanceAhead, 6.5f, false);
+        if (proxy == null) {
+            recordGateFailure(proofId, "could not spawn clone proxy; modelId=" + modelId);
+            return "[MOTM] Proof " + proofId + " FAIL: could not spawn clone proxy; modelId=" + modelId;
+        }
+        Store<EntityStore> store = proxy.ref().getStore();
+        boolean appearanceAttempted = false;
+        boolean appearanceApplied = false;
+        boolean modelComponentAttempted = false;
+        boolean modelComponentApplied = false;
+        String failure = null;
+        if (modelId != null && !modelId.isBlank()) {
+            try {
+                appearanceAttempted = true;
+                appearanceApplied = NPCEntity.setAppearance(proxy.ref(), modelId, store);
+            } catch (Throwable error) {
+                failure = error.getClass().getSimpleName() + ": " + error.getMessage();
+            }
+        }
+        if (playerModel != null) {
+            try {
+                modelComponentAttempted = true;
+                store.putComponent(proxy.ref(), ModelComponent.getComponentType(), new ModelComponent(new Model(playerModel)));
+                modelComponentApplied = store.getComponent(proxy.ref(), ModelComponent.getComponentType()) != null;
+            } catch (Throwable error) {
+                failure = failure == null
+                        ? error.getClass().getSimpleName() + ": " + error.getMessage()
+                        : failure + " | " + error.getClass().getSimpleName() + ": " + error.getMessage();
+            }
+        }
+        boolean passed = appearanceApplied || modelComponentApplied;
+        hooks.recordClientIntent("proof_capability_gate_player_clone", MotmObservability.mapOf(
+                "proofId", proofId,
+                "entityIndex", proxy.ref().getIndex(),
+                "modelId", modelId,
+                "appearanceStrategyAttempted", appearanceAttempted,
+                "modelComponentStrategyAttempted", modelComponentAttempted
+        ));
+        hooks.recordServerTruth("proof_capability_gate_player_clone", MotmObservability.mapOf(
+                "proofId", proofId,
+                "entityIndex", proxy.ref().getIndex(),
+                "modelId", modelId,
+                "appearanceApplied", appearanceApplied,
+                "modelComponentApplied", modelComponentApplied,
+                "visualMatchRequiresClientCheck", true,
+                "failure", failure
+        ));
+        return "[MOTM] Proof " + proofId + " " + (passed ? "PASS" : "FAIL")
+                + ": player modelId=" + modelId
+                + " appearanceAttempted=" + appearanceAttempted
+                + " appearanceApplied=" + appearanceApplied
+                + " modelComponentApplied=" + modelComponentApplied
+                + " (visual match is the gate answer).";
+    }
+
+    private GateProxy spawnGateProxy(Player player,
+                                     String proofId,
+                                     Vector3d forward,
+                                     double distanceAhead,
+                                     float despawnSeconds,
+                                     boolean renderless) {
+        World world = player == null ? null : player.getWorld();
+        Vector3d base = playerPosition(player);
+        Vector3d direction = normalizeHorizontal(forward);
+        if (world == null || base == null || direction == null) {
+            return null;
+        }
+        Vector3d position = com.motm.util.MotmVectors.addScaled(base, direction, distanceAhead);
+        NPCEntity proxy = new NPCEntity(world);
+        MotmNpcRoles.applyRole(proxy, "Spark_Living",
+                HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), log);
+        proxy.setDespawnTime(despawnSeconds);
+        world.spawnEntity(proxy, position,
+                new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
+        Ref<EntityStore> ref = proxy.getReference();
+        if (ref == null || !ref.isValid() || ref.getStore() == null) {
+            return null;
+        }
+        if (renderless) {
+            FieldVisualHytaleAdapter.configureRenderlessProxy(ref, ref.getStore());
+        }
+
+        cleanupState.addProxy(new TemporaryProofProxy(
+                proofId, world, ref, System.currentTimeMillis() + (long) (despawnSeconds * 1000L)));
+        return new GateProxy(world, ref);
+    }
+
+    private void scheduleOnWorld(World world, long delayMillis, Runnable task) {
+        CompletableFuture.delayedExecutor(delayMillis, TimeUnit.MILLISECONDS).execute(() -> {
+            try {
+                if (world != null && world.isAlive()) {
+                    world.execute(task);
+                }
+            } catch (Throwable error) {
+                log.log(Level.WARNING, "[MOTM] Proof scheduled task failed: " + error.getMessage(), error);
+            }
+        });
+    }
+
+    private void recordGateFailure(String proofId, String reason) {
+        hooks.recordClientIntent("proof_capability_gate_failure", MotmObservability.mapOf(
+                "proofId", proofId,
+                "result", "FAIL",
+                "reason", reason
+        ));
+        hooks.recordServerTruth("proof_capability_gate_failure", MotmObservability.mapOf(
+                "proofId", proofId,
+                "result", "FAIL",
+                "reason", reason
+        ));
+    }
+
+    private int countEntitiesNear(Store<EntityStore> store, Vector3d point, double radius) {
+        if (store == null || point == null) {
+            return 0;
+        }
+        int[] count = {0};
+        double radiusSquared = radius * radius;
+        store.forEachChunk((chunk, commandBuffer) -> {
+            for (int index = 0; index < chunk.size(); index++) {
+                TransformComponent transform = chunk.getComponent(index, TransformComponent.getComponentType());
+                Vector3d position = transform == null ? null : transform.getPosition();
+                if (position != null && distanceSquared(position, point) <= radiusSquared) {
+                    count[0]++;
+                }
+            }
+        });
+        return count[0];
+    }
+
+    private static double distanceSquared(Vector3d a, Vector3d b) {
+        double dx = a.x - b.x;
+        double dy = a.y - b.y;
+        double dz = a.z - b.z;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    private record GateProxy(World world, Ref<EntityStore> ref) {
     }
 
     @Override

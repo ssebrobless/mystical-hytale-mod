@@ -94,6 +94,25 @@ public final class MotmProofRuntime {
                 (playerId, player, currentStore, forward) -> actions.runMovementProof(player, currentStore, "movement-tunnel", forward, 2.0, true, false));
         runners.put("movement-dust-devil",
                 (playerId, player, currentStore, forward) -> actions.runMovementProof(player, currentStore, "movement-dust-devil", forward, 5.0, false, true));
+        runners.put("gate-r6-particle-world",
+                (playerId, player, currentStore, forward) -> actions.runParticleWorldProof(
+                        player, currentStore, "gate-r6-particle-world", "Block_Break_Stone", 3.0));
+        runners.put("gate-r7-entity-scale",
+                (playerId, player, currentStore, forward) -> actions.runEntityScaleProof(
+                        player, currentStore, "gate-r7-entity-scale", forward, 3.0));
+        runners.put("gate-r8-custom-particle",
+                (playerId, player, currentStore, forward) -> actions.runParticleWorldProof(
+                        player, currentStore, "gate-r8-custom-particle", "MOTM_Proof_Pink_Halo", 3.0));
+        runners.put("gate-r9-dynamic-light",
+                (playerId, player, currentStore, forward) -> actions.runDynamicLightProof(
+                        player, currentStore, "gate-r9-dynamic-light", forward, 3.0));
+        runners.put("gate-r10-intangible",
+                (playerId, player, currentStore, forward) -> actions.runIntangibleProof(
+                        player, currentStore, "gate-r10-intangible", forward, 2.0));
+        runners.put("gate-r11-player-clone",
+                (playerId, player, currentStore, forward) -> actions.runPlayerCloneProof(
+                        player, currentStore, "gate-r11-player-clone", forward, 2.0));
+
 
         if (!runners.keySet().equals(Set.copyOf(MotmProofCatalog.ids()))) {
             log.warning("[MOTM] Proof runner registry differs from MotmProofCatalog ids.");
@@ -139,6 +158,36 @@ public final class MotmProofRuntime {
                                         String... projectileConfigIds);
 
         String runProxyProof(Player player, String proofId, String roleId, String effectId, double distanceAhead);
+
+        String runParticleWorldProof(Player player,
+                                     Store<EntityStore> currentStore,
+                                     String proofId,
+                                     String systemId,
+                                     double distanceAhead);
+
+        String runEntityScaleProof(Player player,
+                                   Store<EntityStore> currentStore,
+                                   String proofId,
+                                   Vector3d forward,
+                                   double distanceAhead);
+
+        String runDynamicLightProof(Player player,
+                                    Store<EntityStore> currentStore,
+                                    String proofId,
+                                    Vector3d forward,
+                                    double distanceAhead);
+
+        String runIntangibleProof(Player player,
+                                  Store<EntityStore> currentStore,
+                                  String proofId,
+                                  Vector3d forward,
+                                  double distanceAhead);
+
+        String runPlayerCloneProof(Player player,
+                                   Store<EntityStore> currentStore,
+                                   String proofId,
+                                   Vector3d forward,
+                                   double distanceAhead);
 
         String runMovementProof(Player player,
                                 Store<EntityStore> currentStore,

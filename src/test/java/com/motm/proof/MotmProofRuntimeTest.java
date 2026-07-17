@@ -84,5 +84,50 @@ class MotmProofRuntimeTest {
                                        boolean burstVelocity) {
             return "movement:" + proofId + ":" + distance;
         }
+
+        @Override
+        public String runParticleWorldProof(Player player,
+                                            Store<EntityStore> currentStore,
+                                            String proofId,
+                                            String systemId,
+                                            double distanceAhead) {
+            return "particle-world:" + proofId + ":" + systemId;
+        }
+
+        @Override
+        public String runEntityScaleProof(Player player,
+                                          Store<EntityStore> currentStore,
+                                          String proofId,
+                                          Vector3d forward,
+                                          double distanceAhead) {
+            return "entity-scale:" + proofId;
+        }
+
+        @Override
+        public String runDynamicLightProof(Player player,
+                                           Store<EntityStore> currentStore,
+                                           String proofId,
+                                           Vector3d forward,
+                                           double distanceAhead) {
+            return "dynamic-light:" + proofId;
+        }
+
+        @Override
+        public String runIntangibleProof(Player player,
+                                         Store<EntityStore> currentStore,
+                                         String proofId,
+                                         Vector3d forward,
+                                         double distanceAhead) {
+            return "intangible:" + proofId;
+        }
+
+        @Override
+        public String runPlayerCloneProof(Player player,
+                                          Store<EntityStore> currentStore,
+                                          String proofId,
+                                          Vector3d forward,
+                                          double distanceAhead) {
+            return "player-clone:" + proofId;
+        }
     }
 }
