@@ -94,6 +94,7 @@ public final class HytaleAssetResolver {
     private static final String MODEL_TRILLODON = "Common/NPC/Beast/Trillodon/Models/Model.blockymodel";
     private static final String MODEL_REX_CAVE = "Common/NPC/Beast/Rex_Cave/Models/Model.blockymodel";
     private static final String MODEL_VOID_SPAWN = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
+    private static final String MODEL_CRAWLER_VOID = "Common/NPC/Void/Crawler_Void/Models/Model.blockymodel";
     private static final String MODEL_VOID_EYE = "Common/NPC/Void/Eye_Void/Models/Model.blockymodel";
     private static final String MODEL_FROG = "Common/NPC/Critter/Frog/Models/Model.blockymodel";
     private static final String MODEL_FIREBALL_PROJECTILE = "Common/Items/Projectiles/Fireball.blockymodel";
@@ -579,9 +580,9 @@ public final class HytaleAssetResolver {
                 case "crocodile_swamp_monster" -> MODEL_CROCODILE;
                 case "snapjaw_abyssal" -> MODEL_SNAPJAW;
                 case "skeleton_minion", "shadow_clone" -> MODEL_SHADOW_KNIGHT;
-                case "void_spawn" -> MODEL_VOID_SPAWN;
+                case "void_spawn" -> MODEL_CRAWLER_VOID;
                 case "scarak_egg" -> MODEL_SCARAK;
-                case "locust_queen" -> MODEL_SCARAK;
+                case "locust_queen" -> MODEL_SCARAK_BROODMOTHER;
                 default -> null;
             };
         }
