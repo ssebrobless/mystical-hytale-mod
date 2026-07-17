@@ -6,10 +6,7 @@
     "EntityBottomTint": "#6b4f20",
     "Particles": [
       {
-        "SystemId": "Sand_Storm"
-      },
-      {
-        "SystemId": "Block_Hit_Sand"
+        "SystemId": "Block_Sprint_Sand"
       }
     ]
   }
