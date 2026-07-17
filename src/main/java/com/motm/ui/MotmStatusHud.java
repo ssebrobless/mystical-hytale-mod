@@ -278,7 +278,7 @@ public class MotmStatusHud extends CustomUIHud {
             return "";
         }
         String normalized = name.trim();
-        return normalized.length() <= 22 ? normalized : normalized.substring(0, 21).trim() + ".";
+        return normalized.length() <= 34 ? normalized : normalized.substring(0, 33).trim() + ".";
     }
 
     private String formatTrackerTimer(double seconds) {

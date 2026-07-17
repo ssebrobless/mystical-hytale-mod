@@ -2239,7 +2239,7 @@ public class GameplayPlaybackManager {
             String selfLoopId = AbilityRuntimeEffects.selfLoopEffectId(
                     player.getPlayerClass(), currentStyleId(player), ability);
             if (selfLoopId != null) {
-                selfAdapter.startActiveSelfEffect(playerRef, player.getPlayerId(), selfLoopId,
+                selfAdapter.startPulsingSelfEffect(playerRef, player.getPlayerId(), selfLoopId,
                         System.currentTimeMillis() + (long) (ability.getDurationSeconds() * 1000.0));
             }
         }

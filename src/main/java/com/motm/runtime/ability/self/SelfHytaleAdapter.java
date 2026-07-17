@@ -93,11 +93,32 @@ public final class SelfHytaleAdapter {
                                       String effectId,
                                       long expireAtMillis,
                                       long nextApplyAtMillis) {
+        startActiveSelfEffect(ownerRef, ownerPlayerId, effectId, expireAtMillis, nextApplyAtMillis, false);
+    }
+
+    /**
+     * Pulse variant for loop visuals: application particles only fire on a
+     * fresh apply, so pulsing removes the effect before each re-apply.
+     */
+    public void startPulsingSelfEffect(Ref<EntityStore> ownerRef,
+                                       String ownerPlayerId,
+                                       String effectId,
+                                       long expireAtMillis) {
+        startActiveSelfEffect(ownerRef, ownerPlayerId, effectId, expireAtMillis,
+                System.currentTimeMillis() + DEFAULT_SELF_EFFECT_INITIAL_DELAY_MS, true);
+    }
+
+    private void startActiveSelfEffect(Ref<EntityStore> ownerRef,
+                                       String ownerPlayerId,
+                                       String effectId,
+                                       long expireAtMillis,
+                                       long nextApplyAtMillis,
+                                       boolean pulse) {
         if (ownerRef == null || !ownerRef.isValid() || effectId == null || effectId.isBlank()) {
             return;
         }
         ActiveSelfEffect effect = activationRuntime.createSelfEffect(
-                ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis);
+                ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, pulse);
         if (effect != null) {
             selfState.replaceSelfEffect(ownerPlayerId, effectId, effect);
         }
@@ -170,6 +191,9 @@ public final class SelfHytaleAdapter {
         }
         if (!effect.readyToApply(now)) {
             return false;
+        }
+        if (effect.pulse()) {
+            support.removeEffectById(effect.ownerRef(), currentStore, effect.effectId());
         }
         boolean applied = support.applyEffectById(effect.ownerRef(), currentStore, effect.effectId());
         effect.scheduleNextApply(now, SELF_EFFECT_REFRESH_INTERVAL_MS);

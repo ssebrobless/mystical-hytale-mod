@@ -8,6 +8,7 @@ public final class ActiveSelfEffect {
     private final Ref<EntityStore> ownerRef;
     private final String effectId;
     private final long expireAtMillis;
+    private final boolean pulse;
     private long nextApplyAtMillis;
 
     public ActiveSelfEffect(String ownerPlayerId,
@@ -15,11 +16,21 @@ public final class ActiveSelfEffect {
                             String effectId,
                             long expireAtMillis,
                             long nextApplyAtMillis) {
+        this(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, false);
+    }
+
+    public ActiveSelfEffect(String ownerPlayerId,
+                            Ref<EntityStore> ownerRef,
+                            String effectId,
+                            long expireAtMillis,
+                            long nextApplyAtMillis,
+                            boolean pulse) {
         this.ownerPlayerId = ownerPlayerId;
         this.ownerRef = ownerRef;
         this.effectId = effectId;
         this.expireAtMillis = expireAtMillis;
         this.nextApplyAtMillis = nextApplyAtMillis;
+        this.pulse = pulse;
     }
 
     public String ownerPlayerId() { return ownerPlayerId; }
@@ -27,6 +38,8 @@ public final class ActiveSelfEffect {
     public String effectId() { return effectId; }
     public long expireAtMillis() { return expireAtMillis; }
     public long nextApplyAtMillis() { return nextApplyAtMillis; }
+    /** Pulse loops re-fire application particles by removing before re-applying. */
+    public boolean pulse() { return pulse; }
 
     public boolean expired(long now) {
         return now >= expireAtMillis;

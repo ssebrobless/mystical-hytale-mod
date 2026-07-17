@@ -11,11 +11,20 @@ public final class SelfActivationRuntime {
                                              String effectId,
                                              long expireAtMillis,
                                              long nextApplyAtMillis) {
+        return createSelfEffect(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, false);
+    }
+
+    public ActiveSelfEffect createSelfEffect(String ownerPlayerId,
+                                             Ref<EntityStore> ownerRef,
+                                             String effectId,
+                                             long expireAtMillis,
+                                             long nextApplyAtMillis,
+                                             boolean pulse) {
         if (ownerPlayerId == null || ownerRef == null || !ownerRef.isValid()
                 || effectId == null || effectId.isBlank()) {
             return null;
         }
-        return new ActiveSelfEffect(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis);
+        return new ActiveSelfEffect(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, pulse);
     }
 
     public ActivePlayerAnchor createPlayerAnchor(String reason,
