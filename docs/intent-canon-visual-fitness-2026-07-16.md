@@ -197,3 +197,27 @@ implementation; do not guess):
    style sweep acceptance (a sweep cannot PASS a style with an open HIGH misfit).
 5. SYSTEMIC rows are engineering work (resolver/proxy architecture), not per-ability
    polish — schedule as primitives, not sweeps.
+
+## 10. Grill Session Decisions - 2026-07-16 (AUTHOR-STATED, supersedes Sec. 8 where overlapping)
+
+| # | Topic | Decision |
+|---|---|---|
+| G1 | Mentokinesis control marker | Staged: interim = bright pink OUTLINE read (faint pink tint + pink shimmer particles hugging silhouette; mob keeps own colors), upgrade = custom pink halo particle system after gate R8. True rim-outline is not a confirmed capability; outline is the target read, not the mechanism. |
+| G2 | Dominate control model | ~15-20s control window; cooldown starts on release/expiry; recast while active = early release; released target reverts to NORMAL AI (no auto-aggro, no death). `hivemind` = same clock, radius/multi variant. Authored 3s duration is superseded for control (was stun-era data). |
+| G3 | Scope stamps | 3-style/9-ability loadout: INTENTIONAL CUT. Elite mobs: DEFERRED (keep data + gate; revisit post-v1). Terra "Subterranean Fortitude": INTENTIONAL CUT (consolidated into Immovable). |
+| G4 | Hell_flame blue fire | Destination = custom blue-fire particle system (WV.4/R8). Interim = composition. AMENDED by asset scan: vanilla `Item/Fireplace_Blue/Fire_Blue.particlesystem` (+`Fire_Center_Blue`, `Fire_Blue_Smoke`) is NATIVE blue fire - use it for the interim; custom system likely only needed for projectile-shaped blue fire. |
+| G5 | Smoke_form body | Keep the PLAYER's own model wrapped in dense smoke shroud + `Intangible` phasing (gate R10). No ModelChange. Bat morph removed (WV.3). |
+| G6 | Aqua Barrier | Opacity IS load-bearing: destination = custom opaque bubble shell model (WV.4, committed not conditional). Interim = blue bubble-particle composition. |
+| G7 | Elemental reactions | IN SCOPE for v1. Feedback = dual-tone particle burst at target (both elements' palettes) + reaction-specific status visual + HUD tracker ping. 6 composed EntityEffects; gated behind defect D10 wiring fix. |
+| G8 | Perk visibility rule | HUD primary. Body/world visuals ONLY for trigger-moment perks (Haunting, Neptune's Grace, Freezing Winds, Desperation, Ignite AoE). Always-on stat/movement perks stay invisible. |
+| G9 | Triceratops_form | `Trillodon` model everywhere (spec, effect JSON, resolver). Display name stays "Triceratops Form". Resolves the 3-way drift. |
+| G10 | Atonement palette | Corrupted-holy: WHITE primary, GOLD glows, DARK PURPLE accents (totem heal beams/glows + lightsource assets). Style and ability names unchanged. |
+| G11 | Shadow_step clone | Staged: interim = dark-tinted Mannequin silhouette wreathed in void smoke. New research gate R11: player-model cloning onto NPC proxy; upgrade to true doppelganger if proven. |
+| G12 | Hydro six-style palettes | Stamped: Surf = bright foamy turquoise breakers; Rain = soft grey-blue drizzle; Saltwater = deep teal currents/undertow; Freshwater = clear light blue-green, restorative; Bilgewater = murky brown-green grime; Boiling = white steam over angry blue. Asset mapping (author-directed liquid mining): Surf = `_Test/WaterRnD` splash toolkit; Rain = `Weather/Rain/*` + `Water_Dripping`; Saltwater = `Weather/Geyzer/Water_Beam*` (beam kit fits rip_current/riptide pulls); Freshwater = WateringCan splashes + bubble streams + `Bubbles_Breathing`; Bilgewater = Mud/Tar splashes + `Cauldron/Corrupted_Bubbles`; Boiling = `Geyzer_Smoke` steam + beam-splash eruptions + lava-splash accents. |
+| G13 | Imbuement (CORRECTION) | NOT weapon coating - it is an exclusive self-buff STANCE system, colors already authored: Power = dark red, Fortitude = dark green (+10% heal, abyssal_armor), Swiftness = bright yellow (shadow_haste). Visual contract: full-body aura in authored color, exactly one active, visible flash on stance swap. Sec. 8's "imbuement glow colors" grill item was an audit paraphrase error - REMOVED. |
+| G14 | Battle Cry radius | 8 blocks (implementation lock wins over mockup's 15). |
+
+Process addendum (author-directed): before WV work begins, run a verification pass of
+every style row in this doc against the authored JSON descriptions in
+`src/main/resources/data/styles/*.json` - canon must inherit the author's words, not
+scout paraphrases (the G13 error class).

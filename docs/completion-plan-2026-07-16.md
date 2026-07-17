@@ -267,7 +267,8 @@ and `docs/modding-research-2026-07-16.md` (ecosystem/API/asset research). W0.1 i
 - **New research gates (extend capability atlas before W2/W3)**: R6 `ParticleUtil`
   world-space burst (may delete proxy dependency from tether/field visuals); R7
   `EntityScaleComponent`; R8 pack-shipped custom `.particlesystem`; R9
-  `PersistentDynamicLight` on non-player proxy; R10 `Intangible` phasing (smoke_form).
+  `PersistentDynamicLight` on non-player proxy; R10 `Intangible` phasing (smoke_form);
+  R11 player-model cloning onto NPC proxy (shadow_step doppelganger).
 - **New workstream WV - Visual Identity Pass** (runs beside W3-W5, feeds sweep gates):
   - WV.1 replace `Spark_Living` projectile/field proxies with native
     `Projectile_Config_MOTM_*` configs per family (magma_sling is the template);
@@ -278,9 +279,13 @@ and `docs/modding-research-2026-07-16.md` (ecosystem/API/asset research). W0.1 i
   - WV.3 fix HIGH misfits from the intent doc tables (smoke_form Bat, Portal_Teleport
     impact, raise_dead Shadow_Knight, blue hell_flame, rainbow, anchor_haul,
     self_petrification, vines).
-  - WV.4 custom-asset shortlist (decision rule applied): mist-humanoid model, pink
-    psychic marker + particle system, Aqua Barrier bubble (conditional).
+  - WV.4 custom-asset shortlist (decision rule applied): pink psychic control halo
+    particle system, opaque Aqua Barrier bubble shell model (COMMITTED per G6),
+    projectile-shaped blue fire (interim uses vanilla `Fire_Blue` per G4).
+    Removed: mist-humanoid model (G5 keeps player model + shroud).
 - **Sweep gate tightened**: a style sweep cannot PASS with an open HIGH misfit for that
   style (intent doc Sec. 9 rule 4).
-- **Grill session needed**: intent doc Sec. 8 lists undocumented-intent items per class;
-  schedule with the author before implementing those abilities.
+- **Grill session HELD 2026-07-16**: 14 decisions recorded in intent doc Sec. 10
+  (G1-G14), including W1 contract inputs (pink outline marker, 15-20s dominate clock,
+  recast-release, revert-to-normal-AI). Remaining Sec. 8 items shrink to per-ability
+  minutiae; resolve during style sweeps with the Sec. 10 verification-pass rule.
