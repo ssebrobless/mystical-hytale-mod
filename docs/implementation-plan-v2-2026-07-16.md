@@ -88,3 +88,28 @@ gate applies (no style passes with an open HIGH misfit).
 - NoesisGUI migration (community roadmap): keep HUD/page code behind current seams.
 - API churn: manifest preflight + MotmNpcRoles guards + deprecation ledger re-check per
   game update (catalog README procedure).
+
+## Status log
+
+**Phase 0 - COMPLETE (code) / seams live-proof deferred to Phase 1 opener.** 2026-07-16,
+commits `4fa75cc` (+fixups). 0.1: zero [removal] warnings - full ECS-native migration
+(round 2 was required: getSectionById/getActiveSlot/legacy Inventory class are all
+forRemoval; final surfaces = InventoryComponent nested component types + getCombined +
+ActiveSlotInventoryComponent.getActiveSlot + MotmCraftRecipeEventSystem +
+PlayerRef.sendMessage). 0.2: all three seams wired and unit-tested (loop stable-order
+test includes runtime-perks). 0.3: 70/70 path literals case-exact; fixed Trillodon
+Wildlife/ path + stalactite model. 0.4: Soul Harvest lethal-save atomic.
+
+Live-session findings (2026-07-16, recorded for Phase 1/2):
+- Seam one-shot logs are fine-level - invisible in console; Phase 1 opener adds a
+  `phase0-seams` harness scenario (spawn killable mob, scripted two-element combo,
+  assert perk_kill_credit + reaction_triggered in evidence) and bumps one-shot seam
+  logs to info.
+- Author-observed, confirming planned work: fireball has no travel visual (U2), fire
+  ability produced PURPLE impact (defect #11 witnessed live - U1/C1), aim snaps to
+  targets off-crosshair (added to Phase 2.4 acceptance: aim = crosshair, dodgeable).
+- NEW defect #13: lingering smoke effect persisted on player after ability/class swaps
+  until `dev effects clear` - trace the leaking effect source (suspect class-fallback
+  Move effect or ignite self-burst residue) during U1 manifest work.
+- Confirmed working as designed: summon friendly-fire suppression (owner cannot damage
+  own summon), Aqua Barrier auto-apply on Hydro swap with interim bubble visual.
