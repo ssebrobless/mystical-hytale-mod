@@ -16,7 +16,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
-import com.hypixel.hytale.server.core.event.events.player.PlayerCraftEvent;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
@@ -442,23 +442,22 @@ public class RuntimePerkManager {
         return true;
     }
 
-    public void handlePlayerCraft(PlayerCraftEvent event) {
-        if (event == null || event.getPlayer() == null || event.getCraftedRecipe() == null) {
+    public void handlePlayerCraft(CraftingRecipe recipe, int quantity, Player runtimePlayer) {
+        if (recipe == null || runtimePlayer == null) {
             return;
         }
-        Player runtimePlayer = event.getPlayer();
         String playerId = mod.getRuntimePlayerId(runtimePlayer);
         PlayerData playerData = playerId != null && mod.getPlayerDataManager() != null
                 ? mod.getPlayerDataManager().getOnlinePlayer(playerId)
                 : null;
-        if (playerData == null || playerData.getSelectedPerks() == null || runtimePlayer.getInventory() == null) {
+        if (playerData == null || playerData.getSelectedPerks() == null) {
             return;
         }
 
-        CraftedOutput craftedOutput = craftedOutput(event.getCraftedRecipe());
+        CraftedOutput craftedOutput = craftedOutput(recipe);
         if (craftedOutput == null || craftedOutput.itemId == null || craftedOutput.itemId.isBlank()) {
             LOG.info("[MOTM] Runtime perk crafting enhancement skipped: no primary item output recipe="
-                    + event.getCraftedRecipe().getId());
+                    + recipe.getId());
             return;
         }
 
@@ -481,9 +480,9 @@ public class RuntimePerkManager {
         }
 
         LOG.info("[MOTM] Runtime perk crafting enhancement: player=" + playerId
-                + " recipe=" + event.getCraftedRecipe().getId()
+                + " recipe=" + recipe.getId()
                 + " itemId=" + craftedOutput.itemId
-                + " quantity=" + event.getQuantity()
+                + " quantity=" + quantity
                 + " enhanced=" + enhanced);
     }
 
@@ -648,15 +647,24 @@ public class RuntimePerkManager {
                                                     String label,
                                                     double maxDurabilityMultiplier,
                                                     String context) {
-        if (player == null || player.getInventory() == null || itemId == null || itemId.isBlank()) {
+        if (player == null || itemId == null || itemId.isBlank()
+                || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null) {
             return false;
         }
+        Ref<EntityStore> playerRef = player.getReference();
+        Store<EntityStore> store = playerRef.getStore();
+        InventoryComponent.Hotbar hotbar = store.getComponent(playerRef, InventoryComponent.Hotbar.getComponentType());
+        InventoryComponent.Tool tools = store.getComponent(playerRef, InventoryComponent.Tool.getComponentType());
+        InventoryComponent.Storage storage = store.getComponent(playerRef, InventoryComponent.Storage.getComponentType());
+        InventoryComponent.Backpack backpack = store.getComponent(playerRef, InventoryComponent.Backpack.getComponentType());
+        InventoryComponent.Utility utility = store.getComponent(playerRef, InventoryComponent.Utility.getComponentType());
         ItemContainer[] containers = new ItemContainer[] {
-                player.getInventory().getHotbar(),
-                player.getInventory().getTools(),
-                player.getInventory().getStorage(),
-                player.getInventory().getBackpack(),
-                player.getInventory().getUtility()
+                hotbar != null ? hotbar.getInventory() : null,
+                tools != null ? tools.getInventory() : null,
+                storage != null ? storage.getInventory() : null,
+                backpack != null ? backpack.getInventory() : null,
+                utility != null ? utility.getInventory() : null
         };
         for (ItemContainer container : containers) {
             if (container == null) {

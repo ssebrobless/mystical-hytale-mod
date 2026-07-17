@@ -31,6 +31,8 @@ import com.motm.MenteesMod;
 import com.motm.model.AbilityData;
 import com.motm.model.PlayerData;
 import com.motm.model.StatusEffect;
+import com.motm.model.ElementalMark;
+
 import com.motm.model.StyleData;
 import com.motm.runtime.ability.AbilityExecutionPolicy;
 import com.motm.runtime.ability.AbilityRuntimeMath;
@@ -205,6 +207,8 @@ public class GameplayPlaybackManager {
     private final VisualProxyRuntimeState visualProxyState = new VisualProxyRuntimeState();
     private final CombatRuntimeState combatState = new CombatRuntimeState();
     private boolean warnedGroundedFallback;
+    private boolean reactionTriggeredObserved;
+
 
     public GameplayPlaybackManager(MenteesMod mod) {
         this.mod = mod;
@@ -2783,8 +2787,10 @@ public class GameplayPlaybackManager {
                 continue;
             }
 
+            applyElementalMarkForAbility(player, ability, targetEntityId);
             Damage damage = new Damage(new Damage.EntitySource(playerRef), cause, (float) resolvedDamage);
             DamageSystems.executeDamage(targetRef, store, damage);
+
             reportAbilityKillIfDead(player.getPlayerId(), player, targetRef, store, targetEntityId);
             applyPostDamageClassPassives(player, playerRef, targetEntityId, resolvedDamage, true);
             applyEffectById(targetRef, store, impactEffectId);
@@ -2800,11 +2806,47 @@ public class GameplayPlaybackManager {
             return CombatResolution.none();
         }
 
+
         String summary = hits == 1
                 ? "1 hit for " + AbilityPresentation.formatDecimal(totalDamage) + " damage"
                 : hits + " hits for " + AbilityPresentation.formatDecimal(totalDamage) + " damage";
         return new CombatResolution(hits, totalDamage, summary);
     }
+    private void applyElementalMarkForAbility(PlayerData player,
+                                              AbilityData ability,
+                                              String targetEntityId) {
+        if (player == null || ability == null || targetEntityId == null
+                || mod.getElementalReactionManager() == null
+                || player.getPlayerClass() == null) {
+            return;
+        }
+
+        String element = player.getPlayerClass().toLowerCase(Locale.ROOT);
+        ElementalMark.MarkType markType = ElementalReactionManager.getMarkTypeForAbility(
+                element,
+                ability.getEffect()
+        );
+        if (markType == null) {
+            return;
+        }
+
+        ElementalMark mark = new ElementalMark(
+                markType,
+                player.getPlayerId(),
+                ability.getId(),
+                element
+        );
+        ElementalReactionManager.ReactionResult reaction =
+                mod.getElementalReactionManager().applyMark(targetEntityId, mark);
+        if (reaction != null && !reactionTriggeredObserved) {
+            reactionTriggeredObserved = true;
+            LOG.info("[MOTM] event=reaction_triggered reaction=" + reaction.reactionName()
+                    + " targetEntityId=" + targetEntityId
+                    + " element=" + element
+                    + " abilityId=" + ability.getId());
+        }
+    }
+
 
     private void applyTempestImpactEffects(AbilityData ability,
                                            Ref<EntityStore> targetRef,

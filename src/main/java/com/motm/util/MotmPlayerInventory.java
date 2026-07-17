@@ -1,38 +1,29 @@
 package com.motm.util;
 
+import com.hypixel.hytale.component.ComponentAccessor;
+import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
-
-import java.util.ArrayList;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 public final class MotmPlayerInventory {
     private MotmPlayerInventory() {
     }
 
     public static CombinedItemContainer combined(Player player) {
-        if (player == null || player.getInventory() == null) {
+        if (player == null || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null) {
             return null;
         }
-
-        var inventory = player.getInventory();
-        var containers = new ArrayList<ItemContainer>(6);
-        addInventoryContainer(containers, inventory.getHotbar());
-        addInventoryContainer(containers, inventory.getStorage());
-        addInventoryContainer(containers, inventory.getBackpack());
-        addInventoryContainer(containers, inventory.getUtility());
-        addInventoryContainer(containers, inventory.getTools());
-        addInventoryContainer(containers, inventory.getArmor());
-        if (containers.isEmpty()) {
-            return null;
-        }
-
-        return new CombinedItemContainer(containers.toArray(ItemContainer[]::new));
+        return combined(player.getReference(), player.getReference().getStore());
     }
 
-    private static void addInventoryContainer(ArrayList<ItemContainer> containers, ItemContainer container) {
-        if (container != null) {
-            containers.add(container);
+    public static CombinedItemContainer combined(Ref<EntityStore> playerRef,
+                                                  ComponentAccessor<EntityStore> accessor) {
+        if (playerRef == null || !playerRef.isValid() || accessor == null) {
+            return null;
         }
+        return InventoryComponent.getCombined(accessor, playerRef, InventoryComponent.EVERYTHING);
     }
 }

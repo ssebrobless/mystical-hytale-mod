@@ -42,7 +42,7 @@ public final class HydroInventoryBridge implements ResourceManager.HydroInventor
     }
 
     public void syncContainerItem(Player player, PlayerData playerData, boolean notify) {
-        if (player == null || playerData == null || player.getInventory() == null) {
+        if (player == null || playerData == null) {
             return;
         }
 

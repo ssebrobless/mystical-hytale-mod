@@ -79,12 +79,13 @@ import com.motm.util.MotmPreflightAudit;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
-import com.hypixel.hytale.server.core.event.events.player.PlayerCraftEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
@@ -96,8 +97,6 @@ import org.joml.Vector3d;
 import org.joml.Vector3i;
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.InteractionType;
-import com.hypixel.hytale.protocol.packets.interface_.ChatType;
-import com.hypixel.hytale.protocol.packets.interface_.ServerMessage;
 
 import java.nio.file.Path;
 import java.nio.file.Files;
@@ -264,6 +263,13 @@ public class MenteesMod extends JavaPlugin {
                         classPassiveManager.onMobKilled(player, runtimePlayer, mobEntityId);
                     }
                 }
+                @Override
+                public void afterMobKilled(PlayerData player, Player runtimePlayer, String mobEntityId) {
+                    if (runtimePerkManager != null) {
+                        runtimePerkManager.afterMobKilled(player, runtimePlayer, mobEntityId);
+                    }
+                }
+
 
                 @Override
                 public void applyKillTriggers(String playerId, Player runtimePlayer) {
@@ -1081,6 +1087,30 @@ public class MenteesMod extends JavaPlugin {
                         classPassiveManager.tick(onlineRuntimePlayers.snapshot(), currentStore);
                     }
                 }
+                @Override
+                public void tickRuntimePerks(Store<EntityStore> currentStore) {
+                    if (runtimePerkManager == null) {
+                        return;
+                    }
+                    for (Map.Entry<String, Player> entry : onlineRuntimePlayers.snapshot().entrySet()) {
+                        Player runtimePlayer = entry.getValue();
+                        Ref<EntityStore> playerRef = runtimePlayer != null ? runtimePlayer.getReference() : null;
+                        if (playerRef == null || !playerRef.isValid() || playerRef.getStore() != currentStore) {
+                            continue;
+                        }
+                        PlayerData player = playerDataManager != null
+                                ? playerDataManager.getOnlinePlayer(entry.getKey())
+                                : null;
+                        runtimePerkManager.onPlayerTick(
+                                player,
+                                runtimePlayer,
+                                playerRef,
+                                currentStore,
+                                0L
+                        );
+                    }
+                }
+
 
                 @Override
                 public void processDevCommandInbox(Store<EntityStore> currentStore) {
@@ -1938,8 +1968,7 @@ public class MenteesMod extends JavaPlugin {
                 this::onPlayerDisconnect,
                 this::handleDamageBlock,
                 this::handlePlayerInteract,
-                this::handlePlayerMouseButton,
-                this::handlePlayerCraft
+                this::handlePlayerMouseButton
         );
     }
 
@@ -2373,9 +2402,9 @@ public class MenteesMod extends JavaPlugin {
         }
     }
 
-    private void handlePlayerCraft(PlayerCraftEvent event) {
+    public void handlePlayerCraft(CraftingRecipe recipe, int quantity, Player player) {
         if (runtimePerkManager != null) {
-            runtimePerkManager.handlePlayerCraft(event);
+            runtimePerkManager.handlePlayerCraft(recipe, quantity, player);
         }
     }
 
@@ -2479,11 +2508,18 @@ public class MenteesMod extends JavaPlugin {
     public boolean isCustomHudEnabled() { return CUSTOM_HUD_ENABLED; }
 
     public void sendPlayerMessage(Player player, Message message) {
-        if (player == null || message == null || player.getPlayerConnection() == null) {
+        if (player == null || message == null) {
             return;
         }
         try {
-            player.getPlayerConnection().write(new ServerMessage(ChatType.Chat, message.getFormattedMessage()));
+            Ref<EntityStore> playerRef = player.getReference();
+            Store<EntityStore> store = playerRef != null && playerRef.isValid() ? playerRef.getStore() : null;
+            PlayerRef universePlayerRef = store != null && playerRef != null
+                    ? store.getComponent(playerRef, PlayerRef.getComponentType())
+                    : null;
+            if (universePlayerRef != null) {
+                universePlayerRef.sendMessage(message);
+            }
         } catch (Exception e) {
             LOG.warning("[MOTM] Failed to send player message: " + e.getMessage());
         }
@@ -2568,12 +2604,17 @@ public class MenteesMod extends JavaPlugin {
 
     public double getBlacksmithArmorDamageReduction(String playerId) {
         Player player = getRuntimePlayer(playerId);
-        if (player == null || player.getInventory() == null || player.getInventory().getArmor() == null) {
+        Ref<EntityStore> playerRef = player != null ? player.getReference() : null;
+        Store<EntityStore> store = playerRef != null && playerRef.isValid() ? playerRef.getStore() : null;
+        InventoryComponent.Armor armor = store != null && playerRef != null
+                ? store.getComponent(playerRef, InventoryComponent.Armor.getComponentType())
+                : null;
+        if (armor == null || armor.getInventory() == null) {
             return 0.0;
         }
         final int[] enhancedPieces = {0};
         final double[] extraResistance = {0.0};
-        player.getInventory().getArmor().forEach((slot, stack) -> {
+        armor.getInventory().forEach((slot, stack) -> {
             if (hasBooleanMetadata(stack, BLACKSMITH_METADATA_KEY)) {
                 enhancedPieces[0]++;
                 if (stack != null && stack.getItem() != null && stack.getItem().getArmor() != null) {

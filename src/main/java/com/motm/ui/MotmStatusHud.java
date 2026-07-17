@@ -1,6 +1,7 @@
 package com.motm.ui;
 
 import com.hypixel.hytale.server.core.entity.entities.player.hud.CustomUIHud;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.motm.MenteesMod;
@@ -869,11 +870,15 @@ public class MotmStatusHud extends CustomUIHud {
         }
 
         var runtimePlayer = mod.getRuntimePlayer(player.getPlayerId());
-        if (runtimePlayer == null || runtimePlayer.getInventory() == null) {
+        if (runtimePlayer == null || runtimePlayer.getReference() == null || !runtimePlayer.getReference().isValid()
+                || runtimePlayer.getReference().getStore() == null) {
             return false;
         }
 
-        return mod.isSpellbookItem(runtimePlayer.getInventory().getItemInHand());
+        return mod.isSpellbookItem(InventoryComponent.getItemInHand(
+                runtimePlayer.getReference().getStore(),
+                runtimePlayer.getReference()
+        ));
     }
 
     private void setText(UICommandBuilder commands, String selector, String value) {

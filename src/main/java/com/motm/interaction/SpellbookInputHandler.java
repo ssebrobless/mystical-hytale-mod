@@ -6,6 +6,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.protocol.InteractionType;
@@ -53,7 +54,10 @@ public final class SpellbookInputHandler {
             }
 
             ItemStack eventItemInHand = event.getItemInHand();
-            ItemStack inventoryItemInHand = player.getInventory() != null ? player.getInventory().getItemInHand() : null;
+            ItemStack inventoryItemInHand = player.getReference() != null && player.getReference().isValid()
+                    && player.getReference().getStore() != null
+                    ? InventoryComponent.getItemInHand(player.getReference().getStore(), player.getReference())
+                    : null;
             ItemStack itemInHand = eventItemInHand != null && !eventItemInHand.isEmpty()
                     ? eventItemInHand
                     : inventoryItemInHand;
@@ -143,7 +147,10 @@ public final class SpellbookInputHandler {
             }
 
             var eventItemInHand = event.getItemInHand();
-            ItemStack inventoryItemInHand = player.getInventory() != null ? player.getInventory().getItemInHand() : null;
+            ItemStack inventoryItemInHand = player.getReference() != null && player.getReference().isValid()
+                    && player.getReference().getStore() != null
+                    ? InventoryComponent.getItemInHand(player.getReference().getStore(), player.getReference())
+                    : null;
             String itemId = resolveMouseButtonItemId(eventItemInHand, inventoryItemInHand);
             boolean hasSelectedStyle = hasSelectedStyle(playerData);
             String loggedItemId = itemId == null || itemId.isBlank() ? "<none>" : itemId;

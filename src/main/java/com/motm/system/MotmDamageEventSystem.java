@@ -9,6 +9,7 @@ import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
@@ -145,7 +146,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
         }
 
         Player runtimePlayer = store.getComponent(sourceRef, Player.getComponentType());
-        if (runtimePlayer == null || runtimePlayer.getInventory() == null) {
+        if (runtimePlayer == null) {
             return;
         }
 
@@ -160,7 +161,7 @@ public class MotmDamageEventSystem extends DamageEventSystem {
             return;
         }
 
-        ItemStack held = runtimePlayer.getInventory().getItemInHand();
+        ItemStack held = InventoryComponent.getItemInHand(store, sourceRef);
         String itemId = held != null ? held.getItemId() : null;
         String response = mod.getGameplayPlaybackManager().handleNativeWeaponDamage(
                 runtimePlayer,

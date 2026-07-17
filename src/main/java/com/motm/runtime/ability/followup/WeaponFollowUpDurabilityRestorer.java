@@ -1,9 +1,12 @@
 package com.motm.runtime.ability.followup;
 
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.util.MotmInventoryOps;
 
 import java.util.Locale;
@@ -15,15 +18,29 @@ public final class WeaponFollowUpDurabilityRestorer {
     }
 
     public static boolean restoreHeldItemDurability(Player runtimePlayer, String itemId, Logger logger) {
-        if (runtimePlayer == null || runtimePlayer.getInventory() == null || itemId == null || itemId.isBlank()) {
+        if (runtimePlayer == null || itemId == null || itemId.isBlank()
+                || runtimePlayer.getReference() == null || !runtimePlayer.getReference().isValid()
+                || runtimePlayer.getReference().getStore() == null) {
             return false;
         }
 
-        Inventory inventory = runtimePlayer.getInventory();
-        if (restoreActiveContainerDurability(inventory.getTools(), inventory.getActiveToolsSlot(), itemId, logger)) {
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef.getStore();
+        InventoryComponent.Tool tools = store.getComponent(playerRef, InventoryComponent.Tool.getComponentType());
+        if (tools != null && restoreActiveContainerDurability(
+                tools.getInventory(),
+                tools.getActiveSlot(),
+                itemId,
+                logger)) {
             return true;
         }
-        return restoreActiveContainerDurability(inventory.getHotbar(), inventory.getActiveHotbarSlot(), itemId, logger);
+        InventoryComponent.Hotbar hotbar = store.getComponent(playerRef, InventoryComponent.Hotbar.getComponentType());
+        return hotbar != null && restoreActiveContainerDurability(
+                hotbar.getInventory(),
+                hotbar.getActiveSlot(),
+                itemId,
+                logger
+        );
     }
 
     static boolean restoreActiveContainerDurability(ItemContainer container,

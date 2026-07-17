@@ -4,6 +4,7 @@ import org.joml.Vector3i;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.motm.model.PlayerData;
@@ -84,7 +85,7 @@ public final class BlockDamageInteractionHandler {
 
         for (Map.Entry<String, Player> entry : support.onlineRuntimePlayers()) {
             Player candidate = entry.getValue();
-            if (candidate == null || candidate.getInventory() == null) {
+            if (candidate == null) {
                 continue;
             }
 
@@ -93,7 +94,10 @@ public final class BlockDamageInteractionHandler {
                 continue;
             }
 
-            ItemStack itemInHand = candidate.getInventory().getItemInHand();
+            ItemStack itemInHand = candidate.getReference() != null && candidate.getReference().isValid()
+                    && candidate.getReference().getStore() != null
+                    ? InventoryComponent.getItemInHand(candidate.getReference().getStore(), candidate.getReference())
+                    : null;
             if (requireTerraPickaxe
                     && (itemInHand == null || itemInHand.isEmpty() || !eventItemId.equalsIgnoreCase(itemInHand.getItemId()))) {
                 continue;
@@ -133,8 +137,9 @@ public final class BlockDamageInteractionHandler {
         if (eventItem != null && !eventItem.isEmpty()) {
             return false;
         }
-        ItemStack held = player != null && player.getInventory() != null
-                ? player.getInventory().getItemInHand()
+        ItemStack held = player != null && player.getReference() != null
+                && player.getReference().isValid() && player.getReference().getStore() != null
+                ? InventoryComponent.getItemInHand(player.getReference().getStore(), player.getReference())
                 : null;
         return held == null || held.isEmpty();
     }

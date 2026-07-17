@@ -1,5 +1,7 @@
 package com.motm.runtime.player;
 
+import java.util.logging.Logger;
+
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.motm.model.PlayerData;
 
@@ -8,6 +10,9 @@ import com.motm.model.PlayerData;
  * kill/death events.
  */
 public final class PlayerCombatLifecycleActions {
+
+    private static final Logger LOG = Logger.getLogger("MOTM");
+    private boolean perkKillCreditObserved;
 
     private final Hooks hooks;
 
@@ -26,6 +31,13 @@ public final class PlayerCombatLifecycleActions {
         Player runtimePlayer = hooks.runtimePlayer(playerId);
         if (runtimePlayer != null) {
             hooks.classPassiveMobKilled(player, runtimePlayer, mobEntityId);
+            hooks.afterMobKilled(player, runtimePlayer, mobEntityId);
+            if (!perkKillCreditObserved) {
+                perkKillCreditObserved = true;
+                LOG.info("[MOTM] event=perk_kill_credit playerId=" + playerId
+                        + " mobEntityId=" + mobEntityId);
+            }
+
         }
         hooks.applyKillTriggers(playerId, runtimePlayer);
         hooks.checkAchievements(player, "mob_killed", null);
@@ -59,6 +71,8 @@ public final class PlayerCombatLifecycleActions {
         void resourceMobKilled(String playerId, String playerClass);
 
         void classPassiveMobKilled(PlayerData player, Player runtimePlayer, String mobEntityId);
+        void afterMobKilled(PlayerData player, Player runtimePlayer, String mobEntityId);
+
 
         void applyKillTriggers(String playerId, Player runtimePlayer);
 

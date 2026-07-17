@@ -102,6 +102,11 @@ class PlayerCombatLifecycleActionsTest {
         }
 
         @Override
+        public void afterMobKilled(PlayerData player, Player runtimePlayer, String mobEntityId) {
+            events.add("perk-kill");
+        }
+
+        @Override
         public void applyKillTriggers(String playerId, Player runtimePlayer) {
             events.add("kill-triggers");
         }

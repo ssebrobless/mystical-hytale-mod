@@ -83,7 +83,7 @@ public final class HytaleAssetResolver {
     private static final String MODEL_YETI = "Common/NPC/Beast/Yeti/Models/Model.blockymodel";
     private static final String MODEL_CROCODILE = "Common/NPC/Swimming_Beast/Crocodile/Models/Model.blockymodel";
     private static final String MODEL_SNAPJAW = "Common/NPC/Swimming_Beast/Snapjaw/Models/Model.blockymodel";
-    private static final String MODEL_CALCITE_STALACTITE = "Common/Items/Rocks/Rock_Calcite_Stalactite_Large.blockymodel";
+    private static final String MODEL_CALCITE_STALACTITE = "Common/Blocks/Stone/Stalactite_Sharp_Large.blockymodel";
     private static final String MODEL_FIRE_GOLEM = "Common/NPC/Elemental/Golem_Firesteel/Models/Model.blockymodel";
     private static final String MODEL_SCARAK = "Common/NPC/Beast/Scarak_Fighter/Models/Model.blockymodel";
     private static final String MODEL_SCARAK_BROODMOTHER = "Common/NPC/Beast/Scarak_Broodmother/Models/Model.blockymodel";
@@ -91,7 +91,7 @@ public final class HytaleAssetResolver {
     private static final String MODEL_PTERODACTYL = "Common/NPC/Flying_Beast/Pterodactyl/Models/Model.blockymodel";
     private static final String MODEL_BAT = "Common/NPC/Flying_Critter/Bat/Models/Model.blockymodel";
     private static final String MODEL_SHADOW_KNIGHT = "Common/NPC/Undead/Shadow_Knight/Models/Model.blockymodel";
-    private static final String MODEL_TRILLODON = "Common/NPC/Beast/Trillodon/Models/Model.blockymodel";
+    private static final String MODEL_TRILLODON = "Common/NPC/Wildlife/Trillodon/Models/Model.blockymodel";
     private static final String MODEL_REX_CAVE = "Common/NPC/Beast/Rex_Cave/Models/Model.blockymodel";
     private static final String MODEL_VOID_SPAWN = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
     private static final String MODEL_CRAWLER_VOID = "Common/NPC/Void/Crawler_Void/Models/Model.blockymodel";

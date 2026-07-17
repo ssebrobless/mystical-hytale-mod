@@ -63,6 +63,8 @@ public class ClassPassiveManager {
     private static final int TERRA_CAVE_REQUIRED_SOLID_BLOCKS = 3;
     private static final int CORRUPTUS_SOUL_HARVEST_MAX_STACKS = 5;
     private static final int CORRUPTUS_SOUL_HARVEST_LOCKOUT_TICKS = 10 * 60 * TICKS_PER_SECOND;
+    private static final String CORRUPTUS_SOUL_HARVEST_EFFECT_ID = "MOTM_Corruptus_Impact";
+
     private static final int PERSISTENT_AQUA_BARRIER_TICKS = Integer.MAX_VALUE / 4;
     private static final Pattern DECIMAL_PATTERN = Pattern.compile("([0-9]+(?:\\.[0-9]+)?)");
 
@@ -92,6 +94,10 @@ public class ClassPassiveManager {
     private final Map<String, MovementSettingsSnapshot> aeroMovementSettingsByPlayer = new HashMap<>();
     private final Map<String, Integer> corruptusDarkResurrectionStacksByPlayer = new HashMap<>();
     private final Map<String, Long> corruptusPassiveLockoutUntilTickByPlayer = new HashMap<>();
+    private final Set<String> corruptusSoulHarvestSaveInProgress = new HashSet<>();
+    private boolean soulHarvestSaveObserved;
+
+
 
     private long tickCounter = 0L;
 
@@ -139,6 +145,8 @@ public class ClassPassiveManager {
         aeroMoveBoostByPlayer.remove(playerId);
         corruptusDarkResurrectionStacksByPlayer.remove(playerId);
         corruptusPassiveLockoutUntilTickByPlayer.remove(playerId);
+        corruptusSoulHarvestSaveInProgress.remove(playerId);
+
     }
 
     public synchronized void suppressHydroAquaBarrierForDevCleanup(String playerId, Player runtimePlayer) {
@@ -792,25 +800,40 @@ public class ClassPassiveManager {
     }
 
     private void triggerDarkResurrection(String playerId, Ref<EntityStore> playerRef, Store<EntityStore> store) {
-        EntityStatMap entityStatMap = store.getComponent(playerRef, EntityStatMap.getComponentType());
-        if (entityStatMap == null) {
+        if (playerId == null || !corruptusSoulHarvestSaveInProgress.add(playerId)) {
             return;
         }
 
-        EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
-        if (health == null || health.getMax() <= 0.0f) {
-            return;
-        }
+        try {
+            EntityStatMap entityStatMap = store.getComponent(playerRef, EntityStatMap.getComponentType());
+            if (entityStatMap == null) {
+                return;
+            }
 
-        float targetHealth = (float) Math.max(1.0, health.getMax() * corruptusPassive.resurrectionHealthFraction());
-        entityStatMap.setStatValue(DefaultEntityStatTypes.getHealth(), targetHealth);
-        corruptusDarkResurrectionStacksByPlayer.put(playerId, 0);
-        corruptusPassiveLockoutUntilTickByPlayer.put(playerId, tickCounter + corruptusPassive.lockoutTicks());
-        statusEffectManager.removeEffect(playerId, StatusEffect.Type.BURN);
-        statusEffectManager.removeEffect(playerId, StatusEffect.Type.DOT);
-        LOG.info("[MOTM] Soul Harvest resurrection triggered: player=" + playerId
-                + " restoredHealth=" + formatDecimal(targetHealth)
-                + " lockoutTicks=" + corruptusPassive.lockoutTicks());
+            EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+            if (health == null || health.getMax() <= 0.0f) {
+                return;
+            }
+
+            float targetHealth = (float) Math.max(1.0, health.getMax() * corruptusPassive.resurrectionHealthFraction());
+            entityStatMap.setStatValue(DefaultEntityStatTypes.getHealth(), targetHealth);
+            corruptusDarkResurrectionStacksByPlayer.put(playerId, 0);
+            corruptusPassiveLockoutUntilTickByPlayer.put(playerId, tickCounter + corruptusPassive.lockoutTicks());
+            applyEffectById(playerRef, store, CORRUPTUS_SOUL_HARVEST_EFFECT_ID);
+            statusEffectManager.removeEffect(playerId, StatusEffect.Type.BURN);
+            statusEffectManager.removeEffect(playerId, StatusEffect.Type.DOT);
+            if (!soulHarvestSaveObserved) {
+                soulHarvestSaveObserved = true;
+                LOG.info("[MOTM] event=soul_harvest_save playerId=" + playerId
+                        + " restoredHealth=" + formatDecimal(targetHealth)
+                        + " lockoutTicks=" + corruptusPassive.lockoutTicks());
+            }
+            LOG.info("[MOTM] Soul Harvest resurrection triggered: player=" + playerId
+                    + " restoredHealth=" + formatDecimal(targetHealth)
+                    + " lockoutTicks=" + corruptusPassive.lockoutTicks());
+        } finally {
+            corruptusSoulHarvestSaveInProgress.remove(playerId);
+        }
     }
 
     private boolean isCorruptusPassiveLockedOut(String playerId) {

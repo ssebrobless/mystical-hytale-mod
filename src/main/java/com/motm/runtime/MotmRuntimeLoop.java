@@ -17,6 +17,8 @@ public final class MotmRuntimeLoop {
 
     private long lastHeartbeatAtMs = 0L;
     private int hudRefreshTickCounter = 0;
+    private boolean perkTickActivationObserved;
+
 
     public MotmRuntimeLoop(int hudRefreshIntervalTicks, long heartbeatIntervalMs, Hooks hooks) {
         this.hudRefreshIntervalTicks = Math.max(1, hudRefreshIntervalTicks);
@@ -32,6 +34,12 @@ public final class MotmRuntimeLoop {
         hooks.processRuntimeTask("player-maintenance", currentStore);
         hooks.processFreeCastSafety(currentStore);
         hooks.tickClassPassives(currentStore);
+        hooks.tickRuntimePerks(currentStore);
+        if (!perkTickActivationObserved) {
+            perkTickActivationObserved = true;
+            hooks.logFine("[MOTM] event=perk_tick_active");
+        }
+
         hooks.processRuntimeTask("style-test-sequence", currentStore);
         hooks.processRuntimeTask("ability-test", currentStore);
         hooks.processRuntimeTask("dev", currentStore);
@@ -113,6 +121,8 @@ public final class MotmRuntimeLoop {
         void processFreeCastSafety(Store<EntityStore> currentStore);
 
         void tickClassPassives(Store<EntityStore> currentStore);
+        void tickRuntimePerks(Store<EntityStore> currentStore);
+
 
         void processDevCommandInbox(Store<EntityStore> currentStore);
 

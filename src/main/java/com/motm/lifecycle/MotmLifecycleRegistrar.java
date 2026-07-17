@@ -4,13 +4,13 @@ import com.hypixel.hytale.registry.Registration;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.DamageBlockEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
-import com.hypixel.hytale.server.core.event.events.player.PlayerCraftEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.motm.MenteesMod;
 import com.motm.command.MotmCommandBase;
+import com.motm.system.MotmCraftRecipeEventSystem;
 import com.motm.system.MotmDamageEventSystem;
 import com.motm.system.MotmMobRuntimeSystem;
 import com.motm.system.MotmServerTickSystem;
@@ -42,8 +42,7 @@ public final class MotmLifecycleRegistrar {
                          Consumer<String> onPlayerDisconnect,
                          Consumer<DamageBlockEvent> onDamageBlock,
                          Consumer<PlayerInteractEvent> onPlayerInteract,
-                         Consumer<PlayerMouseButtonEvent> onPlayerMouseButton,
-                         Consumer<PlayerCraftEvent> onPlayerCraft) {
+                         Consumer<PlayerMouseButtonEvent> onPlayerMouseButton) {
         if (!registrations.isEmpty()) {
             log.info("[MOTM] Hytale event/command hooks already registered.");
             return;
@@ -63,12 +62,12 @@ public final class MotmLifecycleRegistrar {
         registrations.add(mod.getEventRegistry().registerGlobal(DamageBlockEvent.class, onDamageBlock::accept));
         registrations.add(mod.getEventRegistry().registerGlobal(PlayerInteractEvent.class, onPlayerInteract::accept));
         registrations.add(mod.getEventRegistry().registerGlobal(PlayerMouseButtonEvent.class, onPlayerMouseButton::accept));
-        registrations.add(mod.getEventRegistry().registerGlobal(PlayerCraftEvent.class, onPlayerCraft::accept));
         registrations.add(mod.getCommandRegistry().registerCommand(new MotmCommandBase(mod)));
 
         if (!runtimeSystemsRegistered) {
             mod.getEntityStoreRegistry().registerSystem(new MotmServerTickSystem(mod));
             mod.getEntityStoreRegistry().registerSystem(new MotmMobRuntimeSystem(mod));
+            mod.getEntityStoreRegistry().registerSystem(new MotmCraftRecipeEventSystem(mod));
             mod.getEntityStoreRegistry().registerSystem(new MotmDamageEventSystem(mod));
             runtimeSystemsRegistered = true;
         }

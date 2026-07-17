@@ -27,7 +27,7 @@ public final class TerraInventoryResourceBridge implements ResourceManager.Terra
     @Override
     public int countInventoryResource(String playerId, String resourceType) {
         Player player = lookupPlayer(playerId);
-        if (player == null || player.getInventory() == null || resourceType == null || resourceType.isBlank()) {
+        if (player == null || resourceType == null || resourceType.isBlank()) {
             return 0;
         }
 
@@ -42,7 +42,7 @@ public final class TerraInventoryResourceBridge implements ResourceManager.Terra
         }
 
         Player player = lookupPlayer(playerId);
-        if (player == null || player.getInventory() == null || resourceType == null || resourceType.isBlank()) {
+        if (player == null || resourceType == null || resourceType.isBlank()) {
             return false;
         }
 

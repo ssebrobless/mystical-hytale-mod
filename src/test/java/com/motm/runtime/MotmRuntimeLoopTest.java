@@ -29,6 +29,8 @@ class MotmRuntimeLoopTest {
                 "task:player-maintenance",
                 "free-cast-safety",
                 "class-passives",
+                "runtime-perks",
+                "log-perk-tick-active",
                 "task:style-test-sequence",
                 "task:ability-test",
                 "task:dev",
@@ -81,6 +83,11 @@ class MotmRuntimeLoopTest {
         @Override
         public void tickElementalReactions() {
             events.add("elemental-reactions");
+        }
+
+        @Override
+        public void tickRuntimePerks(Store<EntityStore> currentStore) {
+            events.add("runtime-perks");
         }
 
         @Override
@@ -178,7 +185,7 @@ class MotmRuntimeLoopTest {
 
         @Override
         public void logFine(String message) {
-            events.add("log-dot");
+            events.add(message.contains("perk_tick_active") ? "log-perk-tick-active" : "log-dot");
         }
 
         @Override
