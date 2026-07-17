@@ -242,3 +242,45 @@ project committed to on 2026-06-01.
 4. Leveling feedback loop complete (XP/level-up/milestone events, DoT).
 5. Zero `[removal]` warnings; zero SEVERE role/asset errors at world load.
 6. Public-readiness + canon-drift + no-resource audits PASS; public jar on CurseForge.
+
+## 8. Revision 1 - 2026-07-16 (intent & visual research wave)
+
+Inputs: `docs/intent-canon-visual-fitness-2026-07-16.md` (intent canon + fitness audit)
+and `docs/modding-research-2026-07-16.md` (ecosystem/API/asset research). W0.1 is DONE
+(commit `faeb9d9`): role assets shipped, all role assignment guarded, role SEVEREs gone.
+
+### New defects (add to Sec. 5 ledger)
+
+| # | Item | Severity |
+|---|---|---|
+| 8 | `RuntimePerkManager.onPlayerTick()` never invoked from the runtime loop - all tick-based perk state dead (Accelerate, Bunny Hop, Semiaquatic, Ignite DoT, ghost lifetimes, eco-tree expiry) | HIGH - contradicts PERK_RUNTIME_STATUS "implemented" |
+| 9 | `PlayerCombatLifecycleActions.onMobKilled()` never calls `RuntimePerkManager.afterMobKilled()` - Haunting ghosts and kill-trigger perks dead | HIGH |
+| 10 | `ElementalReactionManager.applyMark()` has no ingress from ability combat - entire reaction system dormant | HIGH |
+| 11 | Resolver keyword-routing brittleness (`hellfire`/`soul_scorch` can miss the fire branch and fall to void FX); `asRuntimeEffectId()` silently drops vanilla-path resolver rows | MED |
+| 12 | Identity drifts: triceratops (3 conflicting model ids), summon `modelIds()` vs `modelId()`, orphaned `MOTM_Arbor_Sapling_Pink_Glow`, `crawler_void` missing from resolver | MED |
+
+### Workstream changes
+
+- **W0 gains W0.4**: fix defects #8-#10 (three wiring seams; small diffs, big behavioral
+  unlock). Do BEFORE the perk family pass in W4 - perk visuals are pointless while ticks
+  are dead. W0.2 (API migration) and W0.3 (casing audit) unchanged, still open.
+- **New research gates (extend capability atlas before W2/W3)**: R6 `ParticleUtil`
+  world-space burst (may delete proxy dependency from tether/field visuals); R7
+  `EntityScaleComponent`; R8 pack-shipped custom `.particlesystem`; R9
+  `PersistentDynamicLight` on non-player proxy; R10 `Intangible` phasing (smoke_form).
+- **New workstream WV - Visual Identity Pass** (runs beside W3-W5, feeds sweep gates):
+  - WV.1 replace `Spark_Living` projectile/field proxies with native
+    `Projectile_Config_MOTM_*` configs per family (magma_sling is the template);
+    wind/psychic need surrogate or custom models.
+  - WV.2 generate per-style EntityEffect stacks (`MOTM_{Class}_{Style}_*`) from the
+    REALIGNMENT palette tables; target ~160 effects (52 today); theme candidates from
+    the research doc catalog.
+  - WV.3 fix HIGH misfits from the intent doc tables (smoke_form Bat, Portal_Teleport
+    impact, raise_dead Shadow_Knight, blue hell_flame, rainbow, anchor_haul,
+    self_petrification, vines).
+  - WV.4 custom-asset shortlist (decision rule applied): mist-humanoid model, pink
+    psychic marker + particle system, Aqua Barrier bubble (conditional).
+- **Sweep gate tightened**: a style sweep cannot PASS with an open HIGH misfit for that
+  style (intent doc Sec. 9 rule 4).
+- **Grill session needed**: intent doc Sec. 8 lists undocumented-intent items per class;
+  schedule with the author before implementing those abilities.
