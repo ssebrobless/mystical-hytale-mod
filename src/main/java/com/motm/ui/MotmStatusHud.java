@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public class MotmStatusHud extends CustomUIHud {
 
-    private static final String HUD_DOCUMENT = "Hud/MOTM_StatusHud.ui";
+    private static final String HUD_DOCUMENT = "HUD/MOTM_StatusHud.ui";
     private static final int MAX_BUFF_SLOTS = 3;
     private static final int MAX_DEBUFF_SLOTS = 3;
     private static final int MAX_TRACKER_ROWS = 12;

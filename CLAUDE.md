@@ -59,3 +59,5 @@ keeps the older Claude-oriented project rules in sync.
 - `GameplayPlaybackManager.java` is still large. Prefer small, test-backed slices
   that keep public behavior stable rather than broad rewrites.
 - Custom HUD documents require `IncludesAssetPack=true`, and HUD install should be deferred briefly after join so the client can resolve the UI safely.
+- Custom UI document and classpath resource paths are CASE-SENSITIVE (verified 2026-07-16: client hard-disconnects on world join if the append path casing differs from the packed resource, e.g. `Hud/` vs `HUD/`). Match `src/main/resources` casing exactly; the preflight audit's `ERROR hud` line is the early warning.
+- Hytale client API deprecations marked for removal (Inventory accessors, PlayerCraftEvent, getPlayerConnection) compile with warnings as of 0.5.6; migrate call sites in MenteesMod, RuntimePerkManager, MotmPlayerInventory, WeaponFollowUpDurabilityRestorer before the next major game update.
