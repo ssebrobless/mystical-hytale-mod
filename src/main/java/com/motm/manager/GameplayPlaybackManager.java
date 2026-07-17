@@ -2235,6 +2235,14 @@ public class GameplayPlaybackManager {
         if (effectApplied) {
             casterVisualState.record(player.getPlayerId(), effectId);
         }
+        if ("self_buff".equals(lower(ability.getCastType())) && ability.getDurationSeconds() > 0) {
+            String selfLoopId = AbilityRuntimeEffects.selfLoopEffectId(
+                    player.getPlayerClass(), currentStyleId(player), ability);
+            if (selfLoopId != null) {
+                selfAdapter.startActiveSelfEffect(playerRef, player.getPlayerId(), selfLoopId,
+                        System.currentTimeMillis() + (long) (ability.getDurationSeconds() * 1000.0));
+            }
+        }
         MovementResult movementResult = applyMovement(runtimePlayer, playerRef, store, ability);
 
         List<String> summaryParts = new ArrayList<>();

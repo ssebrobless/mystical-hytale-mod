@@ -1,12 +1,14 @@
 {
   "Duration": 0.45,
   "OverlapBehavior": "Overwrite",
-  "WorldSoundEventId": "SFX_Stone_Break",
   "ApplicationEffects": {
     "EntityTopTint": "#2a1808",
     "EntityBottomTint": "#120906",
     "Particles": [
-      { "SystemId": "Block_Break_Stone" }
-    ]
+      {
+        "SystemId": "Block_Break_Stone"
+      }
+    ],
+    "WorldSoundEventId": "SFX_Stone_Break"
   }
 }

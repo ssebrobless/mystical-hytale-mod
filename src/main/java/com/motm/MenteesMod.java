@@ -1198,6 +1198,8 @@ public class MenteesMod extends JavaPlugin {
             }
     );
     private volatile MotmPreflightAudit.AuditReport lastPreflightAudit;
+    private final java.util.concurrent.atomic.AtomicBoolean preflightWorldRerunPending =
+            new java.util.concurrent.atomic.AtomicBoolean(true);
 
     // Plugin data directory
     private Path pluginDirectory;
@@ -2034,6 +2036,11 @@ public class MenteesMod extends JavaPlugin {
     }
 
     public void onPlayerReady(Player runtimePlayer) {
+        if (preflightWorldRerunPending.compareAndSet(true, false)) {
+            // Setup-time preflight cannot see world asset maps; re-audit once
+            // now that the registry is loaded so manifest validation is real.
+            runPreflightAudit();
+        }
         playerSessionLifecycleActions.onPlayerReady(runtimePlayer);
     }
 

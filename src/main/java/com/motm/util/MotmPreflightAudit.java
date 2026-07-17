@@ -137,6 +137,11 @@ public final class MotmPreflightAudit {
             audit.error("manifest", "Expected " + EXPECTED_TOTAL_ABILITIES
                     + " rows, found " + manifest.size() + ".");
         }
+        if (!worldAssetMapsReady()) {
+            audit.warning("manifest", "World asset maps are not loaded yet; per-row asset validation "
+                    + "is deferred to the automatic re-run at first player ready.");
+            return;
+        }
 
         for (Map.Entry<String, AbilityVisualManifest.Row> entry : manifest.rows().entrySet()) {
             String scope = "manifest:" + entry.getKey();
@@ -170,6 +175,20 @@ public final class MotmPreflightAudit {
                             + row.projectileConfig() + "'.");
                 }
             }
+        }
+    }
+
+    /**
+     * The plugin setup hook runs before the server's asset registry loads
+     * vanilla and pack assets, so map lookups at boot report false negatives.
+     * Probe with sentinel assets that always exist once the registry is up.
+     */
+    private static boolean worldAssetMapsReady() {
+        try {
+            return EntityEffect.getAssetMap().getAsset("Immunity_Fire") != null
+                    && NPCPlugin.get().hasRoleName("Spark_Living");
+        } catch (RuntimeException | LinkageError error) {
+            return false;
         }
     }
 

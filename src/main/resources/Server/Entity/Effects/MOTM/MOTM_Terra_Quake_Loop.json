@@ -1,14 +1,20 @@
 {
   "Duration": 0.85,
   "OverlapBehavior": "Extend",
-  "WorldSoundEventId": "SFX_Stone_Break",
   "ApplicationEffects": {
     "EntityTopTint": "#3a2410",
     "EntityBottomTint": "#a87455",
     "Particles": [
-      { "SystemId": "Mace_Signature_Ground_Hit" },
-      { "SystemId": "Block_Break_Stone" },
-      { "SystemId": "Earth_Brazier_Glow" }
-    ]
+      {
+        "SystemId": "Mace_Signature_Ground_Hit"
+      },
+      {
+        "SystemId": "Block_Break_Stone"
+      },
+      {
+        "SystemId": "Earth_Brazier_Glow"
+      }
+    ],
+    "WorldSoundEventId": "SFX_Stone_Break"
   }
 }

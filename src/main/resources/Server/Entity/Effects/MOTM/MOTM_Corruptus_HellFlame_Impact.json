@@ -7,7 +7,7 @@
     "WorldSoundEventId": "SFX_Staff_Flame_Fireball_Impact",
     "Particles": [
       {
-        "SystemId": "Fire_Blue_Smoke"
+        "SystemId": "Fire_Blue"
       },
       {
         "SystemId": "Fire_Blue"

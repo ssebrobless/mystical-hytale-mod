@@ -1,7 +1,6 @@
 {
   "Duration": 0.45,
   "OverlapBehavior": "Overwrite",
-  "WorldSoundEventId": "SFX_Wolf_Alerted",
   "ApplicationEffects": {
     "EntityTopTint": "#f4ffff",
     "EntityBottomTint": "#51d2ff",
@@ -12,6 +11,7 @@
       {
         "SystemId": "Battleaxe_Signature_Whirlwind"
       }
-    ]
+    ],
+    "WorldSoundEventId": "SFX_Wolf_Alerted"
   }
 }

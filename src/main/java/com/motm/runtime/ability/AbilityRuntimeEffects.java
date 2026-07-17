@@ -34,6 +34,17 @@ public final class AbilityRuntimeEffects {
         };
     }
 
+    /**
+     * Loop-phase visual for self-centered duration casts (auras, storms,
+     * coatings). Null when the ability has no authored loop asset.
+     */
+    public static String selfLoopEffectId(String classId, String styleId, AbilityData ability) {
+        if (ability == null) {
+            return null;
+        }
+        return asRuntimeEffectId(HytaleAssetResolver.resolve(classId, styleId, ability).getLoopEffectAsset());
+    }
+
     public static String projectileVisualEffectId(String classId, String styleId, AbilityData ability) {
         String themed = themedEffectId(classId, styleId, ability, RuntimeEffectKind.MOVE);
         if (themed != null) {

@@ -9,7 +9,7 @@
         "SystemId": "Block_Break_Sand"
       },
       {
-        "SystemId": "Block_Break_Sand_Dust"
+        "SystemId": "Block_Hit_Sand"
       }
     ]
   }

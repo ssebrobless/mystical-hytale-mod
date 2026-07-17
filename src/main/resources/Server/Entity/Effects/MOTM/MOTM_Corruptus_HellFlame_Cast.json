@@ -8,7 +8,7 @@
     "LocalSoundEventId": "SFX_Staff_Flame_Fireball_Launch_Local",
     "Particles": [
       {
-        "SystemId": "Fire_Center_Blue"
+        "SystemId": "Fire_Blue"
       }
     ]
   }

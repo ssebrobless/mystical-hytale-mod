@@ -1,7 +1,6 @@
 {
   "Duration": 0.35,
   "OverlapBehavior": "Extend",
-  "WorldSoundEventId": "SFX_Wolf_Alerted",
   "ApplicationEffects": {
     "EntityTopTint": "#f8ffff",
     "EntityBottomTint": "#76d8f5",
@@ -13,9 +12,10 @@
         "SystemId": "Daggers_Dash_Straight"
       },
       {
-        "SystemId": "Wind_Sparks_Tail"
+        "SystemId": "Wind_Spirit_Tail"
       }
     ],
-    "ModelVFXId": "Dagger_Dash"
+    "ModelVFXId": "Dagger_Dash",
+    "WorldSoundEventId": "SFX_Wolf_Alerted"
   }
 }
