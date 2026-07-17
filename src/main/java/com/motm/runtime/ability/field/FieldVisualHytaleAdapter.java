@@ -17,6 +17,7 @@ import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.motm.model.AbilityData;
 import com.motm.runtime.state.VisualProxyRuntimeState;
 import com.motm.util.HytaleAssetResolver;
+import com.motm.util.MotmNpcRoles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +65,8 @@ public final class FieldVisualHytaleAdapter {
         float despawnTimeSeconds = (float) Math.max(1.0, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.75);
         for (Vector3d position : positions) {
             NPCEntity proxy = new NPCEntity(world);
-            proxy.setRoleName(roleId);
+            MotmNpcRoles.applyRole(proxy, roleId,
+                    HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), LOG);
             proxy.setDespawnTime(despawnTimeSeconds);
             world.spawnEntity(proxy, new Vector3d(position), new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
 

@@ -16,11 +16,15 @@ import com.motm.model.PlayerData;
 import com.motm.model.StyleData;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.HytaleAssetResolver;
+import com.motm.util.MotmNpcRoles;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Logger;
 
 public final class SummonLifecycleHytaleAdapter {
+    private static final Logger LOG = Logger.getLogger("MOTM");
+
     private final SummonRuntimeState summonState;
     private final SummonActivationRuntime activationRuntime;
     private final Support support;
@@ -79,7 +83,8 @@ public final class SummonLifecycleHytaleAdapter {
             SummonSpawnDescriptor descriptor = summons.get(index);
             Vector3d spawnPosition = offsetSpawnPosition(baseSpawnPosition, forward, index, summons.size());
             NPCEntity summon = new NPCEntity(world);
-            summon.setRoleName(descriptor.roleId());
+            MotmNpcRoles.applyRole(summon, descriptor.roleId(),
+                    HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), LOG);
             summon.setDespawnTime((float) Math.max(2.0, ability.getDurationSeconds()));
             world.spawnEntity(summon, spawnPosition, new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
 

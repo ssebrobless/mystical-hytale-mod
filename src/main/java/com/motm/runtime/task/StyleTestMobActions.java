@@ -17,6 +17,8 @@ import org.joml.Vector3f;
 import org.joml.Vector3i;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.motm.runtime.state.StyleTestRuntimeState;
+import com.motm.util.HytaleAssetResolver;
+import com.motm.util.MotmNpcRoles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +43,9 @@ public final class StyleTestMobActions {
     private static final Set<String> GLOBAL_CLEANUP_ROLES = Set.of(
             "Test_Dummy_Stationary",
             "Mannequin",
-            "Spark_Living"
+            "Spark_Living",
+            "MOTM_Scarak_Fighter_Ally",
+            "MOTM_Scarak_Defender_Ally"
     );
 
     private final StyleTestRuntimeState state;
@@ -368,7 +372,8 @@ public final class StyleTestMobActions {
     private Ref<EntityStore> spawnNpc(World world, Vector3d position, String roleName) {
         try {
             NPCEntity npc = new NPCEntity(world);
-            npc.setRoleName(roleName);
+            MotmNpcRoles.applyRole(npc, roleName,
+                    HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), log);
             npc.setDespawnTime(240.0f);
             world.spawnEntity(npc, new Vector3d(position), new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
 

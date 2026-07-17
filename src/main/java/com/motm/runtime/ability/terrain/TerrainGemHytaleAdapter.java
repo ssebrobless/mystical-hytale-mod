@@ -19,8 +19,13 @@ import com.motm.runtime.ability.field.FieldVisualHytaleAdapter;
 import com.motm.runtime.state.VisualProxyRuntimeState;
 import com.motm.util.AbilityPresentation;
 import com.motm.util.HytaleAssetResolver;
+import com.motm.util.MotmNpcRoles;
+
+import java.util.logging.Logger;
 
 public final class TerrainGemHytaleAdapter {
+    private static final Logger LOG = Logger.getLogger("MOTM");
+
     private final LapidaryGemRuntimeState gemState;
     private final TerrainActivationRuntime activationRuntime;
     private final VisualProxyRuntimeState visualProxyState;
@@ -67,7 +72,7 @@ public final class TerrainGemHytaleAdapter {
                 * Math.max(0.10, ability.getShieldPercent() / 100.0));
         Vector3d proxyPosition = new Vector3d(center).add(1.0, 2.35, 1.0);
         NPCEntity proxy = new NPCEntity(world);
-        proxy.setRoleName(HytaleAssetResolver.resolveRenderlessVisualProxyRoleId());
+        MotmNpcRoles.applyRole(proxy, HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), LOG);
         proxy.setDespawnTime((float) Math.max(1.0, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5));
         world.spawnEntity(proxy, proxyPosition, new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
 

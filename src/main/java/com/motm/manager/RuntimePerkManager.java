@@ -43,6 +43,8 @@ import com.motm.MenteesMod;
 import com.motm.model.PlayerData;
 import com.motm.model.StatusEffect;
 import com.motm.util.MotmInventoryOps;
+import com.motm.util.HytaleAssetResolver;
+import com.motm.util.MotmNpcRoles;
 import org.bson.BsonBoolean;
 import org.bson.BsonString;
 
@@ -1306,7 +1308,8 @@ public class RuntimePerkManager {
             return null;
         }
         NPCEntity ghost = new NPCEntity(world);
-        ghost.setRoleName(GHOST_ROLE_ID);
+        MotmNpcRoles.applyRole(ghost, GHOST_ROLE_ID,
+                HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), LOG);
         ghost.setDespawnTime(60.0f);
         Vector3d spawn = new Vector3d(ownerPosition.x + 1.5, ownerPosition.y + 1.0, ownerPosition.z);
         world.spawnEntity(ghost, spawn, new Rotation3f(0f, 0f, 0f));

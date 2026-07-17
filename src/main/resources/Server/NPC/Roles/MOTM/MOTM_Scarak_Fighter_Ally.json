@@ -1,0 +1,25 @@
+{
+  "Type": "Generic",
+  "MotionControllerList": [
+    {
+      "Type": "Walk"
+    }
+  ],
+  "Appearance": "Scarak_Fighter",
+  "DropList": "Empty",
+  "MaxHealth": { "Compute": "MaxHealth" },
+  "Parameters": {
+    "MaxHealth": {
+      "Value": 100,
+      "Description": "Max health for the NPC"
+    },
+    "Description": {
+      "Value": "Legacy self-heal stub slated for cleanup.",
+      "Description": "Legacy self-heal stub slated for cleanup."
+    }
+  },
+  "Instructions": [
+    { }
+  ],
+  "NameTranslationKey": "server.npcRoles.Empty_Role.name"
+}

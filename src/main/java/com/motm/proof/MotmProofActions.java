@@ -24,6 +24,8 @@ import com.motm.runtime.state.ProofCleanupRuntimeState;
 import com.motm.runtime.state.TemporaryProofProxy;
 import com.motm.runtime.state.TemporaryProofSelection;
 import com.motm.util.MotmObservability;
+import com.motm.util.HytaleAssetResolver;
+import com.motm.util.MotmNpcRoles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -236,7 +238,8 @@ public final class MotmProofActions implements MotmProofRuntime.DefaultProofActi
         }
         Vector3d position = com.motm.util.MotmVectors.addScaled(base, forward, distanceAhead);
         NPCEntity proxy = new NPCEntity(world);
-        proxy.setRoleName(roleId);
+        MotmNpcRoles.applyRole(proxy, roleId,
+                HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), log);
         proxy.setDespawnTime(4.5f);
         world.spawnEntity(proxy, position, new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
 

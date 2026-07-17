@@ -18,6 +18,7 @@ import com.motm.model.AbilityData;
 import com.motm.runtime.state.VisualProxyRuntimeState;
 import com.motm.util.HytaleAssetResolver;
 import com.motm.util.MotmObservability;
+import com.motm.util.MotmNpcRoles;
 
 import java.util.Map;
 import java.util.Locale;
@@ -68,7 +69,8 @@ public final class ProjectileVisualHytaleAdapter {
 
         String roleId = HytaleAssetResolver.resolveProjectileRoleId(classId, styleId, ability);
         NPCEntity proxy = new NPCEntity(world);
-        proxy.setRoleName(roleId);
+        MotmNpcRoles.applyRole(proxy, roleId,
+                HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), log);
         proxy.setDespawnTime((float) Math.max(0.6, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5));
         world.spawnEntity(proxy, new Vector3d(position), new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
 
