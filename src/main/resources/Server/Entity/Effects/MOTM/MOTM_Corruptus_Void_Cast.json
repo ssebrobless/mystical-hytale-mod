@@ -4,6 +4,7 @@
   "ApplicationEffects": {
     "EntityTopTint": "#c3b6ff",
     "EntityBottomTint": "#25113d",
+    "WorldSoundEventId": "SFX_Portal_Void",
     "Particles": [
       {
         "SystemId": "VoidImpact"

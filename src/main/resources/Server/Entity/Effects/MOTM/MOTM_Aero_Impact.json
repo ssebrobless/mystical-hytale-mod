@@ -4,6 +4,18 @@
   "ApplicationEffects": {
     "EntityBottomTint": "#6fb9b4",
     "EntityTopTint": "#f0fffb",
-    "ModelVFXId": "Portal_Teleport"
+    "WorldSoundEventId": "SFX_Global_Weather_Thunder",
+    "Particles": [
+      {
+        "SystemId": "Wind"
+      },
+      {
+        "SystemId": "Daggers_Dash_Straight"
+      },
+      {
+        "SystemId": "Wind_Sparks_Tail"
+      }
+    ],
+    "ModelVFXId": "Dagger_Dash"
   }
 }

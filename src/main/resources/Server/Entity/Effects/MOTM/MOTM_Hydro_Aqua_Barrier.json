@@ -2,6 +2,7 @@
   "Duration": 1.5,
   "OverlapBehavior": "Extend",
   "ApplicationEffects": {
+    "WorldSoundEventId": "SFX_Water_MoveIn",
     "Particles": [
       {
         "SystemId": "E_Sphere"

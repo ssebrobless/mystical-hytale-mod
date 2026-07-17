@@ -8,6 +8,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.component.DisplayNameComponent;
+import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
@@ -160,7 +161,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
             return null;
         }
 
-        applyScaledResult(ref, store, commandBuffer, result);
+        applyScaledResult(ref, store, commandBuffer, result, mobType);
 
         String category = mod.getDataLoader().getMobCategory(mobType);
         boolean isRare = result.stats().isElite()
@@ -177,7 +178,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
 
     private void applyScaledResult(Ref<EntityStore> ref, Store<EntityStore> store,
                                    CommandBuffer<EntityStore> commandBuffer,
-                                   ScaledMobResult result) {
+                                   ScaledMobResult result, String mobType) {
         EntityStatMap entityStatMap = store.getComponent(ref, EntityStatMap.getComponentType());
         if (entityStatMap != null) {
             applyHealthScaling(entityStatMap, result.stats().getHealth());
@@ -190,6 +191,12 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
 
         commandBuffer.putComponent(ref, DisplayNameComponent.getComponentType(),
                 new DisplayNameComponent(displayName));
+        commandBuffer.putComponent(ref, Nameplate.getComponentType(),
+                new Nameplate(mod.getMobScalingManager().formatMobName(
+                        mobType,
+                        result.level(),
+                        "hostile"
+                )));
     }
 
     private void applyHealthScaling(EntityStatMap entityStatMap, double targetHealth) {

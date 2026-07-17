@@ -6,7 +6,9 @@ import com.motm.model.AbilityData;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 /**
  * Maps MOTM abilities onto real built-in Hytale assets so the future runtime
  * layer has concrete animation / particle / model targets to use.
@@ -103,22 +105,24 @@ public final class HytaleAssetResolver {
     private static final String ROLE_SLUG_MAGMA = "Slug_Magma";
     private static final String ROLE_SPARK_LIVING = "Spark_Living";
     private static final String ROLE_VISUAL_PROXY = ROLE_SPARK_LIVING;
+    private static final Logger LOG = Logger.getLogger(HytaleAssetResolver.class.getName());
+    private static final Set<String> MANIFEST_FALLBACK_WARNINGS = ConcurrentHashMap.newKeySet();
 
     private HytaleAssetResolver() {
     }
-
     public static AbilityActionAssets resolve(String classId, String styleId, AbilityData ability) {
         if (ability == null) {
             return AbilityActionAssets.empty();
         }
 
+        AbilityVisualManifest.Row manifest = manifestRow(ability);
         return new AbilityActionAssets(
                 resolveAnimation(classId, styleId, ability),
-                resolveCastEffect(classId, styleId, ability),
-                resolveTravelEffect(classId, styleId, ability),
-                resolveImpactEffect(classId, styleId, ability),
-                resolveLoopEffect(classId, styleId, ability),
-                resolveModel(classId, styleId, ability)
+                manifest == null ? resolveCastEffect(classId, styleId, ability) : manifest.cast(),
+                manifest == null ? resolveTravelEffect(classId, styleId, ability) : manifest.travel(),
+                manifest == null ? resolveImpactEffect(classId, styleId, ability) : manifest.impact(),
+                manifest == null ? resolveLoopEffect(classId, styleId, ability) : manifest.loop(),
+                manifest == null ? resolveModel(classId, styleId, ability) : manifest.model()
         );
     }
 
@@ -154,6 +158,10 @@ public final class HytaleAssetResolver {
     }
 
     public static String resolveProjectileRoleId(String classId, String styleId, AbilityData ability) {
+        AbilityVisualManifest.Row manifest = manifestRow(ability);
+        if (manifest != null) {
+            return manifest.role();
+        }
         String abilityId = ability == null ? "" : lower(ability.getId());
         String style = lower(styleId);
 
@@ -673,6 +681,18 @@ public final class HytaleAssetResolver {
         return abilityId.contains("pterodactyl")
                 || abilityId.contains("flight")
                 || abilityId.contains("smoke_form");
+    }
+
+    private static AbilityVisualManifest.Row manifestRow(AbilityData ability) {
+        if (ability == null || ability.getId() == null || ability.getId().isBlank()) {
+            return null;
+        }
+        String abilityId = lower(ability.getId());
+        AbilityVisualManifest.Row row = AbilityVisualManifest.current().lookup(abilityId);
+        if (row == null && MANIFEST_FALLBACK_WARNINGS.add(abilityId)) {
+            LOG.warning("[MOTM] Ability visual manifest row missing; using branch fallback: ability=" + abilityId);
+        }
+        return row;
     }
 
     private static String lower(String value) {

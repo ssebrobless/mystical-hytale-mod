@@ -1,0 +1,13 @@
+{
+  "Duration": 0.9,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#66aaff",
+    "EntityBottomTint": "#0a1e50",
+    "Particles": [
+      {
+        "SystemId": "Fire_Blue"
+      }
+    ]
+  }
+}

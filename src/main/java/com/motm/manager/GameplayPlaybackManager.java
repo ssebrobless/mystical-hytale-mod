@@ -174,6 +174,7 @@ public class GameplayPlaybackManager {
     private final AbilityMovementRuntime movementRuntime = new AbilityMovementRuntime();
     private final LavaHazardRuntimeState lavaHazardState = new LavaHazardRuntimeState();
     private final StompRuntimeState stompState = new StompRuntimeState();
+    private final com.motm.runtime.state.CasterVisualRuntimeState casterVisualState = new com.motm.runtime.state.CasterVisualRuntimeState();
     private final ProjectileRuntimeFacade projectileRuntime;
     private final FieldRuntimeState fieldState = new FieldRuntimeState();
     private final FieldActivationRuntime fieldActivationRuntime = new FieldActivationRuntime();
@@ -1732,7 +1733,9 @@ public class GameplayPlaybackManager {
         LOG.info("[MOTM] " + ability.getName() + " armed: player=" + player.getPlayerName()
                 + " - next jump's landing will trigger " + ability.getName());
         String effectId = AbilityRuntimeEffects.castEffectId(player.getPlayerClass(), currentStyleId(player), ability);
-        applyEffectById(playerRef, store, effectId);
+        if (applyEffectById(playerRef, store, effectId)) {
+            casterVisualState.record(player.getPlayerId(), effectId);
+        }
         int takeoffDisplaced = displaceTargetsAround(runtimePlayer, player, ability,
                 new Vector3d(transform.getTransform().getPosition()));
 
@@ -1981,6 +1984,9 @@ public class GameplayPlaybackManager {
         fieldOwnerMobilityAdapter.clearLavaPoolOwnerVelocityBoost(playerId, runtimeRef, runtimeStore);
         lavaHazardState.clearPlayer(playerId);
         fieldOriginState.clearCasterCenteredOrigin(playerId);
+        String trackedCasterEffect = casterVisualState.take(playerId);
+        int casterEffects = trackedCasterEffect != null
+                && removeEffectById(runtimeRef, runtimeStore, trackedCasterEffect) ? 1 : 0;
 
         String summary = "armed=" + armed
                 + " projectiles=" + projectiles
@@ -1996,7 +2002,8 @@ public class GameplayPlaybackManager {
                 + " followUps=" + followUps
                 + " summons=" + summons
                 + " terrain=" + terrain
-                + " proxies=" + proxies;
+                + " proxies=" + proxies
+                + " casterEffects=" + casterEffects;
         LOG.info("[MOTM] Style review runtime reset: playerId=" + playerId + " " + summary);
         return summary;
     }
@@ -2225,6 +2232,9 @@ public class GameplayPlaybackManager {
                 ? null
                 : AbilityRuntimeEffects.castEffectId(player.getPlayerClass(), currentStyleId(player), ability);
         boolean effectApplied = applyEffectById(playerRef, store, effectId);
+        if (effectApplied) {
+            casterVisualState.record(player.getPlayerId(), effectId);
+        }
         MovementResult movementResult = applyMovement(runtimePlayer, playerRef, store, ability);
 
         List<String> summaryParts = new ArrayList<>();

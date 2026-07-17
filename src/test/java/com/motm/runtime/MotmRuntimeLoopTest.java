@@ -185,7 +185,12 @@ class MotmRuntimeLoopTest {
 
         @Override
         public void logFine(String message) {
-            events.add(message.contains("perk_tick_active") ? "log-perk-tick-active" : "log-dot");
+            events.add("log-dot");
+        }
+
+        @Override
+        public void logInfo(String message) {
+            events.add(message.contains("perk_tick_active") ? "log-perk-tick-active" : "log-info");
         }
 
         @Override

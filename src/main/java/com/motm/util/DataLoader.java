@@ -43,6 +43,7 @@ public class DataLoader {
     private JsonObject xpConfig;
     private JsonObject mobBaseStats;
     private JsonObject mobScalingConfig;
+    private AbilityVisualManifest abilityVisualManifest = AbilityVisualManifest.empty();
 
     public DataLoader(Path dataDirectory) {
         this.dataDirectory = dataDirectory;
@@ -56,6 +57,8 @@ public class DataLoader {
         safeLoad("leveling", this::loadLevelingData);
         safeLoad("mobs", this::loadMobData);
         safeLoad("elite titles", this::loadEliteTitles);
+        safeLoad("ability visual manifest", this::loadAbilityVisualManifest);
+        AbilityVisualManifest.install(abilityVisualManifest);
         LOG.info("[MOTM] Data loading complete.");
     }
 
@@ -481,6 +484,19 @@ public class DataLoader {
             values.add(value.getAsString());
         }
         return values;
+    }
+
+    private void loadAbilityVisualManifest() {
+        JsonObject root = loadJson("data/ability-visual-manifest.json", JsonObject.class);
+        if (root == null) {
+            throw new IllegalStateException("Ability visual manifest is missing");
+        }
+        abilityVisualManifest = AbilityVisualManifest.fromJson(root);
+        LOG.info("[MOTM] Loaded " + abilityVisualManifest.size() + " ability visual manifest rows.");
+    }
+
+    public AbilityVisualManifest getAbilityVisualManifest() {
+        return abilityVisualManifest;
     }
 
     // --- Generic JSON loading ---

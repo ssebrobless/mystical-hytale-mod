@@ -6,6 +6,10 @@ import com.motm.model.AbilityData;
 import com.motm.model.ClassData;
 import com.motm.model.Perk;
 import com.motm.model.StyleData;
+import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
+import com.hypixel.hytale.server.core.asset.type.particle.config.ParticleSystem;
+import com.hypixel.hytale.server.core.modules.projectile.config.ProjectileConfig;
+import com.hypixel.hytale.server.npc.NPCPlugin;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -112,11 +116,81 @@ public final class MotmPreflightAudit {
         auditBootstrap(mod, audit);
         auditHudAndSpellbook(mod, audit);
         auditClassesAndAbilities(mod, audit);
+        auditAbilityVisualManifest(mod, audit);
 
         Path reportPath = writeReport(mod.getPluginDirectory(), audit);
         AuditReport report = audit.build(reportPath, mod.getPluginDirectory());
         logSummary(report);
         return report;
+    }
+
+    private static void auditAbilityVisualManifest(MenteesMod mod, AuditBuilder audit) {
+        DataLoader loader = mod.getDataLoader();
+        AbilityVisualManifest manifest = loader == null ? null : loader.getAbilityVisualManifest();
+        if (manifest == null) {
+            audit.error("manifest", "Ability visual manifest is not loaded.");
+            return;
+        }
+
+        audit.manifestRowCount = manifest.size();
+        if (manifest.size() != EXPECTED_TOTAL_ABILITIES) {
+            audit.error("manifest", "Expected " + EXPECTED_TOTAL_ABILITIES
+                    + " rows, found " + manifest.size() + ".");
+        }
+
+        for (Map.Entry<String, AbilityVisualManifest.Row> entry : manifest.rows().entrySet()) {
+            String scope = "manifest:" + entry.getKey();
+            AbilityVisualManifest.Row row = entry.getValue();
+            if (row == null) {
+                audit.error(scope, "Manifest row is null.");
+                continue;
+            }
+            if (!row.legacy()) {
+                validateManifestEffect(scope, "cast", row.cast(), audit);
+                validateManifestEffect(scope, "travel", row.travel(), audit);
+                validateManifestEffect(scope, "impact", row.impact(), audit);
+                validateManifestEffect(scope, "loop", row.loop(), audit);
+            }
+            if (!isBlank(row.role())) {
+                try {
+                    if (!NPCPlugin.get().hasRoleName(row.role())) {
+                        audit.error(scope, "Unknown NPC role '" + row.role() + "'.");
+                    }
+                } catch (RuntimeException | LinkageError error) {
+                    audit.error(scope, "NPC role map unavailable while validating '" + row.role() + "'.");
+                }
+            }
+            if (!isBlank(row.projectileConfig())) {
+                try {
+                    if (ProjectileConfig.getAssetMap().getAsset(row.projectileConfig()) == null) {
+                        audit.error(scope, "Unknown projectile config '" + row.projectileConfig() + "'.");
+                    }
+                } catch (RuntimeException | LinkageError error) {
+                    audit.error(scope, "Projectile config map unavailable while validating '"
+                            + row.projectileConfig() + "'.");
+                }
+            }
+        }
+    }
+
+    private static void validateManifestEffect(String scope,
+                                               String phase,
+                                               String assetId,
+                                               AuditBuilder audit) {
+        if (isBlank(assetId)) {
+            return;
+        }
+        try {
+            if (assetId.endsWith(".particlesystem")) {
+                if (ParticleSystem.getAssetMap().getAsset(assetId) == null) {
+                    audit.error(scope, "Unknown " + phase + " particle system '" + assetId + "'.");
+                }
+            } else if (EntityEffect.getAssetMap().getAsset(assetId) == null) {
+                audit.error(scope, "Unknown " + phase + " entity effect '" + assetId + "'.");
+            }
+        } catch (RuntimeException | LinkageError error) {
+            audit.error(scope, "Asset map unavailable while validating " + phase + " '" + assetId + "'.");
+        }
     }
 
     private static void auditBootstrap(MenteesMod mod, AuditBuilder audit) {
@@ -588,6 +662,7 @@ public final class MotmPreflightAudit {
         LOG.info("[MOTM] Classes=" + report.classCount()
                 + " Styles=" + report.styleCount()
                 + " Abilities=" + report.abilityCount()
+                + " ManifestRowsValidated=" + report.manifestRowCount()
                 + " Errors=" + report.errorCount()
                 + " Warnings=" + report.warningCount());
 
@@ -648,6 +723,7 @@ public final class MotmPreflightAudit {
             int classCount,
             int styleCount,
             int abilityCount,
+            int manifestRowCount,
             int errorCount,
             int warningCount,
             List<Finding> errors,
@@ -687,7 +763,8 @@ public final class MotmPreflightAudit {
             StringBuilder sb = new StringBuilder("[MOTM] Preflight Audit\n");
             sb.append("Classes: ").append(classCount)
                     .append(" | Styles: ").append(styleCount)
-                    .append(" | Abilities: ").append(abilityCount).append("\n");
+                    .append(" | Abilities: ").append(abilityCount)
+                    .append(" | Manifest rows validated: ").append(manifestRowCount).append("\n");
             sb.append("Errors: ").append(errorCount)
                     .append(" | Warnings: ").append(warningCount).append("\n");
             sb.append("Status: ").append(isHealthy()
@@ -715,6 +792,7 @@ public final class MotmPreflightAudit {
         private int classCount;
         private int styleCount;
         private int abilityCount;
+        private int manifestRowCount;
 
         private void error(String scope, String message) {
             errors.add(new Finding("ERROR", scope, message));
@@ -727,12 +805,12 @@ public final class MotmPreflightAudit {
         private void info(String scope, String message) {
             infos.add(new Finding("INFO", scope, message));
         }
-
         private AuditReport build(Path reportPath, Path pluginDirectory) {
             return new AuditReport(
                     classCount,
                     styleCount,
                     abilityCount,
+                    manifestRowCount,
                     errors.size(),
                     warnings.size(),
                     List.copyOf(errors),
@@ -750,6 +828,7 @@ public final class MotmPreflightAudit {
             sb.append("Classes   : ").append(classCount).append("\n");
             sb.append("Styles    : ").append(styleCount).append("\n");
             sb.append("Abilities : ").append(abilityCount).append("\n");
+            sb.append("Manifest  : ").append(manifestRowCount).append(" rows validated\n");
             sb.append("Errors    : ").append(errors.size()).append("\n");
             sb.append("Warnings  : ").append(warnings.size()).append("\n");
             sb.append("Status    : ").append(errors.isEmpty()

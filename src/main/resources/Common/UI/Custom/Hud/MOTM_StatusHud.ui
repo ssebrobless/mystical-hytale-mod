@@ -1055,72 +1055,96 @@
     Visible: false;
 
     Group #TrackerRow1Root { Anchor: (Left: 0, Top: 0, Width: 280, Height: 18); Visible: false;
+      Group #TrackerRow1Frame { Anchor: (Left: 266, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow1Icon { Anchor: (Left: 267, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow1NameShadow { Anchor: (Left: 1, Top: 1, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow1Name { Anchor: (Left: 0, Top: 0, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, TextColor: #ffffff); }
       Label #TrackerRow1TimerShadow { Anchor: (Left: 210, Top: 1, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #000000); }
       Label #TrackerRow1Timer { Anchor: (Left: 209, Top: 0, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #ffffff); }
     }
     Group #TrackerRow2Root { Anchor: (Left: 0, Top: 18, Width: 280, Height: 18); Visible: false;
+      Group #TrackerRow2Frame { Anchor: (Left: 266, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow2Icon { Anchor: (Left: 267, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow2NameShadow { Anchor: (Left: 1, Top: 1, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow2Name { Anchor: (Left: 0, Top: 0, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, TextColor: #ffffff); }
       Label #TrackerRow2TimerShadow { Anchor: (Left: 210, Top: 1, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #000000); }
       Label #TrackerRow2Timer { Anchor: (Left: 209, Top: 0, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #ffffff); }
     }
     Group #TrackerRow3Root { Anchor: (Left: 0, Top: 36, Width: 280, Height: 18); Visible: false;
+      Group #TrackerRow3Frame { Anchor: (Left: 266, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow3Icon { Anchor: (Left: 267, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow3NameShadow { Anchor: (Left: 1, Top: 1, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow3Name { Anchor: (Left: 0, Top: 0, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, TextColor: #ffffff); }
       Label #TrackerRow3TimerShadow { Anchor: (Left: 210, Top: 1, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #000000); }
       Label #TrackerRow3Timer { Anchor: (Left: 209, Top: 0, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #ffffff); }
     }
     Group #TrackerRow4Root { Anchor: (Left: 0, Top: 54, Width: 280, Height: 18); Visible: false;
+      Group #TrackerRow4Frame { Anchor: (Left: 266, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow4Icon { Anchor: (Left: 267, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow4NameShadow { Anchor: (Left: 1, Top: 1, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow4Name { Anchor: (Left: 0, Top: 0, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, TextColor: #ffffff); }
       Label #TrackerRow4TimerShadow { Anchor: (Left: 210, Top: 1, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #000000); }
       Label #TrackerRow4Timer { Anchor: (Left: 209, Top: 0, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #ffffff); }
     }
     Group #TrackerRow5Root { Anchor: (Left: 0, Top: 72, Width: 280, Height: 18); Visible: false;
+      Group #TrackerRow5Frame { Anchor: (Left: 266, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow5Icon { Anchor: (Left: 267, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow5NameShadow { Anchor: (Left: 1, Top: 1, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow5Name { Anchor: (Left: 0, Top: 0, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, TextColor: #ffffff); }
       Label #TrackerRow5TimerShadow { Anchor: (Left: 210, Top: 1, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #000000); }
       Label #TrackerRow5Timer { Anchor: (Left: 209, Top: 0, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #ffffff); }
     }
     Group #TrackerRow6Root { Anchor: (Left: 0, Top: 90, Width: 280, Height: 18); Visible: false;
+      Group #TrackerRow6Frame { Anchor: (Left: 266, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow6Icon { Anchor: (Left: 267, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow6NameShadow { Anchor: (Left: 1, Top: 1, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow6Name { Anchor: (Left: 0, Top: 0, Width: 205, Height: 16); Style: (HorizontalAlignment: End, FontSize: 10, TextColor: #ffffff); }
       Label #TrackerRow6TimerShadow { Anchor: (Left: 210, Top: 1, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #000000); }
       Label #TrackerRow6Timer { Anchor: (Left: 209, Top: 0, Width: 54, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 10, TextColor: #ffffff); }
     }
     Group #TrackerRow7Root { Anchor: (Left: 0, Top: 108, Width: 320, Height: 18); Visible: false;
+      Group #TrackerRow7Frame { Anchor: (Left: 315, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow7Icon { Anchor: (Left: 316, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow7NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow7Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
       Label #TrackerRow7TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
       Label #TrackerRow7Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
     }
     Group #TrackerRow8Root { Anchor: (Left: 0, Top: 126, Width: 320, Height: 18); Visible: false;
+      Group #TrackerRow8Frame { Anchor: (Left: 315, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow8Icon { Anchor: (Left: 316, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow8NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow8Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
       Label #TrackerRow8TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
       Label #TrackerRow8Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
     }
     Group #TrackerRow9Root { Anchor: (Left: 0, Top: 144, Width: 320, Height: 18); Visible: false;
+      Group #TrackerRow9Frame { Anchor: (Left: 315, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow9Icon { Anchor: (Left: 316, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow9NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow9Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
       Label #TrackerRow9TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
       Label #TrackerRow9Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
     }
     Group #TrackerRow10Root { Anchor: (Left: 0, Top: 162, Width: 320, Height: 18); Visible: false;
+      Group #TrackerRow10Frame { Anchor: (Left: 315, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow10Icon { Anchor: (Left: 316, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow10NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow10Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
       Label #TrackerRow10TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
       Label #TrackerRow10Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
     }
     Group #TrackerRow11Root { Anchor: (Left: 0, Top: 180, Width: 320, Height: 18); Visible: false;
+      Group #TrackerRow11Frame { Anchor: (Left: 315, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow11Icon { Anchor: (Left: 316, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow11NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow11Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
       Label #TrackerRow11TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }
       Label #TrackerRow11Timer { Anchor: (Left: 245, Top: 0, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #ffffff); }
     }
     Group #TrackerRow12Root { Anchor: (Left: 0, Top: 198, Width: 320, Height: 18); Visible: false;
+      Group #TrackerRow12Frame { Anchor: (Left: 315, Top: 1, Width: 16, Height: 16); Visible: false; }
+      Sprite #TrackerRow12Icon { Anchor: (Left: 316, Top: 2, Width: 14, Height: 14); TexturePath: "Common/UI/StatusEffects/Poison.png"; Visible: false; }
       Label #TrackerRow12NameShadow { Anchor: (Left: 1, Top: 1, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, RenderBold: false, TextColor: #000000); }
       Label #TrackerRow12Name { Anchor: (Left: 0, Top: 0, Width: 240, Height: 16); Style: (HorizontalAlignment: End, FontSize: 11, TextColor: #ffffff); }
       Label #TrackerRow12TimerShadow { Anchor: (Left: 246, Top: 1, Width: 68, Height: 16); Style: (HorizontalAlignment: Start, FontSize: 11, TextColor: #000000); }

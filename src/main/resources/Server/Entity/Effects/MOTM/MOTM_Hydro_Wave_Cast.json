@@ -4,6 +4,7 @@
   "ApplicationEffects": {
     "EntityTopTint": "#c7f6ff",
     "EntityBottomTint": "#1374af",
+    "WorldSoundEventId": "SFX_Water_MoveIn",
     "Particles": [
       {
         "SystemId": "Water_Bubble_Stream"

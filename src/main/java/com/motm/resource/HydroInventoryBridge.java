@@ -32,13 +32,19 @@ public final class HydroInventoryBridge implements ResourceManager.HydroInventor
     @Override
     public boolean hasHydroContainer(String playerId) {
         Player player = lookupPlayer(playerId);
-        return player != null && HydroContainerItems.hasContainer(MotmPlayerInventory.combined(player));
+        return player != null && HydroContainerItems.hasContainer(MotmPlayerInventory.combined(
+                player.getReference(),
+                player.getReference() != null ? player.getReference().getStore() : null
+        ));
     }
 
     @Override
     public int getHydroContainerTier(String playerId) {
         Player player = lookupPlayer(playerId);
-        return player == null ? 0 : HydroContainerItems.detectTier(MotmPlayerInventory.combined(player));
+        return player == null ? 0 : HydroContainerItems.detectTier(MotmPlayerInventory.combined(
+                player.getReference(),
+                player.getReference() != null ? player.getReference().getStore() : null
+        ));
     }
 
     public void syncContainerItem(Player player, PlayerData playerData, boolean notify) {
@@ -46,7 +52,10 @@ public final class HydroInventoryBridge implements ResourceManager.HydroInventor
             return;
         }
 
-        CombinedItemContainer inventory = MotmPlayerInventory.combined(player);
+        CombinedItemContainer inventory = MotmPlayerInventory.combined(
+                player.getReference(),
+                player.getReference() != null ? player.getReference().getStore() : null
+        );
         if (inventory == null) {
             return;
         }

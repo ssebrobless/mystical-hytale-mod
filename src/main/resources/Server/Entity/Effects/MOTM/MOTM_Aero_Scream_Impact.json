@@ -8,8 +8,14 @@
     "Particles": [
       {
         "SystemId": "Wind"
+      },
+      {
+        "SystemId": "Daggers_Dash_Straight"
+      },
+      {
+        "SystemId": "Wind_Sparks_Tail"
       }
     ],
-    "ModelVFXId": "Portal_Teleport"
+    "ModelVFXId": "Dagger_Dash"
   }
 }

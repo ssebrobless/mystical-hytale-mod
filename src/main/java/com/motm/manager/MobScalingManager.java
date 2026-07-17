@@ -322,7 +322,9 @@ public class MobScalingManager {
     // --- Display Helpers ---
 
     public String formatMobName(String mobType, int level, String category) {
-        return getLevelTitle(level) + "\nLevel " + Math.max(0, Math.min(200, level));
+        String displayName = formatDisplayName(mobType == null || mobType.isBlank() ? "Mob" : mobType);
+        return displayName + " - " + getLevelTitle(level)
+                + "\nLevel " + Math.max(0, Math.min(200, level));
     }
 
     public String formatEliteMobName(String mobType, int level, String eliteTitle) {

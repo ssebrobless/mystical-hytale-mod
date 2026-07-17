@@ -41,6 +41,7 @@ import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.motm.MenteesMod;
 import com.motm.model.PlayerData;
+import com.motm.model.Perk;
 import com.motm.model.StatusEffect;
 import com.motm.util.MotmInventoryOps;
 import com.motm.util.HytaleAssetResolver;
@@ -149,15 +150,119 @@ public class RuntimePerkManager {
             if (perkId == null || perkId.isBlank()) {
                 continue;
             }
+            Perk perk = mod.getDataLoader().getPerkByIdAnyClass(perkId);
             boolean active = isHudActive(player, perkId);
+            double cooldownSeconds = active ? 0.0 : cooldownSecondsRemaining(player.getPlayerId(), perkId);
+            String state = active
+                    ? "ACTIVE"
+                    : cooldownSeconds > 0.0 ? "COOLDOWN" : "READY";
             entries.add(new RuntimePerkHudEntry(
                     perkId,
                     resolvePerkName(perkId),
-                    active ? 0.0 : cooldownSecondsRemaining(player.getPlayerId(), perkId),
-                    active
+                    cooldownSeconds,
+                    active,
+                    resolvePerkIconPath(perk),
+                    resolvePerkFramePath(perk),
+                    state,
+                    resolvePerkCounterText(perk)
             ));
         }
         return entries;
+    }
+
+    private String resolvePerkIconPath(Perk perk) {
+        String semantic = resolvePerkEffectSemantic(perk);
+        if (containsAny(semantic, "fire", "ignite", "burn", "flame", "on_move")) {
+            return "Common/UI/StatusEffects/Burn.png";
+        }
+        if (containsAny(semantic, "poison", "corrupt", "dark", "void", "dot")) {
+            return "Common/UI/StatusEffects/Poison.png";
+        }
+        if (containsAny(semantic, "heal", "healing", "lifesteal", "regen", "restore", "health")) {
+            return "Common/UI/StatusEffects/HealthRegen.png";
+        }
+        if (containsAny(semantic, "movement", "move", "speed", "sprint", "swim", "dodge", "jump", "stamina", "fall")) {
+            return "Common/UI/StatusEffects/Stamina.png";
+        }
+        return "Common/UI/StatusEffects/Poison.png";
+    }
+
+    private String resolvePerkFramePath(Perk perk) {
+        int tier = perk == null ? 1 : Math.max(1, perk.getTier());
+        String quality = tier <= 1 ? "Common"
+                : tier == 2 ? "Rare"
+                : tier == 3 ? "Epic" : "Legendary";
+        return "Common/UI/ItemQualities/Slots/Slot" + quality + "@2x.png";
+    }
+
+    private String resolvePerkEffectSemantic(Perk perk) {
+        if (perk == null || perk.getEffects() == null) {
+            return "";
+        }
+        for (Perk.Effect effect : perk.getEffects()) {
+            if (effect == null) {
+                continue;
+            }
+            String type = effect.getType();
+            if (type == null || type.isBlank()) {
+                type = effect.getEffectType();
+            }
+            if (type == null || type.isBlank()) {
+                continue;
+            }
+            return (type + " " + safe(effect.getElement()) + " "
+                    + safe(effect.getStat()) + " " + safe(effect.getCondition())).toLowerCase(Locale.ROOT);
+        }
+        return "";
+    }
+
+    private String resolvePerkCounterText(Perk perk) {
+        String type = firstPerkEffectType(perk);
+        return switch (type) {
+            case "stacking_buff" -> "STACK";
+            case "on_hit", "on_hit_taken" -> "ON HIT";
+            case "on_kill", "ghost_on_kill" -> "ON KILL";
+            case "on_crit" -> "ON CRIT";
+            case "on_dodge" -> "ON DODGE";
+            case "on_ability_use" -> "ON CAST";
+            case "on_action" -> "ON ACTION";
+            default -> "";
+        };
+    }
+
+    private String firstPerkEffectType(Perk perk) {
+        if (perk == null || perk.getEffects() == null) {
+            return "";
+        }
+        for (Perk.Effect effect : perk.getEffects()) {
+            if (effect == null) {
+                continue;
+            }
+            String type = effect.getType();
+            if (type == null || type.isBlank()) {
+                type = effect.getEffectType();
+            }
+            if (type != null && !type.isBlank()) {
+                return type.toLowerCase(Locale.ROOT);
+            }
+        }
+        return "";
+    }
+
+    private boolean containsAny(String value, String... needles) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        for (String needle : needles) {
+            if (value.contains(needle)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 
     public float modifyIncomingDamage(PlayerData target, Ref<EntityStore> targetRef, Store<EntityStore> store,
@@ -1722,7 +1827,16 @@ public class RuntimePerkManager {
 
     private record RainState(boolean raining, int weatherIndex, String weatherId) {}
 
-    public record RuntimePerkHudEntry(String id, String name, double cooldownSeconds, boolean active) {}
+    public record RuntimePerkHudEntry(
+            String id,
+            String name,
+            double cooldownSeconds,
+            boolean active,
+            String iconPath,
+            String framePath,
+            String state,
+            String counterText
+    ) {}
 
     private record CraftedOutput(String itemId, int quantity) {}
 

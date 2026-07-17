@@ -1187,6 +1187,11 @@ public class MenteesMod extends JavaPlugin {
                 }
 
                 @Override
+                public void logInfo(String message) {
+                    LOG.info(message);
+                }
+
+                @Override
                 public long nowMs() {
                     return System.currentTimeMillis();
                 }
@@ -2335,7 +2340,8 @@ public class MenteesMod extends JavaPlugin {
     }
 
     private CombinedItemContainer getCombinedPlayerInventory(Player player) {
-        return MotmPlayerInventory.combined(player);
+        Ref<EntityStore> playerRef = player != null ? player.getReference() : null;
+        return MotmPlayerInventory.combined(playerRef, playerRef != null ? playerRef.getStore() : null);
     }
 
     public void rebuildPlayerRuntime(com.motm.model.PlayerData player) {

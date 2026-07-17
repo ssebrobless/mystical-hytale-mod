@@ -4,6 +4,7 @@
   "ApplicationEffects": {
     "EntityTopTint": "#d7f6ff",
     "EntityBottomTint": "#4b90c9",
+    "WorldSoundEventId": "SFX_Tornado",
     "Particles": [
       {
         "SystemId": "Battleaxe_Signature_Whirlwind"

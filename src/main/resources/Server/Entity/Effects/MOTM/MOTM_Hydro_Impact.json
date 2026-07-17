@@ -4,6 +4,11 @@
   "ApplicationEffects": {
     "EntityBottomTint": "#3e81b8",
     "EntityTopTint": "#c6f0ff",
-    "ModelVFXId": "Portal_Teleport"
+    "WorldSoundEventId": "SFX_Ice_Ball_Death",
+    "Particles": [
+      {
+        "SystemId": "Water_Can_Splash"
+      }
+    ]
   }
 }

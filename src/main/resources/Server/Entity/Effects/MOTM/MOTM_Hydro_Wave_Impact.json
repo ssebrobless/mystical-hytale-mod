@@ -4,11 +4,11 @@
   "ApplicationEffects": {
     "EntityTopTint": "#dfffff",
     "EntityBottomTint": "#3f96c2",
+    "WorldSoundEventId": "SFX_Water_MoveOut",
     "Particles": [
       {
         "SystemId": "Water_Can_Splash"
       }
-    ],
-    "ModelVFXId": "Portal_Teleport"
+    ]
   }
 }

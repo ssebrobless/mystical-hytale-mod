@@ -1,0 +1,1199 @@
+{
+  "schemaVersion": 1,
+  "abilities": {
+    "stomp": {
+      "cast": "MOTM_Terra_Quake_Cast",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Terra_Quake_Impact",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "aftershock": {
+      "cast": "MOTM_Terra_Quake_Cast",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Terra_Quake_Impact",
+      "loop": "MOTM_Terra_Quake_Loop",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "sinkhole": {
+      "cast": "MOTM_Terra_Quake_Cast",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Terra_Quake_Impact",
+      "loop": "MOTM_Terra_Sinkhole_Cracks",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "iron_wall": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "metal_coat": {
+      "cast": "MOTM_Proof_Coating_Metal",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Block/Metal/Spawners/Block_Break_Metal_Sparks.particlespawner",
+      "loop": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "alloy_enhancement": {
+      "cast": "MOTM_Proof_Alloy_Enhancement",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Proof_Alloy_Impact",
+      "loop": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "lava_pool": {
+      "cast": "Server/Particles/Combat/Fire_Stick/Spawners/Fire_Charge1_Fire.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Fire/Spawners/Impact_Smoke.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Fire/Spawners/Impact_Fire.particlespawner",
+      "loop": "MOTM_Proof_Lava_Pool_Field",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "obsidian_skin": {
+      "cast": "MOTM_Proof_Coating_Obsidian",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Proof_Coating_Obsidian",
+      "loop": "MOTM_Proof_Coating_Obsidian",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "magma_sling": {
+      "cast": "Server/Particles/Combat/Fire_Stick/Spawners/Fire_Charge1_Fire.particlespawner",
+      "travel": "MOTM_Proof_Magma_Sling_Travel",
+      "impact": "Server/Particles/Combat/Impact/Misc/Fire/Spawners/Impact_Fire.particlespawner",
+      "loop": "Server/Particles/Combat/Fire_Stick/Fire_Trap/Fire_AoE_Grow.particlesystem",
+      "model": "Common/Items/Projectiles/Fireball.blockymodel",
+      "role": "Spark_Living",
+      "projectileConfig": "Projectile_Config_MOTM_Magma_Sling_Visual",
+      "legacy": true
+    },
+    "rubble_rouser": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "model": "Server/Models/Projectiles/Items/Rubble/Rubble_Stone.json",
+      "role": "Spark_Living",
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "pillar_strike": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "rockslide": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "rooted": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "model": "Common/NPC/Elemental/Spirit_Root/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "vines": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": null,
+      "model": "Common/NPC/Elemental/Spirit_Root/Models/Model.blockymodel",
+      "role": "Spark_Living",
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "sapling": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": null,
+      "model": "Common/NPC/Elemental/Spirit_Root/Models/Model.blockymodel",
+      "role": "Spark_Living",
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "nightshade": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Proof_Coating_Poison",
+      "loop": null,
+      "model": null,
+      "role": "Spark_Living",
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "frolick": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "cacti_cluster": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Proof_Coating_Poison",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "gargoyle": {
+      "cast": "MOTM_Proof_Coating_Stone",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "glare": {
+      "cast": "MOTM_Proof_Coating_Stone",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Proof_Coating_Stone",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "tunnel": {
+      "cast": "MOTM_Proof_Coating_Stone",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "burrow": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "mudpit": {
+      "cast": "Server/Particles/Item/Lantern/Spawners/Earth_Brazier_Glow.particlespawner",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "Server/Particles/Combat/Mace/Signature/Spawners/Mace_Signature_Shockwave.particlespawner",
+      "loop": "MOTM_Proof_Debris_Wave",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "debris": {
+      "cast": "MOTM_Proof_Debris_Wave",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Proof_Debris_Wave",
+      "loop": "MOTM_Proof_Debris_Wave",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "sandstorm": {
+      "cast": "MOTM_Terra_Sand_Cast",
+      "travel": "MOTM_Terra_Sand_Travel",
+      "impact": "MOTM_Terra_Sand_Impact",
+      "loop": "MOTM_Terra_Sand_Loop",
+      "model": null,
+      "role": null,
+      "projectileConfig": null
+    },
+    "dust_devil": {
+      "cast": "MOTM_Terra_Sand_Cast",
+      "travel": "MOTM_Terra_Sand_Travel",
+      "impact": "MOTM_Terra_Sand_Impact",
+      "loop": "MOTM_Terra_Sand_Loop",
+      "model": null,
+      "role": null,
+      "projectileConfig": null
+    },
+    "vitrification": {
+      "cast": "MOTM_Terra_Sand_Cast",
+      "travel": "MOTM_Terra_Sand_Travel",
+      "impact": "MOTM_Terra_Sand_Impact",
+      "loop": "MOTM_Terra_Sand_Loop",
+      "model": null,
+      "role": null,
+      "projectileConfig": null
+    },
+    "lapidary": {
+      "cast": "MOTM_Proof_Gem_Green",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Proof_Gem_Green",
+      "loop": "MOTM_Proof_Gem_Green",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "fracture": {
+      "cast": "MOTM_Proof_Gem_Green",
+      "travel": "Server/Particles/Block/Crystal/Spawners/Block_Break_Crystal_Sparks.particlespawner",
+      "impact": "MOTM_Proof_Gem_Green",
+      "loop": "MOTM_Proof_Gem_Green",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "refraction": {
+      "cast": "MOTM_Proof_Gem_Green",
+      "travel": "Server/Particles/Block/Stone/Spawners/Block_Break_Stone_Dust.particlespawner",
+      "impact": "MOTM_Proof_Gem_Green",
+      "loop": "MOTM_Proof_Gem_Green",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "frozen_needles": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "stalactite_crash": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": "Common/Blocks/Stone/Stalactite_Sharp_Large.blockymodel",
+      "role": "Spark_Living",
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "skate": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "snow_imp": {
+      "cast": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "snowstorm": {
+      "cast": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "loop": "Server/Particles/Deployables/Slowness_Totem/Totem_Slow_SmokeFlat_Constant.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "frosty": {
+      "cast": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "loop": null,
+      "model": "Common/NPC/Elemental/Spirit_Frost/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "high_tide": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "waverider": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "riptide": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "piercing_rain": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "rainbow": {
+      "cast": "Server/Particles/Deployables/Healing_Totem/Totem_Heal_SmokeFlat_Constant.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Deployables/Healing_Totem/Totem_Heal_Sparks_Constant.particlespawner",
+      "loop": "Server/Particles/Deployables/Healing_Totem/Totem_Heal_Sparks_Constant.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "splash": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "scald": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Fire/Spawners/Impact_Smoke.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "geyser": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "overheat": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "vapor_vanish": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "dispersion": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "hidrosis": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "ice_cap": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "model": "Common/NPC/Elemental/Spirit_Frost/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "glacier": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "ice_shelf": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "loop": null,
+      "model": "Common/NPC/Elemental/Spirit_Frost/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "tide_pool": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "abyssal_assist": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "rip_current": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "leap_frog": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "river_rapids": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "swamp_monster": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "bilge_dump": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "anchor_haul": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Metal/Spawners/Block_Break_Metal_Sparks.particlespawner",
+      "impact": "Server/Particles/Block/Metal/Spawners/Block_Break_Metal_Sparks.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": "Spark_Living",
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "oil_spill": {
+      "cast": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "travel": "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner",
+      "impact": "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner",
+      "loop": "Server/Particles/Block/Water/Spawners/Bubbles.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "shriek": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "sonic_boom": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "battle_cry": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Battleaxe/Signature/Battleaxe_Signature_Whirlwind.particlesystem",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "jet_burst": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "afterburner": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "mach_punch": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "thunderclap": {
+      "cast": "Server/Particles/NPC/Void_Dragon/Spawners/Void_Lightning.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Sword/Signature/Spawners/Ready_Flash/Sword_Signature_Ready_Sparks.particlespawner",
+      "loop": null,
+      "model": "Common/NPC/Elemental/Spirit_Thunder/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "smite": {
+      "cast": "Server/Particles/NPC/Void_Dragon/Spawners/Void_Lightning.particlespawner",
+      "travel": "Server/Particles/NPC/Void_Dragon/Spawners/Void_Lightning.particlespawner",
+      "impact": "Server/Particles/Combat/Sword/Signature/Spawners/Ready_Flash/Sword_Signature_Ready_Sparks.particlespawner",
+      "loop": null,
+      "model": "Common/NPC/Elemental/Spirit_Thunder/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "chain_lightning": {
+      "cast": "Server/Particles/NPC/Void_Dragon/Spawners/Void_Lightning.particlespawner",
+      "travel": "Server/Particles/NPC/Void_Dragon/Spawners/Void_Lightning.particlespawner",
+      "impact": "Server/Particles/Combat/Sword/Signature/Spawners/Ready_Flash/Sword_Signature_Ready_Sparks.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "twister": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Battleaxe/Signature/Battleaxe_Signature_Whirlwind.particlesystem",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "funnel_cloud": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Battleaxe/Signature/Battleaxe_Signature_Whirlwind.particlesystem",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "eye_of_the_storm": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Battleaxe/Signature/Battleaxe_Signature_Whirlwind.particlesystem",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "leap": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "divebomb": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "hang_time": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "air_slash": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "gale_cutter": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "razor_wind": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "smoke_bomb": {
+      "cast": "Server/Particles/Combat/Mace/Signature/Spawners/Cast/Mace_Signature_Cast_Smoke.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Mace/Signature/Spawners/Cast/Mace_Signature_Cast_End_Smoke.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "vanish": {
+      "cast": "Server/Particles/Combat/Mace/Signature/Spawners/Cast/Mace_Signature_Cast_Smoke.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Battleaxe/Signature/Battleaxe_Signature_Whirlwind.particlesystem",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "smoke_form": {
+      "cast": "Server/Particles/Combat/Mace/Signature/Spawners/Cast/Mace_Signature_Cast_Smoke.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Mace/Signature/Spawners/Cast/Mace_Signature_Cast_End_Smoke.particlespawner",
+      "model": "Common/NPC/Flying_Critter/Bat/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "gust": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": "Common/NPC/Beast/Spark_Living/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "cyclone_shield": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Battleaxe/Signature/Battleaxe_Signature_Whirlwind.particlesystem",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "tempest": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": "Server/Particles/Combat/Battleaxe/Signature/Battleaxe_Signature_Whirlwind.particlesystem",
+      "model": "Common/NPC/Beast/Spark_Living/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "air_shot": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "bullet_storm": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "pressure_burst": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Combat/Battleaxe/Bash/Spawners/Battleaxe_Bash_Shockwave.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "smog": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Projectile/Acid/Spawners/Acid_Sparks.particlespawner",
+      "loop": "Server/Particles/Combat/Mace/Signature/Spawners/Cast/Mace_Signature_Cast_End_Smoke.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "toxic_breath": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Projectile/Acid/Spawners/Acid_Sparks.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "acid_rain": {
+      "cast": "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner",
+      "travel": "Server/Particles/NPC/Spirit_Wind/Spawners/Wind_Sparks_Tail.particlespawner",
+      "impact": "Server/Particles/Projectile/Acid/Spawners/Acid_Sparks.particlespawner",
+      "loop": "Server/Particles/Deployables/Slowness_Totem/Totem_Slow_SmokeFlat_Constant.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "fireball": {
+      "cast": "Server/Particles/Combat/Fire_Stick/Spawners/Fire_Charge1_Fire.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Fire/Spawners/Impact_Smoke.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Fire/Spawners/Impact_Fire.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "ignite": {
+      "cast": "Server/Particles/Combat/Fire_Stick/Spawners/Fire_Charge1_Fire.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Fire/Spawners/Impact_Fire.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "combust": {
+      "cast": "Server/Particles/Combat/Fire_Stick/Spawners/Fire_Charge1_Fire.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Fire/Spawners/Impact_Fire.particlespawner",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "raise_dead": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "life_drain": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "death_mark": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "shadow_step": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": "Common/NPC/Undead/Shadow_Knight/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "umbral_veil": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "dark_embrace": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "hellfire": {
+      "cast": "MOTM_Corruptus_HellFlame_Cast",
+      "travel": null,
+      "impact": "MOTM_Corruptus_HellFlame_Impact",
+      "loop": "MOTM_Corruptus_HellFlame_Loop",
+      "model": "Common/NPC/Elemental/Golem_Firesteel/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null
+    },
+    "infernal_ground": {
+      "cast": "MOTM_Corruptus_HellFlame_Cast",
+      "travel": null,
+      "impact": "MOTM_Corruptus_HellFlame_Impact",
+      "loop": "MOTM_Corruptus_HellFlame_Loop",
+      "model": null,
+      "role": null,
+      "projectileConfig": null
+    },
+    "soul_scorch": {
+      "cast": "MOTM_Corruptus_HellFlame_Cast",
+      "travel": null,
+      "impact": "MOTM_Corruptus_HellFlame_Impact",
+      "loop": "MOTM_Corruptus_HellFlame_Loop",
+      "model": null,
+      "role": null,
+      "projectileConfig": null
+    },
+    "dominate": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "mind_shatter": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "hivemind": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "imbue_power": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "imbue_fortitude": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "imbue_swiftness": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "sanctuary": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Deployables/Healing_Totem/Totem_Heal_Sparks_Constant.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "absorb": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "purify": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "rift": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSplash.particlespawner",
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "void_spawn": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": "Common/NPC/Void/Eye_Void/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "consume": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "scarak_egg": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "brood_surge": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "locust_queen": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": null,
+      "model": null,
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "pterodactyl_form": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": "Common/NPC/Flying_Beast/Pterodactyl/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "triceratops_form": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": "Common/NPC/Wildlife/Trillodon/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    },
+    "t_rex_form": {
+      "cast": "Server/Particles/NPC/Spectre_Void/Spawners/Void_Sparks.particlespawner",
+      "travel": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "impact": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem",
+      "loop": "Server/Particles/Combat/Impact/Misc/Void/VoidSmoke_Impact.particlespawner",
+      "model": "Common/NPC/Beast/Rex_Cave/Models/Model.blockymodel",
+      "role": null,
+      "projectileConfig": null,
+      "legacy": true
+    }
+  }
+}

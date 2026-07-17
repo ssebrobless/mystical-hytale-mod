@@ -36,7 +36,9 @@ public final class HydroContainerRefillHandler {
                              PlayerData playerData,
                              ItemStack itemInHand,
                              boolean holdingSpellbook) {
-        if (event == null || player == null || playerData == null || resourceManager == null) {
+        if (event == null || player == null || playerData == null || resourceManager == null
+                || player.getReference() == null || !player.getReference().isValid()
+                || player.getReference().getStore() == null) {
             return false;
         }
         if (!resourceManager.areAbilityResourceCostsEnabled()) {
@@ -48,7 +50,10 @@ public final class HydroContainerRefillHandler {
         if (!"hydro".equalsIgnoreCase(playerData.getPlayerClass())) {
             return false;
         }
-        if (!HydroContainerItems.hasContainer(com.motm.util.MotmPlayerInventory.combined(player))) {
+        if (!HydroContainerItems.hasContainer(com.motm.util.MotmPlayerInventory.combined(
+                player.getReference(),
+                player.getReference().getStore()
+        ))) {
             return false;
         }
         if (!canAttemptRefill(itemInHand, holdingSpellbook)) {

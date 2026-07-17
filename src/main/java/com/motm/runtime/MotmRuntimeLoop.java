@@ -37,7 +37,7 @@ public final class MotmRuntimeLoop {
         hooks.tickRuntimePerks(currentStore);
         if (!perkTickActivationObserved) {
             perkTickActivationObserved = true;
-            hooks.logFine("[MOTM] event=perk_tick_active");
+            hooks.logInfo("[MOTM] event=perk_tick_active");
         }
 
         hooks.processRuntimeTask("style-test-sequence", currentStore);
@@ -151,6 +151,7 @@ public final class MotmRuntimeLoop {
         void recordCausality(String type, Map<String, Object> data);
 
         void logFine(String message);
+        void logInfo(String message);
 
         long nowMs();
     }

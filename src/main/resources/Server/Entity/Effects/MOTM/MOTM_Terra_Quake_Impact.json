@@ -1,7 +1,7 @@
 {
   "Duration": 0.55,
   "OverlapBehavior": "Overwrite",
-  "WorldSoundEventId": "SFX_Stone_Break",
+  "WorldSoundEventId": "SFX_Golem_Earth_Stomp_Impact",
   "ApplicationEffects": {
     "EntityTopTint": "#3a2410",
     "EntityBottomTint": "#a87455",

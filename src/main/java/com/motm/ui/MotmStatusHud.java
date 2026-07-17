@@ -30,6 +30,10 @@ public class MotmStatusHud extends CustomUIHud {
     private static final int MAX_DEBUFF_SLOTS = 3;
     private static final int MAX_TRACKER_ROWS = 12;
     private static final int TICKS_PER_SECOND = 20;
+    private static final String TERRA_REGEN_ICON = "Common/UI/StatusEffects/HealthRegen.png";
+    private static final String MOVEMENT_ICON = "Common/UI/StatusEffects/Stamina.png";
+    private static final String CORRUPTUS_ICON = "Common/UI/StatusEffects/Poison.png";
+    private static final String HYDRO_BARRIER_ICON = "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
 
     private final MenteesMod mod;
 
@@ -123,7 +127,12 @@ public class MotmStatusHud extends CustomUIHud {
                 entries.add(new TrackerEntry(
                         perkEntry.name(),
                         perkEntry.cooldownSeconds(),
-                        perkEntry.active()
+                        perkEntry.active(),
+                        perkEntry.iconPath(),
+                        perkEntry.framePath(),
+                        perkEntry.state(),
+                        perkEntry.counterText(),
+                        true
                 ));
             }
         }
@@ -137,11 +146,25 @@ public class MotmStatusHud extends CustomUIHud {
 
         switch (classId) {
             case "terra" -> {
-                entries.add(new TrackerEntry("Immovable", 0.0, false));
+                entries.add(new TrackerEntry(
+                        "Immovable",
+                        0.0,
+                        passiveManager.isTerraShieldPrimed(playerId),
+                        TERRA_REGEN_ICON,
+                        null,
+                        passiveManager.isTerraShieldPrimed(playerId) ? "ACTIVE" : "READY",
+                        "",
+                        false
+                ));
                 entries.add(new TrackerEntry(
                         "Miner's Affinity",
                         0.0,
-                        passiveManager.isTerraMiningAffinityActive(playerId)
+                        passiveManager.isTerraMiningAffinityActive(playerId),
+                        MOVEMENT_ICON,
+                        null,
+                        passiveManager.isTerraMiningAffinityActive(playerId) ? "ACTIVE" : "READY",
+                        "",
+                        false
                 ));
                 entries.add(new TrackerEntry("Cave Vision", 0.0, passiveManager.isTerraCaveVisionActive(playerId)));
             }
@@ -149,21 +172,54 @@ public class MotmStatusHud extends CustomUIHud {
                 boolean swimming = passiveManager.isHydroSwimming(playerId);
                 boolean underwater = passiveManager.isHydroUnderwater(playerId);
                 double barrierHp = passiveManager.getHydroAquaBarrierShieldHp(playerId);
-                entries.add(new TrackerEntry("Tidal Flow", 0.0, swimming || underwater));
+                double barrierCooldown = barrierHp > 0.0
+                        ? 0.0
+                        : passiveManager.getHydroAquaBarrierCooldownSecondsRemaining(playerId);
+                entries.add(new TrackerEntry(
+                        "Tidal Flow",
+                        0.0,
+                        swimming || underwater,
+                        MOVEMENT_ICON,
+                        null,
+                        swimming || underwater ? "ACTIVE" : "READY",
+                        "",
+                        false
+                ));
                 entries.add(new TrackerEntry(
                         "Aqua Barrier",
-                        barrierHp > 0.0 ? 0.0 : passiveManager.getHydroAquaBarrierCooldownSecondsRemaining(playerId),
-                        barrierHp > 0.0
+                        barrierCooldown,
+                        barrierHp > 0.0,
+                        HYDRO_BARRIER_ICON,
+                        null,
+                        barrierHp > 0.0 ? "ACTIVE" : barrierCooldown > 0.0 ? "COOLDOWN" : "READY",
+                        barrierHp > 0.0 ? formatTrackerNumber(barrierHp) + "/" + formatTrackerNumber(barrierHp) : "",
+                        false
                 ));
             }
-            case "aero" -> {
-                entries.add(new TrackerEntry("Wind Walker", 0.0, false));
-            }
+            case "aero" -> entries.add(new TrackerEntry(
+                    "Wind Walker",
+                    0.0,
+                    false,
+                    MOVEMENT_ICON,
+                    null,
+                    "READY",
+                    "",
+                    false
+            ));
             case "corruptus" -> {
                 int stacks = passiveManager.getCorruptusDarkResurrectionStacks(playerId);
                 int maxStacks = passiveManager.getCorruptusSoulHarvestMaxStacks();
                 double lockout = passiveManager.getCorruptusPassiveLockoutSecondsRemaining(playerId);
-                entries.add(new TrackerEntry("Soul Harvest " + stacks + "/" + maxStacks, lockout, stacks > 0 && lockout <= 0.0));
+                entries.add(new TrackerEntry(
+                        "Soul Harvest " + stacks + "/" + maxStacks,
+                        lockout,
+                        stacks > 0 && lockout <= 0.0,
+                        CORRUPTUS_ICON,
+                        null,
+                        stacks > 0 && lockout <= 0.0 ? "ACTIVE" : lockout > 0.0 ? "COOLDOWN" : "READY",
+                        lockout > 0.0 ? "LOCKOUT " + formatTrackerTimer(lockout) : "",
+                        false
+                ));
             }
             default -> {
             }
@@ -180,13 +236,20 @@ public class MotmStatusHud extends CustomUIHud {
             setText(commands, prefix + "TimerShadow.Text", "");
             commands.set(prefix + "Timer.Visible", false);
             commands.set(prefix + "TimerShadow.Visible", false);
+            commands.set(prefix + "Icon.Visible", false);
+            commands.set(prefix + "Frame.Visible", false);
             return;
         }
 
         boolean coolingDown = entry.cooldownSeconds() > 0.0;
+        boolean iconVisible = entry.iconPath() != null && !entry.iconPath().isBlank()
+                && (entry.active() || entry.showIconWhenInactive());
+        boolean frameVisible = iconVisible && entry.framePath() != null && !entry.framePath().isBlank();
         String nameColor = entry.active() ? "#a8ff9a" : coolingDown ? "#a6a6a6" : "#ffffff";
         String timerColor = coolingDown && !entry.active() ? "#a6a6a6" : "#ffffff";
-        String timerText = coolingDown ? formatTrackerTimer(entry.cooldownSeconds()) : "";
+        String timerText = entry.counterText() != null && !entry.counterText().isBlank()
+                ? entry.counterText()
+                : coolingDown ? formatTrackerTimer(entry.cooldownSeconds()) : "";
 
         setText(commands, prefix + "Name.Text", fitTrackerName(entry.name()));
         setText(commands, prefix + "NameShadow.Text", fitTrackerName(entry.name()));
@@ -198,8 +261,16 @@ public class MotmStatusHud extends CustomUIHud {
         commands.set(prefix + "Timer.Style.TextColor", timerColor);
         commands.set(prefix + "Timer.Style.RenderBold", false);
         commands.set(prefix + "TimerShadow.Style.RenderBold", false);
-        commands.set(prefix + "Timer.Visible", coolingDown);
-        commands.set(prefix + "TimerShadow.Visible", coolingDown);
+        commands.set(prefix + "Timer.Visible", !timerText.isBlank());
+        commands.set(prefix + "TimerShadow.Visible", !timerText.isBlank());
+        if (iconVisible) {
+            commands.set(prefix + "Icon.TexturePath", entry.iconPath());
+        }
+        if (frameVisible) {
+            commands.set(prefix + "Frame.Background", entry.framePath());
+        }
+        commands.set(prefix + "Icon.Visible", iconVisible);
+        commands.set(prefix + "Frame.Visible", frameVisible);
     }
 
     private String fitTrackerName(String name) {
@@ -212,6 +283,13 @@ public class MotmStatusHud extends CustomUIHud {
 
     private String formatTrackerTimer(double seconds) {
         return Math.max(0, (int) Math.ceil(seconds)) + "s";
+    }
+
+    private String formatTrackerNumber(double value) {
+        if (!Double.isFinite(value)) {
+            return "0";
+        }
+        return String.format(Locale.ROOT, "%.0f", Math.max(0.0, value));
     }
 
     private String titleCase(String raw) {
@@ -910,8 +988,19 @@ public class MotmStatusHud extends CustomUIHud {
     private record TrackerEntry(
             String name,
             double cooldownSeconds,
-            boolean active
-    ) {}
+            boolean active,
+            String iconPath,
+            String framePath,
+            String state,
+            String counterText,
+            boolean showIconWhenInactive
+    ) {
+        private TrackerEntry(String name, double cooldownSeconds, boolean active) {
+            this(name, cooldownSeconds, active, null, null,
+                    active ? "ACTIVE" : cooldownSeconds > 0.0 ? "COOLDOWN" : "READY",
+                    "", false);
+        }
+    }
 
     private static final class AggregatedEffect {
         private final StatusEffect.Type type;

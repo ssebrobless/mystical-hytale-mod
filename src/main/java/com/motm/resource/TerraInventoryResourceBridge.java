@@ -31,7 +31,10 @@ public final class TerraInventoryResourceBridge implements ResourceManager.Terra
             return 0;
         }
 
-        CombinedItemContainer inventory = MotmPlayerInventory.combined(player);
+        CombinedItemContainer inventory = MotmPlayerInventory.combined(
+                player.getReference(),
+                player.getReference() != null ? player.getReference().getStore() : null
+        );
         return inventory == null ? 0 : countInventoryResource(inventory, resourceType);
     }
 
@@ -46,7 +49,10 @@ public final class TerraInventoryResourceBridge implements ResourceManager.Terra
             return false;
         }
 
-        CombinedItemContainer inventory = MotmPlayerInventory.combined(player);
+        CombinedItemContainer inventory = MotmPlayerInventory.combined(
+                player.getReference(),
+                player.getReference() != null ? player.getReference().getStore() : null
+        );
         if (inventory == null || countInventoryResource(inventory, resourceType) < amount) {
             return false;
         }

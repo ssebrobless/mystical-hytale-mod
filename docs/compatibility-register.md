@@ -183,3 +183,25 @@ delete the old code instead of teaching agents to route around it.
 - Removal gate: the remaining `MenteesMod` mutable state is either moved to
   named owners or proven to be plugin-shell lifecycle state, then the
   architecture check ratchet is lowered again.
+
+### Ability Visual Manifest Transition Fallback
+
+- Owner: `HytaleAssetResolver` manifest-first resolution.
+- Implementation boundary:
+  `src/main/java/com/motm/util/AbilityVisualManifest.java`,
+  `src/main/java/com/motm/util/HytaleAssetResolver.java` (fallback branch and
+  one-shot warning only), and `src/main/java/com/motm/util/MotmPreflightAudit.java`
+  (legacy-row skip in manifest validation).
+- Consumer: 114 manifest rows seeded from pre-manifest resolver behavior and
+  marked `"legacy": true`; they carry vanilla spawner paths the runtime drops
+  silently today and have not yet received authored per-style visual identities.
+- Preferred replacement: every row re-authored during the Phase 3 per-style
+  sweeps (docs/implementation-plan-v2-2026-07-16.md) with validated `MOTM_*`
+  effect ids, after which rows lose the `legacy` flag and preflight validates
+  them fully.
+- Verification evidence: `MotmPreflightAudit` reports ManifestRowsValidated and
+  errors on any non-legacy row with an unresolvable id; style sweep evidence
+  bundles prove authored visuals per ability.
+- Removal gate: zero `"legacy": true` rows remain in
+  `data/ability-visual-manifest.json`; then the resolver fallback branch, the
+  legacy flag, and the preflight skip are deleted in the same change.

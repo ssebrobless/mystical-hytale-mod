@@ -1,0 +1,41 @@
+{
+  "id": "phase0-seams",
+  "description": "Phase 0 seam visibility scenario: Corruptus Flame fireball, Hydro Surf High Tide, reaction-combo return to Flame, and repeated fireballs against stationary test mobs.",
+  "styleId": "flame",
+  "abilities": [],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker phase0-seams-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set corruptus",
+    "motm style flame",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [
+    "motm dev test ability fireball",
+    "motm style surf",
+    "motm dev freecast on",
+    "motm dev test ability high_tide",
+    "motm style flame",
+    "motm dev freecast on",
+    "motm dev test ability fireball",
+    "motm dev test ability fireball",
+    "motm dev test ability fireball"
+  ],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev effects clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker phase0-seams-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "server-truth:snapshot"
+  ]
+}

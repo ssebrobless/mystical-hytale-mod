@@ -1,0 +1,15 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#66aaff",
+    "EntityBottomTint": "#0a1e50",
+    "WorldSoundEventId": "SFX_Staff_Flame_Fireball_Launch",
+    "LocalSoundEventId": "SFX_Staff_Flame_Fireball_Launch_Local",
+    "Particles": [
+      {
+        "SystemId": "Fire_Center_Blue"
+      }
+    ]
+  }
+}

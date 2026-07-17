@@ -54,7 +54,7 @@ public final class TerraReviewInventoryKit {
             return "[MOTM] Terra inventory clean failed: player runtime/store missing.";
         }
 
-        CombinedItemContainer inventory = MotmPlayerInventory.combined(player);
+        CombinedItemContainer inventory = MotmPlayerInventory.combined(player.getReference(), player.getReference().getStore());
         if (inventory == null) {
             return "[MOTM] Terra inventory clean failed: player inventory unavailable.";
         }
@@ -130,7 +130,7 @@ public final class TerraReviewInventoryKit {
             return 0;
         }
 
-        CombinedItemContainer inventory = MotmPlayerInventory.combined(player);
+        CombinedItemContainer inventory = MotmPlayerInventory.combined(player.getReference(), player.getReference().getStore());
         if (inventory == null) {
             return 0;
         }
