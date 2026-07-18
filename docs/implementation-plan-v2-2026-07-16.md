@@ -113,3 +113,30 @@ Live-session findings (2026-07-16, recorded for Phase 1/2):
   Move effect or ignite self-burst residue) during U1 manifest work.
 - Confirmed working as designed: summon friendly-fire suppression (owner cannot damage
   own summon), Aqua Barrier auto-apply on Hydro swap with interim bubble visual.
+
+**Phase 1 - COMPLETE (code) / live tour partially verified.** 2026-07-17, commits
+`a181a7c`..`f049f1f`. 1.1 manifest + preflight (post-world re-audit: 120 rows,
+Errors=0 live), 1.0 seams scenario, 1.2 effects batch (portal purged, blue fire,
+sand, 24 mono-verified sounds), 1.3 HUD identity. Defects #11 (blue fire confirmed
+live) and #13 (caster visual tracking) fixed.
+
+Live-session findings (2026-07-17):
+- CRASH FIXED: killing a mob carrying MOTM per-tick registrations (perk IgniteDot)
+  kept executing damage on the removed ref -> EntityTracker desync -> client NPE.
+  MotmEntityLiveness guard now on every per-tick target path + afterMobKilled purge
+  (status/marks/ignites/channel pulses). Retest owed: sandstorm DoT mob, kill with
+  dust devil.
+- Sandstorm aura visual: loop effect proven attached (log: expired/removed cleanly)
+  but Sand_Storm is ambient-weather scale (invisible) - now Block_Sprint_Sand
+  continuous emitters. Verified-visible reference pattern: Eye_Void_Smoke_Teal.
+  OPEN fidelity gap for Phase 2 field engine: aura visuals must read at ability
+  RADIUS (world-space ring/tornado via ParticleUtil), not just on the caster model.
+- Aura lifecycle: self effects carry sourceAbilityId; toggle-end/deactivate clears
+  the aura visual (was lingering past natural end).
+- Preflight setup-time false errors (asset maps load after plugin setup): readiness
+  sentinel + one-shot re-audit at first player ready.
+- Asset lessons (now procedure): EntityEffect Particles.SystemId must be a
+  .particlesystem asset id, NOT a spawner name; WorldSoundEventId must be MONO
+  (stereo = validation failure that unloads the whole mod); sound keys live INSIDE
+  ApplicationEffects; application particles fire once - continuous auras need
+  uncapped looping emitters (or pulse mode for burst systems).
