@@ -185,3 +185,32 @@ waverider/river_rapids burst-profile fallback, afterburner 8s ember terrain seam
 Live gate checklist: fireball/frozen_needles VISIBLY fly + crosshair aim + dodgeable;
 dust_devil carries the player forward as a sand tornado; dash burst/trail/end reads;
 gale X + razor 5-sequence visible; no portal reads anywhere; run the 6 scenarios.
+
+**Client-crash saga - RESOLVED (2026-07-18, live-verified NO CRASH).** Bisection
+eliminated in order: post-death damage (3-layer liveness fix, real but not the
+driver), tracker desync, HUD forbidden property (real second bug: CustomUI hard-
+disconnects on runtime Sprite.TexturePath/Group.Background writes - icons disabled
+until pre-declared-Visible pattern), block placement (only frolick places trail
+blocks), field proxies generally (infernal_ground probe PASSED). DRIVER: the
+movement-trail's 4 supplemental fields spawning rows of Spark_Living proxies
+model-stripped post-spawn in one tick - client NPE deterministic ~0.3s after cast.
+Fix: movement-trail fields spawn no visual proxies (dash runtime owns trail
+visuals). Collateral: crashed sessions persisted mid-flight proxies into the world
+save; rehydration NPE'd MotionControllerWalk (footingBlocks null) and killed the
+world at load - repaired by restoring universe/worlds from the 23:24 backup
+(poisoned copy quarantined at worlds.poisoned-2026-07-18). PROXY RULE (add to
+asset lessons): visual proxies wear vanilla roles, so target exclusion MUST be
+identity-based (visualProxyState), and mass same-tick spawn+strip cohorts are
+client-lethal.
+
+Open after 2a live session:
+- Dash displacement: Velocity.set AND setClient both fail to move a live player.
+  Next mechanism: GrapplingHook-style attach/impulse research (R-gate it).
+- Dash effect cleanup shipped (14d4c56): cast/travel effects removed at dash end -
+  retest owed.
+- Aura/field range readability: author asks for a visual that conveys ability
+  RADIUS (Phase 2.5 field engine acceptance addition).
+- Sandstorm player-aura still reads as foot particles, not a storm (Phase 2.5).
+- load-world.ps1 Play/world-click automation BROKEN (menu drift) - harness backlog.
+- Manifest audit noise: 26 de-legacied rows carry raw archive paths in
+  cast/travel/impact (81 preflight errors, fail-closed) - re-author or re-legacy.
