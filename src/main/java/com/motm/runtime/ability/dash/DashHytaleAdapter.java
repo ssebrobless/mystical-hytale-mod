@@ -21,9 +21,15 @@ public final class DashHytaleAdapter {
     private static final long TRAIL_INTERVAL_MILLIS = 90L;
     private static final long MAX_DASH_WINDOW_MILLIS = 2_200L;
     private static final double ARRIVAL_TOLERANCE = 0.45;
-    private static final String SAND_STORM = "Sand_Storm";
-    private static final String SAND_SPRINT = "Block_Sprint_Sand";
-    private static final String WIND_TAIL = "Wind_Spirit_Tail";
+    // ENGINE RULE (live-verified 2026-07-18): ParticleUtil world spawns are
+    // fire-and-forget - a system whose spawners lack TotalParticles emits
+    // FOREVER at that position. World bursts MUST use burst-only systems
+    // (every spawner TotalParticles-capped). Sand_Storm/Block_Sprint_Sand/
+    // Wind_Spirit_Tail/Fire_Charge1/Fire_AoE_Grow are continuous - never
+    // world-spawn them.
+    private static final String SAND_STORM = "Block_Break_Sand";
+    private static final String SAND_SPRINT = "Block_Land_Sand_Hard";
+    private static final String WIND_TAIL = "Block_Break_Dust";
     private static final String WATER_TRAIL = "Bubbles_Breathing";
     private static final String VOID_TRAIL = "VoidImpact";
     private static final String STONE_TRAIL = "Block_Break_Stone";
@@ -130,7 +136,6 @@ public final class DashHytaleAdapter {
             }
             return true;
         }
-
         if (now - dash.lastTrailAtMillis() >= TRAIL_INTERVAL_MILLIS) {
             spawnWorldBurst(trailSystemId(dash.classId(), dash.ability()), position, store);
             applyEffect(ref, store, travelEffectId(dash.classId(), dash.styleId(), dash.ability()));
@@ -138,7 +143,7 @@ public final class DashHytaleAdapter {
                 applySweptKnockback(dash, store, position);
                 spawnWorldBurst(SAND_SPRINT, position, store);
             } else if (isAfterburner(dash.ability())) {
-                spawnWorldBurst("Fire_AoE_Grow", position, store);
+                spawnWorldBurst("Explosion_Small", position, store);
             }
             dash.markTrail(now);
         }
@@ -218,7 +223,7 @@ public final class DashHytaleAdapter {
 
     private static String trailSystemId(String classId, AbilityData ability) {
         if (isDustDevil(ability)) return SAND_STORM;
-        if (isAfterburner(ability)) return "Fire_Charge1";
+        if (isAfterburner(ability)) return "Explosion_Small";
         return switch (lower(classId)) {
             case "hydro" -> WATER_TRAIL;
             case "corruptus" -> VOID_TRAIL;
@@ -229,7 +234,7 @@ public final class DashHytaleAdapter {
 
     private static String endSystemId(String classId, AbilityData ability) {
         if (isDustDevil(ability)) return SAND_STORM;
-        if (isAfterburner(ability)) return "Fire_AoE_Grow";
+        if (isAfterburner(ability)) return "Explosion_Small";
         return switch (lower(classId)) {
             case "hydro" -> WATER_TRAIL;
             case "corruptus" -> VOID_TRAIL;
