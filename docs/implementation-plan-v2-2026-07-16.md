@@ -10,6 +10,16 @@ Definition of done is unchanged (completion plan Sec. 7): 11 primitives proven, 
 styles sweep-passed, 20 perks live-proven, leveling loop complete, zero [removal]
 warnings, zero load SEVEREs, public jar on CurseForge.
 
+**Contract-assembly rule (added 2026-07-17 after the dust_devil under-build).** Before
+implementing or sweeping ANY ability, assemble its full authored contract from all
+three sources and restate it in the work item: (1) the style JSON row - every field,
+especially cast_type, travel_type, terrain_effect, duration/radius/dash/knockback;
+(2) the universal grammar rules + class section + misfit table in
+`docs/intent-canon-visual-fitness-2026-07-16.md`; (3) any G1-G14 grill lock touching
+it. The runtime summary line is NOT the contract - dust_devil logged "dash burst"
+while the authored identity (rolling sand tornado sweeping a radius-5 path over 2s)
+was unbuilt. An ability without its restated contract does not enter a build lane.
+
 ```
 Phase 0        Phase 1              Phase 2                Phase 3
 HARDEN ──────▶ FOUNDATIONS ───────▶ PRIMITIVE ENGINES ───▶ CONTENT PASSES ──▶ Phase 4
@@ -140,3 +150,19 @@ Live-session findings (2026-07-17):
   (stereo = validation failure that unloads the whole mod); sound keys live INSIDE
   ApplicationEffects; application particles fire once - continuous auras need
   uncapped looping emitters (or pulse mode for burst systems).
+
+Crash retest (2026-07-17 21:55, log-verified):
+- PASS: no crash, no tracker errors across repeated sandstorm+dust_devil repro.
+- PASS: aura lifecycle - natural expiry removes native effect (nativeRemoved=true);
+  toggle consumption logs `cleared aura visual`. Perceived lingering = particle
+  tail/tint latency; watch item only.
+- CONFIRMED GAP -> Phase 2.4 (dash family), full authored contract restated so the
+  sweep cannot under-build it: dust_devil = caster dashes 5 blocks AS a rolling sand
+  tornado over 2s (travel_type rolling_tornado), knocking back (force 4) everything in
+  the swept radius-5 path; canon rule 3 (burst + trail + end cue over time, grill
+  rejected teleport-read), sand canon (no white smoke). Current build: no client
+  displacement, instant snap-knockback, foot dust - misses the identity, not just the
+  movement. Displacement mechanism is PROVEN territory: GrapplingHook (catalog
+  mod-patterns.md) moves live players via velocity impulses - use that, not position
+  writes. Acceptance: player position delta in evidence + author confirms the
+  tornado read.
