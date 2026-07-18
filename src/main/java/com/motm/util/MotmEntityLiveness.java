@@ -3,6 +3,7 @@ package com.motm.util;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
@@ -16,6 +17,12 @@ public final class MotmEntityLiveness {
 
     public static boolean isLiveTarget(Ref<EntityStore> ref, Store<EntityStore> store) {
         if (ref == null || !ref.isValid() || store == null || ref.getStore() != store) {
+            return false;
+        }
+
+        // Hytale adds this component as soon as death processing starts, while the
+        // entity can remain valid and retain positive stats until removal is queued.
+        if (store.getComponent(ref, DeathComponent.getComponentType()) != null) {
             return false;
         }
 

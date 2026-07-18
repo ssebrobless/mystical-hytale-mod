@@ -18,8 +18,11 @@ import com.hypixel.hytale.server.core.entity.knockback.KnockbackComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.MenteesMod;
 import com.motm.model.PlayerData;
+import com.motm.util.MotmEntityLiveness;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hooks native Hytale damage so Alloy Enhancement changes the real hit number.
@@ -27,6 +30,8 @@ import java.util.UUID;
 public class MotmDamageEventSystem extends DamageEventSystem {
 
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(MotmDamageEventSystem.class.getName());
+
+    private final Set<String> nonLiveDamageLogs = ConcurrentHashMap.newKeySet();
 
     private final MenteesMod mod;
 
@@ -62,6 +67,17 @@ public class MotmDamageEventSystem extends DamageEventSystem {
                 ? store.getComponent(targetRef, UUIDComponent.getComponentType())
                 : null;
         UUID targetUuid = targetUuidComponent != null ? targetUuidComponent.getUuid() : null;
+
+        if (!MotmEntityLiveness.isLiveTarget(targetRef, store)) {
+            float before = damage.getAmount();
+            damage.setAmount(0.0f);
+            String targetKey = targetUuid != null ? targetUuid.toString() : "index=" + entityIndex;
+            if (before > 0.0f && nonLiveDamageLogs.add(targetKey)) {
+                LOG.fine("[MOTM] Damage suppressed for non-live target: target="
+                        + targetKey + " amount=" + before);
+            }
+            return;
+        }
 
         if (!(damage.getSource() instanceof Damage.EntitySource)) {
             if (targetPlayer != null

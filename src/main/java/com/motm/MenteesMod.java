@@ -265,6 +265,8 @@ public class MenteesMod extends JavaPlugin {
                 }
                 @Override
                 public void afterMobKilled(PlayerData player, Player runtimePlayer, String mobEntityId) {
+                    LOG.info("[MOTM] afterMobKilled purge fired: mobEntityId=" + mobEntityId
+                            + " killer=" + (player != null ? player.getPlayerId() : "unknown"));
                     if (mobEntityId != null && !mobEntityId.isBlank()) {
                         if (statusEffectManager != null) {
                             statusEffectManager.clearAllForEntity(mobEntityId);

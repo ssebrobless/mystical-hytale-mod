@@ -48,6 +48,9 @@ public final class FieldPulseHytaleAdapter {
                 resolvedDamage *= support.incomingDamageMultiplier(entityId);
                 resolvedDamage = support.absorbDamage(entityId, resolvedDamage);
                 if (resolvedDamage > 0.0) {
+                    if (!MotmEntityLiveness.isLiveTarget(targetRef, store)) {
+                        continue;
+                    }
                     Damage damage = new Damage(new Damage.EntitySource(field.ownerRef()),
                             DamageCause.PHYSICAL,
                             (float) resolvedDamage);

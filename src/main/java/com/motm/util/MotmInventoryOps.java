@@ -31,8 +31,8 @@ public final class MotmInventoryOps {
             if (store == null) {
                 return false;
             }
-            player.giveItem(stack, entityRef, store);
-            return true;
+            var transaction = player.giveItem(stack, entityRef, store);
+            return transaction != null && transaction.succeeded();
         } catch (Throwable e) {
             logFailure(log, "grant", context, e);
             return false;
