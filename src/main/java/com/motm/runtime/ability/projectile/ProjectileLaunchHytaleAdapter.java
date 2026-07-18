@@ -206,6 +206,22 @@ public final class ProjectileLaunchHytaleAdapter {
             return null;
         }
 
+        // The head rotation carries the player's true aim (incl. pitch); the
+        // body transform direction lags behind and flattens vertical aim.
+        try {
+            com.hypixel.hytale.server.core.modules.entity.component.HeadRotation head =
+                    store.getComponent(ref,
+                            com.hypixel.hytale.server.core.modules.entity.component.HeadRotation.getComponentType());
+            if (head != null) {
+                Vector3d look = head.getDirection();
+                if (look != null && look.isFinite() && look.length() >= 0.001) {
+                    return normalize(new Vector3d(look));
+                }
+            }
+        } catch (RuntimeException | LinkageError ignored) {
+            // fall through to transform direction
+        }
+
         TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
         if (transform == null || transform.getTransform() == null || transform.getTransform().getDirection() == null) {
             return null;

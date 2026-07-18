@@ -16,7 +16,10 @@ public record ProjectileTrajectoryProfile(
         return new ProjectileTrajectoryProfile(0.0, 0.0, 0.0, false, 0.0);
     }
     public static ProjectileTrajectoryProfile nativeProjectile() {
-        return new ProjectileTrajectoryProfile(1.6, 0.0, 0.0, true, 0.75);
+        // Eye-height launch with forward clearance so the projectile visibly
+        // leaves the player model (magma template feel) while aim stays on the
+        // head look vector.
+        return new ProjectileTrajectoryProfile(1.5, 0.9, 0.0, true, 0.75);
     }
 
     public static ProjectileTrajectoryProfile magmaSling() {
