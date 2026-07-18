@@ -85,6 +85,13 @@ public final class TerrainSupplementalHytaleAdapter {
             radius = TerrainRuntimeSpecs.trailRadius(ability);
             halfWidth = radius;
             thickness = Math.max(1.0, radius * 0.8);
+            // No visual proxies for movement trails: the dash runtime renders the
+            // trail with world-space particle bursts, and the proxy cohort (4
+            // nodes x row of Spark_Living spawn+model-strip packets in one tick)
+            // is the prime suspect for the client NPE (2026-07-18 bisection:
+            // single-field ground zones with proxies do NOT crash; every
+            // trail-family cast did).
+            useFieldVisualProxy = false;
             summary = humanize(terrainEffect.isBlank() ? abilityId : terrainEffect) + " trail";
         } else if (TerrainRuntimeSpecs.shouldCreatePersonalAuraField(ability)) {
             centers.add(new Vector3d(transform.getTransform().getPosition()));
