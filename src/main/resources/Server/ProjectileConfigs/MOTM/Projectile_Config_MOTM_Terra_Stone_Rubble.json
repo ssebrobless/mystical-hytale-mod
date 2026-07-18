@@ -1,0 +1,39 @@
+{
+  "Parent": "Projectile_Config_Rubble",
+  "Model": "Rubble_Default",
+  "LaunchForce": 45,
+  "Interactions": {
+    "ProjectileHit": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Block_Break_Stone" }
+            ],
+            "WorldSoundEventId": "SFX_Golem_Earth_Stomp_Impact"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    },
+    "ProjectileMiss": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Block_Break_Stone" }
+            ],
+            "WorldSoundEventId": "SFX_Stone_Break"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    }
+  }
+}

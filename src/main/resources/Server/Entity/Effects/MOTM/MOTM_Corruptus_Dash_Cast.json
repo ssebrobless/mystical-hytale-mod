@@ -1,0 +1,11 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#33204f",
+    "EntityBottomTint": "#120d22",
+    "Particles": [
+      { "SystemId": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem" }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "Duration": 0.55,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#d4ffff",
+    "EntityBottomTint": "#2a83aa",
+    "Particles": [
+      { "SystemId": "Server/Particles/Block/Water/Water_Bubble_Stream.particlesystem" }
+    ]
+  }
+}

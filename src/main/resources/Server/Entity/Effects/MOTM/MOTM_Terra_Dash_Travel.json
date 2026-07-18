@@ -1,0 +1,11 @@
+{
+  "Duration": 0.3,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#c2a24a",
+    "EntityBottomTint": "#6b4f20",
+    "Particles": [
+      { "SystemId": "Server/Particles/Block/Stone/Block_Break_Stone.particlesystem" }
+    ]
+  }
+}

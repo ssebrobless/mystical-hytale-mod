@@ -1,0 +1,41 @@
+{
+  "id": "projectile-family-wind",
+  "description": "Wind-family projectile proof: select Aero Wind Blade, spawn stationary test mobs, cast Air Slash, Gale Cutter, and Razor Wind, and clean up.",
+  "styleId": "wind_blade",
+  "abilities": [
+    "air_slash",
+    "gale_cutter",
+    "razor_wind"
+  ],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker projectile-wind-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set aero",
+    "motm style wind_blade",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker projectile-wind-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:projectile_impact_resolved",
+    "server-truth:snapshot"
+  ],
+  "notes": [
+    "The runner checks ability_cast_end for each of air_slash, gale_cutter, and razor_wind because all three are listed in abilities.",
+    "projectile_impact_resolved is the server-side projectile resolution evidence; this scenario makes no claim about a native visual asset.",
+    "server-truth:snapshot asserts snapshot presence only; this scenario does not claim a visual screenshot or log-gate result."
+  ]
+}

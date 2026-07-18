@@ -202,6 +202,9 @@ public class GameplayPlaybackManager {
     private final LapidaryGemRuntimeState lapidaryGemState = new LapidaryGemRuntimeState();
     private final ChannelRuntimeState channelState = new ChannelRuntimeState();
     private final ChannelHytaleAdapter channelAdapter;
+    private final com.motm.runtime.ability.dash.DashRuntimeState dashState =
+            new com.motm.runtime.ability.dash.DashRuntimeState();
+    private final com.motm.runtime.ability.dash.DashHytaleAdapter dashAdapter;
     private final SelfRuntimeState selfState = new SelfRuntimeState();
     private final SelfHytaleAdapter selfAdapter;
     private final AbilitySpecificHytaleAdapter abilitySpecificAdapter;
@@ -626,6 +629,41 @@ public class GameplayPlaybackManager {
                     @Override
                     public void logWarning(String message) {
                         LOG.warning(message);
+                    }
+                }
+        );
+        this.dashAdapter = new com.motm.runtime.ability.dash.DashHytaleAdapter(
+                dashState,
+                new com.motm.runtime.ability.dash.DashHytaleAdapter.Hooks() {
+                    @Override
+                    public Player resolvePlayer(String playerId) {
+                        return mod.getRuntimePlayer(playerId);
+                    }
+
+                    @Override
+                    public boolean applyEffect(Ref<EntityStore> ref, Store<EntityStore> store, String effectId) {
+                        return GameplayPlaybackManager.this.applyEffectById(ref, store, effectId);
+                    }
+
+                    @Override
+                    public List<Ref<EntityStore>> collectNearbyTargets(Store<EntityStore> store,
+                                                                       Vector3d center,
+                                                                       double radius,
+                                                                       int maxTargets) {
+                        return GameplayPlaybackManager.this.collectNearbyNpcTargets(store, center, radius, maxTargets);
+                    }
+
+                    @Override
+                    public boolean applyKnockback(Ref<EntityStore> targetRef,
+                                                  Store<EntityStore> store,
+                                                  Ref<EntityStore> sourceRef,
+                                                  AbilityData ability) {
+                        return GameplayPlaybackManager.this.applyKnockback(targetRef, store, sourceRef, ability);
+                    }
+
+                    @Override
+                    public void logWarning(String message) {
+                        LOG.warning("[MOTM] " + message);
                     }
                 }
         );
@@ -1759,6 +1797,7 @@ public class GameplayPlaybackManager {
         terrainState.removeProcessedSelections(selection -> terrainHytaleAdapter.processTemporarySelection(selection, currentStore, now));
         terrainState.removeProcessedMovingTrails(trail -> terrainHytaleAdapter.processMovingTrail(trail, currentStore, now));
         channelAdapter.processForStore(currentStore, now);
+        dashAdapter.processForStore(currentStore, now);
         transformationAdapter.processForStore(currentStore, now);
         for (Map.Entry<String, ActiveWeaponFollowUp> entry : weaponFollowUps.entries()) {
             if (processWeaponFollowUpExpiry(entry.getKey(), entry.getValue(), currentStore, now)) {
@@ -1987,6 +2026,7 @@ public class GameplayPlaybackManager {
         String trackedCasterEffect = casterVisualState.take(playerId);
         int casterEffects = trackedCasterEffect != null
                 && removeEffectById(runtimeRef, runtimeStore, trackedCasterEffect) ? 1 : 0;
+        int dashes = dashAdapter.removeForPlayer(playerId);
 
         String summary = "armed=" + armed
                 + " projectiles=" + projectiles
@@ -2003,7 +2043,8 @@ public class GameplayPlaybackManager {
                 + " summons=" + summons
                 + " terrain=" + terrain
                 + " proxies=" + proxies
-                + " casterEffects=" + casterEffects;
+                + " casterEffects=" + casterEffects
+                + " dashes=" + dashes;
         LOG.info("[MOTM] Style review runtime reset: playerId=" + playerId + " " + summary);
         return summary;
     }
@@ -2011,6 +2052,7 @@ public class GameplayPlaybackManager {
     public synchronized Map<String, Object> buildObservabilitySnapshot(String playerId) {
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("activeProjectiles", projectileRuntime.activeProjectileCount());
+        snapshot.put("activeDashes", dashAdapter.activeDashCount());
         snapshot.put("activeFields", fieldState.activeFieldCount());
         snapshot.put("activeTerrainSelections", terrainState.activeSelectionCount());
         snapshot.put("activeMovingTerrainTrails", terrainState.movingTrailCount());
@@ -2241,7 +2283,10 @@ public class GameplayPlaybackManager {
             return PlaybackResult.none("Player entity store is unavailable.");
         }
 
-        String effectId = AbilityExecutionPolicy.suppressGenericCasterVisual(ability)
+        boolean dashOwnedVisual = AbilityExecutionPolicy.isMovementCast(ability)
+                || "waverider".equals(lower(ability.getId()))
+                || "river_rapids".equals(lower(ability.getId()));
+        String effectId = dashOwnedVisual || AbilityExecutionPolicy.suppressGenericCasterVisual(ability)
                 ? null
                 : AbilityRuntimeEffects.castEffectId(player.getPlayerClass(), currentStyleId(player), ability);
         boolean effectApplied = applyEffectById(playerRef, store, effectId);
@@ -2258,6 +2303,14 @@ public class GameplayPlaybackManager {
             }
         }
         MovementResult movementResult = applyMovement(runtimePlayer, playerRef, store, ability);
+        if (movementResult.applied()
+                && movementResult.startPosition() != null
+                && movementResult.endPosition() != null) {
+            dashAdapter.startFromEndpoints(runtimePlayer, player, player.getPlayerClass(),
+                    currentStyleId(player), ability,
+                    movementResult.startPosition(), movementResult.endPosition(),
+                    System.currentTimeMillis());
+        }
 
         List<String> summaryParts = new ArrayList<>();
         if (effectApplied) summaryParts.add(formatEffectLabel(effectId) + " visuals");
@@ -2668,7 +2721,11 @@ public class GameplayPlaybackManager {
                                          Store<EntityStore> store,
                                          AbilityData ability) {
         String castType = lower(ability.getCastType());
-        if (!AbilityExecutionPolicy.isMovementCastType(castType)) {
+        String abilityId = lower(ability.getId());
+        boolean authoredDash = AbilityExecutionPolicy.isMovementCastType(castType)
+                || "waverider".equals(abilityId)
+                || "river_rapids".equals(abilityId);
+        if (!authoredDash) {
             return MovementResult.none();
         }
 
@@ -2724,19 +2781,32 @@ public class GameplayPlaybackManager {
                 horizontalDistance,
                 verticalDistance
         );
+        if (!plan.applied() && ("waverider".equals(abilityId) || "river_rapids".equals(abilityId))) {
+            double fallbackSeconds = 0.45;
+            Vector3d fallbackVelocity = new Vector3d(horizontalDirection)
+                    .mul(horizontalDistance / fallbackSeconds);
+            fallbackVelocity.y = verticalDistance / fallbackSeconds;
+            plan = AbilityMovementRuntime.MovementPlan.burst(
+                    horizontalDistance,
+                    verticalDistance,
+                    new Vector3d(start).add(
+                            horizontalDirection.x * horizontalDistance,
+                            verticalDistance,
+                            horizontalDirection.z * horizontalDistance),
+                    fallbackVelocity);
+        }
         if (!plan.applied()) {
             return MovementResult.none();
         }
 
-        boolean applied;
-        if (plan.mode() == AbilityMovementRuntime.MovementMode.BURST) {
-            applied = applyBurstVelocity(playerRef, store, plan.velocity());
-        } else {
-            Vector3d target = plan.target();
-            runtimePlayer.moveTo(playerRef, target.x, target.y, target.z, store);
-            applied = true;
-        }
-        if (!applied) {
+        // Dash movement must remain client-visible over time. Even reposition plans
+        // (shadow_step/dispersion/burrow/tunnel) use the player's Velocity component;
+        // no server-side position write is used for a dash.
+        double dashSeconds = "dust_devil".equals(abilityId) ? 2.0 : 0.45;
+        Vector3d velocityProfile = new Vector3d(horizontalDirection)
+                .mul(horizontalDistance / dashSeconds);
+        velocityProfile.y = verticalDistance / dashSeconds;
+        if (!applyBurstVelocity(playerRef, store, velocityProfile)) {
             return MovementResult.none();
         }
         return new MovementResult(
@@ -2745,7 +2815,8 @@ public class GameplayPlaybackManager {
                 verticalDistance,
                 start,
                 new Vector3d(plan.target()),
-                buildMovementSummary(castType, horizontalDistance, verticalDistance, plan.mode())
+                buildMovementSummary(castType, horizontalDistance, verticalDistance,
+                        AbilityMovementRuntime.MovementMode.BURST)
         );
     }
 

@@ -1,0 +1,51 @@
+{
+  "Parent": "Projectile_Config_Ice_Bolt",
+  "Model": "Spirit_Thunder",
+  "LaunchForce": 32,
+  "Physics": {
+    "Type": "Standard",
+    "Gravity": 0,
+    "TerminalVelocityAir": 50,
+    "TerminalVelocityWater": 15,
+    "RotationMode": "VelocityDamped",
+    "Bounciness": 0.0,
+    "SticksVertically": true
+  },
+  "LaunchWorldSoundEventId": "SFX_Tornado",
+  "Interactions": {
+    "ProjectileHit": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Lightning" },
+              { "SystemId": "Beam_Lightning2" },
+              { "SystemId": "Lightning_Sword" }
+            ],
+            "WorldSoundEventId": "SFX_Tornado"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    },
+    "ProjectileMiss": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Lightning" }
+            ],
+            "WorldSoundEventId": "SFX_Tornado"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    }
+  }
+}

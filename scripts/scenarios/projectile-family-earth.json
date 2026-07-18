@@ -1,0 +1,39 @@
+{
+  "id": "projectile-family-earth",
+  "description": "Earth-family projectile proof: select Terra Magma, spawn stationary test mobs, cast Magma Sling, and clean up.",
+  "styleId": "magma",
+  "abilities": [
+    "magma_sling"
+  ],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker projectile-earth-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set terra",
+    "motm style magma",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker projectile-earth-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:projectile_impact_resolved",
+    "server-truth:snapshot"
+  ],
+  "notes": [
+    "The runner checks magma_sling's ability_cast_end because it is listed in abilities.",
+    "projectile_impact_resolved is emitted by the projectile impact adapter when the launched projectile resolves; no client visual event is required here.",
+    "server-truth:snapshot asserts snapshot presence only; this scenario does not claim a visual screenshot or log-gate result."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#d9f3ff",
+    "EntityBottomTint": "#6c91c9",
+    "WorldSoundEventId": "SFX_Tornado",
+    "Particles": [
+      { "SystemId": "Server/Particles/NPC/Spirit_Wind/Wind_Spirit_Hand.particlesystem" }
+    ]
+  }
+}

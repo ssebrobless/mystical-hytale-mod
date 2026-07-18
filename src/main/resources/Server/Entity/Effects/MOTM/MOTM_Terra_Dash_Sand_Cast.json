@@ -1,0 +1,11 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#c2a24a",
+    "EntityBottomTint": "#6b4f20",
+    "Particles": [
+      { "SystemId": "Server/Particles/Weather/Sand/Sand_Storm.particlesystem" }
+    ]
+  }
+}

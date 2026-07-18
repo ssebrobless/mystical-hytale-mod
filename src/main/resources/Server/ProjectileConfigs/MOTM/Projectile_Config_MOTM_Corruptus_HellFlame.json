@@ -1,0 +1,39 @@
+{
+  "Parent": "Projectile_Config_Fireball",
+  "Model": "Fireball",
+  "LaunchWorldSoundEventId": "SFX_Staff_Flame_Fireball_Launch",
+  "Interactions": {
+    "ProjectileHit": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Fire_Blue" }
+            ],
+            "WorldSoundEventId": "SFX_Effect_Burn_World"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    },
+    "ProjectileMiss": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Fire_Blue" }
+            ],
+            "WorldSoundEventId": "SFX_Effect_Burn_World"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    }
+  }
+}

@@ -13,6 +13,8 @@ import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.RespondToHit;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.component.RemoveReason;
+import com.hypixel.hytale.server.core.modules.projectile.component.Projectile;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.motm.model.AbilityData;
 import com.motm.runtime.state.VisualProxyRuntimeState;
@@ -130,13 +132,32 @@ public final class ProjectileVisualHytaleAdapter {
     }
 
     public void despawn(ActiveProjectile projectile) {
-        if (projectile == null || projectile.visualRef() == null || !projectile.visualRef().isValid()) {
+        if (projectile == null) {
             return;
         }
+        Ref<EntityStore> ref = projectile.visualRef();
+        if (ref == null || !ref.isValid()) {
+            return;
+        }
+        Store<EntityStore> store = ref.getStore();
+        if (store == null) {
+            return;
+        }
+        try {
+            if (store.getComponent(ref, Projectile.getComponentType()) != null) {
+                store.removeEntity(ref, RemoveReason.REMOVE);
+            } else {
+                visualProxyState.despawn(ref);
+            }
+        } catch (RuntimeException e) {
+            if (log != null) {
+                log.warning("[MOTM] Projectile cleanup failed safely: " + e.getMessage());
+            }
+            visualProxyState.remove(ref);
+        }
 
-        visualProxyState.despawn(projectile.visualRef());
+
     }
-
     public void untrack(Ref<EntityStore> visualRef) {
         visualProxyState.remove(visualRef);
     }

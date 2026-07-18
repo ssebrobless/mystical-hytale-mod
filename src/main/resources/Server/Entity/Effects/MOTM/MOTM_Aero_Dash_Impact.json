@@ -1,0 +1,11 @@
+{
+  "Duration": 0.55,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#fff0b0",
+    "EntityBottomTint": "#7b7bd4",
+    "Particles": [
+      { "SystemId": "Server/Particles/NPC/Spirit_Wind/Wind_Spirit_Hand.particlesystem" }
+    ]
+  }
+}

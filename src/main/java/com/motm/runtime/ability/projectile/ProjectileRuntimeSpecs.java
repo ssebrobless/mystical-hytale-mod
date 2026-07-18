@@ -1,6 +1,7 @@
 package com.motm.runtime.ability.projectile;
 
 import com.motm.model.AbilityData;
+import com.motm.util.AbilityVisualManifest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public final class ProjectileRuntimeSpecs {
     private static final double MAX_PROJECTILE_SPEED = 38.0;
     private static final double DEFAULT_PROJECTILE_TTL_SECONDS = 2.5;
     private static final double DEFAULT_IMPACT_RADIUS = 0.0;
-    private static final long DEFAULT_VOLLEY_STAGGER_MS = 80L;
+    private static final long DEFAULT_VOLLEY_STAGGER_MS = 65L;
     private static final long DEFAULT_BURST_STAGGER_MS = 22L;
     private static final double VOLLEY_SPREAD_DEGREES = 8.0;
     private static final double BURST_SPREAD_DEGREES = 12.0;
@@ -62,9 +63,12 @@ public final class ProjectileRuntimeSpecs {
         String abilityId = lower(ability != null ? ability.getId() : null);
         String travelType = lower(ability != null ? ability.getTravelType() : null);
         return switch (castType) {
+            case "chain" -> 1;
+            case "projectile_line" -> "gale_cutter".equals(abilityId)
+                    ? new GaleCutterState(null, 9.0).launchCount() : 1;
             case "projectile_volley" -> switch (abilityId) {
                 case "bullet_storm" -> 6;
-                case "razor_wind" -> 5;
+                case "razor_wind" -> RazorWindState.SHOT_COUNT;
                 case "frozen_needles", "cacti_cluster" -> 5;
                 case "debris" -> 4;
                 default -> travelType.contains("storm") ? 5 : DEFAULT_PROJECTILE_CLUSTER_COUNT + 1;
@@ -123,6 +127,7 @@ public final class ProjectileRuntimeSpecs {
 
         String abilityId = lower(ability != null ? ability.getId() : null);
         return switch (castType) {
+            case "projectile_line" -> "gale_cutter".equals(abilityId) ? 9.0 : 0.0;
             case "projectile_burst" -> switch (abilityId) {
                 case "splash" -> 13.0;
                 case "scald" -> 11.5;
@@ -149,8 +154,7 @@ public final class ProjectileRuntimeSpecs {
         for (int index = 0; index < projectileCount; index++) {
             long delay = switch (castType) {
                 case "projectile_volley" -> switch (abilityId) {
-                    case "bullet_storm" -> index * 65L;
-                    case "razor_wind" -> index * 45L;
+                    case "razor_wind" -> new RazorWindState().launchDelayMillis(index);
                     case "frozen_needles" -> index * 55L;
                     case "debris" -> index * 90L;
                     default -> index * DEFAULT_VOLLEY_STAGGER_MS;
@@ -180,22 +184,39 @@ public final class ProjectileRuntimeSpecs {
         }
         return (long) (travelSeconds * 1000);
     }
-
     private static ProjectileTrajectoryProfile resolveTrajectoryProfile(AbilityData ability) {
         if (isMagmaSlingAbility(ability)) {
+            // Shipped, live-proven template profile - keep even if the manifest row drifts.
             return ProjectileTrajectoryProfile.magmaSling();
+        }
+        if (usesNativeProjectile(ability)) {
+            return ProjectileTrajectoryProfile.nativeProjectile();
         }
         return ProjectileTrajectoryProfile.generic();
     }
 
     private static List<String> resolveNativeProjectileConfigIds(AbilityData ability) {
+        if (ability == null || ability.getId() == null) {
+            return List.of();
+        }
+        AbilityVisualManifest.Row row = AbilityVisualManifest.current().lookup(ability.getId());
+        if (row != null && row.projectileConfig() != null && !row.projectileConfig().isBlank()) {
+            return List.of(row.projectileConfig());
+        }
         if (isMagmaSlingAbility(ability)) {
-            return List.of(
-                    "Projectile_Config_MOTM_Magma_Sling_Visual",
-                    "Projectile_Config_Fireball",
-                    "Weapons/Stick/Projectile_Config_Fireball");
+            // Fail-safe: the shipped template must not lose its native visual
+            // when the manifest is absent (unit tests, load-order edge cases).
+            return List.of("Projectile_Config_MOTM_Magma_Sling_Visual");
         }
         return List.of();
+    }
+
+    public static boolean usesNativeProjectileConfig(AbilityData ability) {
+        return !resolveNativeProjectileConfigIds(ability).isEmpty();
+    }
+
+    private static boolean usesNativeProjectile(AbilityData ability) {
+        return usesNativeProjectileConfig(ability);
     }
 
     private static boolean isMagmaSlingAbility(AbilityData ability) {

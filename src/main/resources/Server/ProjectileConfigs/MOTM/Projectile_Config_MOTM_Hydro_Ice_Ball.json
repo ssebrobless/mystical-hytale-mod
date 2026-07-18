@@ -1,0 +1,41 @@
+{
+  "Parent": "Projectile_Config_Ice_Ball",
+  "Model": "Ice_Ball",
+  "LaunchForce": 30,
+  "LaunchWorldSoundEventId": "SFX_Staff_Ice_Shoot",
+  "Interactions": {
+    "ProjectileHit": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Ice_Blast" },
+              { "SystemId": "Weapon_Frost_Mist" }
+            ],
+            "WorldSoundEventId": "SFX_Ice_Ball_Death"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    },
+    "ProjectileMiss": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Ice_Blast" }
+            ],
+            "WorldSoundEventId": "SFX_Ice_Ball_Death"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    }
+  }
+}

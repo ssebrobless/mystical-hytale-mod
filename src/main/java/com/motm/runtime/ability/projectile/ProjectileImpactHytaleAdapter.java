@@ -9,6 +9,8 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.model.AbilityData;
+import com.hypixel.hytale.server.core.universe.world.ParticleUtil;
+import com.motm.util.MotmEntityLiveness;
 import com.motm.model.PlayerData;
 import com.motm.util.AbilityPresentation;
 
@@ -36,6 +38,10 @@ public final class ProjectileImpactHytaleAdapter {
             return;
         }
 
+        if (isChainLightning(projectile.ability())) {
+            applyChainImpact(projectile, player, store, impactPosition, directHit, support);
+            return;
+        }
         List<Ref<EntityStore>> targets = hitAdapter.collectImpactTargets(projectile, store, impactPosition, directHit);
         if (targets.isEmpty()) {
             return;
@@ -46,7 +52,7 @@ public final class ProjectileImpactHytaleAdapter {
         double totalDamage = 0.0;
 
         for (Ref<EntityStore> targetRef : targets) {
-            if (targetRef == null || !targetRef.isValid()) {
+            if (targetRef == null || !MotmEntityLiveness.isLiveTarget(targetRef, store)) {
                 continue;
             }
 
@@ -93,7 +99,8 @@ public final class ProjectileImpactHytaleAdapter {
         }
 
         applyTargetEffects(projectile, player, store, targets, support);
-        if (isLightningProjectile(projectile.ability()) && directHit != null && directHit.isValid()) {
+        if (isLightningProjectile(projectile.ability())
+                && directHit != null && MotmEntityLiveness.isLiveTarget(directHit, store)) {
             String directEntityId = support.resolveEntityId(directHit, store);
             if (directEntityId != null) {
                 projectile.hitEntityIds().add(directEntityId);
@@ -101,6 +108,65 @@ public final class ProjectileImpactHytaleAdapter {
             applyLightningArcSplash(projectile, player, store, directHit, support);
         }
     }
+    private void applyChainImpact(ActiveProjectile projectile,
+                                  PlayerData player,
+                                  Store<EntityStore> store,
+                                  Vector3d impactPosition,
+                                  Ref<EntityStore> directHit,
+                                  Support support) {
+        if (impactPosition == null || !MotmEntityLiveness.isLiveTarget(directHit, store)) {
+            return;
+        }
+        ChainLightningState chain = new ChainLightningState();
+        Ref<EntityStore> current = directHit;
+        Vector3d center = impactPosition;
+        int hops = 0;
+        double totalDamage = 0.0;
+        while (current != null && hops < ChainLightningState.MAX_HOPS && chain.visit(current, store)) {
+            if (!MotmEntityLiveness.isLiveTarget(current, store)) {
+                break;
+            }
+            Vector3d targetPosition = getPosition(current, store);
+            if (targetPosition == null) {
+                break;
+            }
+            String targetEntityId = support.resolveEntityId(current, store);
+            double resolvedDamage = projectile.baseDamage() * support.outgoingDamageMultiplier(player);
+            resolvedDamage *= support.targetSequenceDamageMultiplier(
+                    projectile.ability(), "chain", hops);
+            if (targetEntityId != null) {
+                resolvedDamage = support.applySpecialDamageModifiers(
+                        player, projectile.ability(), current, store, targetEntityId, resolvedDamage);
+                resolvedDamage *= support.incomingDamageMultiplier(targetEntityId);
+                resolvedDamage = support.absorbDamage(targetEntityId, resolvedDamage);
+            }
+            if (resolvedDamage > 0.0) {
+                Damage damage = new Damage(new Damage.EntitySource(projectile.ownerRef()),
+                        DamageCause.PROJECTILE, (float) resolvedDamage);
+                DamageSystems.executeDamage(current, store, damage);
+                support.reportAbilityKillIfDead(projectile.ownerPlayerId(), player, current, store, targetEntityId);
+                support.applyPostDamageClassPassives(
+                        player, projectile.ownerRef(), targetEntityId, resolvedDamage, true);
+                support.applyLifesteal(projectile.ownerRef(), projectile.ownerPlayerId(), resolvedDamage);
+                totalDamage += resolvedDamage;
+            }
+            String impactEffectId = support.resolveImpactEffectId(
+                    projectile.classId(), projectile.styleId(), projectile.ability());
+            support.applyEffect(current, store, impactEffectId);
+            applyTargetEffects(projectile, player, store, List.of(current), support);
+            projectile.hitEntityIds().add(targetEntityId);
+            ParticleUtil.spawnParticleEffect("Spell/Lightning", targetPosition, store);
+            hops++;
+            center = targetPosition;
+            current = chain.nearestNext(hitAdapter, store, center);
+        }
+        support.recordProjectileImpact(projectile, hops, totalDamage, center);
+        if (totalDamage > 0.0) {
+            player.getStatistics().setTotalDamageDealt(
+                    player.getStatistics().getTotalDamageDealt() + totalDamage);
+        }
+    }
+
 
     public void applyTraversalHits(ActiveProjectile projectile,
                                    PlayerData player,
@@ -130,7 +196,7 @@ public final class ProjectileImpactHytaleAdapter {
         double totalDamage = 0.0;
 
         for (Ref<EntityStore> targetRef : targets) {
-            if (targetRef == null || !targetRef.isValid()) {
+            if (targetRef == null || !MotmEntityLiveness.isLiveTarget(targetRef, store)) {
                 continue;
             }
 
@@ -197,7 +263,8 @@ public final class ProjectileImpactHytaleAdapter {
                                         Vector3d impactPosition,
                                         boolean allowSplash,
                                         Support support) {
-        if (projectile == null || player == null || store == null || primaryTarget == null || !primaryTarget.isValid()) {
+        if (projectile == null || player == null || store == null || primaryTarget == null
+                || !MotmEntityLiveness.isLiveTarget(primaryTarget, store)) {
             return;
         }
 
@@ -260,7 +327,8 @@ public final class ProjectileImpactHytaleAdapter {
 
         int applied = 0;
         for (Ref<EntityStore> splashTarget : hitAdapter.collectNearbyTargets(store, impactPosition, radius, maxTargets + 1)) {
-            if (splashTarget == null || !splashTarget.isValid() || splashTarget.equals(primaryTarget)) {
+            if (splashTarget == null || !MotmEntityLiveness.isLiveTarget(splashTarget, store)
+                    || splashTarget.equals(primaryTarget)) {
                 continue;
             }
             support.applyTargetToken(token, splashTarget, store,
@@ -290,7 +358,8 @@ public final class ProjectileImpactHytaleAdapter {
         double castBuffMultiplier = support.outgoingDamageMultiplier(player);
 
         for (Ref<EntityStore> arcTarget : arcTargets) {
-            if (arcTarget == null || !arcTarget.isValid() || arcTarget.equals(directTargetRef)) {
+            if (arcTarget == null || !MotmEntityLiveness.isLiveTarget(arcTarget, store)
+                    || arcTarget.equals(directTargetRef)) {
                 continue;
             }
 
@@ -331,6 +400,9 @@ public final class ProjectileImpactHytaleAdapter {
         }
 
         for (Ref<EntityStore> targetRef : targets) {
+            if (targetRef == null || !MotmEntityLiveness.isLiveTarget(targetRef, store)) {
+                continue;
+            }
             String entityId = support.resolveEntityId(targetRef, store);
             if (entityId == null || entityId.equals(player.getPlayerId())) {
                 continue;
@@ -370,6 +442,11 @@ public final class ProjectileImpactHytaleAdapter {
                 || abilityId.contains("lightning")
                 || travelType.contains("lightning")
                 || travelType.contains("thunder");
+    }
+    private static boolean isChainLightning(AbilityData ability) {
+        return ability != null
+                && "chain".equalsIgnoreCase(ability.getCastType())
+                && lower(ability.getTravelType()).contains("chain_lightning");
     }
 
     private static List<String> parseEffectTokens(String effect) {

@@ -1,0 +1,40 @@
+{
+  "Parent": "Projectile_Config_Scarak_Seeker_Spitball",
+  "Model": "Scarak_Seeker_Spitball",
+  "LaunchForce": 32,
+  "Interactions": {
+    "ProjectileHit": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Impact_Poison" },
+              { "SystemId": "Status_Poisoned" }
+            ],
+            "WorldSoundEventId": "SFX_Scarak_Seeker_Spitball_Death"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    },
+    "ProjectileMiss": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Impact_Poison" }
+            ],
+            "WorldSoundEventId": "SFX_Scarak_Seeker_Spitball_Death"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    }
+  }
+}

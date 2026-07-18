@@ -1,0 +1,39 @@
+{
+  "id": "projectile-family-lightning",
+  "description": "Lightning-family projectile proof: select Aero Thunder, spawn stationary test mobs, cast the crosshair lightning projectile Smite, and clean up.",
+  "styleId": "thunder",
+  "abilities": [
+    "smite"
+  ],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker projectile-lightning-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set aero",
+    "motm style thunder",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker projectile-lightning-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:projectile_impact_resolved",
+    "server-truth:snapshot"
+  ],
+  "notes": [
+    "Smite is the Thunder style's authored projectile; Chain Lightning is a separate chain-hop runtime and is intentionally not asserted by this projectile-only scenario.",
+    "The runner checks smite's ability_cast_end because it is listed in abilities; projectile_impact_resolved is the server-side resolution evidence.",
+    "server-truth:snapshot asserts snapshot presence only; this scenario does not claim a visual screenshot or log-gate result."
+  ]
+}

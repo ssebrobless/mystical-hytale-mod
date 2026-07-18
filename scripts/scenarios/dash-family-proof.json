@@ -1,0 +1,47 @@
+{
+  "id": "dash-family-proof",
+  "description": "Dash proof for Terra Dust Devil followed by Aero Jet Burst (the Zephyr-pattern dash), with before/after observability snapshots and cleanup.",
+  "styleId": "sand",
+  "abilities": [],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker dash-family-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set terra",
+    "motm style sand",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [
+    "motm dev observe snapshot dust-devil-before",
+    "motm dev test ability dust_devil",
+    "motm dev observe snapshot dust-devil-after",
+    "motm dev class set aero",
+    "motm style jet",
+    "motm dev freecast on",
+    "motm dev observe snapshot jet-burst-before",
+    "motm dev test ability jet_burst",
+    "motm dev observe snapshot jet-burst-after"
+  ],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker dash-family-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "server-truth:snapshot"
+  ],
+  "notes": [
+    "Dust Devil and Jet Burst are issued as commands rather than abilities entries because the current ability-test action resolves every abilities entry from one selected style; this scenario must switch from Terra Sand to Aero Jet between casts.",
+    "The command vocabulary is current: dev class set, style, freecast, test ability, test mobs, observe marker, and observe snapshot are implemented command paths.",
+    "buildObservabilitySnapshot carries runtimePlayer.position. The before/after snapshots capture it, but the current runner expectedEvidence surface only asserts server-truth:snapshot presence; position-delta verification remains live/human comparison for now.",
+    "No expected projectile, client-intent, packet, or screenshot evidence is claimed for dash movement; ability_cast_end only proves the server cast lifecycle."
+  ]
+}

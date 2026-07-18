@@ -1,0 +1,50 @@
+{
+  "Parent": "Projectile_Config_Ice_Ball",
+  "Model": "Tornado",
+  "LaunchForce": 6,
+  "Physics": {
+    "Type": "Standard",
+    "Gravity": 0,
+    "TerminalVelocityAir": 6,
+    "TerminalVelocityWater": 6,
+    "RotationMode": "VelocityDamped",
+    "Bounciness": 0.0,
+    "SticksVertically": true
+  },
+  "LaunchWorldSoundEventId": "SFX_Tornado",
+  "Interactions": {
+    "ProjectileHit": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Wind_Spirit_Tail" },
+              { "SystemId": "Battleaxe_Signature_Whirlwind" }
+            ],
+            "WorldSoundEventId": "SFX_Tornado"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    },
+    "ProjectileMiss": {
+      "Cooldown": { "Cooldown": 0 },
+      "Interactions": [
+        {
+          "Type": "Simple",
+          "RunTime": 0,
+          "Effects": {
+            "WorldParticles": [
+              { "SystemId": "Wind_Spirit_Tail" }
+            ],
+            "WorldSoundEventId": "SFX_Tornado"
+          }
+        },
+        { "Type": "RemoveEntity", "Entity": "User" }
+      ]
+    }
+  }
+}

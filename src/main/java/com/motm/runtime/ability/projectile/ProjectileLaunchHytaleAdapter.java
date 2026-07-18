@@ -15,8 +15,7 @@ import java.util.Set;
 
 public final class ProjectileLaunchHytaleAdapter {
     private static final Set<String> DELAYED_PROJECTILE_CAST_TYPES = Set.of(
-            "projectile", "projectile_line", "wave_line", "projectile_burst", "projectile_volley");
-
+            "projectile", "projectile_line", "wave_line", "projectile_burst", "projectile_volley", "chain");
     private final ProjectileLaunchRuntime launchRuntime;
     private final ProjectileRuntimeState projectileState;
     private final ProjectileVisualHytaleAdapter visualAdapter;
@@ -47,7 +46,8 @@ public final class ProjectileLaunchHytaleAdapter {
         }
 
         String castType = support.lower(ability.getCastType());
-        if (!DELAYED_PROJECTILE_CAST_TYPES.contains(castType)) {
+        if (!DELAYED_PROJECTILE_CAST_TYPES.contains(castType)
+                || ("chain".equals(castType) && !ProjectileRuntimeSpecs.usesNativeProjectileConfig(ability))) {
             return Result.none();
         }
 
@@ -72,7 +72,7 @@ public final class ProjectileLaunchHytaleAdapter {
                 playerRef,
                 store,
                 projectileSpec.trajectoryProfile(),
-                explicitTargetRef,
+                projectileSpec.usesNativeProjectileVisual() ? null : explicitTargetRef,
                 targetBlock,
                 origin
         );

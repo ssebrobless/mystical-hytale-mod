@@ -1,0 +1,39 @@
+{
+  "id": "projectile-family-fire",
+  "description": "Fire-family projectile proof: select Corruptus Flame, spawn stationary test mobs, cast Fireball, and clean up.",
+  "styleId": "flame",
+  "abilities": [
+    "fireball"
+  ],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker projectile-fire-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set corruptus",
+    "motm style flame",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs stationary",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker projectile-fire-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "causality:ability_cast_end",
+    "causality:projectile_impact_resolved",
+    "server-truth:snapshot"
+  ],
+  "notes": [
+    "The runner checks fireball's ability_cast_end because it is listed in abilities.",
+    "projectile_impact_resolved is the server-side projectile resolution evidence; this scenario makes no claim about a native visual asset.",
+    "server-truth:snapshot asserts snapshot presence only; this scenario does not claim a visual screenshot or log-gate result."
+  ]
+}

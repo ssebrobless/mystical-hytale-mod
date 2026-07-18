@@ -8,6 +8,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.TransformComponen
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import com.motm.util.MotmEntityLiveness;
 
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public final class ProjectileHitHytaleAdapter {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 TransformComponent transform = validNpcTransform(chunk, entityIndex);
-                if (ref == null || !ref.isValid() || transform == null) {
+                if (ref == null || !MotmEntityLiveness.isLiveTarget(ref, store) || transform == null) {
                     continue;
                 }
 
@@ -78,7 +79,7 @@ public final class ProjectileHitHytaleAdapter {
         }
 
         LinkedHashSet<Ref<EntityStore>> targets = new LinkedHashSet<>();
-        if (directHit != null && directHit.isValid()) {
+        if (directHit != null && MotmEntityLiveness.isLiveTarget(directHit, store)) {
             targets.add(directHit);
         }
 
@@ -95,7 +96,7 @@ public final class ProjectileHitHytaleAdapter {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 TransformComponent transform = validNpcTransform(chunk, entityIndex);
-                if (ref == null || !ref.isValid() || transform == null) {
+                if (ref == null || !MotmEntityLiveness.isLiveTarget(ref, store) || transform == null) {
                     continue;
                 }
 
@@ -125,7 +126,7 @@ public final class ProjectileHitHytaleAdapter {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 TransformComponent transform = validNpcTransform(chunk, entityIndex);
-                if (ref == null || !ref.isValid() || transform == null) {
+                if (ref == null || !MotmEntityLiveness.isLiveTarget(ref, store) || transform == null) {
                     continue;
                 }
 
@@ -160,7 +161,7 @@ public final class ProjectileHitHytaleAdapter {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 TransformComponent transform = validNpcTransform(chunk, entityIndex);
-                if (ref == null || !ref.isValid() || transform == null) {
+                if (ref == null || !MotmEntityLiveness.isLiveTarget(ref, store) || transform == null) {
                     continue;
                 }
 
@@ -190,7 +191,7 @@ public final class ProjectileHitHytaleAdapter {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 TransformComponent transform = validNpcTransform(chunk, entityIndex);
-                if (ref == null || !ref.isValid() || transform == null) {
+                if (ref == null || !MotmEntityLiveness.isLiveTarget(ref, store) || transform == null) {
                     continue;
                 }
 

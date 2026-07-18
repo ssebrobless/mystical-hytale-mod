@@ -15,6 +15,9 @@ public record ProjectileTrajectoryProfile(
     public static ProjectileTrajectoryProfile generic() {
         return new ProjectileTrajectoryProfile(0.0, 0.0, 0.0, false, 0.0);
     }
+    public static ProjectileTrajectoryProfile nativeProjectile() {
+        return new ProjectileTrajectoryProfile(1.6, 0.0, 0.0, true, 0.75);
+    }
 
     public static ProjectileTrajectoryProfile magmaSling() {
         return new ProjectileTrajectoryProfile(1.15, 0.9, 1.0, true, 0.75);

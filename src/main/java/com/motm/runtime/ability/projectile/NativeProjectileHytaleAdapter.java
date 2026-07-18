@@ -17,10 +17,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 /**
- * Spawns first-class Hytale projectile visuals for MOTM projectile abilities.
+ * Spawns first-class Hytale projectile actors for MOTM projectile abilities.
  *
- * MOTM still owns damage/effects through ActiveProjectile until native Hytale
- * interactions can be authored per ability without duplicating damage.
+ * MOTM keeps the ActiveProjectile simulation as the owner-attributed damage,
+ * status, reaction, and timeout path while Hytale owns actor motion/rendering.
  */
 public final class NativeProjectileHytaleAdapter {
     private final ProjectileVisualHytaleAdapter.IntentRecorder intentRecorder;
@@ -82,6 +82,11 @@ public final class NativeProjectileHytaleAdapter {
 
         Ref<EntityStore> spawnedRef = projectileRef.get();
         boolean spawned = spawnedRef != null && spawnedRef.isValid();
+        if (spawnedRef != null && spawnedRef.isValid()
+                && ability != null && "pressure_burst".equalsIgnoreCase(ability.getId())) {
+            new PressureBurstState(activateAtMillis).applyProjectileScale(
+                    spawnedRef, store, activateAtMillis + PressureBurstState.MAX_CHARGE_MILLIS);
+        }
         String failureReason = failure.get();
         record(
                 classId,
@@ -102,7 +107,9 @@ public final class NativeProjectileHytaleAdapter {
                     + " config=" + projectileConfig.getId()
                     + " failure=" + failureReason);
         }
-        return ProjectileVisualRuntime.none();
+        return spawned
+                ? new ProjectileVisualRuntime(spawnedRef, null, Long.MAX_VALUE)
+                : ProjectileVisualRuntime.none();
     }
 
     private ProjectileConfig resolveProjectileConfig(List<String> projectileConfigIds) {
