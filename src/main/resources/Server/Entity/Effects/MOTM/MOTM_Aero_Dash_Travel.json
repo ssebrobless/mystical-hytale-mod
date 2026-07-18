@@ -5,7 +5,7 @@
     "EntityTopTint": "#d9f3ff",
     "EntityBottomTint": "#6c91c9",
     "Particles": [
-      { "SystemId": "Server/Particles/NPC/Spirit_Wind/Wind_Spirit_Tail.particlesystem" }
+      { "SystemId": "Wind_Spirit_Tail" }
     ]
   }
 }

@@ -21,12 +21,12 @@ public final class DashHytaleAdapter {
     private static final long TRAIL_INTERVAL_MILLIS = 90L;
     private static final long MAX_DASH_WINDOW_MILLIS = 2_200L;
     private static final double ARRIVAL_TOLERANCE = 0.45;
-    private static final String SAND_STORM = "Server/Particles/Weather/Sand/Sand_Storm.particlesystem";
-    private static final String SAND_SPRINT = "Server/Particles/Block/Sand/Block_Sprint_Sand.particlesystem";
-    private static final String WIND_TAIL = "Server/Particles/NPC/Spirit_Wind/Wind_Spirit_Tail.particlesystem";
-    private static final String WATER_TRAIL = "Server/Particles/Item/Plants/Bubbles_Breathing.particlesystem";
-    private static final String VOID_TRAIL = "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem";
-    private static final String STONE_TRAIL = "Server/Particles/Block/Stone/Block_Break_Stone.particlesystem";
+    private static final String SAND_STORM = "Sand_Storm";
+    private static final String SAND_SPRINT = "Block_Sprint_Sand";
+    private static final String WIND_TAIL = "Wind_Spirit_Tail";
+    private static final String WATER_TRAIL = "Bubbles_Breathing";
+    private static final String VOID_TRAIL = "VoidImpact";
+    private static final String STONE_TRAIL = "Block_Break_Stone";
 
     private final DashRuntimeState state;
     private final Hooks hooks;
@@ -130,7 +130,7 @@ public final class DashHytaleAdapter {
                 applySweptKnockback(dash, store, position);
                 spawnWorldBurst(SAND_SPRINT, position, store);
             } else if (isAfterburner(dash.ability())) {
-                spawnWorldBurst("Server/Particles/Combat/Fire_Stick/Fire_Trap/Fire_AoE_Grow.particlesystem", position, store);
+                spawnWorldBurst("Fire_AoE_Grow", position, store);
             }
             dash.markTrail(now);
         }
@@ -210,7 +210,7 @@ public final class DashHytaleAdapter {
 
     private static String trailSystemId(String classId, AbilityData ability) {
         if (isDustDevil(ability)) return SAND_STORM;
-        if (isAfterburner(ability)) return "Server/Particles/Combat/Fire_Stick/Fire_Charge1.particlesystem";
+        if (isAfterburner(ability)) return "Fire_Charge1";
         return switch (lower(classId)) {
             case "hydro" -> WATER_TRAIL;
             case "corruptus" -> VOID_TRAIL;
@@ -221,7 +221,7 @@ public final class DashHytaleAdapter {
 
     private static String endSystemId(String classId, AbilityData ability) {
         if (isDustDevil(ability)) return SAND_STORM;
-        if (isAfterburner(ability)) return "Server/Particles/Combat/Fire_Stick/Fire_Trap/Fire_AoE_Grow.particlesystem";
+        if (isAfterburner(ability)) return "Fire_AoE_Grow";
         return switch (lower(classId)) {
             case "hydro" -> WATER_TRAIL;
             case "corruptus" -> VOID_TRAIL;

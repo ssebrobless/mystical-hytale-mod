@@ -5,7 +5,7 @@
     "EntityTopTint": "#b8f4ff",
     "EntityBottomTint": "#2a83aa",
     "Particles": [
-      { "SystemId": "Server/Particles/Block/Water/Water_Bubble_Stream.particlesystem" }
+      { "SystemId": "Water_Bubble_Stream" }
     ]
   }
 }

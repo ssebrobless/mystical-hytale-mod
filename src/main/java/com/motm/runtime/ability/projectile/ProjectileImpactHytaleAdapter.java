@@ -155,7 +155,7 @@ public final class ProjectileImpactHytaleAdapter {
             support.applyEffect(current, store, impactEffectId);
             applyTargetEffects(projectile, player, store, List.of(current), support);
             projectile.hitEntityIds().add(targetEntityId);
-            ParticleUtil.spawnParticleEffect("Spell/Lightning", targetPosition, store);
+            ParticleUtil.spawnParticleEffect("Lightning", targetPosition, store);
             hops++;
             center = targetPosition;
             current = chain.nearestNext(hitAdapter, store, center);

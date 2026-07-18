@@ -5,8 +5,8 @@
     "EntityTopTint": "#c2a24a",
     "EntityBottomTint": "#6b4f20",
     "Particles": [
-      { "SystemId": "Server/Particles/Weather/Sand/Sand_Storm.particlesystem" },
-      { "SystemId": "Server/Particles/Block/Sand/Block_Sprint_Sand.particlesystem" }
+      { "SystemId": "Sand_Storm" },
+      { "SystemId": "Block_Sprint_Sand" }
     ]
   }
 }

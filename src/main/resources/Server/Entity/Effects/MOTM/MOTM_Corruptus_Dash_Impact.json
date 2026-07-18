@@ -5,7 +5,7 @@
     "EntityTopTint": "#5b2b75",
     "EntityBottomTint": "#120d22",
     "Particles": [
-      { "SystemId": "Server/Particles/Combat/Impact/Misc/Void/VoidImpact.particlesystem" }
+      { "SystemId": "VoidImpact" }
     ]
   }
 }

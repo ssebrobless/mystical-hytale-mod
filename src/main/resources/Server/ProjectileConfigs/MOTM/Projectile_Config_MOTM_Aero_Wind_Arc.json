@@ -11,7 +11,7 @@
     "Bounciness": 0.0,
     "SticksVertically": true
   },
-  "LaunchWorldSoundEventId": "SFX_Tornado",
+  "LaunchWorldSoundEventId": "SFX_Bow_T2_Shoot",
   "Interactions": {
     "ProjectileHit": {
       "Cooldown": { "Cooldown": 0 },
