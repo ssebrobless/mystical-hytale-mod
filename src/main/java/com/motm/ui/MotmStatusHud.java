@@ -242,9 +242,14 @@ public class MotmStatusHud extends CustomUIHud {
         }
 
         boolean coolingDown = entry.cooldownSeconds() > 0.0;
-        boolean iconVisible = entry.iconPath() != null && !entry.iconPath().isBlank()
-                && (entry.active() || entry.showIconWhenInactive());
-        boolean frameVisible = iconVisible && entry.framePath() != null && !entry.framePath().isBlank();
+        // DEFECT (2026-07-18, live-verified): CustomUI FORBIDS changing Sprite
+        // TexturePath / Group Background via runtime commands - the client hard-
+        // disconnects on the first such command ("CustomUI is not allowed to
+        // change this property. Selector: #TrackerRow2Icon"), blocking world
+        // entry entirely. Icons stay hidden until the vanilla pattern lands:
+        // pre-declared per-family icon nodes in the .ui toggled via Visible.
+        boolean iconVisible = false;
+        boolean frameVisible = false;
         String nameColor = entry.active() ? "#a8ff9a" : coolingDown ? "#a6a6a6" : "#ffffff";
         String timerColor = coolingDown && !entry.active() ? "#a6a6a6" : "#ffffff";
         String timerText = entry.counterText() != null && !entry.counterText().isBlank()
@@ -263,12 +268,7 @@ public class MotmStatusHud extends CustomUIHud {
         commands.set(prefix + "TimerShadow.Style.RenderBold", false);
         commands.set(prefix + "Timer.Visible", !timerText.isBlank());
         commands.set(prefix + "TimerShadow.Visible", !timerText.isBlank());
-        if (iconVisible) {
-            commands.set(prefix + "Icon.TexturePath", entry.iconPath());
-        }
-        if (frameVisible) {
-            commands.set(prefix + "Frame.Background", entry.framePath());
-        }
+        // TexturePath/Background writes removed - see defect note above.
         commands.set(prefix + "Icon.Visible", iconVisible);
         commands.set(prefix + "Frame.Visible", frameVisible);
     }
