@@ -657,6 +657,11 @@ public class GameplayPlaybackManager {
                     }
 
                     @Override
+                    public boolean removeEffect(Ref<EntityStore> ref, Store<EntityStore> store, String effectId) {
+                        return GameplayPlaybackManager.this.removeEffectById(ref, store, effectId);
+                    }
+
+                    @Override
                     public List<Ref<EntityStore>> collectNearbyTargets(Store<EntityStore> store,
                                                                        Vector3d center,
                                                                        double radius,

@@ -116,6 +116,14 @@ public final class DashHytaleAdapter {
         boolean arrived = progress >= dash.distance() - ARRIVAL_TOLERANCE;
         if (arrived || now >= dash.expiresAtMillis()) {
             if (!dash.endCueApplied()) {
+                // Cleanup rule 8: the cast/travel effects were re-applied every
+                // trail tick; remove them explicitly so nothing lingers on the
+                // caster past the dash window (live finding 2026-07-18).
+                hooks.removeEffect(ref, store, travelEffectId(dash.classId(), dash.styleId(), dash.ability()));
+                hooks.removeEffect(ref, store, castEffectId(dash.classId(), dash.ability()));
+                if (isDustDevil(dash.ability())) {
+                    hooks.removeEffect(ref, store, "MOTM_Terra_Dash_Sand_Travel");
+                }
                 applyEffect(ref, store, impactEffectId(dash.classId(), dash.styleId(), dash.ability()));
                 spawnWorldBurst(endSystemId(dash.classId(), dash.ability()), position, store);
                 dash.markEndCueApplied();
@@ -269,6 +277,7 @@ public final class DashHytaleAdapter {
     public interface Hooks {
         Player resolvePlayer(String playerId);
         boolean applyEffect(Ref<EntityStore> ref, Store<EntityStore> store, String effectId);
+        boolean removeEffect(Ref<EntityStore> ref, Store<EntityStore> store, String effectId);
         List<Ref<EntityStore>> collectNearbyTargets(Store<EntityStore> store, Vector3d center, double radius, int maxTargets);
         boolean applyKnockback(Ref<EntityStore> targetRef, Store<EntityStore> store,
                                Ref<EntityStore> sourceRef, AbilityData ability);
