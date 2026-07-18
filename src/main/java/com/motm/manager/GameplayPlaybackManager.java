@@ -2833,6 +2833,10 @@ public class GameplayPlaybackManager {
                 ? burstVelocity.y
                 : before != null && before.isFinite() ? before.y : 0.0;
         velocity.set(burstVelocity.x, y, burstVelocity.z);
+        // Players are client-authoritative movers: the server-side velocity is
+        // overwritten by the next client input frame unless the CLIENT velocity
+        // channel carries the impulse too (GrapplingHook precedent).
+        velocity.setClient(burstVelocity.x, y, burstVelocity.z);
         return true;
     }
 
