@@ -217,6 +217,13 @@ public class ElementalReactionManager {
     }
 
     /**
+     * Clear every tracked elemental mark for a removed entity.
+     */
+    public void clearAllForEntity(String entityId) {
+        clearMarks(entityId);
+    }
+
+    /**
      * Determine which mark type an ability applies based on the element and ability.
      */
     public static ElementalMark.MarkType getMarkTypeForAbility(String element, String abilityEffect) {

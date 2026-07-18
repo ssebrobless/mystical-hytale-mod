@@ -80,6 +80,12 @@ public class StatusEffectManager {
     public synchronized void clearEffects(String entityId) {
         activeEffects.remove(entityId);
     }
+    /**
+     * Clear every tracked status effect for a removed entity.
+     */
+    public synchronized void clearAllForEntity(String entityId) {
+        clearEffects(entityId);
+    }
 
     /**
      * Remove all effects coming from a specific source ability or perk.

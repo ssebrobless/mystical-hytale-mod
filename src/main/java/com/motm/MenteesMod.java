@@ -265,6 +265,23 @@ public class MenteesMod extends JavaPlugin {
                 }
                 @Override
                 public void afterMobKilled(PlayerData player, Player runtimePlayer, String mobEntityId) {
+                    if (mobEntityId != null && !mobEntityId.isBlank()) {
+                        if (statusEffectManager != null) {
+                            statusEffectManager.clearAllForEntity(mobEntityId);
+                        }
+                        if (elementalReactionManager != null) {
+                            elementalReactionManager.clearAllForEntity(mobEntityId);
+                        }
+                        if (runtimePerkManager != null) {
+                            runtimePerkManager.clearForEntity(mobEntityId);
+                        }
+                        Ref<EntityStore> killerRef = runtimePlayer != null ? runtimePlayer.getReference() : null;
+                        Store<EntityStore> killerStore = killerRef != null && killerRef.isValid()
+                                ? killerRef.getStore() : null;
+                        if (gameplayPlaybackManager != null && killerStore != null) {
+                            gameplayPlaybackManager.purgePulsesTargetingEntity(mobEntityId, killerStore);
+                        }
+                    }
                     if (runtimePerkManager != null) {
                         runtimePerkManager.afterMobKilled(player, runtimePlayer, mobEntityId);
                     }

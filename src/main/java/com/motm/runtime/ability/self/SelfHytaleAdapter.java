@@ -93,7 +93,20 @@ public final class SelfHytaleAdapter {
                                       String effectId,
                                       long expireAtMillis,
                                       long nextApplyAtMillis) {
-        startActiveSelfEffect(ownerRef, ownerPlayerId, effectId, expireAtMillis, nextApplyAtMillis, false);
+        startActiveSelfEffect(ownerRef, ownerPlayerId, effectId, expireAtMillis, nextApplyAtMillis, false, null);
+    }
+
+    /**
+     * Aura loop visual owned by an ability: cleared when the ability
+     * deactivates (toggle end, swap) instead of only on expiry.
+     */
+    public void startAbilitySelfEffect(Ref<EntityStore> ownerRef,
+                                       String ownerPlayerId,
+                                       String effectId,
+                                       long expireAtMillis,
+                                       String sourceAbilityId) {
+        startActiveSelfEffect(ownerRef, ownerPlayerId, effectId, expireAtMillis,
+                System.currentTimeMillis() + DEFAULT_SELF_EFFECT_INITIAL_DELAY_MS, false, sourceAbilityId);
     }
 
     /**
@@ -105,7 +118,30 @@ public final class SelfHytaleAdapter {
                                        String effectId,
                                        long expireAtMillis) {
         startActiveSelfEffect(ownerRef, ownerPlayerId, effectId, expireAtMillis,
-                System.currentTimeMillis() + DEFAULT_SELF_EFFECT_INITIAL_DELAY_MS, true);
+                System.currentTimeMillis() + DEFAULT_SELF_EFFECT_INITIAL_DELAY_MS, true, null);
+    }
+
+    /** Removes ability-owned self effects (state + native) for a player. */
+    public int clearSelfEffectsForAbility(String playerId, String abilityId) {
+        if (playerId == null || playerId.isBlank() || abilityId == null || abilityId.isBlank()) {
+            return 0;
+        }
+        final int[] removed = {0};
+        selfState.removeProcessedSelfEffects(effect -> {
+            if (effect == null
+                    || !playerId.equals(effect.ownerPlayerId())
+                    || !abilityId.equalsIgnoreCase(effect.sourceAbilityId())) {
+                return false;
+            }
+            Ref<EntityStore> ref = effect.ownerRef();
+            Store<EntityStore> store = ref != null && ref.isValid() ? ref.getStore() : null;
+            if (store != null) {
+                support.removeEffectById(ref, store, effect.effectId());
+            }
+            removed[0]++;
+            return true;
+        });
+        return removed[0];
     }
 
     private void startActiveSelfEffect(Ref<EntityStore> ownerRef,
@@ -113,12 +149,13 @@ public final class SelfHytaleAdapter {
                                        String effectId,
                                        long expireAtMillis,
                                        long nextApplyAtMillis,
-                                       boolean pulse) {
+                                       boolean pulse,
+                                       String sourceAbilityId) {
         if (ownerRef == null || !ownerRef.isValid() || effectId == null || effectId.isBlank()) {
             return;
         }
         ActiveSelfEffect effect = activationRuntime.createSelfEffect(
-                ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, pulse);
+                ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, pulse, sourceAbilityId);
         if (effect != null) {
             selfState.replaceSelfEffect(ownerPlayerId, effectId, effect);
         }

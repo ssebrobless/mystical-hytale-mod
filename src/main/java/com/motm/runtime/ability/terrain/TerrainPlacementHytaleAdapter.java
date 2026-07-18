@@ -18,6 +18,7 @@ import com.motm.model.AbilityData;
 import com.motm.runtime.ability.field.FieldRuntimeSpecs;
 import com.motm.runtime.ability.field.FieldTerrainRuntimeSpec;
 import com.motm.util.MotmObservability;
+import com.motm.util.MotmEntityLiveness;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,6 +181,9 @@ public final class TerrainPlacementHytaleAdapter {
         int pushed = 0;
 
         for (Ref<EntityStore> targetRef : collectNearbyNpcTargets(store, center, halfWidth + 2.0, 8)) {
+            if (!MotmEntityLiveness.isLiveTarget(targetRef, store)) {
+                continue;
+            }
             Vector3d targetPosition = position(targetRef, store);
             if (targetPosition == null) {
                 continue;

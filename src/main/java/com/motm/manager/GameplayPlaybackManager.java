@@ -2207,7 +2207,20 @@ public class GameplayPlaybackManager {
             summaryParts.add("cleared " + clearedStatusEffects + " status effect" + (clearedStatusEffects == 1 ? "" : "s"));
         }
 
+        int clearedAuraVisuals = selfAdapter.clearSelfEffectsForAbility(playerId, normalizedAbilityId);
+        if (clearedAuraVisuals > 0) {
+            summaryParts.add("cleared aura visual");
+        }
+
         return summaryParts.isEmpty() ? "" : String.join(" | ", summaryParts);
+    }
+
+    /**
+     * Delegates the dead-target pulse purge (channels, line controls) to the
+     * channel adapter; called from the mob-kill hook (crash guard 2026-07-17).
+     */
+    public synchronized int purgePulsesTargetingEntity(String entityId, Store<EntityStore> store) {
+        return channelAdapter.purgePulsesTargetingEntity(entityId, store);
     }
 
     public PlaybackResult playAbility(Player runtimePlayer,
@@ -2239,8 +2252,9 @@ public class GameplayPlaybackManager {
             String selfLoopId = AbilityRuntimeEffects.selfLoopEffectId(
                     player.getPlayerClass(), currentStyleId(player), ability);
             if (selfLoopId != null) {
-                selfAdapter.startActiveSelfEffect(playerRef, player.getPlayerId(), selfLoopId,
-                        System.currentTimeMillis() + (long) (ability.getDurationSeconds() * 1000.0));
+                selfAdapter.startAbilitySelfEffect(playerRef, player.getPlayerId(), selfLoopId,
+                        System.currentTimeMillis() + (long) (ability.getDurationSeconds() * 1000.0),
+                        ability.getId());
             }
         }
         MovementResult movementResult = applyMovement(runtimePlayer, playerRef, store, ability);

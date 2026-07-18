@@ -9,6 +9,7 @@ public final class ActiveSelfEffect {
     private final String effectId;
     private final long expireAtMillis;
     private final boolean pulse;
+    private final String sourceAbilityId;
     private long nextApplyAtMillis;
 
     public ActiveSelfEffect(String ownerPlayerId,
@@ -16,7 +17,7 @@ public final class ActiveSelfEffect {
                             String effectId,
                             long expireAtMillis,
                             long nextApplyAtMillis) {
-        this(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, false);
+        this(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, false, null);
     }
 
     public ActiveSelfEffect(String ownerPlayerId,
@@ -25,12 +26,23 @@ public final class ActiveSelfEffect {
                             long expireAtMillis,
                             long nextApplyAtMillis,
                             boolean pulse) {
+        this(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, pulse, null);
+    }
+
+    public ActiveSelfEffect(String ownerPlayerId,
+                            Ref<EntityStore> ownerRef,
+                            String effectId,
+                            long expireAtMillis,
+                            long nextApplyAtMillis,
+                            boolean pulse,
+                            String sourceAbilityId) {
         this.ownerPlayerId = ownerPlayerId;
         this.ownerRef = ownerRef;
         this.effectId = effectId;
         this.expireAtMillis = expireAtMillis;
         this.nextApplyAtMillis = nextApplyAtMillis;
         this.pulse = pulse;
+        this.sourceAbilityId = sourceAbilityId;
     }
 
     public String ownerPlayerId() { return ownerPlayerId; }
@@ -40,6 +52,8 @@ public final class ActiveSelfEffect {
     public long nextApplyAtMillis() { return nextApplyAtMillis; }
     /** Pulse loops re-fire application particles by removing before re-applying. */
     public boolean pulse() { return pulse; }
+    /** Ability that started this effect, or null for system-owned effects. */
+    public String sourceAbilityId() { return sourceAbilityId; }
 
     public boolean expired(long now) {
         return now >= expireAtMillis;

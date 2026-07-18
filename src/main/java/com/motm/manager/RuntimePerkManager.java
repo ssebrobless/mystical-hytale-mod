@@ -46,6 +46,7 @@ import com.motm.model.StatusEffect;
 import com.motm.util.MotmInventoryOps;
 import com.motm.util.HytaleAssetResolver;
 import com.motm.util.MotmNpcRoles;
+import com.motm.util.MotmEntityLiveness;
 import org.bson.BsonBoolean;
 import org.bson.BsonString;
 
@@ -393,6 +394,9 @@ public class RuntimePerkManager {
         }
         int targets = 0;
         for (Ref<EntityStore> target : nearbyNpcs(store, center, 7.0)) {
+            if (!MotmEntityLiveness.isLiveTarget(target, store)) {
+                continue;
+            }
             String entityId = entityId(target, store);
             if (entityId == null) {
                 continue;
@@ -423,6 +427,9 @@ public class RuntimePerkManager {
         Vector3d center = position(ref, store);
         if (center != null) {
             for (Ref<EntityStore> target : nearbyNpcs(store, center, 7.0)) {
+                if (!MotmEntityLiveness.isLiveTarget(target, store)) {
+                    continue;
+                }
                 String entityId = entityId(target, store);
                 if (entityId == null) {
                     continue;
@@ -501,6 +508,13 @@ public class RuntimePerkManager {
                 + " proves=neptunes_grace,freezing_winds";
         LOG.info(result);
         return result;
+    }
+
+    public void clearForEntity(String entityId) {
+        if (entityId == null || entityId.isBlank()) {
+            return;
+        }
+        activeIgnites.removeIf(dot -> entityId.equals(dot.targetEntityId));
     }
 
     public void afterMobKilled(PlayerData killer, Player runtimePlayer, String mobEntityId) {
@@ -1018,6 +1032,9 @@ public class RuntimePerkManager {
     private int pushNpcsOutward(Store<EntityStore> store, Vector3d center, double radius, double distance) {
         int pushed = 0;
         for (Ref<EntityStore> target : nearbyNpcs(store, center, radius)) {
+            if (!MotmEntityLiveness.isLiveTarget(target, store)) {
+                continue;
+            }
             Vector3d position = position(target, store);
             if (position == null) {
                 continue;
@@ -1353,6 +1370,9 @@ public class RuntimePerkManager {
         applyEffectById(playerRef, store, FREEZING_WINDS_EFFECT_ID);
         int targets = 0;
         for (Ref<EntityStore> target : nearbyNpcs(store, center, 5.0)) {
+            if (!MotmEntityLiveness.isLiveTarget(target, store)) {
+                continue;
+            }
             String entityId = entityId(target, store);
             if (entityId == null) {
                 continue;
@@ -1367,6 +1387,9 @@ public class RuntimePerkManager {
     }
 
     private void pushNpcAway(Ref<EntityStore> target, Store<EntityStore> store, Vector3d center, double distance) {
+        if (!MotmEntityLiveness.isLiveTarget(target, store)) {
+            return;
+        }
         Vector3d position = position(target, store);
         if (position == null || center == null) {
             return;
@@ -1402,7 +1425,15 @@ public class RuntimePerkManager {
         int targets = 0;
         double tickDamage = Math.max(1.0, maxHealth(attackerRef, store) * 0.01);
         for (Ref<EntityStore> target : nearbyNpcs(store, center, 6.0)) {
-            activeIgnites.add(new IgniteDot(attacker.getPlayerId(), attackerRef, target, tickDamage, tickCounter + 5L * TICKS_PER_SECOND, tickCounter));
+            if (!MotmEntityLiveness.isLiveTarget(target, store)) {
+                continue;
+            }
+            String targetEntityId = entityId(target, store);
+            if (targetEntityId == null) {
+                continue;
+            }
+            activeIgnites.add(new IgniteDot(attacker.getPlayerId(), attackerRef, target, targetEntityId,
+                    tickDamage, tickCounter + 5L * TICKS_PER_SECOND, tickCounter));
             applyEffectById(target, store, IGNITE_EFFECT_ID);
             targets++;
         }
@@ -1448,8 +1479,12 @@ public class RuntimePerkManager {
             if (tickCounter - dot.lastTick < TICKS_PER_SECOND) {
                 continue;
             }
-            dot.lastTick = tickCounter;
             Store<EntityStore> targetStore = dot.targetRef.getStore() != null ? dot.targetRef.getStore() : store;
+            if (!MotmEntityLiveness.isLiveTarget(dot.targetRef, targetStore)) {
+                iterator.remove();
+                continue;
+            }
+            dot.lastTick = tickCounter;
             Damage damage = new Damage(new Damage.EntitySource(dot.ownerRef), DamageCause.ENVIRONMENT, (float) dot.damagePerSecond);
             DamageSystems.executeDamage(dot.targetRef, targetStore, damage);
             LOG.info("[MOTM] Runtime perk dot: ignite damage=" + format(dot.damagePerSecond)
@@ -1471,7 +1506,7 @@ public class RuntimePerkManager {
                 }
                 Store<EntityStore> ghostStore = ghost.ref.getStore() != null ? ghost.ref.getStore() : store;
                 Ref<EntityStore> target = nearestNpc(ghostStore, position(ghost.ownerRef, ghostStore), 12.0);
-                if (target == null) {
+                if (target == null || !MotmEntityLiveness.isLiveTarget(target, ghostStore)) {
                     continue;
                 }
                 ghost.lastAttackTick = tickCounter;
@@ -1713,7 +1748,8 @@ public class RuntimePerkManager {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (ref == null || !ref.isValid() || npc == null || npc.isDespawning()) {
+                if (ref == null || !MotmEntityLiveness.isLiveTarget(ref, store)
+                        || npc == null || npc.isDespawning()) {
                     continue;
                 }
                 if (chunk.getComponent(entityIndex, DeathComponent.getComponentType()) != null) {
@@ -1844,15 +1880,17 @@ public class RuntimePerkManager {
         private final String ownerPlayerId;
         private final Ref<EntityStore> ownerRef;
         private final Ref<EntityStore> targetRef;
+        private final String targetEntityId;
         private final double damagePerSecond;
         private final long expireAtTick;
         private long lastTick;
 
         private IgniteDot(String ownerPlayerId, Ref<EntityStore> ownerRef, Ref<EntityStore> targetRef,
-                          double damagePerSecond, long expireAtTick, long lastTick) {
+                          String targetEntityId, double damagePerSecond, long expireAtTick, long lastTick) {
             this.ownerPlayerId = ownerPlayerId;
             this.ownerRef = ownerRef;
             this.targetRef = targetRef;
+            this.targetEntityId = targetEntityId;
             this.damagePerSecond = damagePerSecond;
             this.expireAtTick = expireAtTick;
             this.lastTick = lastTick;

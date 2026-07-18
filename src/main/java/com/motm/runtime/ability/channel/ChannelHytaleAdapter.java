@@ -10,6 +10,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.model.AbilityData;
 import com.motm.model.PlayerData;
 import com.motm.util.AbilityPresentation;
+import com.motm.util.MotmEntityLiveness;
 
 import java.util.List;
 
@@ -37,6 +38,32 @@ public final class ChannelHytaleAdapter {
                 belongsToCurrentStore(lineControl.ownerRef(), currentStore) && processLineControlTick(lineControl, now));
         channelState.removeProcessedChannels(channel ->
                 belongsToCurrentStore(channel.ownerRef(), currentStore) && processChannelTick(channel, now));
+    }
+
+    /**
+     * Drops pulse registrations targeting a removed entity so no further
+     * damage/updates reach a dead ref (client-crash guard, 2026-07-17).
+     */
+    public int purgePulsesTargetingEntity(String entityId, Store<EntityStore> store) {
+        if (entityId == null || entityId.isBlank() || store == null) {
+            return 0;
+        }
+        final int[] removed = {0};
+        channelState.removeProcessedChannels(channel -> {
+            if (channel == null || !entityId.equals(support.resolveEntityId(channel.targetRef(), store))) {
+                return false;
+            }
+            removed[0]++;
+            return true;
+        });
+        channelState.removeProcessedLineControls(lineControl -> {
+            if (lineControl == null || !entityId.equals(support.resolveEntityId(lineControl.targetRef(), store))) {
+                return false;
+            }
+            removed[0]++;
+            return true;
+        });
+        return removed[0];
     }
 
     public Result startLineControl(Ref<EntityStore> ownerRef,
@@ -133,6 +160,9 @@ public final class ChannelHytaleAdapter {
         if (store == null) {
             return true;
         }
+        if (!MotmEntityLiveness.isLiveTarget(lineControl.targetRef(), store)) {
+            return true;
+        }
 
         Vector3d ownerPosition = support.position(lineControl.ownerRef(), store);
         Vector3d targetPosition = support.position(lineControl.targetRef(), store);
@@ -170,6 +200,9 @@ public final class ChannelHytaleAdapter {
 
         Store<EntityStore> store = channel.ownerRef().getStore();
         if (store == null) {
+            return true;
+        }
+        if (!MotmEntityLiveness.isLiveTarget(channel.targetRef(), store)) {
             return true;
         }
 
@@ -215,6 +248,9 @@ public final class ChannelHytaleAdapter {
     private void applyRepeatingLineControlEffects(ActiveLineControl lineControl,
                                                   PlayerData player,
                                                   Store<EntityStore> store) {
+        if (!MotmEntityLiveness.isLiveTarget(lineControl.targetRef(), store)) {
+            return;
+        }
         String targetEntityId = support.resolveEntityId(lineControl.targetRef(), store);
         if (targetEntityId == null || targetEntityId.equals(player.getPlayerId())) {
             return;

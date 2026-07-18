@@ -11,6 +11,7 @@ import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntitySta
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.model.AbilityData;
 import com.motm.util.AbilityPresentation;
+import com.motm.util.MotmEntityLiveness;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +54,9 @@ public final class FieldSinkholeHytaleAdapter {
             if (targetRef == null || !targetRef.isValid()) {
                 continue;
             }
+            if (!MotmEntityLiveness.isLiveTarget(targetRef, store)) {
+                continue;
+            }
 
             support.applyEffect(targetRef, store, "MOTM_Terra_Sinkhole_Buried");
             support.applyTargetToken("root", targetRef, store, field.ownerRef(), field.ownerPlayerId(), field.ability());
@@ -79,11 +83,9 @@ public final class FieldSinkholeHytaleAdapter {
         if (victims.isEmpty()) {
             return;
         }
-
-        double maxHpFraction = dotPercent * (FieldRuntimeSpecs.FIELD_PULSE_INTERVAL_MS / 1000.0) / 100.0;
         for (BuriedVictim victim : victims) {
-            if (victim.targetRef() != null && victim.targetRef().isValid()) {
-                applySuffocationTick(victim.targetRef(), store, field, maxHpFraction);
+            if (victim.targetRef() != null && MotmEntityLiveness.isLiveTarget(victim.targetRef(), store)) {
+                applySuffocationTick(victim.targetRef(), store, field, dotPercent);
             }
         }
     }
@@ -117,7 +119,7 @@ public final class FieldSinkholeHytaleAdapter {
                                       Store<EntityStore> store,
                                       ActiveField field,
                                       double maxHpFraction) {
-        if (targetRef == null || !targetRef.isValid() || store == null || maxHpFraction <= 0.0) {
+        if (!MotmEntityLiveness.isLiveTarget(targetRef, store) || maxHpFraction <= 0.0) {
             return;
         }
 

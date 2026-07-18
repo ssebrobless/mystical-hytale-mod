@@ -11,7 +11,7 @@ public final class SelfActivationRuntime {
                                              String effectId,
                                              long expireAtMillis,
                                              long nextApplyAtMillis) {
-        return createSelfEffect(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, false);
+        return createSelfEffect(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, false, null);
     }
 
     public ActiveSelfEffect createSelfEffect(String ownerPlayerId,
@@ -19,12 +19,13 @@ public final class SelfActivationRuntime {
                                              String effectId,
                                              long expireAtMillis,
                                              long nextApplyAtMillis,
-                                             boolean pulse) {
+                                             boolean pulse,
+                                             String sourceAbilityId) {
         if (ownerPlayerId == null || ownerRef == null || !ownerRef.isValid()
                 || effectId == null || effectId.isBlank()) {
             return null;
         }
-        return new ActiveSelfEffect(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, pulse);
+        return new ActiveSelfEffect(ownerPlayerId, ownerRef, effectId, expireAtMillis, nextApplyAtMillis, pulse, sourceAbilityId);
     }
 
     public ActivePlayerAnchor createPlayerAnchor(String reason,

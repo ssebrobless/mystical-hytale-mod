@@ -8,6 +8,7 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DamageSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.motm.model.AbilityData;
 import com.motm.model.PlayerData;
+import com.motm.util.MotmEntityLiveness;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,9 @@ public final class FieldPulseHytaleAdapter {
 
         for (Ref<EntityStore> targetRef : targets) {
             if (targetRef == null || !targetRef.isValid()) {
+                continue;
+            }
+            if (!MotmEntityLiveness.isLiveTarget(targetRef, store)) {
                 continue;
             }
 
