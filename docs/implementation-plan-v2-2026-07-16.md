@@ -166,3 +166,22 @@ Crash retest (2026-07-17 21:55, log-verified):
   mod-patterns.md) moves live players via velocity impulses - use that, not position
   writes. Acceptance: player position delta in evidence + author confirms the
   tornado read.
+
+**Contract sheets - COMPLETE.** 2026-07-17, commit `6e7e70d`. docs/ability-contracts/
+<class>-contracts.md: all 120 abilities, verbatim author quotes, machine-checked vs
+source JSON + manifest. Open-questions sections = grill backlog (magnitudes/cadences
+only; identity fully grounded).
+
+**Phase 2a (2.4 projectiles + 2.6 dash slice) - COMPLETE (code) / live proof owed.**
+2026-07-17, commit `e53a293`. Native projectile launches (manifest projectileConfig
+routing, eye-origin crosshair aim, 13 configs across 7 families, 26 rows de-legacied,
+zero Spark_Living projectile paths); geometry specials (gale X, razor 5-volley, chain
+hops, pressure growth); dash = Velocity.set displacement (NO position writes) with
+burst/trail/end cues + dust_devil rolling tornado; 6 proof scenarios. Test-caught and
+fixed: magma_sling manifest-absent fail-safe, 65ms volley cadence. Known gaps for
+next slice: chain-lightning temporal hop spacing, pressure_burst hold/release verb,
+waverider/river_rapids burst-profile fallback, afterburner 8s ember terrain seam
+(TerrainRuntimeSpecs already lists ember_trail - verify live).
+Live gate checklist: fireball/frozen_needles VISIBLY fly + crosshair aim + dodgeable;
+dust_devil carries the player forward as a sand tornado; dash burst/trail/end reads;
+gale X + razor 5-sequence visible; no portal reads anywhere; run the 6 scenarios.
