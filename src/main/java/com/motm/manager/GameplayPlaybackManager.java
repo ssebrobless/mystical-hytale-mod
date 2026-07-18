@@ -238,7 +238,18 @@ public class GameplayPlaybackManager {
                     }
                 }
         );
-        this.fieldTargetAdapter = new FieldTargetHytaleAdapter(MOTM_NON_TARGET_ROLE_NAMES, this::isTargetGrounded);
+        this.fieldTargetAdapter = new FieldTargetHytaleAdapter(MOTM_NON_TARGET_ROLE_NAMES,
+                new FieldTargetHytaleAdapter.Support() {
+                    @Override
+                    public boolean isTargetGrounded(Ref<EntityStore> targetRef, Store<EntityStore> store) {
+                        return GameplayPlaybackManager.this.isTargetGrounded(targetRef, store);
+                    }
+
+                    @Override
+                    public boolean isNonTargetableProxy(Ref<EntityStore> targetRef) {
+                        return GameplayPlaybackManager.this.isMotmVisualProxy(targetRef);
+                    }
+                });
         this.summonLifecycleAdapter = new SummonLifecycleHytaleAdapter(
                 summonState,
                 summonActivationRuntime,
@@ -3206,7 +3217,10 @@ public class GameplayPlaybackManager {
                 }
 
                 NPCEntity npc = chunk.getComponent(entityIndex, NPCEntity.getComponentType());
-                if (npc == null || npc.isDespawning() || isMotmSummon(npc)) {
+                if (npc == null || npc.isDespawning() || isMotmSummon(npc) || isMotmVisualProxy(ref)) {
+                    // Visual proxies now wear vanilla roles (Spark_Living), so the
+                    // role-name filter no longer excludes them - identity check via
+                    // visualProxyState is the authoritative guard (2026-07-18 crash).
                     continue;
                 }
 

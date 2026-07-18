@@ -41,7 +41,8 @@ public final class FieldTargetHytaleAdapter {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
                 Ref<EntityStore> ref = chunk.getReferenceTo(entityIndex);
                 TransformComponent transform = validNpcTransform(chunk, entityIndex);
-                if (ref == null || !ref.isValid() || transform == null) {
+                if (ref == null || !ref.isValid() || transform == null
+                        || (support != null && support.isNonTargetableProxy(ref))) {
                     continue;
                 }
 
@@ -123,5 +124,13 @@ public final class FieldTargetHytaleAdapter {
 
     public interface Support {
         boolean isTargetGrounded(Ref<EntityStore> targetRef, Store<EntityStore> store);
+
+        /**
+         * Visual proxies wear vanilla roles (Spark_Living) since the role
+         * migration, so identity via the proxy registry is the only reliable
+         * exclusion (2026-07-18 crash: dismissed sandstorm proxy pulsed by the
+         * dust devil trail fields while its removal was queued).
+         */
+        boolean isNonTargetableProxy(Ref<EntityStore> targetRef);
     }
 }
