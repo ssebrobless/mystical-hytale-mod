@@ -1,0 +1,35 @@
+{
+  "id": "corruptus-summon-void-spawn",
+  "description": "Summon-family G2 gate (first non-Snow family): spawn a line of hostiles, cast Void Spawn, and confirm three friendly Crawler_Void allies spawn and engage the hostiles (Summon spawned x3 + Summon attack resolved in the server log).",
+  "styleId": "void",
+  "abilities": ["void_spawn"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker summon-void-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set corruptus",
+    "motm style void",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs line",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot summon-settle-1",
+    "motm dev observe snapshot summon-settle-2",
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker summon-void-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "server-truth:snapshot"],
+  "notes": [
+    "Void Spawn summons three friendly Crawler_Void allies for 10s; test mobs line spawns three Test_Dummy_Stationary in front so the allies have hostiles to engage.",
+    "Functional proof is asserted from [MOTM] server log lines emitted by SummonLifecycleHytaleAdapter (Summon spawned: role/appearance/position) and SummonAttackHytaleAdapter (Summon attack resolved: target/damage), not as causality evidence.",
+    "DoD: this is the first non-Snow summon family proven live (primitive-status P0 Summon Combat), reusing the Snow-proven summon runtime + the E1 faction/friendly-fire layer."
+  ]
+}

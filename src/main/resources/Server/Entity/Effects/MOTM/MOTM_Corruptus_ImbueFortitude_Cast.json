@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#8B0000",
+    "EntityBottomTint": "#4B0082",
+    "Particles": [
+      { "SystemId": "Block_Break_Stone" },
+      { "SystemId": "Eye_Void_Smoke_Teal" }
+    ],
+    "WorldSoundEventId": "SFX_Golem_Earth_Stomp"
+  }
+}

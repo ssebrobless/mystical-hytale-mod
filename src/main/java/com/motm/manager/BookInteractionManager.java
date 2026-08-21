@@ -316,72 +316,6 @@ public class BookInteractionManager {
         }
     }
 
-    private void applyDevResource(PlayerData player, DevBookState state) {
-        List<String> options = getResourceOptionLabels(player);
-        if (options.isEmpty()) {
-            state.lastMessage = "aero".equalsIgnoreCase(player.getPlayerClass())
-                    ? "Aero uses cooldowns, movement, and momentum."
-                    : "Ability resources are disabled. Use Ability Lab for cooldown and interaction testing.";
-            return;
-        }
-
-        String playerClass = player.getPlayerClass();
-        String playerId = player.getPlayerId();
-        int index = state.optionIndex;
-
-        switch (safe(playerClass, "").toLowerCase(Locale.ROOT)) {
-            case "hydro" -> {
-                if (index == 0) {
-                    mod.getResourceManager().fillClassResources(playerId, playerClass);
-                    state.lastMessage = "Water refilled.";
-                } else if (index == 1) {
-                    mod.getResourceManager().clearClassResources(playerId, playerClass);
-                    state.lastMessage = "Water emptied.";
-                } else {
-                    int newTier = index - 2;
-                    player.setWaterContainerTier(Math.max(0, Math.min(newTier, ResourceManager.WATER_CONTAINER_CAPACITY.length - 1)));
-                    mod.getResourceManager().synchronizePersistentState(player);
-                    mod.getResourceManager().initializeForPlayer(player);
-                    mod.queueHydroContainerSync(playerId);
-                    state.lastMessage = "Hydro waterskin set to " + mod.getResourceManager().getWaterContainerInfo(playerId) + ".";
-                }
-            }
-            case "corruptus" -> {
-                if (index == 0) {
-                    mod.getResourceManager().fillClassResources(playerId, playerClass);
-                    state.lastMessage = "Souls filled.";
-                } else if (index == 1) {
-                    mod.getResourceManager().clearClassResources(playerId, playerClass);
-                    state.lastMessage = "Souls emptied.";
-                } else if (index == 2) {
-                    mod.getResourceManager().add(playerId, "souls", 10);
-                    state.lastMessage = "Added 10 souls.";
-                }
-            }
-            case "terra" -> {
-                String activeResource = getActiveStyleResourceType(player);
-                if (index == 0) {
-                    mod.getResourceManager().fillClassResources(playerId, playerClass);
-                    state.lastMessage = "Terra materials filled for testing.";
-                } else if (index == 1) {
-                    mod.getResourceManager().clearClassResources(playerId, playerClass);
-                    state.lastMessage = "Terra materials emptied.";
-                } else if (index == 2 && activeResource != null) {
-                    mod.getResourceManager().add(playerId, activeResource, 25);
-                    state.lastMessage = "Added 25 " + mod.getResourceManager().getDisplayName(activeResource) + ".";
-                } else if (index == 3 && activeResource != null) {
-                    mod.getResourceManager().set(playerId, activeResource, 0);
-                    state.lastMessage = "Cleared " + mod.getResourceManager().getDisplayName(activeResource) + ".";
-                } else {
-                    state.lastMessage = "No Terra resource action available.";
-                }
-            }
-            default -> state.lastMessage = "No resource tools available.";
-        }
-
-        syncResourceState(player);
-    }
-
     private void applyDevLevel(PlayerData player, DevBookState state) {
         int level = LEVEL_PRESETS.get(state.optionIndex);
         state.lastMessage = summarize(run(player, "dev", "level", "set", String.valueOf(level)));
@@ -722,30 +656,6 @@ public class BookInteractionManager {
         }
     }
 
-    private void renderResourceDevOptions(PlayerData player, StringBuilder sb, DevBookState state) {
-        List<String> options = getResourceOptionLabels(player);
-        if (options.isEmpty()) {
-            if ("aero".equalsIgnoreCase(player.getPlayerClass())) {
-                sb.append("Aero has no class resource to test.\n");
-                sb.append("Use Ability Lab for cooldown, movement, and momentum testing.\n");
-            } else {
-                sb.append("Ability resources are disabled. Use Ability Lab for cooldown and interaction testing.\n");
-            }
-            return;
-        }
-
-        sb.append("Casting model: ")
-                .append(mod.getResourceManager().getResourceDisplay(player.getPlayerId(), safe(player.getPlayerClass(), "")))
-                .append("\n");
-        if ("hydro".equalsIgnoreCase(player.getPlayerClass())) {
-            sb.append("Container: ").append(mod.getResourceManager().getWaterContainerInfo(player.getPlayerId())).append("\n");
-        }
-        sb.append("Resource tools:\n");
-        for (int i = 0; i < options.size(); i++) {
-            appendOption(sb, i == state.optionIndex, options.get(i));
-        }
-    }
-
     private void renderLevelDevOptions(StringBuilder sb, DevBookState state) {
         sb.append("Level presets:\n");
         for (int i = 0; i < LEVEL_PRESETS.size(); i++) {
@@ -848,10 +758,6 @@ public class BookInteractionManager {
         return abilities.isEmpty() ? 0 : abilities.size() + 4;
     }
 
-    private int devResourceOptionCount(PlayerData player) {
-        return getResourceOptionLabels(player).size();
-    }
-
     private List<StyleData> getStyles(PlayerData player) {
         if (player.getPlayerClass() == null) {
             return Collections.emptyList();
@@ -865,53 +771,6 @@ public class BookInteractionManager {
             return Collections.emptyList();
         }
         return selectedStyle.getAbilities();
-    }
-
-    private List<String> getResourceOptionLabels(PlayerData player) {
-        if (!mod.getResourceManager().areAbilityResourceCostsEnabled()) {
-            return Collections.emptyList();
-        }
-        if (player.getPlayerClass() == null) {
-            return Collections.emptyList();
-        }
-
-        String classId = player.getPlayerClass().toLowerCase(Locale.ROOT);
-        List<String> options = new ArrayList<>();
-        switch (classId) {
-            case "hydro" -> {
-                options.add("Fill water");
-                options.add("Empty water");
-                for (int tier = 0; tier < ResourceManager.WATER_CONTAINER_CAPACITY.length; tier++) {
-                    options.add("Set container: " + ResourceManager.WATER_CONTAINER_NAMES[tier]);
-                }
-            }
-            case "corruptus" -> {
-                options.add("Fill souls");
-                options.add("Empty souls");
-                options.add("Add 10 souls");
-            }
-            case "terra" -> {
-                String activeResource = getActiveStyleResourceType(player);
-                options.add("Fill all Terra materials");
-                options.add("Empty all Terra materials");
-                if (activeResource != null) {
-                    String label = mod.getResourceManager().getDisplayName(activeResource);
-                    options.add("Add 25 " + label);
-                    options.add("Clear " + label);
-                }
-            }
-            default -> {
-            }
-        }
-        return options;
-    }
-
-    private String getActiveStyleResourceType(PlayerData player) {
-        StyleData style = getSelectedStyle(player);
-        if (style != null && style.getResourceType() != null && !style.getResourceType().isBlank()) {
-            return style.getResourceType();
-        }
-        return null;
     }
 
     private boolean hasPendingPerks(PlayerData player) {

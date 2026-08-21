@@ -214,3 +214,68 @@ Open after 2a live session:
 - load-world.ps1 Play/world-click automation BROKEN (menu drift) - harness backlog.
 - Manifest audit noise: 26 de-legacied rows carry raw archive paths in
   cast/travel/impact (81 preflight errors, fail-closed) - re-author or re-legacy.
+
+## Resume roadmap - 2026-08-14 (reground after the 2026-07-18 halt)
+
+Work halted 2026-07-18 after the client-crash saga resolution, mid Phase 2a. `main`
+is 31 commits ahead of `origin/main` (unpushed) with 2 stashes parked
+(`pre-main-update-parked-work-before-pr5-merge`; older
+`partial-phase9-feature-work-before-main-harness-cleanup`). Phases 0/1 are code-complete
+with live proof partial; Phase 2a (2.4 projectiles + 2.6 dash slice) is code-complete
+with live proof owed; Phase 2 items 2.1/2.2/2.3/2.5 are unstarted (`runtime/ability/control`
+and `runtime/ability/tether` folders do not exist yet). The resume sequence pays down
+halt debt before opening new engine surface, so live proof is trustworthy again.
+
+**Session 1 - reground & unblock (static-first, no Hytale process needed for A/B):**
+- A. Git triage: review the 31 unpushed commits and decide push/PR; apply `stash@{0}`
+  (field/terrain `ember_trail` addition), archive or drop `stash@{1}` (May-era phase9,
+  likely superseded).
+- B. Manifest legacy-path defect - FIXED (code) 2026-08-14, live preflight re-run owed.
+  Root cause was deeper than "audit noise": `HytaleAssetResolver.resolve()` uses
+  `manifest.cast/travel/impact/loop` whenever a row exists (the `legacy` flag only gates
+  preflight validation, NOT runtime playback), and `GameplayPlaybackManager.applyEffectById`
+  plays those strings strictly as `EntityEffect` ids. So the 28 de-legacied projectile rows
+  had 81 fields holding raw particle paths (70 `.particlesystem` + 11 `.particlespawner`) that
+  fail BOTH preflight (`EntityEffect`/`ParticleSystem` map miss) AND runtime (missing-asset
+  warning, no visual). Re-legacying would only silence the audit while leaving the visuals
+  broken, so the fix re-authored all 81 fields to valid `EntityEffect` ids. Added 14 themed
+  wrapper effects under `Server/Entity/Effects/MOTM/` (Magma Cast/Impact/Loop, Stone_Loop,
+  Ice Cast/Travel/Impact, Lightning Cast/Impact, Wind_Travel, Acid Cast/Impact, Fire
+  Cast/Impact) wrapping the intended vanilla particle `SystemId`s; reused existing MOTM
+  effects (Quake/Sand/HellFlame/Void) elsewhere. Static verify: 0 raw paths remain, all 29
+  referenced ids are file-backed, manifest diff is 81/81 surgical. Live-only residual: 5
+  `SystemId`s not yet exercised by a passing MOTM effect (Ice_Blast, IceBoulderTrail,
+  Lightning, Beam_Lightning2, Status_Poisoned) must be confirmed at world-join preflight
+  (expected `ERROR manifest`=0) and first live cast.
+- C. Repair `load-world.ps1` menu drift (or script manual world entry) so the
+  observability harness can enter a world at all.
+- D. Run the Phase 2a live gate checklist (fireball/frozen_needles visibly fly +
+  crosshair aim + dodgeable; dust_devil carries the player; gale X; razor 5-volley; no
+  portal reads; run the 6 scenarios). Convert owed proofs to PASS/FAIL.
+
+**Research spike (R-gate) before 2.6 close:** dash displacement is blocked - `Velocity.set`
+and `setClient` both fail to move a live player. Prototype the GrapplingHook-style
+attach/impulse mechanism (proven in `docs/hytale-catalog/mod-patterns.md`); gate on
+"player position delta in evidence + author confirms the read".
+
+**Phase 2 engines (dependency order):** 2.1 Controlled Ally (new `runtime/ability/control/`;
+establishes the faction/FF layer 2.2 reuses) -> 2.2 Summon migration -> 2.3 Tether engine
+(new `runtime/ability/tether/`) -> 2.5 Field/object engine -> 2.6 dash polish close. The
+contract-assembly rule (top of this doc) is mandatory before each ability enters a build lane.
+
+**Phase 3 content lanes (parallel subagent lanes):** 3.T / 3.H / 3.A / 3.C / 3.P / 3.X, each
+shipping its abilities' manifest rows + proof scenarios under the tightened sweep gate.
+
+**Phase 4 sweep/leveling/release:** 4.1 40-style sweep; 4.2 wire the log-only leveling/perk
+stubs (`LevelingManager` XP/level-up/milestone events + stat recalc, `PerkManager` /
+`SynergyEngine` effect application, `MotmRuntimeLoop` DoT via damage API) or retire them;
+4.3 no-drop/no-dummy cleanup; 4.4 public jar -> CurseForge. DoD unchanged (Sec. 7 above).
+
+## Whole-mod completion roadmap
+
+The consolidated end-to-end plan to 100% (DoD state, 11-primitive map, reconciled defect
+ledger #1-#13, leveling tasks, R-gate index, capability probe, critical path, phases
+R/E/C/F, parallelization) lives in `docs/completion-roadmap-2026-08-14.md`. Decisions taken
+2026-08-14: live proof is agent-driven via the `computer` tool (per-session confirmation),
+replacing the broken `load-world.ps1`; all code/static/build/test/package work runs
+unattended. Build is GREEN against the 2026-08-14 game build.

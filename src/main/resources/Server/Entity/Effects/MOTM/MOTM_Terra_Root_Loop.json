@@ -1,0 +1,13 @@
+{
+  "Duration": 0.9,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#228B22",
+    "EntityBottomTint": "#8B4513",
+    "Particles": [
+      { "SystemId": "Block_Break_Grass_Earth" },
+      { "SystemId": "Earth_Brazier_Glow" },
+      { "SystemId": "E_Sphere" }
+    ]
+  }
+}

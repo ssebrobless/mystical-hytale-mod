@@ -1,0 +1,34 @@
+{
+  "id": "corruptus-control-dominate",
+  "description": "Controlled-ally G2 gate: spawn a line of hostiles, Dominate the nearest, and confirm the converted ally engages the other hostiles (control_acquired + control_attack in the server log).",
+  "styleId": "mentokinesis",
+  "abilities": ["dominate"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker control-dominate-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set corruptus",
+    "motm style mentokinesis",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs line",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot control-settle-1",
+    "motm dev observe snapshot control-settle-2",
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker control-dominate-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "server-truth:snapshot"],
+  "notes": [
+    "Two+ hostiles are required so the converted ally has a target other than the caster; test mobs line spawns three Test_Dummy_Stationary in front.",
+    "control_acquired and control_attack are emitted as [MOTM] server log lines by ControlHytaleAdapter; assert them from the log, not as causality evidence (yet)."
+  ]
+}

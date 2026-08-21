@@ -1,0 +1,14 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FFD700",
+    "EntityBottomTint": "#9370DB",
+    "Particles": [
+      { "SystemId": "Impact_Fire" },
+      { "SystemId": "Fire_AoE_Grow" },
+      { "SystemId": "Wind_Spirit_Hand" }
+    ],
+    "WorldSoundEventId": "SFX_Staff_Flame_Fireball_Impact"
+  }
+}

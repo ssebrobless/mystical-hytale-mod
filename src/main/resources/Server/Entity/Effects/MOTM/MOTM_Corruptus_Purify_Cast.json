@@ -1,0 +1,14 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#4B0082",
+    "Particles": [
+      { "SystemId": "MOTM_Proof_Pink_Halo" },
+      { "SystemId": "Impact_Poison" },
+      { "SystemId": "Fire_AoE_Grow" }
+    ],
+    "WorldSoundEventId": "SFX_Staff_Flame_Fireball_Impact"
+  }
+}

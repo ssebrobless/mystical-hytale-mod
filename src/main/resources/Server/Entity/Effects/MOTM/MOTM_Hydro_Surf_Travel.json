@@ -1,0 +1,9 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#87CEEB",
+    "EntityBottomTint": "#00CED1",
+    "Particles": [{ "SystemId": "Water_Bubble_Stream" }, { "SystemId": "Water_Sprint" }]
+  }
+}

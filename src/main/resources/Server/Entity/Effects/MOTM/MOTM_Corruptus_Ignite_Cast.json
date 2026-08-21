@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#8B0000",
+    "Particles": [
+      { "SystemId": "Fire_AoE_Grow" },
+      { "SystemId": "Fire_Charge1" }
+    ],
+    "WorldSoundEventId": "SFX_Staff_Flame_Fireball_Launch"
+  }
+}

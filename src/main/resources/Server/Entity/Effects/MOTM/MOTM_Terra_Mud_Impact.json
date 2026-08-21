@@ -1,0 +1,13 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#8B4513",
+    "EntityBottomTint": "#228B22",
+    "Particles": [
+      { "SystemId": "Block_Break_Grass_Earth" },
+      { "SystemId": "Block_Hit_Sand" }
+    ],
+    "WorldSoundEventId": "SFX_Water_MoveIn"
+  }
+}

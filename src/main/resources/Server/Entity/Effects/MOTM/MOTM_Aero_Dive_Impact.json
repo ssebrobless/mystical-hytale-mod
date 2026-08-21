@@ -1,0 +1,14 @@
+{
+  "Duration": 0.5,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FFD700",
+    "EntityBottomTint": "#9370DB",
+    "Particles": [
+      { "SystemId": "Mace_Signature_Ground_Hit" },
+      { "SystemId": "Wind" },
+      { "SystemId": "Block_Break_Stone" }
+    ],
+    "WorldSoundEventId": "SFX_Golem_Earth_Stomp_Impact"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "Duration": 20.0,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#ff5fd0",
+    "EntityBottomTint": "#7a1f66",
+    "Particles": [
+      {
+        "SystemId": "MOTM_Proof_Pink_Halo"
+      }
+    ]
+  }
+}

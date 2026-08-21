@@ -1,0 +1,13 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#8B0000",
+    "Particles": [
+      { "SystemId": "Status_Poisoned" },
+      { "SystemId": "Block_Break_Sand" }
+    ],
+    "WorldSoundEventId": "SFX_Wolf_Alerted"
+  }
+}

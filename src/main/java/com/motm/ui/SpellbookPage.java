@@ -95,6 +95,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         bindSection(events, "#NavAbilitiesButton", SpellbookManager.Section.ABILITIES);
         bindSection(events, "#NavPerksButton", SpellbookManager.Section.PERKS);
         bindSection(events, "#NavStatsButton", SpellbookManager.Section.PROGRESSION);
+        bindSection(events, "#NavInfoButton", SpellbookManager.Section.INFO);
     }
 
     private void bindClassActions(UIEventBuilder events) {
@@ -298,6 +299,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         applyAbilities(commands, player);
         applyPerks(commands, player);
         applyProgression(commands, player);
+        applyInfo(commands, player);
         applySectionVisibility(commands);
     }
 
@@ -321,6 +323,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setNavState(commands, SpellbookManager.Section.ABILITIES, "#NavAbilitiesButton", "#NavAbilitiesSelected");
         setNavState(commands, SpellbookManager.Section.PERKS, "#NavPerksButton", "#NavPerksSelected");
         setNavState(commands, SpellbookManager.Section.PROGRESSION, "#NavStatsButton", "#NavStatsSelected");
+        setNavState(commands, SpellbookManager.Section.INFO, "#NavInfoButton", "#NavInfoSelected");
     }
 
     private void setNavState(UICommandBuilder commands,
@@ -342,6 +345,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 || currentSection == SpellbookManager.Section.ABILITIES);
         commands.set("#PerksPanel.Visible", currentSection == SpellbookManager.Section.PERKS);
         commands.set("#StatsPanel.Visible", currentSection == SpellbookManager.Section.PROGRESSION);
+        commands.set("#InfoPanel.Visible", currentSection == SpellbookManager.Section.INFO);
     }
 
     private void applyHero(UICommandBuilder commands, PlayerData player) {
@@ -397,7 +401,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#ClassInfoStyleRuleValue.Text", "Styles are the only source of active abilities.");
         setText(commands, "#ClassInfoAbilityRuleValue.Text", "Each style grants three cooldown-based abilities.");
         setText(commands, "#ClassInfoStyleActionValue.Text", "Choose a style on the Style page after selecting a class.");
-        hideRemovedOptionButtons(commands);
 
         setText(commands, "#ClassInfoStyleValue.Text", displayStyle(player));
         setText(commands, "#ClassInfoProgressValue.Text", player != null
@@ -416,13 +419,6 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
                 label += " *";
             }
             setText(commands, selector, label);
-        }
-    }
-
-    private void hideRemovedOptionButtons(UICommandBuilder commands) {
-        for (int index = 0; index < 12; index++) {
-            String selector = "#RemovedOptionButton" + (index + 1);
-            commands.set(selector + ".Visible", false);
         }
     }
 
@@ -560,6 +556,38 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
         setText(commands, "#StatsCurrentValue.Text", buildXpLine(player));
         setText(commands, "#StatsRuleValue.Text", buildStatTableLine(player));
         setText(commands, "#StatsPracticalValue.Text", buildStatBonusLine(player));
+    }
+
+    private void applyInfo(UICommandBuilder commands, PlayerData player) {
+        int classes = mod.getDataLoader().getAllClasses().size();
+        int perks = mod.getDataLoader().getSharedPerkPool().size();
+        int styles = 0;
+        int abilities = 0;
+        for (ClassData c : mod.getDataLoader().getAllClasses()) {
+            List<StyleData> cs = mod.getDataLoader().getStylesForClass(c.getId());
+            styles += cs.size();
+            for (StyleData s : cs) {
+                abilities += s.getAbilities() != null ? s.getAbilities().size() : 0;
+            }
+        }
+        setText(commands, "#InfoBody.Text",
+                "A pure RPG overlay on Hytale's native systems: elemental classes, combat styles, "
+                        + "active abilities, shared perks, and title-band mob scaling. No custom biomes, "
+                        + "weapons, armor, or economy - just class/style/ability identity and progression.");
+        setText(commands, "#InfoCounts.Text", classes + " classes  -  " + styles + " styles  -  "
+                + abilities + " abilities  -  " + perks + " shared perks");
+        setText(commands, "#InfoUpgrades.Text",
+                "How to upgrade:\n"
+                        + "- Class: pick one on the Class page (defines your passive + element).\n"
+                        + "- Style: pick one active style on the Style page - it grants your 3 abilities.\n"
+                        + "- Perks: a perk choice unlocks every 10 levels through level 100 (Perks page).\n"
+                        + "- Stats: spend stat points as you level (Stats page).\n"
+                        + "Next for you: " + getNextStep(player));
+        setText(commands, "#InfoLegend.Text",
+                "HUD legend: elemental resource bars, XP bar + milestone marker, active ability slots "
+                        + "(1-3), passive tracker rows, and buff/debuff status icons. Open this spellbook "
+                        + "anytime by crouching and using it.");
+        setText(commands, "#InfoVersion.Text", "Mentees of the Mystical");
     }
 
     private String displayClass(PlayerData player) {
@@ -784,6 +812,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             case ABILITIES -> "Abilities";
             case PERKS -> "Perks";
             case PROGRESSION -> "Stats";
+            case INFO -> "Mod Info";
         };
     }
 
@@ -795,6 +824,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             case ABILITIES -> "The three active abilities granted by your chosen style.";
             case PERKS -> "Passive modifiers, triggers, and synergies that shape your build.";
             case PROGRESSION -> "Spend stat points and review leveling bonuses.";
+            case INFO -> "What the mod is, content counts, and how upgrades work.";
         };
     }
 
@@ -806,6 +836,7 @@ public class SpellbookPage extends InteractiveCustomUIPage<SpellbookPageEventDat
             case ABILITIES -> "abilities";
             case PERKS -> "perks";
             case PROGRESSION -> "stats";
+            case INFO -> "info";
         };
     }
 

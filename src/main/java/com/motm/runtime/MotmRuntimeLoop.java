@@ -18,6 +18,8 @@ public final class MotmRuntimeLoop {
     private long lastHeartbeatAtMs = 0L;
     private int hudRefreshTickCounter = 0;
     private boolean perkTickActivationObserved;
+    private final java.util.concurrent.atomic.AtomicLong lastGlobalFrameTick =
+            new java.util.concurrent.atomic.AtomicLong(Long.MIN_VALUE);
 
 
     public MotmRuntimeLoop(int hudRefreshIntervalTicks, long heartbeatIntervalMs, Hooks hooks) {
@@ -26,11 +28,20 @@ public final class MotmRuntimeLoop {
         this.hooks = hooks;
     }
 
-    public void tick(Store<EntityStore> currentStore) {
-        Map<String, Double> dotDamageByEntity = hooks.tickStatusEffects();
-        hooks.tickElementalReactions();
-        hooks.tickStyleCooldowns();
-        hooks.tickResources();
+    public void tick(Store<EntityStore> currentStore, long serverTick) {
+        // Global entity/player state maps (status effects, elemental marks, style cooldowns,
+        // resources) are store-independent and must tick exactly once per server frame. This loop
+        // runs once per LIVE WORLD on a single shared instance, so with N worlds these no-arg ticks
+        // would otherwise decrement N times, decaying durations/cooldowns ~Nx faster than authored
+        // (multi-world creative test: elemental marks and reaction windows too short vs canon). The
+        // frame guard collapses them to one tick per server frame; single-world (N=1) is a no-op.
+        Map<String, Double> dotDamageByEntity = java.util.Map.of();
+        if (claimGlobalFrame(serverTick)) {
+            dotDamageByEntity = hooks.tickStatusEffects();
+            hooks.tickElementalReactions();
+            hooks.tickStyleCooldowns();
+            hooks.tickResources();
+        }
         hooks.processRuntimeTask("player-maintenance", currentStore);
         hooks.processFreeCastSafety(currentStore);
         hooks.tickClassPassives(currentStore);
@@ -57,6 +68,14 @@ public final class MotmRuntimeLoop {
         tickHudRefresh(currentStore);
         recordHeartbeat(currentStore);
         logPendingDotDamage(dotDamageByEntity);
+    }
+
+    // Returns true for exactly one caller per distinct server frame. Worlds tick this shared loop
+    // on separate threads; the first to advance the frame claims it (single CAS, no retry) and runs
+    // the global-state ticks. Later worlds in the same frame see serverTick <= last and skip.
+    private boolean claimGlobalFrame(long serverTick) {
+        long last = lastGlobalFrameTick.get();
+        return serverTick > last && lastGlobalFrameTick.compareAndSet(last, serverTick);
     }
 
     private void tickHudRefresh(Store<EntityStore> currentStore) {
@@ -95,8 +114,9 @@ public final class MotmRuntimeLoop {
         }
 
         dotDamageByEntity.forEach((entityId, dotPercent) ->
-                hooks.logFine("[MOTM] TODO: Apply " + (dotPercent * 100)
-                        + "% max HP DoT to entity " + entityId + " via Hytale's damage API."));
+                hooks.logFine("[MOTM] Status DoT ticking: " + (dotPercent * 100)
+                        + "% max HP/frame on entity " + entityId
+                        + " (damage applied per-mob by MotmMobRuntimeSystem)."));
     }
 
     private static String worldName(Store<EntityStore> currentStore) {

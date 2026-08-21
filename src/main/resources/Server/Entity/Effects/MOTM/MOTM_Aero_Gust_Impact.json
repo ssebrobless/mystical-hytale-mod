@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FFD700",
+    "EntityBottomTint": "#9370DB",
+    "Particles": [
+      { "SystemId": "Wind_Spirit_Hand" },
+      { "SystemId": "Battleaxe_Signature_Whirlwind" }
+    ],
+    "WorldSoundEventId": "SFX_Tornado"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "Duration": 0.5,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#8B0000",
+    "Particles": [
+      { "SystemId": "Block_Break_Sand" },
+      { "SystemId": "Impact_Poison" }
+    ],
+    "WorldSoundEventId": "SFX_Stone_Break"
+  }
+}

@@ -74,10 +74,14 @@ public final class FieldSinkholeHytaleAdapter {
             return;
         }
 
-        double dotPercent = Math.max(0.0, field.ability().getDotPercentPerSecond());
-        if (dotPercent <= 0.0) {
+        // dot_percent_per_second is authored as a percent of max HP per second (e.g. 2 = 2%/s).
+        double perSecondFraction = Math.max(0.0, field.ability().getDotPercentPerSecond()) / 100.0;
+        if (perSecondFraction <= 0.0) {
             return;
         }
+        // Pulses fire on the field cadence, so scale the per-second rate to this pulse's slice.
+        double perPulseFraction = perSecondFraction
+                * (FieldRuntimeSpecs.FIELD_PULSE_INTERVAL_MS / 1000.0);
 
         List<BuriedVictim> victims = fieldState.buriedVictims(field);
         if (victims.isEmpty()) {
@@ -85,7 +89,7 @@ public final class FieldSinkholeHytaleAdapter {
         }
         for (BuriedVictim victim : victims) {
             if (victim.targetRef() != null && MotmEntityLiveness.isLiveTarget(victim.targetRef(), store)) {
-                applySuffocationTick(victim.targetRef(), store, field, dotPercent);
+                applySuffocationTick(victim.targetRef(), store, field, perPulseFraction);
             }
         }
     }

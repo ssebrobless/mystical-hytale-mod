@@ -324,7 +324,7 @@
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.7,
           "recovery_seconds": 0.28,
-          "effect": "burn",
+          "effect": "burn+knockback",
           "categories": [
             "dot"
           ],

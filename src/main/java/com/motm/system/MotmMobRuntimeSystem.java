@@ -11,6 +11,8 @@ import com.hypixel.hytale.server.core.modules.entity.component.DisplayNameCompon
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
+import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
+import com.hypixel.hytale.server.core.modules.entity.damage.DamageSystems;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
@@ -25,10 +27,12 @@ import com.motm.model.PlayerData;
 import com.motm.model.ScaledMobResult;
 
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -72,6 +76,7 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
         Set<UUID> activeMobIds = new HashSet<>();
         Set<UUID> activePlayerIds = new HashSet<>();
         World world = store.getExternalData().getWorld();
+        List<DotHit> dotHits = new ArrayList<>();
 
         store.forEachChunk((chunk, commandBuffer) -> {
             for (int entityIndex = 0; entityIndex < chunk.size(); entityIndex++) {
@@ -110,6 +115,17 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
                 DeathComponent death = chunk.getComponent(entityIndex, DeathComponent.getComponentType());
                 if (death == null) {
                     processedMobDeaths.remove(entityId);
+                    double dotPercent = mod.getStatusEffectManager().getDotPercent(entityId.toString());
+                    if (dotPercent > 0.0) {
+                        EntityStatMap statMap = chunk.getComponent(entityIndex, EntityStatMap.getComponentType());
+                        EntityStatValue health = statMap != null ? statMap.get(DefaultEntityStatTypes.getHealth()) : null;
+                        if (health != null && health.getMax() > 0.0f) {
+                            float dotDamage = (float) (health.getMax() * dotPercent);
+                            if (dotDamage > 0.0f) {
+                                dotHits.add(new DotHit(ref, dotDamage, entityId));
+                            }
+                        }
+                    }
                     continue;
                 }
 
@@ -118,6 +134,19 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
                 }
             }
         });
+
+        // Apply status-effect DoT (reaction/ability BURN/DOT) collected during iteration. Applied
+        // AFTER forEachChunk so executeDamage never mutates the store mid-iteration; refs are stable
+        // handles valid for the rest of this tick. Duration decrement stays once/frame in tickAll().
+        for (DotHit hit : dotHits) {
+            if (hit.ref() == null || !hit.ref().isValid()) {
+                continue;
+            }
+            Damage damage = new Damage(new Damage.EntitySource(hit.ref()), DamageCause.ENVIRONMENT, hit.damage());
+            DamageSystems.executeDamage(hit.ref(), store, damage);
+            LOG.info("[MOTM] Status DoT applied: entity=" + hit.entityId()
+                    + " damage=" + String.format(Locale.ROOT, "%.2f", hit.damage()));
+        }
 
         trackedMobs.keySet().retainAll(activeMobIds);
         processedMobDeaths.retainAll(activeMobIds);
@@ -401,4 +430,6 @@ public class MotmMobRuntimeSystem extends TickingSystem<EntityStore> {
     }
 
     private record TrackedMob(String mobType, int level, boolean rare) {}
+
+    private record DotHit(Ref<EntityStore> ref, float damage, UUID entityId) {}
 }

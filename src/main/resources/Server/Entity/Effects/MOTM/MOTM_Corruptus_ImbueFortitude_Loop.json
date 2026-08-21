@@ -1,0 +1,12 @@
+{
+  "Duration": 0.9,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#8B0000",
+    "EntityBottomTint": "#4B0082",
+    "Particles": [
+      { "SystemId": "Block_Break_Stone" },
+      { "SystemId": "MOTM_Proof_Pink_Halo" }
+    ]
+  }
+}

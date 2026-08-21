@@ -3,7 +3,6 @@ package com.motm.manager;
 import com.motm.model.StatusEffect;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Manages active status effects on entities.
@@ -12,7 +11,6 @@ import java.util.logging.Logger;
  */
 public class StatusEffectManager {
 
-    private static final Logger LOG = Logger.getLogger("MOTM");
     private static final String PRIORITY_SHIELD_SOURCE_ID = "hydro_passive_aqua_barrier";
 
     // entityId -> list of active effects
@@ -150,6 +148,26 @@ public class StatusEffectManager {
         // Clean up empty entries
         activeEffects.entrySet().removeIf(e -> e.getValue().isEmpty());
         return dotDamage;
+    }
+
+    /**
+     * Read-only sum of active damage-over-time percent (fraction of max HP per tick) for an entity.
+     * Does NOT decrement durations - duration ticking stays in {@link #tickAll()} (once per server
+     * frame). The per-mob damage application (MotmMobRuntimeSystem) reads this each frame and applies
+     * it via DamageSystems, so DoT stays server-truth and never mutates the store mid-iteration.
+     */
+    public synchronized double getDotPercent(String entityId) {
+        List<StatusEffect> effects = activeEffects.get(entityId);
+        if (effects == null || effects.isEmpty()) {
+            return 0.0;
+        }
+        double dot = 0.0;
+        for (StatusEffect effect : effects) {
+            if (effect.isDamageOverTime() && !effect.isExpired()) {
+                dot += effect.getDamagePerTickPercent();
+            }
+        }
+        return dot;
     }
 
     /**

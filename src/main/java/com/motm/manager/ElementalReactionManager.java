@@ -6,6 +6,8 @@ import com.motm.util.DataLoader;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages elemental marks on entities and detects/resolves elemental reactions.
@@ -34,8 +36,13 @@ public class ElementalReactionManager {
     private final DataLoader dataLoader;
     private final StatusEffectManager statusEffectManager;
 
-    // entityId -> list of active marks
-    private final Map<String, List<ElementalMark>> activeMarks = new HashMap<>();
+    // entityId -> list of active marks. Thread-safe: tickAll() runs on every world's tick thread
+    // concurrently and applyMark() writes from ability/summon-attack threads. A plain HashMap here
+    // corrupted its size counter under concurrent mutation, throwing NegativeArraySizeException in
+    // tickAll's entrySet().toArray() and crashing the world (Store shutdown) - live-confirmed via
+    // corruptus necro raise_dead (game 0.5.9, 2026-08-18). Inner lists are CopyOnWriteArrayList so
+    // add/removeIf/forEach are safe without external locking.
+    private final Map<String, List<ElementalMark>> activeMarks = new ConcurrentHashMap<>();
 
     public ElementalReactionManager(DataLoader dataLoader, StatusEffectManager statusEffectManager) {
         this.dataLoader = dataLoader;
@@ -47,7 +54,7 @@ public class ElementalReactionManager {
      * If a reaction is triggered, returns the reaction; otherwise null.
      */
     public ReactionResult applyMark(String entityId, ElementalMark newMark) {
-        List<ElementalMark> marks = activeMarks.computeIfAbsent(entityId, k -> new ArrayList<>());
+        List<ElementalMark> marks = activeMarks.computeIfAbsent(entityId, k -> new CopyOnWriteArrayList<>());
 
         // Check cooldown - can't reapply same mark type too quickly
         for (ElementalMark existing : marks) {

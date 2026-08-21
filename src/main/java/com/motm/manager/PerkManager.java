@@ -138,14 +138,6 @@ public class PerkManager {
                 pendingTier, new ArrayList<>(selectedPerkIds), Instant.now().toString()
         ));
 
-        // Apply perk effects
-        for (String perkId : selectedPerkIds) {
-            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
-            if (perk != null) {
-                applyPerkEffects(player, perk);
-            }
-        }
-
         // Recalculate data-only synergies. Runtime stat modifiers are applied by
         // the queued world-thread rebuild after command selection completes.
         synergyEngine.recalculateSynergies(player);
@@ -156,23 +148,6 @@ public class PerkManager {
         LOG.info("[MOTM] " + player.getPlayerName() + " selected perk choice " + pendingTier
                 + ": " + selectedPerkIds);
         return true;
-    }
-
-    public void applyPerkEffects(PlayerData player, Perk perk) {
-        if (perk.getEffects() == null) return;
-
-        for (Perk.Effect effect : perk.getEffects()) {
-            // Effect application depends on Hytale's entity/stat API.
-            // The effect types from the pseudocode are:
-            //   stat_increase, stat_multiplier, damage_increase, damage_reduction,
-            //   ability, summon, passive, on_hit, on_kill, aura, transformation,
-            //   conditional_buff, immunity
-            //
-            // TODO: Hook each effect type into Hytale's actual player stat/ability system.
-            // For now, we log what would be applied.
-            LOG.fine("[MOTM] Applying effect: " + effect.getType()
-                    + " (value=" + effect.getValue() + ") from perk " + perk.getId());
-        }
     }
 
     public void applyAllOwnedPerks(PlayerData player) {
@@ -193,12 +168,6 @@ public class PerkManager {
     // --- Reapply on Load ---
 
     public void reapplyAllPerks(PlayerData player, SynergyEngine synergyEngine) {
-        for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
-            if (perk != null) {
-                applyPerkEffects(player, perk);
-            }
-        }
         applyAllOwnedPerks(player);
         synergyEngine.recalculateSynergies(player);
     }

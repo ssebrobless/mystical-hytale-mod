@@ -46,7 +46,7 @@ public final class PlayerSessionLifecycleActions {
         }
 
         if (player.isFirstJoin()) {
-            log.info("[MOTM] " + playerName + " is a new player - showing class selection");
+            log.info("[MOTM] " + playerName + " is a new player - first-join wizard runs on ready");
         }
     }
 
@@ -104,6 +104,28 @@ public final class PlayerSessionLifecycleActions {
             if (!hooks.ensureSpellbookItem(runtimePlayer)) {
                 hooks.queueSpellbookGrant(playerId);
             }
+        }
+
+        // First-join wizard: a new or class-less player is protected (setup invincibility via
+        // isStartupSelectionProtected) until they pick a class + an active style. Grant the spellbook so
+        // they have the tool, and tell them what to do. Selection completion clears firstJoin
+        // (completeStartupSelection), so this stops once they have chosen their path.
+        if (playerData != null
+                && (playerData.getPlayerClass() == null
+                || playerData.getSelectedStyles() == null
+                || playerData.getSelectedStyles().isEmpty())) {
+            if (!hooks.ensureSpellbookItem(runtimePlayer)) {
+                hooks.queueSpellbookGrant(playerId);
+            }
+            hooks.sendMessage(runtimePlayer, "[MOTM] Welcome to Mentees of the Mystical!");
+            hooks.sendMessage(runtimePlayer,
+                    "[MOTM] You are protected until you choose your path.");
+            hooks.sendMessage(runtimePlayer,
+                    "[MOTM] Open your spellbook (in your hotbar) to choose your elemental class and your active style (grants 3 abilities).");
+            hooks.recordCausality("first_join_wizard", mapOf(
+                    "playerId", playerId,
+                    "username", identity.username()
+            ));
         }
 
         hooks.queueStatusHudInstall(playerId);
@@ -233,6 +255,8 @@ public final class PlayerSessionLifecycleActions {
         boolean playerHasSpellbook(Player runtimePlayer);
 
         void queueSpellbookGrant(String playerId);
+
+        void sendMessage(Player runtimePlayer, String message);
 
         void refreshPlayerProgressionBonuses(String playerId);
 

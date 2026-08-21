@@ -1,0 +1,35 @@
+{
+  "id": "terra-tether-vines",
+  "description": "Tether visual-link gate: spawn a line of hostiles, cast Vines on the nearest, and confirm the shared tether link renders between caster and target across the root/DoT duration (tether_link log lines from the line-control tick).",
+  "styleId": "arbor",
+  "abilities": ["vines"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker tether-vines-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set terra",
+    "motm style arbor",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs line",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot tether-settle-1",
+    "motm dev observe snapshot tether-settle-2",
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker tether-vines-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "server-truth:snapshot"],
+  "notes": [
+    "Vines is a line_control tether (root+dot, 5s) targeting the nearest enemy; test mobs line spawns three Test_Dummy_Stationary in front.",
+    "The shared visual-link contract is asserted from [MOTM] tether_link log lines emitted by GameplayPlaybackManager.renderTetherLink (via TetherLinkRenderer) each line-control tick: a burst-only bead chain (Block_Break_Stone for terra) re-sampled between caster and target so it follows both endpoints (synced movement) and self-cleans when the tick stops (capped beads expire).",
+    "DoD: first shared tether visual-link (primitive-status P0 Pull/tether/carry), reusing the existing line-control functional runtime (pull/root/DoT)."
+  ]
+}

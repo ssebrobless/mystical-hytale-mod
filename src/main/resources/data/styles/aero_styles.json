@@ -34,7 +34,7 @@
           "cooldown_seconds": 4,
           "cast_time_seconds": 0.35,
           "recovery_seconds": 0.24,
-          "effect": "stun",
+          "effect": "stun+knockback",
           "categories": [
             "damage",
             "crowd_control"
@@ -56,6 +56,7 @@
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
           "effect": "attack_buff+speed",
+          "effect_magnitudes": { "attack_buff": 0.15, "speed": 0.10 },
           "categories": [
             "buff"
           ],
@@ -407,7 +408,7 @@
           "cooldown_seconds": 5,
           "cast_time_seconds": 0.35,
           "recovery_seconds": 0.24,
-          "effect": "",
+          "effect": "knockback",
           "categories": [
             "damage",
             "crowd_control"

@@ -18,6 +18,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class ProjectileHitHytaleAdapter {
+    // Projectiles travel at the caster's eye height (~1.5 blocks), but an entity's
+    // TransformComponent position is at its FEET. Comparing the flight path to the feet
+    // makes a shot that visually passes through the body miss unless collisionRadius is
+    // inflated (why magma_sling was special-cased to 1.8). Compare against the torso
+    // instead so eye-height projectiles register body hits across every family.
+    private static final double TARGET_TORSO_OFFSET_Y = 0.9;
     private final Set<String> ignoredNpcRoleNames;
 
     public ProjectileHitHytaleAdapter(Set<String> ignoredNpcRoleNames) {
@@ -50,7 +56,7 @@ public final class ProjectileHitHytaleAdapter {
                     continue;
                 }
 
-                Vector3d targetPosition = transform.getTransform().getPosition();
+                Vector3d targetPosition = torso(transform.getTransform().getPosition());
                 double normalizedProjection = dot(subtract(targetPosition, from), segment) / segmentLengthSquared;
                 double clampedProjection = clamp(normalizedProjection, 0.0, 1.0);
                 Vector3d nearestPoint = com.motm.util.MotmVectors.addScaled(from, segment, clampedProjection);
@@ -68,6 +74,13 @@ public final class ProjectileHitHytaleAdapter {
         });
 
         return hit.get();
+    }
+
+    private static Vector3d torso(Vector3d feetPosition) {
+        if (feetPosition == null) {
+            return null;
+        }
+        return new Vector3d(feetPosition.x, feetPosition.y + TARGET_TORSO_OFFSET_Y, feetPosition.z);
     }
 
     public List<Ref<EntityStore>> collectImpactTargets(ActiveProjectile projectile,
@@ -100,7 +113,7 @@ public final class ProjectileHitHytaleAdapter {
                     continue;
                 }
 
-                if (distance(impactPosition, transform.getTransform().getPosition()) <= radius) {
+                if (distance(impactPosition, torso(transform.getTransform().getPosition())) <= radius) {
                     targets.add(ref);
                 }
             }
@@ -135,7 +148,7 @@ public final class ProjectileHitHytaleAdapter {
                     continue;
                 }
 
-                Vector3d targetPosition = transform.getTransform().getPosition();
+                Vector3d targetPosition = torso(transform.getTransform().getPosition());
                 double normalizedProjection = dot(subtract(targetPosition, from), segment) / segmentLengthSquared;
                 double clampedProjection = clamp(normalizedProjection, 0.0, 1.0);
                 Vector3d nearestPoint = com.motm.util.MotmVectors.addScaled(from, segment, clampedProjection);
@@ -165,7 +178,7 @@ public final class ProjectileHitHytaleAdapter {
                     continue;
                 }
 
-                double candidateDistance = distance(center, transform.getTransform().getPosition());
+                double candidateDistance = distance(center, torso(transform.getTransform().getPosition()));
                 if (candidateDistance <= radius) {
                     candidates.add(new NearbyTargetCandidate(ref, candidateDistance));
                 }
@@ -195,7 +208,7 @@ public final class ProjectileHitHytaleAdapter {
                     continue;
                 }
 
-                double candidateDistance = distance(center, transform.getTransform().getPosition());
+                double candidateDistance = distance(center, torso(transform.getTransform().getPosition()));
                 if (candidateDistance <= radius && candidateDistance < bestDistance[0]) {
                     bestDistance[0] = candidateDistance;
                     nearest.set(ref);

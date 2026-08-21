@@ -1,0 +1,10 @@
+{
+  "Duration": 0.9,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#00CED1",
+    "EntityBottomTint": "#1E90FF",
+    "Particles": [{ "SystemId": "IceBoulderTrail" }],
+    "ModelVFXId": "Freeze"
+  }
+}

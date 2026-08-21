@@ -1,0 +1,13 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#8B0000",
+    "Particles": [
+      { "SystemId": "VoidImpact" },
+      { "SystemId": "Impact_Fire" }
+    ],
+    "WorldSoundEventId": "SFX_Staff_Flame_Fireball_Impact"
+  }
+}

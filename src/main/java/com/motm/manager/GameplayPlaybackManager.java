@@ -4,6 +4,8 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
 import org.joml.Vector3d;
+import com.hypixel.hytale.server.core.universe.world.ParticleUtil;
+import com.motm.runtime.ability.tether.TetherLinkRenderer;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 import com.hypixel.hytale.server.core.asset.type.entityeffect.config.EntityEffect;
@@ -21,6 +23,10 @@ import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
+import com.hypixel.hytale.server.core.entity.knockback.KnockbackComponent;
+import com.hypixel.hytale.protocol.ChangeVelocityType;
+import com.hypixel.hytale.protocol.VelocityThresholdStyle;
+import com.hypixel.hytale.server.core.modules.splitvelocity.VelocityConfig;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.prefab.selection.standard.BlockSelection;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -77,6 +83,10 @@ import com.motm.runtime.ability.self.SelfHytaleAdapter;
 import com.motm.runtime.ability.self.SelfRuntimeState;
 import com.motm.runtime.ability.specific.AbilitySpecificHytaleAdapter;
 import com.motm.runtime.ability.stomp.ArmedStomp;
+import com.motm.runtime.ability.control.ActiveControlledAlly;
+import com.motm.runtime.ability.control.ControlHytaleAdapter;
+import com.motm.runtime.ability.control.ControlRuntimeState;
+import com.motm.runtime.ability.control.ControlTickRuntime;
 import com.motm.runtime.ability.stomp.StompRuntimeState;
 import com.motm.runtime.ability.summon.ActiveSummon;
 import com.motm.runtime.ability.summon.SummonActivationRuntime;
@@ -131,6 +141,7 @@ public class GameplayPlaybackManager {
             "ground_burst", "ground_zone", "ground_target", "ground_strike",
             "support_zone", "self_burst", "barrier", "execute");
     private static final Set<String> CONE_CAST_TYPES = Set.of("cone", "gaze");
+    private static final Set<String> CONTROL_ABILITY_IDS = Set.of("dominate", "hivemind");
     private static final double DEFAULT_LINE_HALF_WIDTH = 1.75;
     private static final double DEFAULT_AREA_RADIUS = FieldRuntimeSpecs.DEFAULT_AREA_RADIUS;
     private static final double DEFAULT_CHAIN_RADIUS = 3.0;
@@ -165,6 +176,8 @@ public class GameplayPlaybackManager {
     private final SummonLifecycleHytaleAdapter summonLifecycleAdapter;
     private final SummonControlHytaleAdapter summonControlAdapter;
     private final SummonAttackHytaleAdapter summonAttackAdapter;
+    private final ControlRuntimeState controlState = new ControlRuntimeState();
+    private final ControlHytaleAdapter controlAdapter;
     private final TransformationRuntimeState transformationState = new TransformationRuntimeState();
     private final TransformationHytaleAdapter transformationAdapter;
     private final WeaponFollowUpRuntimeState weaponFollowUps = new WeaponFollowUpRuntimeState();
@@ -431,6 +444,37 @@ public class GameplayPlaybackManager {
                                                                           double radius,
                                                                           int maxTargets) {
                         return GameplayPlaybackManager.this.collectNearbyNpcTargets(store, center, radius, maxTargets);
+                    }
+
+                    @Override
+                    public void logInfo(String message) {
+                        LOG.info(message);
+                    }
+                }
+        );
+        this.controlAdapter = new ControlHytaleAdapter(
+                controlState,
+                new ControlTickRuntime(),
+                new SummonMovementRuntime(),
+                new ControlHytaleAdapter.Support() {
+                    @Override
+                    public PlayerData owner(String ownerPlayerId) {
+                        return mod.getPlayerDataManager().getOnlinePlayer(ownerPlayerId);
+                    }
+
+                    @Override
+                    public boolean applyEffectById(Ref<EntityStore> ref, Store<EntityStore> store, String effectId) {
+                        return GameplayPlaybackManager.this.applyEffectById(ref, store, effectId);
+                    }
+
+                    @Override
+                    public String resolveEntityId(Ref<EntityStore> ref, Store<EntityStore> store) {
+                        return GameplayPlaybackManager.this.resolveEntityId(ref, store);
+                    }
+
+                    @Override
+                    public boolean isMotmSummon(NPCEntity npc) {
+                        return GameplayPlaybackManager.this.isMotmSummon(npc);
                     }
 
                     @Override
@@ -807,6 +851,15 @@ public class GameplayPlaybackManager {
                     @Override
                     public String humanize(String value) {
                         return GameplayPlaybackManager.this.humanize(value);
+                    }
+
+                    @Override
+                    public void renderTetherLink(Vector3d from,
+                                                 Vector3d to,
+                                                 PlayerData player,
+                                                 AbilityData ability,
+                                                 Store<EntityStore> store) {
+                        GameplayPlaybackManager.this.renderTetherLink(from, to, player, ability, store);
                     }
                 }
         );
@@ -1692,6 +1745,7 @@ public class GameplayPlaybackManager {
         FormRuntimeResult form = applyTransformation(runtimePlayer, player, style, ability);
         SummonRuntimeResult summons = handleSummonRuntime(runtimePlayer, player, style, ability, context);
         WeaponFollowUpResult followUp = armWeaponFollowUp(player, ability);
+        String control = handleControlRuntime(runtimePlayer, player, style, ability, context);
 
         if (combat.totalDamage() > 0) {
             player.getStatistics().setTotalDamageDealt(
@@ -1716,6 +1770,7 @@ public class GameplayPlaybackManager {
         if (!channel.summary().isBlank()) summaryParts.add(channel.summary());
         if (!form.summary().isBlank()) summaryParts.add(form.summary());
         if (!summons.summary().isBlank()) summaryParts.add(summons.summary());
+        if (!control.isBlank()) summaryParts.add(control);
         if (!followUp.summary().isBlank()) summaryParts.add(followUp.summary());
 
         String summary = summaryParts.isEmpty()
@@ -1821,6 +1876,7 @@ public class GameplayPlaybackManager {
             }
         }
         summonControlAdapter.processForStore(currentStore, now);
+        controlAdapter.processForStore(currentStore, now);
     }
 
     public synchronized void tickArmedStomps(Store<EntityStore> currentStore) {
@@ -1868,10 +1924,6 @@ public class GameplayPlaybackManager {
 
             stompState.replace(playerId, armed, armed.withObservation(y, nowAirborne));
         }
-    }
-
-    private void fireArmedStomp(Player runtimePlayer, ArmedStomp armed, Vector3d landingPosition) {
-        fireArmedJumpLanding(runtimePlayer, armed, landingPosition);
     }
 
     private void fireArmedJumpLanding(Player runtimePlayer, ArmedStomp armed, Vector3d landingPosition) {
@@ -2065,6 +2117,39 @@ public class GameplayPlaybackManager {
         return summary;
     }
 
+    private long lastTetherLinkLogAtMillis = 0L;
+
+    private void renderTetherLink(Vector3d from,
+                                  Vector3d to,
+                                  PlayerData player,
+                                  AbilityData ability,
+                                  Store<EntityStore> store) {
+        if (from == null || to == null || player == null || ability == null || store == null) {
+            return;
+        }
+        String systemId = TetherLinkRenderer.beadSystemId(player.getPlayerClass());
+        List<Vector3d> beads = TetherLinkRenderer.sampleChain(from, to);
+        for (Vector3d point : beads) {
+            try {
+                ParticleUtil.spawnParticleEffect(systemId, point, store);
+            } catch (Throwable error) {
+                LOG.warning("[MOTM] Tether link bead failed system=" + systemId
+                        + " error=" + error.getMessage());
+                break;
+            }
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastTetherLinkLogAtMillis >= 900L) {
+            lastTetherLinkLogAtMillis = now;
+            LOG.info("[MOTM] tether_link: abilityId=" + safe(ability.getId())
+                    + " classId=" + safe(player.getPlayerClass())
+                    + " system=" + systemId
+                    + " beads=" + beads.size()
+                    + " from=" + formatVector(from)
+                    + " to=" + formatVector(to));
+        }
+    }
+
     public synchronized Map<String, Object> buildObservabilitySnapshot(String playerId) {
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("activeProjectiles", projectileRuntime.activeProjectileCount());
@@ -2137,25 +2222,63 @@ public class GameplayPlaybackManager {
 
     public synchronized boolean shouldSuppressFriendlySummonDamage(Ref<EntityStore> sourceRef,
                                                                    Ref<EntityStore> targetRef) {
-        if (sourceRef == null || targetRef == null || summonState == null) {
+        if (sourceRef == null || targetRef == null) {
             return false;
         }
-        ActiveSummon sourceSummon = summonState.findSummonByRef(sourceRef);
-        ActiveSummon targetSummon = summonState.findSummonByRef(targetRef);
-        return sourceSummon != null
-                && targetSummon != null
-                && sourceSummon.ownerPlayerId() != null
-                && sourceSummon.ownerPlayerId().equals(targetSummon.ownerPlayerId());
+        if (summonState != null) {
+            ActiveSummon sourceSummon = summonState.findSummonByRef(sourceRef);
+            ActiveSummon targetSummon = summonState.findSummonByRef(targetRef);
+            if (sourceSummon != null && targetSummon != null
+                    && sourceSummon.ownerPlayerId() != null
+                    && sourceSummon.ownerPlayerId().equals(targetSummon.ownerPlayerId())) {
+                return true;
+            }
+        }
+        // Controlled allies cannot damage (or be damaged by) their owner, the owner's
+        // summons, or the owner's other controlled allies.
+        if (controlState != null) {
+            ActiveControlledAlly sourceControl = controlState.findByControlledRef(sourceRef);
+            ActiveControlledAlly targetControl = controlState.findByControlledRef(targetRef);
+            if (sourceControl != null || targetControl != null) {
+                String sourceOwner = friendlyOwnerId(sourceRef);
+                String targetOwner = friendlyOwnerId(targetRef);
+                if (sourceOwner != null && sourceOwner.equals(targetOwner)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String friendlyOwnerId(Ref<EntityStore> ref) {
+        if (ref == null) {
+            return null;
+        }
+        if (controlState != null) {
+            ActiveControlledAlly control = controlState.findByControlledRef(ref);
+            if (control != null) {
+                return control.ownerPlayerId();
+            }
+        }
+        if (summonState != null) {
+            ActiveSummon summon = summonState.findSummonByRef(ref);
+            if (summon != null) {
+                return summon.ownerPlayerId();
+            }
+        }
+        Store<EntityStore> store = ref.getStore();
+        if (store != null) {
+            String entityId = resolveEntityId(ref, store);
+            if (entityId != null && mod.getPlayerDataManager().getOnlinePlayer(entityId) != null) {
+                return entityId;
+            }
+        }
+        return null;
     }
 
     private int despawnVisualProxiesForStore(Store<EntityStore> currentStore) {
         return visualProxyState.despawnForStore(currentStore);
     }
-
-    private boolean sameWorld(World left, World right) {
-        return left != null && right != null && (left == right || left.equals(right));
-    }
-
 
     public synchronized String forceArmedStompLanding(String playerId, Player runtimePlayer) {
         if (playerId == null || playerId.isBlank() || runtimePlayer == null) {
@@ -2299,7 +2422,14 @@ public class GameplayPlaybackManager {
             return PlaybackResult.none("Player entity store is unavailable.");
         }
 
-        boolean dashOwnedVisual = AbilityExecutionPolicy.isMovementCast(ability)
+        // A movement cast only owns its visual through the dash adapter when that adapter will
+        // actually start a dash - which requires a positive dash distance or range (see
+        // DashHytaleAdapter.start, which returns early when distance <= 0). A vertical-only stall
+        // (air_stall hang_time: launch_height with no dash_distance/range) produces no dash visual,
+        // so it must fall through to the generic caster effect below to stay visibly cast and
+        // client-intent-observable.
+        boolean dashAdapterWillEmit = ability.getDashDistance() > 0.0 || ability.getRange() > 0.0;
+        boolean dashOwnedVisual = (AbilityExecutionPolicy.isMovementCast(ability) && dashAdapterWillEmit)
                 || "waverider".equals(lower(ability.getId()))
                 || "river_rapids".equals(lower(ability.getId()));
         String effectId = dashOwnedVisual || AbilityExecutionPolicy.suppressGenericCasterVisual(ability)
@@ -2470,18 +2600,6 @@ public class GameplayPlaybackManager {
                 ability == null ? 0.0 : AbilityRuntimeMath.pullStep(ability, 0.55, 0.75)
         );
         fieldState.addFields(activation.fields());
-    }
-
-    private Vector3d currentForward(Vector3d direction) {
-        if (direction == null || !direction.isFinite()) {
-            return new Vector3d(0.0, 0.0, 1.0);
-        }
-        Vector3d forward = new Vector3d(direction.x, 0.0, direction.z);
-        if (!forward.isFinite() || forward.length() < 0.001) {
-            return new Vector3d(0.0, 0.0, 1.0);
-        }
-        forward.normalize();
-        return forward;
     }
 
     private boolean processFieldTick(ActiveField field, long now) {
@@ -2709,29 +2827,6 @@ public class GameplayPlaybackManager {
         }
     }
 
-    private List<Vector3d> buildAreaVisualPositions(Vector3d center, AbilityData ability) {
-        if (center == null || ability == null) {
-            return List.of();
-        }
-
-        List<Vector3d> positions = new ArrayList<>();
-        positions.add(new Vector3d(center));
-        double radius = ability.getRadius() > 0 ? ability.getRadius() : DEFAULT_AREA_RADIUS;
-        double ringRadius = Math.max(1.8, Math.min(radius * 0.62, 5.5));
-        positions.add(new Vector3d(center).add(ringRadius, 0.0, 0.0));
-        positions.add(new Vector3d(center).add(-ringRadius, 0.0, 0.0));
-        positions.add(new Vector3d(center).add(0.0, 0.0, ringRadius));
-        positions.add(new Vector3d(center).add(0.0, 0.0, -ringRadius));
-        if (radius >= 4.5) {
-            double diagonal = ringRadius * 0.72;
-            positions.add(new Vector3d(center).add(diagonal, 0.0, diagonal));
-            positions.add(new Vector3d(center).add(-diagonal, 0.0, diagonal));
-            positions.add(new Vector3d(center).add(diagonal, 0.0, -diagonal));
-            positions.add(new Vector3d(center).add(-diagonal, 0.0, -diagonal));
-        }
-        return positions;
-    }
-
     private MovementResult applyMovement(Player runtimePlayer,
                                          Ref<EntityStore> playerRef,
                                          Store<EntityStore> store,
@@ -2819,12 +2914,23 @@ public class GameplayPlaybackManager {
         // (shadow_step/dispersion/burrow/tunnel) use the player's Velocity component;
         // no server-side position write is used for a dash.
         double dashSeconds = "dust_devil".equals(abilityId) ? 2.0 : 0.45;
-        Vector3d velocityProfile = new Vector3d(horizontalDirection)
-                .mul(horizontalDistance / dashSeconds);
+        // The KnockbackComponent impulse carries momentum past the duration window, so a raw
+        // distance/dashSeconds velocity overshoots the authored dash_distance (live-measured
+        // 2026-08-17: jet_burst dash_distance 10 travelled ~23.6). The Def VelocityConfig uses
+        // multiplicative resistance (settle distance ~ proportional to initial speed), so a
+        // single calibration lands the authored distance across dashes; vertical knockup is
+        // left unscaled (gravity settles the arc).
+        double horizontalSpeed = (horizontalDistance / dashSeconds) * DASH_IMPULSE_CALIBRATION;
+        Vector3d velocityProfile = new Vector3d(horizontalDirection).mul(horizontalSpeed);
         velocityProfile.y = verticalDistance / dashSeconds;
         if (!applyBurstVelocity(playerRef, store, velocityProfile)) {
             return MovementResult.none();
         }
+        LOG.info("[MOTM] dash_impulse: abilityId=" + lower(abilityId)
+                + " mechanism=knockback start=" + formatVector(start)
+                + " target=" + formatVector(plan.target())
+                + " velocity=" + formatVector(velocityProfile));
+
         return new MovementResult(
                 true,
                 horizontalDistance,
@@ -2836,24 +2942,52 @@ public class GameplayPlaybackManager {
         );
     }
 
+    private static final float DASH_KNOCKBACK_DURATION_SECONDS = 0.45f;
+    private static final double DASH_IMPULSE_CALIBRATION = 0.57;
+
     private boolean applyBurstVelocity(Ref<EntityStore> playerRef, Store<EntityStore> store, Vector3d burstVelocity) {
         if (playerRef == null || !playerRef.isValid() || store == null || burstVelocity == null) {
             return false;
         }
-        Velocity velocity = store.getComponent(playerRef, Velocity.getComponentType());
-        if (velocity == null) {
+        double y = burstVelocity.y;
+        if (Double.isNaN(y)) {
+            Velocity existing = store.getComponent(playerRef, Velocity.getComponentType());
+            Vector3d before = existing != null ? existing.getVelocity() : null;
+            y = before != null && before.isFinite() ? before.y : 0.0;
+        }
+        // Live players are client-authoritative movers: a raw Velocity.set/setClient is
+        // overwritten by the next client input frame (dash displacement R-gate, 2026-07-16).
+        // Displacement MUST go through the KnockbackComponent, which the client-side
+        // KnockbackPredictionSystems simulate and honor - the GrapplingHook/knockback
+        // precedent. Mechanism mirrors vanilla KnockbackApplyCommand.applyKnockback and its
+        // "Def" VelocityConfig preset (HytaleServer.jar 0.5.9).
+        KnockbackComponent knockback = (KnockbackComponent)
+                store.ensureAndGetComponent(playerRef, KnockbackComponent.getComponentType());
+        if (knockback == null) {
             return false;
         }
-        Vector3d before = velocity.getVelocity();
-        double y = !Double.isNaN(burstVelocity.y)
-                ? burstVelocity.y
-                : before != null && before.isFinite() ? before.y : 0.0;
-        velocity.set(burstVelocity.x, y, burstVelocity.z);
-        // Players are client-authoritative movers: the server-side velocity is
-        // overwritten by the next client input frame unless the CLIENT velocity
-        // channel carries the impulse too (GrapplingHook precedent).
-        velocity.setClient(burstVelocity.x, y, burstVelocity.z);
+        knockback.setVelocity(new Vector3d(burstVelocity.x, y, burstVelocity.z));
+        knockback.setVelocityType(ChangeVelocityType.Set);
+        knockback.setVelocityConfig(dashVelocityConfig());
+        knockback.setDuration(DASH_KNOCKBACK_DURATION_SECONDS);
+        knockback.setTimer(0.0f);
         return true;
+    }
+
+    private static VelocityConfig dashVelocityConfig() {
+        // Uniform-resistance dash config (derived from the vanilla "Def" preset). Ground and air
+        // resistance are matched (0.96) so a dash travels the SAME distance whether it arcs
+        // through the air (knockup dashes) or slides along the ground - otherwise the vanilla
+        // ground friction (0.82) makes grounded dashes stop far short (live-measured 2026-08-17:
+        // afterburner grounded travelled 3.5 vs airborne jet_burst 7.3 at equal calibration).
+        VelocityConfig config = new VelocityConfig();
+        config.setAirResistance(0.96f);
+        config.setAirResistanceMax(0.0f);
+        config.setGroundResistance(0.96f);
+        config.setGroundResistanceMax(0.0f);
+        config.setThreshold(1.0f);
+        config.setStyle(VelocityThresholdStyle.Linear);
+        return config;
     }
 
     private CombatResolution applyCombat(Player runtimePlayer,
@@ -3199,6 +3333,49 @@ public class GameplayPlaybackManager {
         return new SummonRuntimeResult(spawned.spawned(), 0, spawned.summary());
     }
 
+    private String handleControlRuntime(Player runtimePlayer,
+                                        PlayerData player,
+                                        StyleData style,
+                                        AbilityData ability,
+                                        CastContext context) {
+        if (ability == null || ability.getId() == null || player == null) {
+            return "";
+        }
+        String abilityId = lower(ability.getId());
+        if (!CONTROL_ABILITY_IDS.contains(abilityId)) {
+            return "";
+        }
+        Ref<EntityStore> playerRef = runtimePlayer != null ? runtimePlayer.getReference() : null;
+        Store<EntityStore> store = playerRef != null ? playerRef.getStore() : null;
+        if (playerRef == null || store == null) {
+            return "";
+        }
+        List<Ref<EntityStore>> targets = resolveTargets(playerRef, store, ability, context);
+        if (targets.isEmpty()) {
+            return "";
+        }
+        long now = System.currentTimeMillis();
+        // Canon: mentokinesis control is a 15-20s recast-release window, regardless of the
+        // authored ability Duration (dominate's data uses a 999s placeholder).
+        long authoredMillis = ability.getDurationSeconds() > 0
+                ? (long) (ability.getDurationSeconds() * 1000.0)
+                : 15000L;
+        long durationMillis = Math.max(15000L, Math.min(20000L, authoredMillis));
+        boolean singleTarget = "dominate".equals(abilityId);
+        String classId = lower(player.getPlayerClass());
+        String styleId = style != null ? lower(style.getId()) : "";
+        int converted = 0;
+        for (Ref<EntityStore> targetRef : targets) {
+            if (controlAdapter.convert(playerRef, player, targetRef, store, classId, styleId, ability, durationMillis, now)) {
+                converted++;
+            }
+            if (singleTarget) {
+                break;
+            }
+        }
+        return converted > 0 ? ("controlled " + converted) : "";
+    }
+
     private void applyTokenToTarget(String token,
                                     Ref<EntityStore> targetRef,
                                     Store<EntityStore> store,
@@ -3206,6 +3383,41 @@ public class GameplayPlaybackManager {
                                     String sourcePlayerId,
                                     AbilityData ability) {
         applyTargetToken(token, targetRef, store, sourceRef, sourcePlayerId, ability);
+    }
+
+    // Dev proof for status-effect DoT: applies a BURN to nearby live mobs so MotmMobRuntimeSystem's
+    // per-frame DoT application (getDotPercent -> executeDamage) is observable live.
+    public String runDevDotProof(PlayerData player, Player runtimePlayer) {
+        if (runtimePlayer == null || runtimePlayer.getReference() == null
+                || !runtimePlayer.getReference().isValid()
+                || runtimePlayer.getReference().getStore() == null) {
+            return "[MOTM] Dev DoT proof failed: player reference invalid.";
+        }
+        Ref<EntityStore> playerRef = runtimePlayer.getReference();
+        Store<EntityStore> store = playerRef.getStore();
+        TransformComponent transform = store.getComponent(playerRef, TransformComponent.getComponentType());
+        if (transform == null || transform.getTransform() == null || transform.getTransform().getPosition() == null) {
+            return "[MOTM] Dev DoT proof failed: player position unavailable.";
+        }
+        Vector3d center = transform.getTransform().getPosition();
+        List<Ref<EntityStore>> targets = collectNearbyNpcTargets(store, center, 20.0, 8);
+        if (targets.isEmpty()) {
+            return "[MOTM] Dev DoT proof: no nearby mobs (spawn test mobs first).";
+        }
+        int applied = 0;
+        for (Ref<EntityStore> target : targets) {
+            String entityId = resolveEntityId(target, store);
+            if (entityId == null) {
+                continue;
+            }
+            mod.getStatusEffectManager().applyEffect(entityId,
+                    new StatusEffect(StatusEffect.Type.BURN, 40, 0.03, player.getPlayerId(), "dev-dot-proof"));
+            applied++;
+        }
+        String result = "[MOTM] Dev DoT proof: applied BURN (40 ticks, 3%/tick) to " + applied
+                + " nearby mob(s); MotmMobRuntimeSystem applies the damage.";
+        LOG.info(result);
+        return result;
     }
 
     private List<Ref<EntityStore>> collectNearbyNpcTargets(Store<EntityStore> store,
@@ -3577,6 +3789,13 @@ public class GameplayPlaybackManager {
             }
             case CONSUME -> {
                 double healthRatio = resolveHealthRatio(targetRef, store);
+                if (healthRatio > 0.0 && healthRatio <= 0.10) {
+                    // Void Consume executes targets below 10% health (see ability concept).
+                    double currentHealth = resolveCurrentHealth(targetRef, store);
+                    LOG.info("[MOTM] Consume execute: target=" + targetEntityId
+                            + " hpRatio=" + AbilityPresentation.formatDecimal(healthRatio));
+                    yield Math.max(damage, currentHealth * 1.5);
+                }
                 double modifier = 1.0;
                 if (healthRatio > 0.0 && healthRatio <= 0.35) {
                     modifier += healthRatio <= 0.18 ? 1.20 : 0.65;
@@ -3621,6 +3840,15 @@ public class GameplayPlaybackManager {
             return 0.0;
         }
         return health.get() / health.getMax();
+    }
+
+    private double resolveCurrentHealth(Ref<EntityStore> entityRef, Store<EntityStore> store) {
+        EntityStatMap entityStatMap = store.getComponent(entityRef, EntityStatMap.getComponentType());
+        if (entityStatMap == null) {
+            return 0.0;
+        }
+        EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
+        return health == null ? 0.0 : health.get();
     }
 
     private List<Ref<EntityStore>> resolveTargets(Ref<EntityStore> playerRef,
@@ -4163,19 +4391,6 @@ public class GameplayPlaybackManager {
         return health.getMax();
     }
 
-    private double resolveCurrentHealth(Ref<EntityStore> entityRef, Store<EntityStore> store) {
-        EntityStatMap entityStatMap = store.getComponent(entityRef, EntityStatMap.getComponentType());
-        if (entityStatMap == null) {
-            return 0.0;
-        }
-
-        EntityStatValue health = entityStatMap.get(DefaultEntityStatTypes.getHealth());
-        if (health == null) {
-            return 0.0;
-        }
-        return health.get();
-    }
-
     private double resolvePlayerMaxHealth(String playerId) {
         Player runtimePlayer = mod.getRuntimePlayer(playerId);
         if (runtimePlayer == null || runtimePlayer.getReference() == null || !runtimePlayer.getReference().isValid()
@@ -4544,22 +4759,6 @@ public class GameplayPlaybackManager {
 
     private String lower(String value) {
         return value == null ? "" : value.toLowerCase(Locale.ROOT);
-    }
-
-    private Vector3d rotateAroundY(Vector3d vector, double degrees) {
-        if (Math.abs(degrees) < 0.001) {
-            return normalize(vector);
-        }
-
-        double radians = Math.toRadians(degrees);
-        double cos = Math.cos(radians);
-        double sin = Math.sin(radians);
-        Vector3d rotated = new Vector3d(
-                (vector.x * cos) - (vector.z * sin),
-                vector.y,
-                (vector.x * sin) + (vector.z * cos)
-        );
-        return normalize(rotated);
     }
 
     private double clamp(double value, double min, double max) {

@@ -2,6 +2,7 @@ package com.motm.model;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents an active ability granted by a style.
@@ -78,6 +79,8 @@ public class AbilityData {
     private double verticalDisplaceBlocks;
     @SerializedName("dot_percent_per_second")
     private double dotPercentPerSecond;
+    @SerializedName("effect_magnitudes")
+    private Map<String, Double> effectMagnitudes;
 
     public String getId() { return id; }
     public String getName() { return name; }
@@ -120,4 +123,13 @@ public class AbilityData {
     public String getTrigger() { return trigger; }
     public double getVerticalDisplaceBlocks() { return verticalDisplaceBlocks; }
     public double getDotPercentPerSecond() { return dotPercentPerSecond; }
+
+    /** Per-ability override for a status-effect token's magnitude; falls back to the token default. */
+    public double getEffectMagnitude(String token, double fallback) {
+        if (effectMagnitudes == null || token == null) {
+            return fallback;
+        }
+        Double value = effectMagnitudes.get(token);
+        return value != null ? value : fallback;
+    }
 }

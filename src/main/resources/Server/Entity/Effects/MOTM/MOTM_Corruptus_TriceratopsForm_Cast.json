@@ -1,0 +1,14 @@
+{
+  "Duration": 0.5,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#8B0000",
+    "Particles": [
+      { "SystemId": "Block_Break_Stone" },
+      { "SystemId": "Mace_Signature_Ground_Hit" }
+    ],
+    "WorldSoundEventId": "SFX_Golem_Earth_Stomp",
+    "ModelVFXId": "Stoneskin"
+  }
+}

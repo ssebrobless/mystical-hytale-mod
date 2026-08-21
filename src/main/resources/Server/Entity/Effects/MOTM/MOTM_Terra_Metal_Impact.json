@@ -1,0 +1,13 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#CD853F",
+    "EntityBottomTint": "#8B4513",
+    "Particles": [
+      { "SystemId": "Mace_Signature_Ground_Hit" },
+      { "SystemId": "Block_Break_Stone" }
+    ],
+    "WorldSoundEventId": "SFX_Stone_Break"
+  }
+}

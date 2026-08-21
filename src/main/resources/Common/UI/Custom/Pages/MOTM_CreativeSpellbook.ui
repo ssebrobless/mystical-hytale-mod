@@ -1,0 +1,217 @@
+@PanelBg = #101722(0.95);
+@PanelSoft = #1a2230(0.90);
+@PanelLine = #344052(0.70);
+@Text = #eef3f7;
+@Muted = #b3bfcb;
+@Accent = #d8aa53;
+@Good = #98d982;
+@Bad = #e08a7a;
+
+@SmallText = (FontSize: 13, TextColor: @Muted, Wrap: true);
+@BodyText = (FontSize: 15, TextColor: @Text, Wrap: true);
+@TitleText = (FontSize: 26, RenderBold: true, TextColor: @Text);
+@ValueText = (FontSize: 15, RenderBold: true, TextColor: @Good, Wrap: true);
+@ActiveText = (FontSize: 13, RenderBold: true, TextColor: @Accent, VerticalAlignment: Center);
+@NavText = (FontSize: 14, RenderBold: true, TextColor: @Text);
+@ButtonStyle = (
+  Default: (
+    Background: PatchStyle(Color: @PanelSoft),
+    LabelStyle: @NavText
+  ),
+  Hovered: (
+    Background: PatchStyle(Color: #263143(0.94)),
+    LabelStyle: (...@NavText, TextColor: @Accent)
+  ),
+  Pressed: (
+    Background: PatchStyle(Color: #3a2d1e(0.95)),
+    LabelStyle: (...@NavText, TextColor: #ffffff)
+  )
+);
+
+Group #Root {
+  Anchor: (Width: 1040, Height: 704);
+  Background: PatchStyle(Color: @PanelBg);
+
+  Group #NavRail {
+    Anchor: (Left: 24, Top: 24, Width: 176, Height: 656);
+    Background: PatchStyle(Color: #0b1018(0.96));
+
+    Label #Title { Anchor: (Left: 14, Top: 12, Width: 148, Height: 30); Text: "MOTM"; Style: (FontSize: 24, RenderBold: true, TextColor: @Accent); }
+    Label #Subtitle { Anchor: (Left: 14, Top: 42, Width: 148, Height: 24); Text: "Creative Sandbox"; Style: @SmallText; }
+
+    TextButton #NavClassesButton { Anchor: (Left: 14, Top: 84, Width: 148, Height: 32); Text: "Classes"; Style: @ButtonStyle; }
+    Label #NavClassesSelected { Anchor: (Left: 14, Top: 84, Width: 148, Height: 32); Text: "> Classes"; Visible: false; Style: @ActiveText; }
+
+    TextButton #NavStylesButton { Anchor: (Left: 14, Top: 122, Width: 148, Height: 32); Text: "Styles"; Style: @ButtonStyle; }
+    Label #NavStylesSelected { Anchor: (Left: 14, Top: 122, Width: 148, Height: 32); Text: "> Styles"; Visible: false; Style: @ActiveText; }
+
+    TextButton #NavAbilitiesButton { Anchor: (Left: 14, Top: 160, Width: 148, Height: 32); Text: "Abilities"; Style: @ButtonStyle; }
+    Label #NavAbilitiesSelected { Anchor: (Left: 14, Top: 160, Width: 148, Height: 32); Text: "> Abilities"; Visible: false; Style: @ActiveText; }
+
+    TextButton #NavPerksButton { Anchor: (Left: 14, Top: 198, Width: 148, Height: 32); Text: "Perks"; Style: @ButtonStyle; }
+    Label #NavPerksSelected { Anchor: (Left: 14, Top: 198, Width: 148, Height: 32); Text: "> Perks"; Visible: false; Style: @ActiveText; }
+
+    TextButton #NavTestButton { Anchor: (Left: 14, Top: 236, Width: 148, Height: 32); Text: "Test Lab"; Style: @ButtonStyle; }
+    Label #NavTestSelected { Anchor: (Left: 14, Top: 236, Width: 148, Height: 32); Text: "> Test Lab"; Visible: false; Style: @ActiveText; }
+
+    TextButton #NavInfoButton { Anchor: (Left: 14, Top: 274, Width: 148, Height: 32); Text: "Info"; Style: @ButtonStyle; }
+    Label #NavInfoSelected { Anchor: (Left: 14, Top: 274, Width: 148, Height: 32); Text: "> Info"; Visible: false; Style: @ActiveText; }
+
+    Label #ActionStatus { Anchor: (Left: 14, Top: 360, Width: 148, Height: 260); Text: ""; Style: (...@SmallText, TextColor: #d9dde7); }
+  }
+
+  Group #HeaderPanel {
+    Anchor: (Left: 224, Top: 24, Width: 792, Height: 96);
+    Background: PatchStyle(Color: @PanelSoft);
+    Label #SectionTitle { Anchor: (Left: 20, Top: 12, Width: 480, Height: 32); Style: @TitleText; }
+    Label #SectionHint { Anchor: (Left: 20, Top: 50, Width: 480, Height: 34); Style: @SmallText; }
+    Label #LoadoutClass { Anchor: (Left: 520, Top: 12, Width: 252, Height: 18); Style: @ValueText; }
+    Label #LoadoutStyle { Anchor: (Left: 520, Top: 34, Width: 252, Height: 18); Style: @ValueText; }
+    Label #LoadoutPerks { Anchor: (Left: 520, Top: 56, Width: 252, Height: 18); Style: @ValueText; }
+    Label #LoadoutLevel { Anchor: (Left: 520, Top: 78, Width: 252, Height: 16); Style: @SmallText; }
+  }
+
+  Group #ContentRoot {
+    Anchor: (Left: 224, Top: 132, Width: 792, Height: 548);
+    Background: PatchStyle(Color: #0f141c(0.92));
+
+    Group #ClassesPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 512);
+      Label #ClassesIntro { Anchor: (Left: 0, Top: 0, Width: 756, Height: 22); Text: "Equip any class instantly. Equipping resets dependent styles/runtime."; Style: @SmallText; }
+      Group #ClassRow1 { Anchor: (Left: 0, Top: 34, Width: 756, Height: 96); Background: PatchStyle(Color: @PanelSoft);
+        Label #Class1Name { Anchor: (Left: 14, Top: 10, Width: 320, Height: 22); Style: @ValueText; }
+        Label #Class1Desc { Anchor: (Left: 14, Top: 36, Width: 460, Height: 50); Style: @SmallText; }
+        Label #Class1Active { Anchor: (Left: 500, Top: 10, Width: 110, Height: 22); Text: "EQUIPPED"; Visible: false; Style: @ActiveText; }
+        TextButton #Class1EquipButton { Anchor: (Left: 618, Top: 10, Width: 124, Height: 30); Text: "Equip"; Style: @ButtonStyle; }
+      }
+      Group #ClassRow2 { Anchor: (Left: 0, Top: 138, Width: 756, Height: 96); Background: PatchStyle(Color: @PanelSoft);
+        Label #Class2Name { Anchor: (Left: 14, Top: 10, Width: 320, Height: 22); Style: @ValueText; }
+        Label #Class2Desc { Anchor: (Left: 14, Top: 36, Width: 460, Height: 50); Style: @SmallText; }
+        Label #Class2Active { Anchor: (Left: 500, Top: 10, Width: 110, Height: 22); Text: "EQUIPPED"; Visible: false; Style: @ActiveText; }
+        TextButton #Class2EquipButton { Anchor: (Left: 618, Top: 10, Width: 124, Height: 30); Text: "Equip"; Style: @ButtonStyle; }
+      }
+      Group #ClassRow3 { Anchor: (Left: 0, Top: 242, Width: 756, Height: 96); Background: PatchStyle(Color: @PanelSoft);
+        Label #Class3Name { Anchor: (Left: 14, Top: 10, Width: 320, Height: 22); Style: @ValueText; }
+        Label #Class3Desc { Anchor: (Left: 14, Top: 36, Width: 460, Height: 50); Style: @SmallText; }
+        Label #Class3Active { Anchor: (Left: 500, Top: 10, Width: 110, Height: 22); Text: "EQUIPPED"; Visible: false; Style: @ActiveText; }
+        TextButton #Class3EquipButton { Anchor: (Left: 618, Top: 10, Width: 124, Height: 30); Text: "Equip"; Style: @ButtonStyle; }
+      }
+      Group #ClassRow4 { Anchor: (Left: 0, Top: 346, Width: 756, Height: 96); Background: PatchStyle(Color: @PanelSoft);
+        Label #Class4Name { Anchor: (Left: 14, Top: 10, Width: 320, Height: 22); Style: @ValueText; }
+        Label #Class4Desc { Anchor: (Left: 14, Top: 36, Width: 460, Height: 50); Style: @SmallText; }
+        Label #Class4Active { Anchor: (Left: 500, Top: 10, Width: 110, Height: 22); Text: "EQUIPPED"; Visible: false; Style: @ActiveText; }
+        TextButton #Class4EquipButton { Anchor: (Left: 618, Top: 10, Width: 124, Height: 30); Text: "Equip"; Style: @ButtonStyle; }
+      }
+      TextButton #ClearClassButton { Anchor: (Left: 0, Top: 458, Width: 200, Height: 32); Text: "Unequip Class"; Style: @ButtonStyle; }
+    }
+
+    Group #StylesPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 512);
+      Visible: false;
+      Label #StylesFilterLabel { Anchor: (Left: 0, Top: 0, Width: 756, Height: 20); Style: @SmallText; }
+      TextButton #StyleFilterTerraButton { Anchor: (Left: 0, Top: 26, Width: 182, Height: 30); Text: "Terra"; Style: @ButtonStyle; }
+      TextButton #StyleFilterHydroButton { Anchor: (Left: 190, Top: 26, Width: 182, Height: 30); Text: "Hydro"; Style: @ButtonStyle; }
+      TextButton #StyleFilterAeroButton { Anchor: (Left: 380, Top: 26, Width: 182, Height: 30); Text: "Aero"; Style: @ButtonStyle; }
+      TextButton #StyleFilterCorruptusButton { Anchor: (Left: 570, Top: 26, Width: 186, Height: 30); Text: "Corruptus"; Style: @ButtonStyle; }
+      Group #StyleSlot1 { Anchor: (Left: 0, Top: 72, Width: 372, Height: 34); Label #Style1Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style1Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style1EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot2 { Anchor: (Left: 384, Top: 72, Width: 372, Height: 34); Label #Style2Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style2Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style2EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot3 { Anchor: (Left: 0, Top: 114, Width: 372, Height: 34); Label #Style3Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style3Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style3EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot4 { Anchor: (Left: 384, Top: 114, Width: 372, Height: 34); Label #Style4Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style4Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style4EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot5 { Anchor: (Left: 0, Top: 156, Width: 372, Height: 34); Label #Style5Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style5Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style5EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot6 { Anchor: (Left: 384, Top: 156, Width: 372, Height: 34); Label #Style6Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style6Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style6EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot7 { Anchor: (Left: 0, Top: 198, Width: 372, Height: 34); Label #Style7Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style7Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style7EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot8 { Anchor: (Left: 384, Top: 198, Width: 372, Height: 34); Label #Style8Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style8Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style8EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot9 { Anchor: (Left: 0, Top: 240, Width: 372, Height: 34); Label #Style9Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style9Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style9EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #StyleSlot10 { Anchor: (Left: 384, Top: 240, Width: 372, Height: 34); Label #Style10Name { Anchor: (Left: 8, Top: 0, Width: 210, Height: 32); Style: @BodyText; } Label #Style10Active { Anchor: (Left: 224, Top: 0, Width: 40, Height: 32); Text: "ON"; Visible: false; Style: @ActiveText; } TextButton #Style10EquipButton { Anchor: (Left: 268, Top: 2, Width: 104, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Label #StylesNote { Anchor: (Left: 0, Top: 288, Width: 756, Height: 40); Text: "One active style at a time (3 abilities). Equipping a style auto-equips its class."; Style: @SmallText; }
+      TextButton #ClearStylesButton { Anchor: (Left: 0, Top: 336, Width: 200, Height: 32); Text: "Unequip Style"; Style: @ButtonStyle; }
+    }
+
+    Group #AbilitiesPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 512);
+      Visible: false;
+      Label #AbilitiesStyleLabel { Anchor: (Left: 0, Top: 0, Width: 756, Height: 20); Style: @SmallText; }
+      TextButton #AbilStyle1Button { Anchor: (Left: 0, Top: 26, Width: 146, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle2Button { Anchor: (Left: 152, Top: 26, Width: 146, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle3Button { Anchor: (Left: 304, Top: 26, Width: 146, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle4Button { Anchor: (Left: 456, Top: 26, Width: 146, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle5Button { Anchor: (Left: 608, Top: 26, Width: 148, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle6Button { Anchor: (Left: 0, Top: 58, Width: 146, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle7Button { Anchor: (Left: 152, Top: 58, Width: 146, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle8Button { Anchor: (Left: 304, Top: 58, Width: 146, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle9Button { Anchor: (Left: 456, Top: 58, Width: 146, Height: 28); Style: @ButtonStyle; }
+      TextButton #AbilStyle10Button { Anchor: (Left: 608, Top: 58, Width: 148, Height: 28); Style: @ButtonStyle; }
+      Label #AbilitiesSelectedStyle { Anchor: (Left: 0, Top: 96, Width: 756, Height: 22); Style: @ValueText; }
+      Group #AbilCard1 { Anchor: (Left: 0, Top: 126, Width: 246, Height: 360); Background: PatchStyle(Color: @PanelSoft);
+        Label #Abil1Name { Anchor: (Left: 12, Top: 12, Width: 222, Height: 24); Style: @ValueText; }
+        Label #Abil1Id { Anchor: (Left: 12, Top: 40, Width: 222, Height: 18); Style: @SmallText; }
+        Label #Abil1Desc { Anchor: (Left: 12, Top: 64, Width: 222, Height: 200); Style: @SmallText; }
+        Label #Abil1Meta { Anchor: (Left: 12, Top: 272, Width: 222, Height: 36); Style: @SmallText; }
+        TextButton #Abil1TestButton { Anchor: (Left: 12, Top: 318, Width: 222, Height: 30); Text: "Test Cast"; Style: @ButtonStyle; }
+      }
+      Group #AbilCard2 { Anchor: (Left: 255, Top: 126, Width: 246, Height: 360); Background: PatchStyle(Color: @PanelSoft);
+        Label #Abil2Name { Anchor: (Left: 12, Top: 12, Width: 222, Height: 24); Style: @ValueText; }
+        Label #Abil2Id { Anchor: (Left: 12, Top: 40, Width: 222, Height: 18); Style: @SmallText; }
+        Label #Abil2Desc { Anchor: (Left: 12, Top: 64, Width: 222, Height: 200); Style: @SmallText; }
+        Label #Abil2Meta { Anchor: (Left: 12, Top: 272, Width: 222, Height: 36); Style: @SmallText; }
+        TextButton #Abil2TestButton { Anchor: (Left: 12, Top: 318, Width: 222, Height: 30); Text: "Test Cast"; Style: @ButtonStyle; }
+      }
+      Group #AbilCard3 { Anchor: (Left: 510, Top: 126, Width: 246, Height: 360); Background: PatchStyle(Color: @PanelSoft);
+        Label #Abil3Name { Anchor: (Left: 12, Top: 12, Width: 222, Height: 24); Style: @ValueText; }
+        Label #Abil3Id { Anchor: (Left: 12, Top: 40, Width: 222, Height: 18); Style: @SmallText; }
+        Label #Abil3Desc { Anchor: (Left: 12, Top: 64, Width: 222, Height: 200); Style: @SmallText; }
+        Label #Abil3Meta { Anchor: (Left: 12, Top: 272, Width: 222, Height: 36); Style: @SmallText; }
+        TextButton #Abil3TestButton { Anchor: (Left: 12, Top: 318, Width: 222, Height: 30); Text: "Test Cast"; Style: @ButtonStyle; }
+      }
+      Label #AbilitiesEmpty { Anchor: (Left: 0, Top: 126, Width: 756, Height: 40); Text: "Select a style above to view its 3 abilities."; Visible: false; Style: @BodyText; }
+    }
+
+    Group #PerksPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 512);
+      Visible: false;
+      Label #PerksHeader { Anchor: (Left: 0, Top: 0, Width: 500, Height: 20); Style: @SmallText; }
+      Label #PerksPageLabel { Anchor: (Left: 510, Top: 0, Width: 120, Height: 20); Style: @ActiveText; }
+      TextButton #PerksPrevButton { Anchor: (Left: 632, Top: 0, Width: 56, Height: 24); Text: "Prev"; Style: @ButtonStyle; }
+      TextButton #PerksNextButton { Anchor: (Left: 692, Top: 0, Width: 56, Height: 24); Text: "Next"; Style: @ButtonStyle; }
+      Group #PerkRow1 { Anchor: (Left: 0, Top: 34, Width: 756, Height: 38); Label #Perk1Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk1Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } Label #Perk1Active { Anchor: (Left: 640, Top: 0, Width: 0, Height: 0); Visible: false; Style: @ActiveText; } TextButton #Perk1ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow2 { Anchor: (Left: 0, Top: 76, Width: 756, Height: 38); Label #Perk2Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk2Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk2ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow3 { Anchor: (Left: 0, Top: 118, Width: 756, Height: 38); Label #Perk3Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk3Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk3ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow4 { Anchor: (Left: 0, Top: 160, Width: 756, Height: 38); Label #Perk4Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk4Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk4ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow5 { Anchor: (Left: 0, Top: 202, Width: 756, Height: 38); Label #Perk5Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk5Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk5ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow6 { Anchor: (Left: 0, Top: 244, Width: 756, Height: 38); Label #Perk6Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk6Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk6ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow7 { Anchor: (Left: 0, Top: 286, Width: 756, Height: 38); Label #Perk7Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk7Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk7ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow8 { Anchor: (Left: 0, Top: 328, Width: 756, Height: 38); Label #Perk8Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk8Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk8ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow9 { Anchor: (Left: 0, Top: 370, Width: 756, Height: 38); Label #Perk9Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk9Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk9ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      Group #PerkRow10 { Anchor: (Left: 0, Top: 412, Width: 756, Height: 38); Label #Perk10Name { Anchor: (Left: 8, Top: 0, Width: 200, Height: 36); Style: @ValueText; } Label #Perk10Desc { Anchor: (Left: 214, Top: 0, Width: 420, Height: 36); Style: @SmallText; } TextButton #Perk10ToggleButton { Anchor: (Left: 640, Top: 4, Width: 108, Height: 28); Text: "Equip"; Style: @ButtonStyle; } }
+      TextButton #ClearPerksButton { Anchor: (Left: 0, Top: 462, Width: 200, Height: 32); Text: "Clear All Perks"; Style: @ButtonStyle; }
+      Label #PerksSynergy { Anchor: (Left: 220, Top: 468, Width: 536, Height: 22); Style: @SmallText; }
+    }
+
+    Group #TestPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 512);
+      Visible: false;
+      Label #TestIntro { Anchor: (Left: 0, Top: 0, Width: 756, Height: 40); Text: "Test cockpit: prepare a clean arena, then equip a style/ability and cast."; Style: @BodyText; }
+      TextButton #SpawnMobsButton { Anchor: (Left: 0, Top: 56, Width: 240, Height: 34); Text: "Spawn Test Mobs"; Style: @ButtonStyle; }
+      TextButton #ResetArenaButton { Anchor: (Left: 256, Top: 56, Width: 240, Height: 34); Text: "Reset Arena"; Style: @ButtonStyle; }
+      TextButton #TeleportFlatButton { Anchor: (Left: 512, Top: 56, Width: 244, Height: 34); Text: "Teleport To Clear Lane"; Style: @ButtonStyle; }
+      TextButton #FreeCastButton { Anchor: (Left: 0, Top: 102, Width: 240, Height: 34); Text: "Free-Cast: OFF"; Style: @ButtonStyle; }
+      TextButton #ModeButton { Anchor: (Left: 256, Top: 102, Width: 240, Height: 34); Text: "Game Mode: Creative"; Style: @ButtonStyle; }
+      TextButton #ClearEffectsButton { Anchor: (Left: 512, Top: 102, Width: 244, Height: 34); Text: "Clear My Effects"; Style: @ButtonStyle; }
+      TextButton #ResetPlayerButton { Anchor: (Left: 0, Top: 148, Width: 240, Height: 34); Text: "Reset Player (wipe)"; Style: @ButtonStyle; }
+      TextButton #SaveSnapshotButton { Anchor: (Left: 256, Top: 148, Width: 240, Height: 34); Text: "Save Snapshot"; Style: @ButtonStyle; }
+      TextButton #RestoreLoadoutButton { Anchor: (Left: 512, Top: 148, Width: 244, Height: 34); Text: "Restore My Loadout"; Style: @ButtonStyle; }
+      Label #SnapshotLabel { Anchor: (Left: 0, Top: 200, Width: 756, Height: 40); Style: @SmallText; }
+      Label #TestStatus { Anchor: (Left: 0, Top: 250, Width: 756, Height: 240); Style: @SmallText; }
+    }
+
+    Group #InfoPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 512);
+      Visible: false;
+      Label #InfoTitle { Anchor: (Left: 0, Top: 0, Width: 756, Height: 26); Text: "Mentees of the Mystical"; Style: @TitleText; }
+      Label #InfoBody { Anchor: (Left: 0, Top: 36, Width: 756, Height: 220); Style: @BodyText; }
+      Label #InfoCounts { Anchor: (Left: 0, Top: 264, Width: 756, Height: 60); Style: @ValueText; }
+      Label #InfoLegend { Anchor: (Left: 0, Top: 332, Width: 756, Height: 120); Style: @SmallText; }
+      Label #InfoVersion { Anchor: (Left: 0, Top: 470, Width: 756, Height: 20); Style: @SmallText; }
+    }
+  }
+}

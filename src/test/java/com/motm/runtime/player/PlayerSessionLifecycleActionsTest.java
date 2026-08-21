@@ -119,6 +119,29 @@ class PlayerSessionLifecycleActionsTest {
     }
 
     @Test
+    void readyRunsFirstJoinWizardForClasslessPlayer() {
+        Hooks hooks = new Hooks();
+        hooks.player = player("player-a"); // no class / no styles -> needs the wizard
+        hooks.ensureSpellbookResult = false; // force a spellbook grant
+        PlayerSessionLifecycleActions actions = new PlayerSessionLifecycleActions(hooks, Logger.getLogger("test"));
+
+        actions.onPlayerReady(identity(), null);
+
+        assertEquals(List.of(
+                "put-runtime",
+                "causality:player_ready",
+                "mark-initialized",
+                "ensure-spellbook",
+                "spellbook-grant",
+                "send-message",
+                "send-message",
+                "send-message",
+                "causality:first_join_wizard",
+                "hud-install"
+        ), hooks.events);
+    }
+
+    @Test
     void disconnectClearsAllPlayerSessionState() {
         Hooks hooks = new Hooks();
         hooks.player = player("player-a");
@@ -288,6 +311,11 @@ class PlayerSessionLifecycleActionsTest {
         @Override
         public void queueSpellbookGrant(String playerId) {
             events.add("spellbook-grant");
+        }
+
+        @Override
+        public void sendMessage(Player runtimePlayer, String message) {
+            events.add("send-message");
         }
 
         @Override

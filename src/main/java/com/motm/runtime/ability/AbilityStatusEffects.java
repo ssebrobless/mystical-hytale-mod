@@ -26,19 +26,19 @@ public final class AbilityStatusEffects {
 
         return switch (normalized) {
             case "burn", "self_burn" -> new StatusEffect(
-                    StatusEffect.Type.BURN, durationTicks, 0.03, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.BURN, durationTicks, mag(ability, normalized, 0.03), sourcePlayerId, sourceAbilityId);
             case "dot" -> new StatusEffect(
-                    StatusEffect.Type.DOT, durationTicks, 0.05, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.DOT, durationTicks, mag(ability, normalized, 0.05), sourcePlayerId, sourceAbilityId);
             case "toxic" -> new StatusEffect(
                     StatusEffect.Type.TOXIC_MARK, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "stun", "stun_if_wall" -> new StatusEffect(
                     StatusEffect.Type.STUN, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "slow" -> new StatusEffect(
-                    StatusEffect.Type.SLOW, durationTicks, 0.20, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.SLOW, durationTicks, mag(ability, normalized, 0.20), sourcePlayerId, sourceAbilityId);
             case "slow_stack" -> new StatusEffect(
-                    StatusEffect.Type.SLOW_STACK, durationTicks, 0.10, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.SLOW_STACK, durationTicks, mag(ability, normalized, 0.10), sourcePlayerId, sourceAbilityId);
             case "vulnerability", "curse" -> new StatusEffect(
-                    StatusEffect.Type.VULNERABILITY, durationTicks, 0.25, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.VULNERABILITY, durationTicks, mag(ability, normalized, 0.25), sourcePlayerId, sourceAbilityId);
             case "freeze" -> new StatusEffect(
                     StatusEffect.Type.FREEZE, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "root" -> new StatusEffect(
@@ -46,7 +46,7 @@ public final class AbilityStatusEffects {
             case "blind", "deafen" -> new StatusEffect(
                     StatusEffect.Type.BLIND, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "disoriented", "attack_slow" -> new StatusEffect(
-                    StatusEffect.Type.DISORIENTED, durationTicks, 0.15, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.DISORIENTED, durationTicks, mag(ability, normalized, 0.15), sourcePlayerId, sourceAbilityId);
             case "grounded" -> new StatusEffect(
                     StatusEffect.Type.GROUNDED, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "flying" -> new StatusEffect(
@@ -54,21 +54,25 @@ public final class AbilityStatusEffects {
             case "shocked", "lightning" -> new StatusEffect(
                     StatusEffect.Type.SHOCKED, durationTicks, 0.0, sourcePlayerId, sourceAbilityId);
             case "evasion", "evasion_zone" -> new StatusEffect(
-                    StatusEffect.Type.EVASION, durationTicks, 0.30, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.EVASION, durationTicks, mag(ability, normalized, 0.30), sourcePlayerId, sourceAbilityId);
             case "evasion_buff" -> new StatusEffect(
-                    StatusEffect.Type.EVASION, durationTicks, 0.40, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.EVASION, durationTicks, mag(ability, normalized, 0.40), sourcePlayerId, sourceAbilityId);
             case "speed" -> new StatusEffect(
-                    StatusEffect.Type.SPEED_BUFF, durationTicks, 0.25, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.SPEED_BUFF, durationTicks, mag(ability, normalized, 0.25), sourcePlayerId, sourceAbilityId);
             case "defense_buff" -> new StatusEffect(
-                    StatusEffect.Type.DEFENSE_BUFF, durationTicks, 0.20, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.DEFENSE_BUFF, durationTicks, mag(ability, normalized, 0.20), sourcePlayerId, sourceAbilityId);
+            case "damage_reduction" -> new StatusEffect(
+                    StatusEffect.Type.DEFENSE_BUFF, durationTicks, mag(ability, normalized, 0.35), sourcePlayerId, sourceAbilityId);
             case "attack_buff" -> new StatusEffect(
-                    StatusEffect.Type.ATTACK_BUFF, durationTicks, 0.20, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.ATTACK_BUFF, durationTicks, mag(ability, normalized, 0.20), sourcePlayerId, sourceAbilityId);
+            case "sand_empower" -> new StatusEffect(
+                    StatusEffect.Type.ATTACK_BUFF, durationTicks, mag(ability, normalized, 0.15), sourcePlayerId, sourceAbilityId);
             case "damage_buff" -> new StatusEffect(
-                    StatusEffect.Type.DAMAGE_BUFF, durationTicks, 0.35, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.DAMAGE_BUFF, durationTicks, mag(ability, normalized, 0.35), sourcePlayerId, sourceAbilityId);
             case "stealth" -> new StatusEffect(
-                    StatusEffect.Type.STEALTH, durationTicks, 0.40, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.STEALTH, durationTicks, mag(ability, normalized, 0.40), sourcePlayerId, sourceAbilityId);
             case "lifesteal" -> new StatusEffect(
-                    StatusEffect.Type.LIFESTEAL, durationTicks, 0.20, sourcePlayerId, sourceAbilityId);
+                    StatusEffect.Type.LIFESTEAL, durationTicks, mag(ability, normalized, 0.20), sourcePlayerId, sourceAbilityId);
             default -> null;
         };
     }
@@ -98,5 +102,9 @@ public final class AbilityStatusEffects {
 
     private static String lower(String value) {
         return value == null ? "" : value.toLowerCase(Locale.ROOT);
+    }
+
+    private static double mag(AbilityData ability, String token, double fallback) {
+        return ability != null ? ability.getEffectMagnitude(token, fallback) : fallback;
     }
 }

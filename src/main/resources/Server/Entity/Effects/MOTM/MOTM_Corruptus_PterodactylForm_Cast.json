@@ -1,0 +1,14 @@
+{
+  "Duration": 0.5,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#4B0082",
+    "Particles": [
+      { "SystemId": "Wind_Spirit_Tail" },
+      { "SystemId": "VoidImpact" }
+    ],
+    "WorldSoundEventId": "SFX_Tornado",
+    "ModelVFXId": "Intangible_Dark"
+  }
+}

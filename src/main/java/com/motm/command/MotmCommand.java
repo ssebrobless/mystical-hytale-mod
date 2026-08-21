@@ -18,6 +18,7 @@ import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.motm.MenteesMod;
+import com.motm.manager.ElementalReactionManager;
 import com.motm.manager.LevelingManager;
 import com.motm.manager.PerkManager;
 import com.motm.manager.SpellbookManager;
@@ -773,6 +774,17 @@ public class MotmCommand {
         return mod.queueDevBookGrant(player.getPlayerId());
     }
 
+    String handleDevCreative(PlayerData player, Player runtimePlayer) {
+        Player rp = runtimePlayer != null ? runtimePlayer : mod.getRuntimePlayer(player.getPlayerId());
+        if (rp == null) {
+            return "[MOTM] Join a world and run this in-game to open the Creative Spellbook.";
+        }
+        boolean opened = mod.openCreativeSpellbook(rp);
+        return opened
+                ? "[MOTM] Opening Creative Spellbook."
+                : "[MOTM] Could not open Creative Spellbook (dev tools required).";
+    }
+
     String handleDevObserve(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 3) {
             return "[MOTM] Usage: /motm dev observe <start|stop|status|scenario|marker|snapshot|spellbook> ...";
@@ -1054,12 +1066,71 @@ public class MotmCommand {
                 }
                 yield setRuntimePlayerHorizontalVelocity(player, resolvedPlayer, x, z);
             }
+            case "reaction", "react" -> {
+                if (args.length < 5) {
+                    yield "[MOTM] Usage: /motm dev passive reaction <elementA> <elementB>";
+                }
+                yield applyDevReaction(player, args[3], args[4]);
+            }
+            case "dot", "burn" -> {
+                if (mod.getGameplayPlaybackManager() == null) {
+                    yield "[MOTM] Gameplay playback manager unavailable.";
+                }
+                yield mod.getGameplayPlaybackManager().runDevDotProof(player, resolvedPlayer);
+            }
             default -> getDevPassiveUsage();
         };
     }
 
+    // Dev proof for the 6 elemental reactions: apply two different-element marks to a synthetic
+    // target id and report the ReactionResult. Reactions match on the element string, so any
+    // non-exception synergy mark type per element is sufficient; status effects are tracked
+    // harmlessly under the synthetic id.
+    private String applyDevReaction(PlayerData player, String elementA, String elementB) {
+        if (mod.getElementalReactionManager() == null) {
+            return "[MOTM] Dev reaction failed: ElementalReactionManager unavailable.";
+        }
+        com.motm.model.ElementalMark.MarkType typeA = canonicalMarkType(elementA);
+        com.motm.model.ElementalMark.MarkType typeB = canonicalMarkType(elementB);
+        if (typeA == null || typeB == null) {
+            return "[MOTM] Dev reaction failed: element must be one of aero|hydro|terra|corruptus.";
+        }
+        String a = elementA.toLowerCase(java.util.Locale.ROOT);
+        String b = elementB.toLowerCase(java.util.Locale.ROOT);
+        String pid = player.getPlayerId();
+        String targetId = "dev-reaction-proof-" + System.currentTimeMillis();
+        ElementalReactionManager mgr = mod.getElementalReactionManager();
+        mgr.clearMarks(targetId);
+        mgr.applyMark(targetId, new com.motm.model.ElementalMark(typeA, pid, "dev-reaction-" + a, a));
+        ElementalReactionManager.ReactionResult reaction =
+                mgr.applyMark(targetId, new com.motm.model.ElementalMark(typeB, pid, "dev-reaction-" + b, b));
+        mgr.clearMarks(targetId);
+        if (reaction == null) {
+            return "[MOTM] Dev reaction: " + a + "+" + b + " produced NO reaction (no matching pair).";
+        }
+        String result = "[MOTM] Dev reaction proven: " + reaction.reactionName()
+                + " elements=" + a + "+" + b
+                + " bonusDamage=" + String.format(java.util.Locale.ROOT, "%.0f", reaction.bonusDamagePercent()) + "%"
+                + " effects=" + String.join(",", reaction.appliedEffects());
+        LOG.info(result);
+        return result;
+    }
+
+    private com.motm.model.ElementalMark.MarkType canonicalMarkType(String element) {
+        if (element == null) {
+            return null;
+        }
+        return switch (element.toLowerCase(java.util.Locale.ROOT)) {
+            case "aero" -> com.motm.model.ElementalMark.MarkType.SHOCKED;
+            case "hydro" -> com.motm.model.ElementalMark.MarkType.WET;
+            case "terra" -> com.motm.model.ElementalMark.MarkType.COMBUSTIBLE;
+            case "corruptus" -> com.motm.model.ElementalMark.MarkType.CURSED;
+            default -> null;
+        };
+    }
+
     private String getDevPassiveUsage() {
-        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|combat|low-health|corruptus-stack|mob-kill|knockback|mining|mole-man|movement-perks|projectile-speed|rainy-day|terror|eco-friendly|crafting|velocity>\n"
+        return "[MOTM] Usage: /motm dev passive <status|health|incoming-damage|outgoing-damage|combat|low-health|corruptus-stack|mob-kill|knockback|mining|mole-man|movement-perks|projectile-speed|rainy-day|terror|eco-friendly|crafting|velocity|reaction|dot>\n"
                 + "Examples:\n"
                 + "  /motm dev passive status\n"
                 + "  /motm dev passive health 50\n"
@@ -1078,7 +1149,9 @@ public class MotmCommand {
                 + "  /motm dev passive terror\n"
                 + "  /motm dev passive eco-friendly\n"
                 + "  /motm dev passive crafting\n"
-                + "  /motm dev passive velocity 1.0 0.0";
+                + "  /motm dev passive velocity 1.0 0.0\n"
+                + "  /motm dev passive reaction aero hydro\n"
+                + "  /motm dev passive dot";
     }
 
     private String buildDevPassiveStatus(PlayerData player, Player runtimePlayer) {
@@ -1200,6 +1273,13 @@ public class MotmCommand {
         EntityStatMap statMap = resolveRuntimeStatMap(player, runtimePlayer);
         if (statMap == null) {
             return "[MOTM] Dev passive outgoing-damage failed: EntityStatMap unavailable.";
+        }
+        // Drop HP in-call so a Hydro spell-vamp heal (ability damage -> 3% heal via onDamageDealt)
+        // registers past the test world's fast natural regen; mirrors the low-health/rainy-day
+        // atomic proofs. Dev-only proof path.
+        EntityStatValue preHealth = statMap.get(DefaultEntityStatTypes.getHealth());
+        if (preHealth != null && preHealth.getMax() > 0.0f && preHealth.get() > preHealth.getMax() * 0.85f) {
+            statMap.setStatValue(DefaultEntityStatTypes.getHealth(), preHealth.getMax() * 0.85f);
         }
         EntityStatValue healthBefore = statMap.get(DefaultEntityStatTypes.getHealth());
         float before = healthBefore != null ? healthBefore.get() : -1.0f;
@@ -2056,24 +2136,6 @@ public class MotmCommand {
 
     private String buildAbilityVisualSummary(String classId, String styleId, AbilityData ability) {
         return AbilityPresentation.buildVisualSummary(classId, styleId, ability);
-    }
-
-    private String buildAbilityVisualDetail(String classId, String styleId, AbilityData ability) {
-        return AbilityPresentation.buildVisualDetail(classId, styleId, ability);
-    }
-
-    private String formatResourceCost(StyleData style, AbilityData ability) {
-        if (ability.getResourceCost() <= 0 || style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
-            return "none";
-        }
-        return ability.getResourceCost() + " " + mod.getResourceManager().getDisplayName(style.getResourceType());
-    }
-
-    private String displayStyleResource(StyleData style) {
-        if (style == null || style.getResourceType() == null || style.getResourceType().isBlank()) {
-            return "None";
-        }
-        return mod.getResourceManager().getDisplayName(style.getResourceType());
     }
 
     private String compactText(String text, int maxLength) {

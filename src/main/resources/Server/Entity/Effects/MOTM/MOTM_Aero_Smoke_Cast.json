@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#E6E6FA",
+    "EntityBottomTint": "#9370DB",
+    "Particles": [
+      { "SystemId": "Eye_Void_Smoke_Teal" }
+    ],
+    "ModelVFXId": "Intangible_Dark",
+    "WorldSoundEventId": "SFX_Portal_Void"
+  }
+}

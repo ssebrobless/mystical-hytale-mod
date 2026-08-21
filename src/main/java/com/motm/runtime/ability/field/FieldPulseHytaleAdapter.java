@@ -29,6 +29,7 @@ public final class FieldPulseHytaleAdapter {
         double totalDamage = 0.0;
         double pulseDamage = support.pulseDamage(player, field.ability());
         String impactEffectId = support.resolveImpactEffectId(field.classId(), field.styleId(), field.ability());
+        int affected = 0;
 
         for (Ref<EntityStore> targetRef : targets) {
             if (targetRef == null || !targetRef.isValid()) {
@@ -42,6 +43,7 @@ public final class FieldPulseHytaleAdapter {
             if (entityId == null || entityId.equals(player.getPlayerId())) {
                 continue;
             }
+            affected++;
 
             if (pulseDamage > 0.0) {
                 double resolvedDamage = pulseDamage * support.outgoingDamageMultiplier(player);
@@ -71,6 +73,15 @@ public final class FieldPulseHytaleAdapter {
                     player.getStatistics().getTotalDamageDealt() + totalDamage);
             support.applyLifesteal(field.ownerRef(), player.getPlayerId(), totalDamage);
         }
+
+        support.logInfo("[MOTM] field_pulse: abilityId=" + lower(field.ability().getId())
+                + " affected=" + affected
+                + " candidates=" + targets.size()
+                + " damage=" + String.format(Locale.ROOT, "%.1f", totalDamage)
+                + " radius=" + String.format(Locale.ROOT, "%.1f",
+                        field.ability().getRadius() > 0
+                                ? field.ability().getRadius()
+                                : field.ability().getRange()));
     }
 
     private void applyTargetEffects(ActiveField field,

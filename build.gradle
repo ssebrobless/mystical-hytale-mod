@@ -96,6 +96,15 @@ test {
     useJUnitPlatform()
 }
 
+// Gated gate-5 diagnostic: enumerate deprecation/[removal] call sites.
+// Usage: ./gradlew compileJava -Pmotm_lint --rerun-tasks
+tasks.withType(JavaCompile).configureEach {
+    if (project.hasProperty('motm_lint')) {
+        options.deprecation = true
+        options.compilerArgs += ['-Xlint:deprecation,removal']
+    }
+}
+
 tasks.register('verifyHytaleInstall') {
     doLast {
         if (hytaleRoot == null) {

@@ -34,6 +34,6 @@ public class MotmServerTickSystem extends TickingSystem<EntityStore> {
             lastProcessedTicks.put(store, worldTick);
         }
 
-        mod.onServerTick(store);
+        mod.onServerTick(store, tick);
     }
 }

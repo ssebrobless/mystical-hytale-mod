@@ -1,0 +1,13 @@
+{
+  "Duration": 0.6,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#ffb347",
+    "EntityBottomTint": "#6b1000",
+    "Particles": [
+      {
+        "SystemId": "Fire_AoE_Grow"
+      }
+    ]
+  }
+}

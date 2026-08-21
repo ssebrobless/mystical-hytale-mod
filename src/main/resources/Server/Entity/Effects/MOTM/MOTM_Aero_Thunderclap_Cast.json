@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FFD700",
+    "EntityBottomTint": "#9370DB",
+    "Particles": [
+      { "SystemId": "Lightning" },
+      { "SystemId": "Beam_Lightning2" }
+    ],
+    "WorldSoundEventId": "SFX_Tornado"
+  }
+}

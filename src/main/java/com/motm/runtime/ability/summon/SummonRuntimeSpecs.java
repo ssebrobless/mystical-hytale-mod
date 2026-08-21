@@ -144,7 +144,7 @@ public final class SummonRuntimeSpecs {
             case "skeleton_minion", "shadow_clone" -> "Shadow_Knight";
             case "void_spawn", "crawler_void" -> "Crawler_Void";
             case "scarak_egg" -> "Scarak_Fighter";
-            case "locust_queen" -> "Scarak_Broodmother";
+            case "locust_queen" -> "Scarak_Fighter";
             default -> null;
         };
     }
@@ -160,7 +160,7 @@ public final class SummonRuntimeSpecs {
             case "skeleton_minion", "shadow_clone" -> "Shadow_Knight";
             case "void_spawn", "crawler_void" -> "Crawler_Void";
             case "scarak_egg" -> "Scarak_Fighter";
-            case "locust_queen" -> "Scarak_Broodmother";
+            case "locust_queen" -> "Scarak_Fighter";
             default -> null;
         };
     }

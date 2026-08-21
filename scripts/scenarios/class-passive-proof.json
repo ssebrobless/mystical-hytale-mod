@@ -1,0 +1,56 @@
+{
+  "id": "class-passive-proof",
+  "description": "Command-driven proof sweep for the 4 class passives: Terra Immovable (mining +50%, knockback -20%, low-HP regen), Hydro Tidal Flow (aqua barrier, spell vamp, oxygen), Aero Wind Walker (signature energy +80%, movement), Corruptus Soul Harvest (stacks 1..5, resurrection+lockout). Perks are cleared so the class passive is isolated.",
+  "styleId": "",
+  "abilities": [],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker class-passive-start",
+    "motm dev effects clear",
+    "motm dev perks clear",
+    "motm dev styles clear",
+    "motm dev freecast on",
+    "motm dev test mobs surround",
+    "motm dev test mobs count",
+    "motm dev observe snapshot class-passive-setup"
+  ],
+  "commands": [
+    "motm dev class set terra",
+    "motm dev passive status",
+    "motm dev passive mining Tool_Pickaxe_Iron",
+    "motm dev passive knockback",
+    "motm dev passive health 24",
+    "motm dev observe snapshot terra-passive",
+    "motm dev class set hydro",
+    "motm dev passive status",
+    "motm dev passive outgoing-damage 100 ability",
+    "motm dev observe snapshot hydro-passive",
+    "motm dev class set aero",
+    "motm dev passive status",
+    "motm dev passive velocity 1.0 0.0",
+    "motm dev observe snapshot aero-passive",
+    "motm dev class set corruptus",
+    "motm dev passive corruptus-stack",
+    "motm dev passive corruptus-stack",
+    "motm dev passive corruptus-stack",
+    "motm dev passive corruptus-stack",
+    "motm dev passive corruptus-stack",
+    "motm dev passive incoming-damage 400 physical",
+    "motm dev observe snapshot corruptus-passive"
+  ],
+  "cleanupCommands": [
+    "motm dev passive health 9999",
+    "motm dev perks clear",
+    "motm dev effects clear",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev observe marker class-passive-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": [
+    "control:dev_command_executed",
+    "causality:server_tick_heartbeat",
+    "causality:runtime_task_executed",
+    "server-truth:snapshot"
+  ]
+}

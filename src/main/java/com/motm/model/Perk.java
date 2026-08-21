@@ -17,9 +17,6 @@ public class Perk {
     private List<String> synergyTags;
     @SerializedName("synergy_bonuses")
     private List<SynergyBonus> synergyBonuses;
-    @SerializedName("enhanced_by")
-    private List<String> enhancedBy;
-    private List<String> enhances;
 
     public String getId() { return id; }
     public String getName() { return name; }
@@ -28,8 +25,6 @@ public class Perk {
     public List<Effect> getEffects() { return effects; }
     public List<String> getSynergyTags() { return synergyTags; }
     public List<SynergyBonus> getSynergyBonuses() { return synergyBonuses; }
-    public List<String> getEnhancedBy() { return enhancedBy; }
-    public List<String> getEnhances() { return enhances; }
 
     public static class Effect {
         private String type;

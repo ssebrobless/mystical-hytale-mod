@@ -1,0 +1,14 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#8B0000",
+    "Particles": [
+      { "SystemId": "Wind_Spirit_Hand" },
+      { "SystemId": "Status_Poisoned" },
+      { "SystemId": "Block_Sprint_Sand" }
+    ],
+    "WorldSoundEventId": "SFX_Tornado"
+  }
+}

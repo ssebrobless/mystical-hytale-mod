@@ -1,0 +1,12 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#228B22",
+    "EntityBottomTint": "#8B4513",
+    "Particles": [
+      { "SystemId": "Impact_Poison" },
+      { "SystemId": "Status_Poisoned" }
+    ]
+  }
+}

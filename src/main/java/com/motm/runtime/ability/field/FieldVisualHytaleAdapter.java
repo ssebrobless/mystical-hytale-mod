@@ -50,6 +50,19 @@ public final class FieldVisualHytaleAdapter {
             return FieldVisualRuntime.none();
         }
 
+        // rain's wave fields (piercing_rain ground_zone, rainbow support_zone) render no visual
+        // proxy ring: their MOTM_Hydro_Wave_Field loop effect (Water_Bubble_Stream) live-crashed
+        // the client renderer with a NullReferenceException ~0.2s after cast, reproduced across
+        // 3 runs (game 0.5.9, 2026-08-18) and independent of proxy count (fails at 5 and 9) and
+        // effect-add volume (fails at 36 and 164; saltwater tide_pool passes at 52). Suppressing
+        // only the client visual proxy stops the crash - the gameplay field (damage/heal/pulse)
+        // is unaffected, verified live. This matches the majority of fields (lava_pool, smog,
+        // aftershock, snowstorm) which already render no field-ring particle.
+        String abilityId = ability == null ? "" : String.valueOf(ability.getId()).toLowerCase(Locale.ROOT);
+        if ("piercing_rain".equals(abilityId) || "rainbow".equals(abilityId)) {
+            return FieldVisualRuntime.none();
+        }
+
         World world = runtimePlayer.getWorld();
         if (world == null) {
             return FieldVisualRuntime.none();

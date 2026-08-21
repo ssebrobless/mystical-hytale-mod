@@ -26,6 +26,7 @@ final class MotmDevCommandRouter {
         return switch (args[1].toLowerCase()) {
             case "help" -> command.getDevHelpMessage();
             case "book" -> command.handleDevBook(player, runtimePlayer);
+            case "creative", "sandbox" -> command.handleDevCreative(player, runtimePlayer);
             case "observe", "observability" -> command.handleDevObserve(player, args, runtimePlayer);
             case "audit" -> command.handleDevAudit(player, args);
             case "test" -> command.handleDevTest(player, args, runtimePlayer);

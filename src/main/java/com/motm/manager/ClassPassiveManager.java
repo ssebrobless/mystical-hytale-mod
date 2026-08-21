@@ -52,7 +52,6 @@ public class ClassPassiveManager {
     private static final int TICKS_PER_SECOND = 20;
     private static final int TERRA_REGEN_INTERVAL_TICKS = TICKS_PER_SECOND;
     private static final double MOVEMENT_EPSILON = 0.08;
-    private static final String TERRA_CAVE_VISION_LIGHT_ID = "motm_terra_cave_vision";
     private static final String HYDRO_AQUA_BARRIER_SOURCE_ID = "hydro_passive_aqua_barrier";
     private static final String HYDRO_AQUA_BARRIER_EFFECT_ID = "MOTM_Hydro_Aqua_Barrier";
     private static final String HYDRO_OXYGEN_MODIFIER_ID = "motm_hydro_passive_oxygen";
@@ -992,18 +991,6 @@ public class ClassPassiveManager {
                 : null;
         return playerWorld != null && currentWorld != null
                 && (playerWorld == currentWorld || playerWorld.equals(currentWorld));
-    }
-
-    private String resolvePrimaryResourceType(String classId) {
-        if (classId == null) {
-            return null;
-        }
-
-        return switch (classId.toLowerCase(Locale.ROOT)) {
-            case "hydro" -> "water";
-            case "corruptus" -> "souls";
-            default -> null;
-        };
     }
 
     private Vector3d getPosition(Ref<EntityStore> entityRef, Store<EntityStore> store) {

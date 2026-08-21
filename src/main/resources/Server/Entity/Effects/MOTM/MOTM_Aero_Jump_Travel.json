@@ -1,0 +1,12 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#E6E6FA",
+    "EntityBottomTint": "#9370DB",
+    "Particles": [
+      { "SystemId": "Wind_Spirit_Tail" },
+      { "SystemId": "Wind" }
+    ]
+  }
+}

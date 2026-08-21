@@ -1,0 +1,37 @@
+{
+  "id": "aero-dash-afterburner",
+  "description": "Dash calibration cross-check: cast Afterburner (cast_type dash, dash_distance 14) and confirm the live player displaces close to the authored 14 blocks (dash_impulse + before/after dev position), validating the single dash impulse calibration across distances.",
+  "styleId": "jet",
+  "abilities": ["afterburner"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker dash-after-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set aero",
+    "motm style jet",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev relocate flatlands",
+    "motm dev test mobs clear",
+    "motm dev test mobs line",
+    "motm dev position",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot dash-settle-1",
+    "motm dev observe snapshot dash-settle-2",
+    "motm dev position",
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker dash-after-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "server-truth:snapshot"],
+  "notes": [
+    "Afterburner is a dash (dash_distance 14) with an 8s ember trail; test mobs line gives an aim target.",
+    "Cross-checks the DASH_IMPULSE_CALIBRATION constant against a different authored distance: before/after dev position delta should land near 14 blocks.",
+    "Relocates to a flatlands platform (open-air, 61x61) first so generated canyon structures do not block the dash and mask horizontal displacement."
+  ]
+}

@@ -176,6 +176,8 @@ public final class ChannelHytaleAdapter {
             return true;
         }
 
+        support.renderTetherLink(ownerPosition, targetPosition, player, lineControl.ability(), store);
+
         if (lineControl.ability().getPullForce() > 0.0) {
             support.applyLineControlPull(lineControl.targetRef(), store, lineControl.ownerRef(), lineControl.ability());
         }
@@ -218,6 +220,8 @@ public final class ChannelHytaleAdapter {
             return true;
         }
 
+        support.renderTetherLink(ownerPosition, targetPosition, player, channel.ability(), store);
+
         String targetEntityId = support.resolveEntityId(channel.targetRef(), store);
         double damage = support.resolveDamageAmount(player, channel.ability()) * 0.55 * support.outgoingDamageMultiplier(player);
         if (targetEntityId != null) {
@@ -230,12 +234,14 @@ public final class ChannelHytaleAdapter {
             DamageSystems.executeDamage(channel.targetRef(), store, pulseDamage);
             support.applyPostDamageClassPassives(player, channel.ownerRef(), targetEntityId, damage, true);
             player.getStatistics().setTotalDamageDealt(player.getStatistics().getTotalDamageDealt() + damage);
-            support.applyLifesteal(channel.ownerRef(), player.getPlayerId(), damage);
             if ("life_drain".equals(lower(channel.ability().getId()))) {
-                double siphoned = support.healEntityFlat(channel.ownerRef(), store, damage * 0.45);
+                // Life Drain siphons a single 50% of actual damage dealt (no extra lifesteal stack on the drain).
+                double siphoned = support.healEntityFlat(channel.ownerRef(), store, damage * 0.50);
                 if (siphoned > 0.0) {
                     player.getStatistics().setTotalHealingDone(player.getStatistics().getTotalHealingDone() + siphoned);
                 }
+            } else {
+                support.applyLifesteal(channel.ownerRef(), player.getPlayerId(), damage);
             }
         }
 
@@ -353,6 +359,12 @@ public final class ChannelHytaleAdapter {
                                  AbilityData ability);
 
         String humanize(String value);
+
+        void renderTetherLink(Vector3d from,
+                              Vector3d to,
+                              PlayerData player,
+                              AbilityData ability,
+                              Store<EntityStore> store);
     }
 
     public record Result(boolean started, String summary) {

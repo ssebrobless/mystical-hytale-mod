@@ -24,7 +24,8 @@ public class SpellbookManager {
         STYLE,
         ABILITIES,
         PERKS,
-        PROGRESSION
+        PROGRESSION,
+        INFO
     }
 
     private final DataLoader dataLoader;
@@ -53,6 +54,7 @@ public class SpellbookManager {
             case ABILITIES -> renderAbilities(player);
             case PERKS -> renderPerks(player);
             case PROGRESSION -> renderProgression(player);
+            case INFO -> renderInfo(player);
         };
     }
 
@@ -69,12 +71,13 @@ public class SpellbookManager {
             case "abilities", "ability", "spells", "combat" -> Section.ABILITIES;
             case "perks", "perk", "web" -> Section.PERKS;
             case "stats", "stat", "progression", "progress", "level", "scaling" -> Section.PROGRESSION;
+            case "info", "about", "mod", "help" -> Section.INFO;
             default -> null;
         };
     }
 
     public String getSectionList() {
-        return "overview, class, style, abilities, perks, stats";
+        return "overview, class, style, abilities, perks, stats, info";
     }
 
     private String renderOverview(PlayerData player) {
@@ -247,6 +250,30 @@ public class SpellbookManager {
         sb.append("Next Step: ").append(getNextStep(player)).append("\n");
         sb.append("Mob Scaling: enemies use level title bands and internal stat presets; mobs never receive perks.\n");
         sb.append("Spend: /motm stats spend <vigor|tenacity|endurance|agility|luck> [points]");
+        return sb.toString();
+    }
+
+    private String renderInfo(PlayerData player) {
+        int classes = dataLoader.getAllClasses().size();
+        int perks = dataLoader.getSharedPerkPool().size();
+        int styles = 0;
+        int abilities = 0;
+        for (var c : dataLoader.getAllClasses()) {
+            var cs = dataLoader.getStylesForClass(c.getId());
+            styles += cs.size();
+            for (var s : cs) {
+                abilities += s.getAbilities() != null ? s.getAbilities().size() : 0;
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("[MOTM Spellbook] === Mod Info ===\n");
+        sb.append("Mentees of the Mystical - a pure RPG overlay on Hytale's native systems.\n");
+        sb.append("Content: ").append(classes).append(" classes, ").append(styles).append(" styles, ")
+                .append(abilities).append(" abilities, ").append(perks).append(" shared perks.\n");
+        sb.append("Upgrades: pick 1 class, then 1 active style (3 abilities). Perk choices unlock every 10 "
+                + "levels through level 100; spend stat points as you level.\n");
+        sb.append("HUD: elemental resource bars, XP + milestone, active ability slots (1-3), passive tracker, "
+                + "and buff/debuff status icons.");
         return sb.toString();
     }
 

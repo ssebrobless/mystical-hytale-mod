@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#8B4513",
+    "EntityBottomTint": "#CD853F",
+    "Particles": [
+      { "SystemId": "Earth_Brazier_Glow" },
+      { "SystemId": "Block_Break_Stone" }
+    ],
+    "WorldSoundEventId": "SFX_Golem_Earth_Stomp"
+  }
+}

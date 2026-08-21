@@ -217,7 +217,20 @@ function Assert-NoNewCriticalLogLines {
     }
 
     $criticalPattern = "SEVERE|WARN\|\|ERROR|NoClassDefFoundError|NullReferenceException|Index was outside|sx is a non-valid number|Section y must|Entity has moved into a chunk that isn't currently loaded|world crashed|Hytale has crashed|Reloading nonexistent role|OutOfMemoryError|StackOverflowError"
+    # Known-benign vanilla engine noise that is not a MOTM defect. Keep this list
+    # narrow and evidence-backed so real crashes still trip the gate.
+    #   - "Missing replacement interactions for interaction ... Melee_Selector ... item null":
+    #     vanilla NPC combat logs a SEVERE when a weaponless NPC (e.g. a harness target
+    #     dummy spawned by /motm dev test mobs) evaluates its melee selector. Ratelimited,
+    #     engine-tagged [Hytale], not [MOTM]. Verified benign 2026-08-16 on game 0.5.9.
+    #   - "[ChunkStore] Took too long to (pre|post)-load process chunk ... > TICK_STEP, Has GC Run":
+    #     vanilla chunk-preload timing hiccup during a GC pass. Engine-tagged [ChunkStore], not
+    #     [MOTM]; routinely tripped when a movement ability (leap/dash/divebomb) displaces the
+    #     player into a not-yet-resident chunk. A perf/GC warning, not a mod fault. Verified
+    #     benign 2026-08-18 on game 0.5.9 (aero jump: all abilities cast, zero MOTM SEVERE).
+    $benignPattern = "Missing replacement interactions for interaction|\[ChunkStore\] Took too long to (pre|post)-load process chunk"
     $criticalLines = New-Object System.Collections.Generic.List[string]
+    $benignLines = New-Object System.Collections.Generic.List[string]
     foreach ($entry in $script:LiveLogOffsets) {
         $tail = Read-FileTailFromOffset -Path ([string]$entry.path) -Offset ([Int64]$entry.offset)
         if ([string]::IsNullOrWhiteSpace($tail)) {
@@ -225,9 +238,12 @@ function Assert-NoNewCriticalLogLines {
         }
         $tail -split "`r?`n" |
             Where-Object { $_ -match $criticalPattern } |
-            Select-Object -First 12 |
             ForEach-Object {
-                $criticalLines.Add("[$($entry.kind)] $($_)") | Out-Null
+                if ($_ -match $benignPattern) {
+                    $benignLines.Add("[$($entry.kind)] $($_)") | Out-Null
+                } elseif ($criticalLines.Count -lt 12) {
+                    $criticalLines.Add("[$($entry.kind)] $($_)") | Out-Null
+                }
             }
     }
 
@@ -238,9 +254,12 @@ function Assert-NoNewCriticalLogLines {
         throw "Observed new critical Hytale log lines after run start. See $scanPath"
     }
 
-    @("# Critical Log Scan", "", "PASS", "", "No critical client/server log lines were observed after run start.") |
-        Set-Content -LiteralPath $scanPath -Encoding UTF8
-    Add-Line("- PASS: no new critical client/server log lines after run start.")
+    $passLines = @("# Critical Log Scan", "", "PASS", "", "No critical client/server log lines were observed after run start.")
+    if ($benignLines.Count -gt 0) {
+        $passLines += @("", "Allowlisted benign vanilla lines (not MOTM defects):", "", ($benignLines -join "`n"))
+    }
+    $passLines | Set-Content -LiteralPath $scanPath -Encoding UTF8
+    Add-Line("- PASS: no new critical client/server log lines after run start (benign allowlisted: $($benignLines.Count)).")
 }
 
 function Resolve-JavapExecutable {

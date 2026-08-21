@@ -1,0 +1,35 @@
+{
+  "id": "leveling-proof",
+  "description": "End-to-end proof for the leveling loop and status-effect DoT. Sets level 9 with XP just below the level-10 threshold, then a mob-kill grants XP that crosses into level 10 - a milestone level - firing the runtime progression listener (level-up message + RecalculateStats via refreshPlayerProgressionBonusesNow + milestone/perk-selection message). Then spawns test mobs and applies a BURN status effect so MotmMobRuntimeSystem's per-frame DoT application (executeDamage) can be observed.",
+  "styleId": "",
+  "abilities": [],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker leveling-proof-setup",
+    "motm dev effects clear",
+    "motm dev test mobs clear",
+    "motm dev class set terra"
+  ],
+  "commands": [
+    "motm dev level set 9",
+    "motm dev xp set 999999",
+    "motm dev passive mob-kill",
+    "motm dev observe snapshot leveling-levelup",
+    "motm dev test mobs surround",
+    "motm dev passive dot",
+    "motm dev observe snapshot leveling-dot"
+  ],
+  "cleanupCommands": [
+    "motm dev effects clear",
+    "motm dev test mobs clear",
+    "motm dev passive health 9999",
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev observe marker leveling-proof-end"
+  ],
+  "expectedEvidence": [
+    "control:dev_command_executed",
+    "causality:server_tick_heartbeat",
+    "causality:runtime_task_executed",
+    "server-truth:snapshot"
+  ]
+}

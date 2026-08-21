@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#ffb347",
+    "EntityBottomTint": "#c0390a",
+    "Particles": [
+      {
+        "SystemId": "Fire_Charge1"
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#b6f13a",
+    "EntityBottomTint": "#4b7a12",
+    "Particles": [
+      {
+        "SystemId": "Impact_Poison"
+      }
+    ]
+  }
+}

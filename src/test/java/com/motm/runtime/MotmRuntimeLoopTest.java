@@ -19,7 +19,7 @@ class MotmRuntimeLoopTest {
         hooks.dotDamageByEntity = Map.of("mob-a", 0.25);
         MotmRuntimeLoop loop = new MotmRuntimeLoop(2, 1000L, hooks);
 
-        loop.tick(null);
+        loop.tick(null, 0L);
 
         assertEquals(List.of(
                 "status-effects",
@@ -56,9 +56,9 @@ class MotmRuntimeLoopTest {
         hooks.nowMs = 1000L;
         MotmRuntimeLoop loop = new MotmRuntimeLoop(2, 1000L, hooks);
 
-        loop.tick(null);
+        loop.tick(null, 0L);
         hooks.nowMs = 1500L;
-        loop.tick(null);
+        loop.tick(null, 1L);
 
         assertEquals(1, hooks.heartbeats.size());
         assertEquals("server_tick_heartbeat", hooks.heartbeats.get(0).type());

@@ -55,7 +55,10 @@ public final class HytaleAssetResolver {
     private static final String FX_WATER_TRAVEL = "Server/Particles/Block/Water/Spawners/Water_Bubble_Stream_Alpha.particlespawner";
     private static final String FX_WATER_IMPACT = "Server/Particles/Block/Water/Spawners/Water_Small_Burst.particlespawner";
     private static final String FX_ICE_IMPACT = "Server/Particles/Combat/Impact/Misc/Ice/Spawner/Impact_Ice_Shockwave.particlespawner";
-    private static final String FX_HEAL_LOOP = "Server/Particles/Deployables/Healing_Totem/Totem_Heal_Sparks_Constant.particlespawner";
+    // Heal loop/impact/field visuals use the SmokeFlat variant (FX_HEAL_SMOKE). The
+    // Totem_Heal_Sparks_Constant spawner (Erosion render mode + a degenerate zero-axis
+    // Attractor) NPEs the client renderer when emitted outside a totem-entity context
+    // (live-confirmed client crash 2026-08-18 on rainbow's heal field, game 0.5.9).
     private static final String FX_HEAL_SMOKE = "Server/Particles/Deployables/Healing_Totem/Totem_Heal_SmokeFlat_Constant.particlespawner";
     private static final String FX_SLOW_LOOP = "Server/Particles/Deployables/Slowness_Totem/Totem_Slow_SmokeFlat_Constant.particlespawner";
     private static final String FX_WIND_CAST = "Server/Particles/Combat/Battleaxe/Signature/Spawners/Battleaxe_Signature_Whirlwind_Spin.particlespawner";
@@ -101,8 +104,6 @@ public final class HytaleAssetResolver {
     private static final String MODEL_FROG = "Common/NPC/Critter/Frog/Models/Model.blockymodel";
     private static final String MODEL_FIREBALL_PROJECTILE = "Common/Items/Projectiles/Fireball.blockymodel";
     private static final String MODEL_RUBBLE_PROJECTILE = "Server/Models/Projectiles/Items/Rubble/Rubble_Stone.json";
-    private static final String ROLE_EMPTY = "Empty_Role";
-    private static final String ROLE_SLUG_MAGMA = "Slug_Magma";
     private static final String ROLE_SPARK_LIVING = "Spark_Living";
     private static final String ROLE_VISUAL_PROXY = ROLE_SPARK_LIVING;
     private static final Logger LOG = Logger.getLogger(HytaleAssetResolver.class.getName());
@@ -462,7 +463,7 @@ public final class HytaleAssetResolver {
                     yield FX_ICE_IMPACT;
                 }
                 if (abilityId.contains("rainbow") || abilityId.contains("heal")) {
-                    yield FX_HEAL_LOOP;
+                    yield FX_HEAL_SMOKE;
                 }
                 yield FX_WATER_IMPACT;
             }
@@ -527,7 +528,7 @@ public final class HytaleAssetResolver {
                     yield abilityId.contains("sand") ? FX_SAND_DUST : FX_STONE_DUST;
                 }
                 case "hydro" -> abilityId.contains("rainbow") || abilityId.contains("heal")
-                        ? FX_HEAL_LOOP
+                        ? FX_HEAL_SMOKE
                         : "snow".equals(style) || abilityId.contains("snow") || abilityId.contains("frost")
                         ? FX_SLOW_LOOP
                         : FX_WATER_TRAVEL;
@@ -539,7 +540,7 @@ public final class HytaleAssetResolver {
                 case "corruptus" -> terrainEffect.contains("infernal") || abilityId.contains("fire")
                         ? FX_FIRE_AOE
                         : abilityId.contains("sanctuary")
-                        ? FX_HEAL_LOOP
+                        ? FX_HEAL_SMOKE
                         : terrainEffect.contains("shadow")
                         ? FX_VOID_SMOKE
                         : abilityId.contains("acid") || abilityId.contains("toxic")
@@ -556,7 +557,7 @@ public final class HytaleAssetResolver {
                         ? FX_ICE_IMPACT
                         : FX_WATER_CAST;
                 case "aero" -> abilityId.contains("smoke") ? FX_SMOKE_END : FX_WIND_LOOP;
-                case "corruptus" -> abilityId.contains("sanctuary") ? FX_HEAL_LOOP : FX_VOID_SMOKE;
+                case "corruptus" -> abilityId.contains("sanctuary") ? FX_HEAL_SMOKE : FX_VOID_SMOKE;
                 default -> null;
             };
         }

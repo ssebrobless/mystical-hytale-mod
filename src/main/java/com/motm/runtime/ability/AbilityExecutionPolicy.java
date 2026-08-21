@@ -23,8 +23,8 @@ public final class AbilityExecutionPolicy {
     private static final Set<String> GENERIC_CASTER_VISUAL_SUPPRESSED_IDS = Set.of(
             "iron_wall", "metal_coat", "alloy_enhancement", "obsidian_skin", "magma_sling");
     private static final Set<String> CASTER_EFFECT_TOKENS = Set.of(
-            "attack_buff", "defense_buff", "evasion", "evasion_buff", "evasion_zone",
-            "stealth", "damage_buff", "lifesteal", "flying", "self_burn", "speed");
+            "attack_buff", "defense_buff", "damage_reduction", "evasion", "evasion_buff", "evasion_zone",
+            "stealth", "damage_buff", "lifesteal", "flying", "self_burn", "speed", "sand_empower");
     private static final Set<String> TARGET_EFFECT_TOKENS = Set.of(
             "burn", "dot", "stun", "stun_if_wall", "slow", "slow_stack", "vulnerability",
             "freeze", "root", "blind", "deafen", "disoriented", "attack_slow",

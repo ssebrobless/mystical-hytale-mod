@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#bfe9ff",
+    "EntityBottomTint": "#4aa3d6",
+    "Particles": [
+      {
+        "SystemId": "Ice_Blast"
+      }
+    ]
+  }
+}

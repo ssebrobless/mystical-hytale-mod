@@ -52,10 +52,6 @@ public class SynergyEngine {
                 }
             }
         }
-
-        // Process enhancement chains
-        processEnhancementChains(player);
-
         logSynergySummary(player);
     }
 
@@ -149,36 +145,6 @@ public class SynergyEngine {
             case "chain_increase" -> player.setSynergyChainBonus(player.getSynergyChainBonus() + value);
             case "radius_increase" -> player.setSynergyRadiusBonus(player.getSynergyRadiusBonus() + value);
             default -> LOG.warning("[MOTM] Unknown synergy bonus type: " + type);
-        }
-    }
-
-    // --- Enhancement Chains ---
-
-    private void processEnhancementChains(PlayerData player) {
-        for (String perkId : player.getSelectedPerks()) {
-            Perk perk = dataLoader.getPerkByIdAnyClass(perkId);
-            if (perk == null || perk.getEnhancedBy() == null) continue;
-
-            for (String enhancerId : perk.getEnhancedBy()) {
-                if (player.getSelectedPerks().contains(enhancerId)) {
-                    applyEnhancement(player, perk, enhancerId);
-                }
-            }
-        }
-    }
-
-    private void applyEnhancement(PlayerData player, Perk basePerk, String enhancerId) {
-        double enhancementMultiplier = 1.25;
-
-        if (basePerk.getEffects() == null) return;
-
-        for (Perk.Effect effect : basePerk.getEffects()) {
-            if (effect.getValue() != 0) {
-                // TODO: Register enhanced effect with increased value (effect.value * 1.25)
-                // This requires hooking into Hytale's effect system to modify applied effects
-                LOG.fine("[MOTM] Perk " + basePerk.getId() + " enhanced by " + enhancerId
-                        + " (x" + enhancementMultiplier + ")");
-            }
         }
     }
 

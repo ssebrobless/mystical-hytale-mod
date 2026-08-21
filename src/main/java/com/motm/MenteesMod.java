@@ -70,6 +70,7 @@ import com.motm.runtime.state.TargetHealthRuntimeState;
 import com.motm.runtime.state.PerkTriggerRuntimeState;
 import com.motm.runtime.state.RuntimePlayerRegistry;
 import com.motm.runtime.state.StatusHudRuntimeState;
+import com.motm.ui.CreativeSpellbookPageActions;
 import com.motm.ui.MotmStatusHudActions;
 import com.motm.ui.SpellbookPageActions;
 import com.motm.util.DataLoader;
@@ -481,6 +482,13 @@ public class MenteesMod extends JavaPlugin {
                 }
 
                 @Override
+                public void sendMessage(Player runtimePlayer, String message) {
+                    if (runtimePlayer != null && message != null && !message.isBlank()) {
+                        MenteesMod.this.sendPlayerMessage(runtimePlayer, Message.raw(message));
+                    }
+                }
+
+                @Override
                 public void refreshPlayerProgressionBonuses(String playerId) {
                     MenteesMod.this.refreshPlayerProgressionBonuses(playerId);
                 }
@@ -604,6 +612,21 @@ public class MenteesMod extends JavaPlugin {
             CUSTOM_PAGE_UI_ENABLED,
             this,
             new SpellbookPageActions.Hooks() {
+                @Override
+                public PlayerRef universePlayerRef(Player player) {
+                    return getUniversePlayerRef(player);
+                }
+
+                @Override
+                public void recordClientIntent(String type, String traceId, Map<String, Object> data) {
+                    MenteesMod.this.recordClientIntent(type, traceId, data);
+                }
+            }
+    );
+    private final CreativeSpellbookPageActions creativeSpellbookPageActions = new CreativeSpellbookPageActions(
+            CUSTOM_PAGE_UI_ENABLED,
+            this,
+            new CreativeSpellbookPageActions.Hooks() {
                 @Override
                 public PlayerRef universePlayerRef(Player player) {
                     return getUniversePlayerRef(player);
@@ -1757,6 +1780,44 @@ public class MenteesMod extends JavaPlugin {
         playerStatModifierManager = new PlayerStatModifierManager(this);
         perkManager = new PerkManager(dataLoader, playerStatModifierManager);
         levelingManager = new LevelingManager(dataLoader, perkManager);
+        levelingManager.setProgressionListener(new LevelingManager.ProgressionListener() {
+            @Override
+            public void onLevelUp(PlayerData p, int oldLevel, int newLevel) {
+                if (p == null) {
+                    return;
+                }
+                // RecalculateStats: reapply the player's progression health bonus to the live entity.
+                playerProgressionActions.refreshPlayerProgressionBonusesNow(p.getPlayerId());
+                Player rp = onlineRuntimePlayers.get(p.getPlayerId());
+                if (rp != null) {
+                    sendPlayerMessage(rp, Message.raw("[MOTM] Level up! " + oldLevel + " -> " + newLevel
+                            + " (+" + LevelingManager.STAT_POINTS_PER_LEVEL + " stat points)"));
+                }
+            }
+
+            @Override
+            public void onMilestoneReached(PlayerData p, int level, int tier) {
+                if (p == null) {
+                    return;
+                }
+                Player rp = onlineRuntimePlayers.get(p.getPlayerId());
+                if (rp != null) {
+                    sendPlayerMessage(rp, Message.raw("[MOTM] Milestone reached! Perk Tier " + tier
+                            + " unlocked - open your spellbook to choose a perk."));
+                }
+            }
+
+            @Override
+            public void onXpGained(PlayerData p, int amount, String source) {
+                if (p == null || p.getSettings() == null || !p.getSettings().isShowXpNotifications()) {
+                    return;
+                }
+                Player rp = onlineRuntimePlayers.get(p.getPlayerId());
+                if (rp != null) {
+                    sendPlayerMessage(rp, Message.raw("[MOTM] +" + amount + " XP (" + source + ")"));
+                }
+            }
+        });
         mobScalingManager = new MobScalingManager(dataLoader);
         playerDataManager = new PlayerDataManager(operationalDataDir, dataLoader);
         mobSpawnActions = new MobSpawnRuntimeActions(
@@ -2122,8 +2183,8 @@ public class MenteesMod extends JavaPlugin {
      * This keeps the runtime systems advancing even before we wire the actual
      * Hytale damage/entity APIs.
      */
-    public void onServerTick(Store<EntityStore> currentStore) {
-        runtimeLoop.tick(currentStore);
+    public void onServerTick(Store<EntityStore> currentStore, int serverTick) {
+        runtimeLoop.tick(currentStore, serverTick);
     }
 
     private void processDevCommandInbox(Store<EntityStore> currentStore) {
@@ -2132,6 +2193,10 @@ public class MenteesMod extends JavaPlugin {
 
     public boolean openSpellbook(Player sender, SpellbookManager.Section section) {
         return spellbookPageActions.open(sender, section);
+    }
+
+    public boolean openCreativeSpellbook(Player sender) {
+        return creativeSpellbookPageActions.open(sender);
     }
 
     public boolean isSpellbookItem(ItemStack stack) {

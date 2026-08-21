@@ -1,0 +1,14 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#4B0082",
+    "Particles": [
+      { "SystemId": "MOTM_Proof_Pink_Halo" },
+      { "SystemId": "Beam_Lightning2" },
+      { "SystemId": "VoidImpact" }
+    ],
+    "WorldSoundEventId": "SFX_Wolf_Alerted"
+  }
+}

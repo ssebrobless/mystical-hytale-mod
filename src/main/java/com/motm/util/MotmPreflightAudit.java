@@ -70,7 +70,6 @@ public final class MotmPreflightAudit {
     );
     private static final Set<String> SUMMON_CAST_TYPES = Set.of("summon", "summon_buff");
     private static final Set<String> SUMMON_NAME_REQUIRED_CAST_TYPES = Set.of("summon");
-    private static final Set<String> TOGGLE_FAMILY_CAST_TYPES = Set.of("transformation", "channel", "self_buff");
     private static final Set<String> SELF_TARGETING_CAST_TYPES = Set.of(
             "self_buff", "self_burst", "transformation", "cleanse"
     );

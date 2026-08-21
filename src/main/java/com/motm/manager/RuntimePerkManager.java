@@ -73,7 +73,12 @@ public class RuntimePerkManager {
     private static final String FREEZING_WINDS_EFFECT_ID = "MOTM_Hydro_Impact";
     private static final String IGNITE_EFFECT_ID = "MOTM_Corruptus_Impact";
     private static final String GHOST_ROLE_ID = "Empty_Role";
-    private static final String GHOST_MODEL_ID = "Common/NPC/Void/Spawn_Void/Models/Model.blockymodel";
+    // Appearance NAME (not a raw model path). setAppearance resolves a registered NPC appearance by
+    // name and assembles its attachments; the previous raw Spawn_Void model path failed to load
+    // standalone (Spawn_Void requires Knight/weapon attachments) -> SEVERE "Role 'Empty_Role':
+    // Cannot find model" (live 2026-08-18, game 0.5.9). Crawler_Void is a complete void NPC proven
+    // to spawn via the summon runtime (E2). Empty_Role stays for scaling/targeting exclusion.
+    private static final String GHOST_APPEARANCE_ID = "Crawler_Void";
     private static final String BLACKSMITH_METADATA_KEY = "motm_blacksmith_armor";
     private static final String TOOLSMITH_METADATA_KEY = "motm_toolsmith_durability";
 
@@ -1100,12 +1105,30 @@ public class RuntimePerkManager {
         if (!rainState.raining && forced && isRainWeatherId(weatherId)) {
             rainState = new RainState(true, forcedWeatherIndex, weatherId);
         }
+        // Drop health a touch in this same call so the 1%-max regen registers a measurable heal.
+        // The test world's natural regen refills HP within ~1.5s, so a separate "lower HP" command
+        // would be undone before this proof runs; doing it atomically here mirrors the low-health
+        // proof and makes Rainy Day's periodic regen observable (dev-only proof path).
+        double healthBeforeProof = -1.0;
+        EntityStatMap proofStatMap = store.getComponent(playerRef, EntityStatMap.getComponentType());
+        if (proofStatMap != null) {
+            EntityStatValue proofHealth = proofStatMap.get(DefaultEntityStatTypes.getHealth());
+            if (proofHealth != null && proofHealth.getMax() > 0.0f) {
+                float drop = Math.max(2.0f, proofHealth.getMax() * 0.03f);
+                float target = Math.max(1.0f, proofHealth.getMax() - drop);
+                if (proofHealth.get() > target) {
+                    proofStatMap.setStatValue(DefaultEntityStatTypes.getHealth(), target);
+                }
+                healthBeforeProof = proofStatMap.get(DefaultEntityStatTypes.getHealth()).get();
+            }
+        }
         double healed = applyRainyDay(player, runtimePlayer, playerRef, store, rainState, true);
         String result = "[MOTM] Dev passive rainy-day: requestedWeather=" + requestedWeatherId
                 + " resolvedWeather=" + weatherId
                 + " forced=" + forced
                 + " raining=" + rainState.raining
                 + " trackerWeatherId=" + rainState.weatherId
+                + " healthBefore=" + format(healthBeforeProof)
                 + " heal=" + format(healed);
         LOG.info(result);
         return result;
@@ -1461,7 +1484,7 @@ public class RuntimePerkManager {
         if (ghostRef == null || !ghostRef.isValid()) {
             return null;
         }
-        NPCEntity.setAppearance(ghostRef, GHOST_MODEL_ID, ghostRef.getStore());
+        NPCEntity.setAppearance(ghostRef, GHOST_APPEARANCE_ID, ghostRef.getStore());
         return new GhostAlly(owner.getPlayerId(), ownerRef, ghostRef,
                 Math.max(1.0, maxHealth(ownerRef, store) * 0.05),
                 tickCounter + 60L * TICKS_PER_SECOND,

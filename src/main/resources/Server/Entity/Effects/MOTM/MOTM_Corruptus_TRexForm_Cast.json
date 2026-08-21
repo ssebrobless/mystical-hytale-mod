@@ -1,0 +1,14 @@
+{
+  "Duration": 0.5,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#8B0000",
+    "Particles": [
+      { "SystemId": "Impact_Fire" },
+      { "SystemId": "VoidImpact" }
+    ],
+    "WorldSoundEventId": "SFX_Golem_Earth_Stomp",
+    "ModelVFXId": "Intangible_Dark"
+  }
+}

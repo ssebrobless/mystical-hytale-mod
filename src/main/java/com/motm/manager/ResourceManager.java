@@ -3,7 +3,6 @@ package com.motm.manager;
 import com.motm.model.PlayerData;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Manages class-specific resource systems.
@@ -27,7 +26,6 @@ public class ResourceManager {
         int getHydroContainerTier(String playerId);
     }
 
-    private static final Logger LOG = Logger.getLogger("MOTM");
     private static final List<String> TERRA_RESOURCE_TYPES = List.of(
             "stone_blocks",
             "metal",

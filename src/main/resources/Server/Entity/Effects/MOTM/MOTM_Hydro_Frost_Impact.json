@@ -1,0 +1,11 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#1E90FF",
+    "EntityBottomTint": "#87CEEB",
+    "Particles": [{ "SystemId": "Ice_Blast" }],
+    "WorldSoundEventId": "SFX_Ice_Ball_Death",
+    "ModelVFXId": "Freeze"
+  }
+}

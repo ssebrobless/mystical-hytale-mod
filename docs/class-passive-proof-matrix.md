@@ -3,15 +3,22 @@
 Use this before style/ability review. The goal is to prove each class passive with text evidence first, then use visual review only for the parts that are inherently visual.
 
 ```
-╔════════════╦════════════════════╦═════════════════════╦══════════════╗
-║ Class      ║ Passive            ║ Best Proof Type     ║ Status       ║
-╠════════════╬════════════════════╬═════════════════════╬══════════════╣
-║ Terra      ║ Immovable          ║ A/B mining + damage ║ instrumented ║
-║ Hydro      ║ Tidal Flow         ║ HP/shield deltas    ║ needs run    ║
-║ Aero       ║ Wind Walker        ║ position/velocity   ║ needs run    ║
-║ Corruptus  ║ Soul Harvest       ║ stack/HP/lockout    ║ needs run    ║
-╚════════════╩════════════════════╩═════════════════════╩══════════════╝
+╔════════════╦════════════════════╦═════════════════════╦═══════════════════════════════╗
+║ Class      ║ Passive            ║ Best Proof Type     ║ Status                        ║
+╠════════════╬════════════════════╬═════════════════════╬═══════════════════════════════╣
+║ Terra      ║ Immovable          ║ A/B mining + damage ║ PROVEN 2026-08-18 (KB x0.8,   ║
+║            ║                    ║                     ║ mining x1.5; regen/cave TODO) ║
+║ Hydro      ║ Tidal Flow         ║ HP/shield deltas    ║ PROVEN 2026-08-18 (barrier,   ║
+║            ║                    ║                     ║ vamp +3.0, oxygen 150; swim TODO)║
+║ Aero       ║ Wind Walker        ║ position/velocity   ║ PROVEN 2026-08-18 (+25% move  ║
+║            ║                    ║                     ║ | +80% signature energy)      ║
+║ Corruptus  ║ Soul Harvest       ║ stack/HP/lockout    ║ PROVEN 2026-08-18 (5 stacks + ║
+║            ║                    ║                     ║ resurrection 49HP/10min)      ║
+╚════════════╩════════════════════╩═════════════════════╩═══════════════════════════════╝
 ```
+
+Live proof: `class-passive-proof` scenario, RunId `class-passive-20260818` (game 0.5.9). See
+`docs/completion-roadmap-2026-08-14.md` "4 CLASS PASSIVES PROVEN" for the captured evidence lines.
 
 ## Terra
 

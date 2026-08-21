@@ -29,7 +29,6 @@ public class LevelingManager {
     private static final double PARTY_BONUS_5P = 0.25;
     private static final double RESTED_BONUS_MAX = 0.50;
     private static final double RESTED_ACCUMULATION_RATE = 0.05; // per hour offline
-    private static final double FIRST_KILL_BONUS = 0.25;
 
     // XP Penalty Constants
     private static final int LEVEL_DIFF_PENALTY_THRESHOLD = 10;
@@ -43,9 +42,24 @@ public class LevelingManager {
     private final DataLoader dataLoader;
     private final PerkManager perkManager;
 
+    // Fired on XP gain / level-up / milestone so the runtime layer (MenteesMod) can apply player
+    // feedback (messages, stat recalculation) without this plain-Java manager touching runtime APIs.
+    private ProgressionListener progressionListener = new ProgressionListener() {};
+
     public LevelingManager(DataLoader dataLoader, PerkManager perkManager) {
         this.dataLoader = dataLoader;
         this.perkManager = perkManager;
+    }
+
+    public void setProgressionListener(ProgressionListener listener) {
+        this.progressionListener = (listener != null) ? listener : new ProgressionListener() {};
+    }
+
+    /** Runtime feedback hooks for progression events; default methods no-op for headless/tests. */
+    public interface ProgressionListener {
+        default void onXpGained(PlayerData player, int amount, String source) {}
+        default void onLevelUp(PlayerData player, int oldLevel, int newLevel) {}
+        default void onMilestoneReached(PlayerData player, int level, int tier) {}
     }
 
     // --- XP Formula ---
@@ -327,9 +341,8 @@ public class LevelingManager {
             processLevelUp(player);
         }
 
-        // TODO: Trigger XP_GAINED event via Hytale event bus
-        // TODO: Show XP notification if player.getSettings().isShowXpNotifications()
         LOG.fine("[MOTM] " + player.getPlayerName() + " gained " + modifiedXp + " XP from: " + source);
+        progressionListener.onXpGained(player, modifiedXp, source);
     }
 
     private void processLevelUp(PlayerData player) {
@@ -345,15 +358,14 @@ public class LevelingManager {
             player.setUnspentStatPoints(player.getUnspentStatPoints() + STAT_POINTS_PER_LEVEL);
         }
 
-        // Full health/mana restore handled by Hytale API hook
-        // TODO: RecalculateStats(player) via ClassManager
+        // RecalculateStats + full restore + level-up feedback are applied by the runtime listener
+        // (MenteesMod refreshes the entity's progression health bonus and messages the player).
+        progressionListener.onLevelUp(player, oldLevel, newLevel);
 
         // Check for milestone (perk selection)
         if (newLevel <= PERK_CAP_LEVEL && newLevel % MILESTONE_INTERVAL == 0) {
             onMilestoneReached(player, newLevel);
         }
-
-        // TODO: Trigger LEVEL_UP event, play effects
         LOG.info("[MOTM] " + player.getPlayerName() + " leveled up: " + oldLevel + " -> " + newLevel);
     }
 
@@ -362,9 +374,10 @@ public class LevelingManager {
         player.setPerkSelectionPoints(player.getPerkSelectionPoints() + 1);
         player.setPendingPerkTier(tier);
 
-        // TODO: Trigger MILESTONE_REACHED and PERK_SELECTION_AVAILABLE events
         LOG.info("[MOTM] " + player.getPlayerName() + " reached milestone level "
                 + level + " (Tier " + tier + ")");
+        // Milestone + perk-selection availability feedback is delivered by the runtime listener.
+        progressionListener.onMilestoneReached(player, level, tier);
     }
 
     // --- Rested Bonus ---

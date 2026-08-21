@@ -1,0 +1,13 @@
+{
+  "Duration": 0.6,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#caa46a",
+    "EntityBottomTint": "#6b4f20",
+    "Particles": [
+      {
+        "SystemId": "Earth_Brazier_Glow"
+      }
+    ]
+  }
+}

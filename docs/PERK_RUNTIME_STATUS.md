@@ -1,6 +1,12 @@
 # Final Shared Perk Runtime Status
 
-Updated: 2026-05-28
+Updated: 2026-08-18
+
+**LIVE STATUS: 20/20 perks live-proven (2026-08-18, game 0.5.9, RunId perk-runtime-20260818c).**
+Every perk's runtime effect was observed live (values in `docs/completion-roadmap-2026-08-14.md`).
+Two fixes landed: Haunting's ghost appearance (raw model path -> proven `Crawler_Void` name) and an
+atomic Rainy Day proof (drops HP in-call so the 1%-max regen registers past the test world's fast
+natural regen).
 
 This document records the current gameplay contract for the 20 shared perk choices. Perks are passive choices unlocked every 10 levels through level 100. Any player can choose any perk, regardless of class.
 
@@ -66,4 +72,8 @@ audits/perk-runtime/<run-id>/report.md
 audits/perk-runtime/<run-id>/<proof-name>.log
 ```
 
-Movement perks still need real sprint/swim lane stimuli for high-confidence live proof. Eco-friendly and crafting perks now have native hooks, but the strongest final proof is still an in-world bare-hand grass punch and a real crafted armor/tool item because those are UI/world actions, not chat-only simulations.
+Movement perks (Accelerate/Bunny Hop/Big Strides/Semiaquatic) are live-proven via the
+`runMovementPerkProof` harness (observed bonus/charge/stamina values); a real in-world sprint/swim
+lane remains the highest-confidence stretch proof. Eco-friendly and crafting perks are proven via
+their native hooks (tree spawn + damage reduction; armor/tool metadata enhancement); an in-world
+bare-hand grass punch and a real crafted item remain the strongest UI/world-action confirmation.

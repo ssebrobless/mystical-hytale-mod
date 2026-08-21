@@ -31,7 +31,6 @@ public class MobScalingManager {
 
     private static final Set<String> SCALING_CATEGORIES = Set.of("hostile", "elite", "mini_boss");
     private static final Set<String> BOSS_SCALING_CATEGORIES = Set.of("boss", "world_boss");
-    private static final Set<String> NON_SCALING_CATEGORIES = Set.of("passive", "neutral", "boss", "world_boss");
 
     // Night/event constants
     private static final double NIGHT_MULTIPLIER = 1.2;

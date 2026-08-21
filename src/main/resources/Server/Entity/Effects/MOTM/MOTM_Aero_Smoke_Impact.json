@@ -1,0 +1,13 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Extend",
+  "ApplicationEffects": {
+    "EntityTopTint": "#E6E6FA",
+    "EntityBottomTint": "#9370DB",
+    "Particles": [
+      { "SystemId": "VoidImpact" },
+      { "SystemId": "Eye_Void_Smoke_Teal" }
+    ],
+    "WorldSoundEventId": "SFX_Portal_Void"
+  }
+}

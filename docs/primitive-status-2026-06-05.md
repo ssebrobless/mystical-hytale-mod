@@ -41,8 +41,12 @@ Primitive family
 
 ## P0 - Summon Combat
 
-Current status: representative Snow summon path is accepted enough to move on,
-but the family is not complete for every summon-like ability.
+Current status: BEHAVIORALLY PROVEN (2026-08-17, RunId summon-void, game 0.5.9). The DoD - at
+least one NON-Snow summon family through the same functional gate - is met: `void_spawn` spawned
+3 Crawler_Void allies (triangle) that engaged 3 distinct hostiles (21 attacks over the full 10s
+window) with zero SEVERE. `SummonRuntimeSpecs` already maps all non-Snow families (no code change);
+remaining U3 families (raise_dead/scarak_egg/swamp_monster) are data-only proof scenarios. See
+`docs/completion-roadmap-2026-08-14.md` (E2 section).
 
 What we learned from Snow:
 
@@ -81,7 +85,13 @@ Next work for this family:
 
 ## P0 - Controlled Ally
 
-Current status: not complete.
+Current status: BEHAVIORALLY PROVEN (2026-08-17, RunId control-g2-2mob, game 0.5.9).
+`runtime/ability/control/` engine (ActiveControlledAlly + ControlRuntimeState + ControlTickRuntime
++ ControlHytaleAdapter) wired into GameplayPlaybackManager; `dominate`/`hivemind` casts convert a
+hostile, the tick drives it to attack another hostile (control_attack x19), and it auto-releases on
+the 15-20s clock (control_released), no crash. Polish owed: pink-marker/follow visual screenshot,
+FF caster-immunity stress, `mind_shatter` centering, logout/death release hook. See
+`docs/completion-roadmap-2026-08-14.md` (E1 G2 sections).
 
 Dependent abilities:
 
@@ -105,7 +115,14 @@ shares faction, targeting, friendly-fire, and follow-zone problems with summons.
 
 ## P0 - Pull / Tether / Carry
 
-Current status: partial.
+Current status: SHARED VISUAL-LINK PROVEN (2026-08-17, RunId tether-vines, game 0.5.9).
+`runtime/ability/tether/TetherLinkRenderer` renders a burst-only (capped) bead chain between the
+anchor-lifted caster and target, re-sampled each tether tick (synced movement) and self-cleaning
+when the tick stops (no permanent-emitter leak). Wired into both the line-control tick
+(vines/pull) and the channel tick (life_drain). Live: `tether_link` x5 over the full 5s vines
+window, 6 beads caster->target, zero SEVERE. Owed: moving-target screenshot, canon per-ability
+skins (Plant_Vine/Water_Beam) pending cap verification, and unifying all 9 abilities under one
+service. See `docs/completion-roadmap-2026-08-14.md` (E3 section).
 
 What is known:
 
@@ -139,7 +156,12 @@ Next work for this family:
 
 ## P1 - Persistent Field Readability
 
-Current status: runtime support exists, visual correctness is not broadly proven.
+Current status: IN-AREA EFFECT + CLEANUP PROVEN (2026-08-17, RunId field-lava, game 0.5.9).
+`lava_pool` (self-centered ground_zone, radius 5, 6s) burned all 4 surround dummies every tick
+(`field_pulse affected=4 x7` over the full 6s, then pulses stop = cleanup), zero SEVERE. Unified
+`field_pulse` observability added to `FieldPulseHytaleAdapter`. Radius-readable visual-proxy grid
+attested via the visualProxyRefs snapshot. Owed: broad per-ability visual screenshots and canon
+field skins. See `docs/completion-roadmap-2026-08-14.md` (E4 section).
 
 Representative runtime owners:
 

@@ -1,0 +1,33 @@
+{
+  "id": "reaction-proof",
+  "description": "Command-driven proof sweep for the 6 elemental reactions. Each command applies two different-element marks to a synthetic target and reports the ReactionResult (name, bonus damage %, applied status effects): Storm Surge (aero+hydro +12%), Mud Snare (hydro+terra +10%), Dust Cyclone (aero+terra +10%), Black Steam (corruptus+hydro +11%), Gravebind (corruptus+terra +12%), Hellstorm (aero+corruptus +14%).",
+  "styleId": "",
+  "abilities": [],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker reaction-proof-setup",
+    "motm dev effects clear",
+    "motm dev test mobs clear"
+  ],
+  "commands": [
+    "motm dev passive reaction aero hydro",
+    "motm dev passive reaction hydro terra",
+    "motm dev passive reaction aero terra",
+    "motm dev passive reaction corruptus hydro",
+    "motm dev passive reaction corruptus terra",
+    "motm dev passive reaction aero corruptus",
+    "motm dev observe snapshot reaction-proof"
+  ],
+  "cleanupCommands": [
+    "motm dev effects clear",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-proof-cleanup",
+    "motm dev observe marker reaction-proof-end"
+  ],
+  "expectedEvidence": [
+    "control:dev_command_executed",
+    "causality:server_tick_heartbeat",
+    "causality:runtime_task_executed",
+    "server-truth:snapshot"
+  ]
+}

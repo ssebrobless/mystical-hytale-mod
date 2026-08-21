@@ -1,0 +1,35 @@
+{
+  "id": "terra-field-lava-pool",
+  "description": "Persistent field gate: surround the caster with hostiles, cast Lava Pool (self-centered ground_zone, radius 5, 6s), and confirm the field burns every in-radius enemy each tick then self-cleans (field_pulse log lines from the field tick).",
+  "styleId": "magma",
+  "abilities": ["lava_pool"],
+  "proofs": [],
+  "setupCommands": [
+    "motm dev observe marker field-lava-start",
+    "motm dev observe snapshot initial",
+    "motm dev class set terra",
+    "motm style magma",
+    "motm dev effects clear",
+    "motm dev freecast on",
+    "motm dev test mobs clear",
+    "motm dev test mobs surround",
+    "motm dev test mobs count",
+    "motm dev observe snapshot after-target-setup"
+  ],
+  "commands": [],
+  "cleanupCommands": [
+    "motm dev observe snapshot field-settle-1",
+    "motm dev observe snapshot field-settle-2",
+    "motm dev observe snapshot post-ability-cleanup",
+    "motm dev test mobs clear",
+    "motm dev observe snapshot post-target-cleanup",
+    "motm dev observe marker field-lava-end",
+    "motm dev observe snapshot final"
+  ],
+  "expectedEvidence": ["causality:ability_cast_end", "server-truth:snapshot"],
+  "notes": [
+    "Lava Pool is a self-centered ground_zone field (radius 5, 6s, burn DoT); test mobs surround spawns four Test_Dummy_Stationary at 3 blocks in each direction, all inside the radius.",
+    "The field is asserted from [MOTM] field_pulse log lines emitted by FieldPulseHytaleAdapter.applyPulse each field tick: affected (in-radius enemies), candidates, damage, and radius. Radius-readability is also visible via the visualProxyRefs snapshot count (proxy grid covering the field).",
+    "DoD: strengthens P1 Persistent fields (was 'adapters exist, weak visual proof') with hard in-area effect + radius + cleanup evidence."
+  ]
+}

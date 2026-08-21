@@ -121,6 +121,7 @@
           "cast_time_seconds": 0.28,
           "recovery_seconds": 0.2,
           "effect": "defense_buff",
+          "effect_magnitudes": { "defense_buff": 0.5 },
           "categories": [
             "buff"
           ],
@@ -257,7 +258,7 @@
           "cooldown_seconds": 8,
           "cast_time_seconds": 0.7,
           "recovery_seconds": 0.28,
-          "effect": "stun",
+          "effect": "stun+knockback",
           "categories": [
             "damage",
             "crowd_control"

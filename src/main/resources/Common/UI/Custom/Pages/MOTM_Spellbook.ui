@@ -61,6 +61,9 @@ Group #Root {
     TextButton #NavStatsButton { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "Stats"; Style: @ButtonStyle; }
     Label #NavStatsSelected { Anchor: (Left: 14, Top: 252, Width: 148, Height: 34); Text: "> Stats"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
 
+    TextButton #NavInfoButton { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: "Mod Info"; Style: @ButtonStyle; }
+    Label #NavInfoSelected { Anchor: (Left: 14, Top: 292, Width: 148, Height: 34); Text: "> Mod Info"; Visible: false; Style: (...@NavText, VerticalAlignment: Center, TextColor: @Accent); }
+
     Label #ActionStatus {
       Anchor: (Left: 14, Top: 410, Width: 148, Height: 190);
       Text: "";
@@ -119,18 +122,6 @@ Group #Root {
       Label #ClassInfoStyleRuleValue { Anchor: (Left: 392, Top: 28, Width: 340, Height: 45); Style: @SmallText; }
       Label #ClassInfoAbilityRuleValue { Anchor: (Left: 392, Top: 78, Width: 340, Height: 45); Style: @SmallText; }
       Label #ClassInfoStyleActionValue { Anchor: (Left: 392, Top: 130, Width: 340, Height: 42); Style: @SmallText; }
-      TextButton #RemovedOptionButton1 { Anchor: (Left: 392, Top: 184, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton2 { Anchor: (Left: 512, Top: 184, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton3 { Anchor: (Left: 632, Top: 184, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton4 { Anchor: (Left: 392, Top: 218, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton5 { Anchor: (Left: 512, Top: 218, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton6 { Anchor: (Left: 632, Top: 218, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton7 { Anchor: (Left: 392, Top: 252, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton8 { Anchor: (Left: 512, Top: 252, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton9 { Anchor: (Left: 632, Top: 252, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton10 { Anchor: (Left: 392, Top: 286, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton11 { Anchor: (Left: 512, Top: 286, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
-      TextButton #RemovedOptionButton12 { Anchor: (Left: 632, Top: 286, Width: 108, Height: 28); Text: ""; Visible: false; Style: @ButtonStyle; }
       Label #ClassInfoStyleValue { Anchor: (Left: 392, Top: 338, Width: 340, Height: 20); Style: @ValueText; }
       Label #ClassInfoProgressValue { Anchor: (Left: 392, Top: 364, Width: 340, Height: 20); Style: @SmallText; }
       Label #ClassInfoMilestoneValue { Anchor: (Left: 392, Top: 390, Width: 340, Height: 20); Style: @SmallText; }
@@ -194,5 +185,16 @@ Group #Root {
     }
 
     Group #StatsPanel { Anchor: (Left: 18, Top: 18, Width: 756, Height: 472); Visible: false; Label #StatsCurrentValue { Anchor: (Left: 0, Top: 0, Width: 742, Height: 40); Style: @ValueText; } Label #StatsRuleValue { Anchor: (Left: 0, Top: 54, Width: 742, Height: 68); Style: @BodyText; } Label #StatsPracticalValue { Anchor: (Left: 0, Top: 136, Width: 742, Height: 68); Style: @SmallText; } }
+
+    Group #InfoPanel {
+      Anchor: (Left: 18, Top: 18, Width: 756, Height: 472);
+      Visible: false;
+      Label #InfoTitle { Anchor: (Left: 0, Top: 0, Width: 742, Height: 26); Text: "Mentees of the Mystical"; Style: @TitleText; }
+      Label #InfoBody { Anchor: (Left: 0, Top: 34, Width: 742, Height: 96); Style: @BodyText; }
+      Label #InfoCounts { Anchor: (Left: 0, Top: 136, Width: 742, Height: 24); Style: @ValueText; }
+      Label #InfoUpgrades { Anchor: (Left: 0, Top: 170, Width: 742, Height: 120); Style: @SmallText; }
+      Label #InfoLegend { Anchor: (Left: 0, Top: 300, Width: 742, Height: 120); Style: @SmallText; }
+      Label #InfoVersion { Anchor: (Left: 0, Top: 440, Width: 742, Height: 20); Style: (...@SmallText, TextColor: @Muted); }
+    }
   }
 }

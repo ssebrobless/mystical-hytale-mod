@@ -1,0 +1,10 @@
+{
+  "Duration": 0.45,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#87CEEB",
+    "EntityBottomTint": "#1E90FF",
+    "Particles": [{ "SystemId": "Water_Can_Splash" }],
+    "WorldSoundEventId": "SFX_Water_MoveOut"
+  }
+}

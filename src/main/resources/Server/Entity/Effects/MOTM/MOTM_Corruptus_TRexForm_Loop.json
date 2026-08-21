@@ -1,0 +1,13 @@
+{
+  "Duration": 0.9,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#FF4500",
+    "EntityBottomTint": "#8B0000",
+    "Particles": [
+      { "SystemId": "Impact_Fire" },
+      { "SystemId": "Fire_AoE_Grow" }
+    ],
+    "ModelVFXId": "Intangible_Dark"
+  }
+}

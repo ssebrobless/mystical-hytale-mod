@@ -79,6 +79,10 @@ public final class FieldSupportPulseHytaleAdapter {
         if (terrainEffect.contains("ice_shell")) {
             support.applyOwnerStatusToken("defense_buff", field, player);
         }
+        if (terrainEffect.contains("lava_pool")) {
+            // Lava Pool protects the caster standing in it (enemies take the burn pulse).
+            support.applyOwnerStatusToken("defense_buff", field, player);
+        }
     }
 
     private boolean shouldPulseOwnerEffectToken(ActiveField field, String token, Support support) {

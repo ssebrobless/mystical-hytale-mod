@@ -1,0 +1,13 @@
+{
+  "Duration": 0.4,
+  "OverlapBehavior": "Overwrite",
+  "ApplicationEffects": {
+    "EntityTopTint": "#CD853F",
+    "EntityBottomTint": "#8B4513",
+    "Particles": [
+      { "SystemId": "Block_Lava_Bubbles" },
+      { "SystemId": "Fire_Charge1" }
+    ],
+    "WorldSoundEventId": "SFX_Staff_Flame_Fireball_Launch"
+  }
+}
