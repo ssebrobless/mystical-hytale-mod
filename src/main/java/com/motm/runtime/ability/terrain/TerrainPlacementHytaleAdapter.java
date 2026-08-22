@@ -63,7 +63,15 @@ public final class TerrainPlacementHytaleAdapter {
                     terrain.primaryAssetIdArray(),
                     terrain.secondaryAssetIdArray(),
                     restoreAdapter);
-            case LAVA_POOL -> skipUnsafeTerrainSelection(terrain.reason(), "lava pool uses field VFX; temporary lava terrain crashes Hytale 0.5.3 client");
+            case LAVA_POOL -> placeGroundedBlockDiscSelection(
+                    runtimePlayer.getWorld(),
+                    terrain.reason(),
+                    center,
+                    ability.getRadius(),
+                    expireAtMillis,
+                    "Rock_Volcanic_Cracked_Incandescent",
+                    "Rock_Volcanic_Cracked_Lava",
+                    "Rock_Magma_Cooled");
             case MUDPIT -> {
                 String fluid = placeGroundedFluidDiscSelection(
                         runtimePlayer.getWorld(),
@@ -127,11 +135,6 @@ public final class TerrainPlacementHytaleAdapter {
                     + (abilityId.isBlank() ? "<unknown>" : abilityId)
                     + " terrainEffect=" + terrainEffect);
         }
-    }
-
-    private String skipUnsafeTerrainSelection(String reason, String summary) {
-        logInfo("[MOTM] Temporary Terra terrain skipped: reason=" + reason + " summary=" + summary);
-        return summary;
     }
 
     public boolean startMovingTerrainTrail(World world,
@@ -562,6 +565,46 @@ public final class TerrainPlacementHytaleAdapter {
         }
         Vector3d grounded = new Vector3d(center.x, center.y - 1.0, center.z);
         return placeFluidDiscSelection(world, reason, grounded, radius, expireAtMillis, fluidIds);
+    }
+
+    public String placeBlockDiscSelection(World world,
+                                          String reason,
+                                          Vector3d center,
+                                          double radius,
+                                          long expireAtMillis,
+                                          String... blockIds) {
+        int blockTypeId = resolveRuntimeBlockTypeId(blockIds);
+        if (world == null || center == null
+                || blockTypeId == BlockType.UNKNOWN_ID || blockTypeId == BlockType.EMPTY_ID) {
+            return "";
+        }
+        Vector3i anchor = blockAnchor(center);
+        BlockSelection selection = baseSelection(anchor);
+        int r = Math.max(1, (int) Math.round(radius));
+        for (int x = -r; x <= r; x++) {
+            for (int z = -r; z <= r; z++) {
+                double dist = Math.sqrt((x * x) + (z * z));
+                if (dist > r + 0.2) {
+                    continue;
+                }
+                selection.addBlockAtWorldPos(anchor.x + x, anchor.y, anchor.z + z, blockTypeId, 0, 0, 0);
+            }
+        }
+        return placeTemporarySelection(world, reason, anchor, selection, expireAtMillis,
+                selection.getBlockCount() + " grounded pool blocks");
+    }
+
+    public String placeGroundedBlockDiscSelection(World world,
+                                                  String reason,
+                                                  Vector3d center,
+                                                  double radius,
+                                                  long expireAtMillis,
+                                                  String... blockIds) {
+        if (center == null) {
+            return "";
+        }
+        Vector3d grounded = new Vector3d(center.x, center.y - 1.0, center.z);
+        return placeBlockDiscSelection(world, reason, grounded, radius, expireAtMillis, blockIds);
     }
 
     public String placeTemporarySelection(World world,
