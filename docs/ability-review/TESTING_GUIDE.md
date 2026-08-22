@@ -12,10 +12,12 @@ Companion data: `_ability_catalog.json` (machine-readable 120-row catalog), the 
   cast with mouse/ability keys) exercises the *real* player experience. **Dev fast-path**
   (`/motm dev ...`) casts any ability on demand with free-cast on — best for churning through
   all 120 quickly. Use both: dev-path for coverage, normal-path to confirm the UX is real.
-- **Are the UIs functional?** Mostly. The Spellbook page (class/style/perk pick) and the
-  status HUD are wired. Three real gaps affect *observation*: (1) the buff/debuff status
-  strip is suppressed/unwired, (2) passive tracker icons render faintly/not at all, (3)
-  spending stat points has no buttons (command only). See §2.
+- **Are the UIs functional?** Yes. The Spellbook page (class/style/perk pick) and the status
+  HUD are wired. As of 2026-08-22 the buff/debuff status strip AND the passive tracker render
+  **text-only** — color-coded labels (buffs green, debuffs red; e.g. `SHIELD 14HP`,
+  `Aqua Barrier 34/34`). Icons are intentionally omitted (toggling icon Sprites at runtime
+  NRE-crashed the client). One remaining gap: spending stat points has no buttons (command
+  only). See §2.
 - **Does the environment matter?** A lot. Training dummies stuck in the ground only prove
   ~1/3 of the design. Projectiles need a *moving* target; dashes/leaps need a target to
   close on and ledges; AoE needs *groups*; support needs an *ally*; reactions need a
@@ -46,6 +48,8 @@ Source: `PlayerSessionLifecycleActions`, `SpellbookPage`, `SpellbookInputHandler
 /motm dev class set <terra|hydro|aero|corruptus>
 /motm style <styleId>
 /motm dev test mobs <close|stationary|cluster|line|surround>
+/motm dev arena build                   # spawn the full test arena (walls, ledge, water+lava pools, dummies)
+/motm dev arena clear                   # tear the arena down
 /motm dev test ability <abilityId>     # free-cast, targets nearest test NPC
 /motm dev test reset                    # scrub arena between styles
 /motm dev passive status                # dump passive/stack/resource state
@@ -62,14 +66,16 @@ Free-cast (resource costs off) is on for dev tests, so cooldowns/resources won't
 |---|---|---|
 | Spellbook page (class/style/perk pick) | Yes | Primary nav. No dedicated *Style* tab — style picked within class view. |
 | Creative Spellbook (dev) | Yes (dev-only) | Sandbox page for review. |
-| Status HUD (passive name, XP, resource bar, 3 ability slots) | Yes | Renders class passive label + ability icons. |
-| **Buff/Debuff status strip** | **No (suppressed/unwired)** | You will NOT see applied buffs/debuffs as icons. Confirm status effects by *behavior* (speed/damage change) or `/motm dev passive status`. |
-| **Passive tracker icons** | **Faint/invisible** | Passive *stacks* (e.g. Soul Harvest) may not show; use `/motm dev passive status`. |
+| Status HUD (class:style line, XP bar, resource bar, 3 ability slots) | Yes | Ability slots show name + cooldown timer as text (icons omitted, same reason as the strip). |
+| Buff/Debuff status strip | Yes (text-only) | Active buffs/debuffs show as color-coded text tags (green buff, red debuff), not icons — e.g. `SHIELD 14HP`. Abbreviated; confirm detail by behavior or dev status. |
+| Passive tracker | Yes (text-only) | Passive name + timer/stack shows as color-coded text (top-right), not icons — e.g. `Aqua Barrier 34/34`, `Tidal Flow`. |
 | **Stat-point spending** | **No buttons** | Command only: `/motm stats spend ...`. |
 | Spellbook `.ui` casing preflight | Not validated | HUD casing IS validated; spellbook page is not — watch for a client disconnect if paths drift. |
 
-**Testing implication:** because the buff/debuff strip is blind, "did the status effect land?"
-must be judged by mechanics (the target slows/burns/roots) or the dev status dump — not by a HUD icon.
+**Testing implication:** the buff/debuff strip now shows applied effects as text tags, so
+"did the status effect land?" can be read from the HUD strip, confirmed by mechanics (the
+target slows/burns/roots), or the dev status dump. There is no icon art — judge by the text
+label plus behavior.
 
 ---
 
