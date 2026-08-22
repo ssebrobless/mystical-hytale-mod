@@ -73,9 +73,11 @@ public class MotmStatusHud extends CustomUIHud {
         commands.set("#StatusLine1.Visible", !primaryLine.isBlank());
         commands.set("#StatusLine2.Visible", false);
 
-        // Hide legacy icon-slot widgets; passive/perk readiness now lives in the top-right tracker.
-        renderStatusSlots(commands, "BuffStatus", List.of(), MAX_BUFF_SLOTS);
-        renderStatusSlots(commands, "DebuffStatus", List.of(), MAX_DEBUFF_SLOTS);
+        // Live buff/debuff strip: read active StatusEffects and populate the pre-declared slots.
+        renderStatusSlots(commands, "BuffStatus",
+                buildStatusStripEntries(player, StatusTone.BUFF, MAX_BUFF_SLOTS), MAX_BUFF_SLOTS);
+        renderStatusSlots(commands, "DebuffStatus",
+                buildStatusStripEntries(player, StatusTone.DEBUFF, MAX_DEBUFF_SLOTS), MAX_DEBUFF_SLOTS);
     }
 
     private String buildClassStyleLine(PlayerData player) {
@@ -236,20 +238,10 @@ public class MotmStatusHud extends CustomUIHud {
             setText(commands, prefix + "TimerShadow.Text", "");
             commands.set(prefix + "Timer.Visible", false);
             commands.set(prefix + "TimerShadow.Visible", false);
-            commands.set(prefix + "Icon.Visible", false);
-            commands.set(prefix + "Frame.Visible", false);
             return;
         }
 
         boolean coolingDown = entry.cooldownSeconds() > 0.0;
-        // DEFECT (2026-07-18, live-verified): CustomUI FORBIDS changing Sprite
-        // TexturePath / Group Background via runtime commands - the client hard-
-        // disconnects on the first such command ("CustomUI is not allowed to
-        // change this property. Selector: #TrackerRow2Icon"), blocking world
-        // entry entirely. Icons stay hidden until the vanilla pattern lands:
-        // pre-declared per-family icon nodes in the .ui toggled via Visible.
-        boolean iconVisible = false;
-        boolean frameVisible = false;
         String nameColor = entry.active() ? "#a8ff9a" : coolingDown ? "#a6a6a6" : "#ffffff";
         String timerColor = coolingDown && !entry.active() ? "#a6a6a6" : "#ffffff";
         String timerText = entry.counterText() != null && !entry.counterText().isBlank()
@@ -268,9 +260,10 @@ public class MotmStatusHud extends CustomUIHud {
         commands.set(prefix + "TimerShadow.Style.RenderBold", false);
         commands.set(prefix + "Timer.Visible", !timerText.isBlank());
         commands.set(prefix + "TimerShadow.Visible", !timerText.isBlank());
-        // TexturePath/Background writes removed - see defect note above.
-        commands.set(prefix + "Icon.Visible", iconVisible);
-        commands.set(prefix + "Frame.Visible", frameVisible);
+        // Text-only rendering: the pre-declared per-family icon Sprites stay at their .ui
+        // default (Visible:false). Toggling any tracker icon Sprite Visible at runtime NREs
+        // the client renderer and hard-disconnects (live-verified 2026-08-22, #TrackerRowNIcon*).
+        // The color-coded Name + Timer labels carry active/cooldown state instead.
     }
 
     private String fitTrackerName(String name) {
@@ -326,39 +319,110 @@ public class MotmStatusHud extends CustomUIHud {
     private void renderStatusSlot(UICommandBuilder commands, String slotId, HudStatusEntry entry) {
         String selector = "#" + slotId;
         commands.set(selector + "Root.Visible", entry != null);
-
         if (entry == null) {
             return;
         }
-
-        commands.set(selector + "BuffBg.Visible", false);
-        commands.set(selector + "DebuffBg.Visible", false);
-        commands.set(selector + "DisabledBg.Visible", false);
-
-        commands.set(selector + "ArrowBuff.Visible", false);
-        commands.set(selector + "ArrowDebuff.Visible", false);
-        commands.set(selector + "ArrowBuffDisabled.Visible", false);
-
-        commands.set(selector + "CooldownBuff.Visible", false);
-        commands.set(selector + "CooldownDebuff.Visible", false);
-        commands.set(selector + "CooldownPassive.Visible", false);
-        commands.set(selector + "CooldownBuff.Value", 0.0);
-        commands.set(selector + "CooldownDebuff.Value", 0.0);
-        commands.set(selector + "CooldownPassive.Value", 0.0);
-
-        commands.set(selector + "IconAttack.Visible", false);
-        commands.set(selector + "IconDefense.Visible", false);
-        commands.set(selector + "IconHealth.Visible", false);
-        commands.set(selector + "IconSpeed.Visible", false);
-        commands.set(selector + "IconStamina.Visible", false);
-        commands.set(selector + "IconShield.Visible", false);
-        commands.set(selector + "IconMagic.Visible", false);
-        commands.set(selector + "IconSword.Visible", false);
-
+        // Text-only rendering: the Assets/-textured backgrounds, arrows, cooldown bars and stat-icon
+        // sprites can NOT be toggled Visible at runtime - the client throws a NullReferenceException
+        // and hard-disconnects on the first such command (live-verified 2026-08-22). They stay at
+        // their .ui default (hidden); the color-coded text tag + counter carry all the information.
+        String tagColor = entry.tone() == StatusTone.BUFF ? "#a8ff9a" : "#ff9a9a";
         setText(commands, selector + "Tag.Text", abbreviateStatusTag(entry.tag()));
+        commands.set(selector + "Tag.Style.TextColor", tagColor);
         setText(commands, selector + "Detail.Text", abbreviateStatusDetail(entry.label()));
+        commands.set(selector + "Detail.Style.TextColor", tagColor);
         setText(commands, selector + "Counter.Text", entry.counter());
         commands.set(selector + "Counter.Visible", entry.counter() != null && !entry.counter().isBlank());
+    }
+
+    private List<HudStatusEntry> buildStatusStripEntries(PlayerData player, StatusTone tone, int maxSlots) {
+        if (player == null || player.getPlayerId() == null) {
+            return List.of();
+        }
+        var manager = mod.getStatusEffectManager();
+        if (manager == null) {
+            return List.of();
+        }
+        List<HudStatusEntry> out = new ArrayList<>();
+        for (StatusEffect effect : manager.getEffects(player.getPlayerId())) {
+            if (effect == null || effect.isExpired() || effect.getType() == StatusEffect.Type.KNOCKBACK) {
+                continue;
+            }
+            if (statusTone(effect.getType()) != tone) {
+                continue;
+            }
+            out.add(toHudStatusEntry(effect));
+        }
+        out.sort(Comparator.comparingInt(HudStatusEntry::priority).reversed());
+        return out.size() > maxSlots ? new ArrayList<>(out.subList(0, maxSlots)) : out;
+    }
+
+    private HudStatusEntry toHudStatusEntry(StatusEffect effect) {
+        StatusEffect.Type type = effect.getType();
+        int remaining = Math.max(0, effect.getRemainingTicks());
+        int initial = Math.max(1, effect.getInitialDurationTicks());
+        double progress = Math.max(0.0, Math.min(1.0, remaining / (double) initial));
+        double seconds = remaining / (double) TICKS_PER_SECOND;
+        String counter = seconds >= 1.0 ? ((int) Math.ceil(seconds)) + "s" : "";
+        return new HudStatusEntry(
+                statusTag(type),
+                statusLabel(type, effect.getValue()),
+                statusTone(type),
+                StatusIcon.SWORD,
+                progress,
+                counter,
+                remaining
+        );
+    }
+
+    private StatusTone statusTone(StatusEffect.Type type) {
+        return switch (type) {
+            case FLYING, SHIELD, EVASION, DEFENSE_BUFF, ATTACK_BUFF, DAMAGE_BUFF,
+                 STEALTH, HEAL_OVER_TIME, LIFESTEAL, SPEED_BUFF -> StatusTone.BUFF;
+            default -> StatusTone.DEBUFF;
+        };
+    }
+
+    private String statusTag(StatusEffect.Type type) {
+        return switch (type) {
+            case BURN -> "BURN";
+            case DOT -> "POISON";
+            case STUN -> "STUN";
+            case SLOW, SLOW_STACK -> "SLOW";
+            case VULNERABILITY -> "VULN";
+            case FREEZE -> "FREEZE";
+            case ROOT -> "ROOT";
+            case BLIND -> "BLIND";
+            case DISORIENTED -> "DAZE";
+            case GROUNDED -> "GROUND";
+            case FLYING -> "FLY";
+            case SHOCKED -> "SHOCK";
+            case SHIELD -> "SHIELD";
+            case EVASION -> "EVADE";
+            case DEFENSE_BUFF -> "DEF+";
+            case ATTACK_BUFF -> "ATK+";
+            case DAMAGE_BUFF -> "DMG+";
+            case STEALTH -> "STEALTH";
+            case HEAL_OVER_TIME -> "REGEN";
+            case TOXIC_MARK -> "TOXIC";
+            case LIFESTEAL -> "LEECH";
+            case SPEED_BUFF -> "SPEED";
+            case KNOCKBACK -> "KB";
+        };
+    }
+
+    private String statusLabel(StatusEffect.Type type, double value) {
+        if (value <= 0.0) {
+            return "";
+        }
+        double pct = value <= 1.5 ? value * 100.0 : value;
+        return switch (type) {
+            case SHIELD -> String.format(Locale.ROOT, "%.0fHP", value);
+            case DEFENSE_BUFF, ATTACK_BUFF, DAMAGE_BUFF, VULNERABILITY, EVASION,
+                 HEAL_OVER_TIME, LIFESTEAL, SPEED_BUFF, SLOW, SLOW_STACK ->
+                    String.format(Locale.ROOT, "%.0f%%", pct);
+            default -> "";
+        };
     }
 
     private String abbreviateStatusDetail(String detail) {
@@ -655,14 +719,10 @@ public class MotmStatusHud extends CustomUIHud {
     }
 
     private void renderAbilityIcon(UICommandBuilder commands, String prefix, StatusIcon icon) {
-        commands.set(prefix + "IconAttack.Visible", icon == StatusIcon.ATTACK);
-        commands.set(prefix + "IconDefense.Visible", icon == StatusIcon.DEFENSE);
-        commands.set(prefix + "IconHealth.Visible", icon == StatusIcon.HEALTH);
-        commands.set(prefix + "IconSpeed.Visible", icon == StatusIcon.SPEED);
-        commands.set(prefix + "IconStamina.Visible", icon == StatusIcon.STAMINA);
-        commands.set(prefix + "IconShield.Visible", icon == StatusIcon.SHIELD);
-        commands.set(prefix + "IconMagic.Visible", icon == StatusIcon.MAGIC);
-        commands.set(prefix + "IconSword.Visible", icon == StatusIcon.SWORD);
+        // No-op: the ability-slot icon Sprites/Groups stay at their .ui default (Visible:false).
+        // Toggling these icon nodes Visible at runtime NREs the client renderer and
+        // hard-disconnects (same crash class as the status strip and passive tracker,
+        // live-verified 2026-08-22). The slot Name + Timer labels convey ability state.
     }
 
     private String safeLower(String value) {

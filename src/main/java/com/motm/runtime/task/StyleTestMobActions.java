@@ -59,7 +59,7 @@ public final class StyleTestMobActions {
     public static String normalizeMode(String mode) {
         String normalized = mode == null ? "" : mode.trim().toLowerCase(Locale.ROOT);
         return switch (normalized) {
-            case "close", "stationary", "standard", "cluster", "line", "surround" -> normalized;
+            case "close", "stationary", "standard", "cluster", "line", "surround", "arena" -> normalized;
             default -> "standard";
         };
     }
@@ -124,6 +124,23 @@ public final class StyleTestMobActions {
             addNpc(targets, world, com.motm.util.MotmVectors.addScaled(basePosition, horizontalForward, -3.0), "Test_Dummy_Stationary");
             addNpc(targets, world, com.motm.util.MotmVectors.addScaled(basePosition, right, 3.0), "Test_Dummy_Stationary");
             addNpc(targets, world, com.motm.util.MotmVectors.addScaled(basePosition, right, -3.0), "Test_Dummy_Stationary");
+        } else if ("arena".equals(normalizedMode)) {
+            buildArenaTerrain(world, basePosition, horizontalForward, right);
+            // [A] moving hostile down the open lane (projectiles / dashes / gap-closers)
+            addNpc(targets, world, com.motm.util.MotmVectors.addScaled(basePosition, horizontalForward, 14.0), "Goblin_Scrapper");
+            // [B] enemy cluster for AoE / cones / volleys
+            addNpc(targets, world, com.motm.util.MotmVectors.addScaled(basePosition, horizontalForward, 8.0), "Test_Dummy_Stationary");
+            addNpc(targets, world, com.motm.util.MotmVectors.addScaled(
+                    com.motm.util.MotmVectors.addScaled(basePosition, horizontalForward, 8.0), right, 2.5), "Test_Dummy_Stationary");
+            addNpc(targets, world, com.motm.util.MotmVectors.addScaled(
+                    com.motm.util.MotmVectors.addScaled(basePosition, horizontalForward, 8.0), right, -2.5), "Test_Dummy_Stationary");
+            // close stationary dummy for pure visual checks
+            addNpc(targets, world, com.motm.util.MotmVectors.addScaled(basePosition, horizontalForward, 4.0), "Test_Dummy_Stationary");
+            // [F] scaled real hostile (MotmMobRuntimeSystem applies title-band scaling post-spawn)
+            addNpc(targets, world, com.motm.util.MotmVectors.addScaled(
+                    com.motm.util.MotmVectors.addScaled(basePosition, horizontalForward, 18.0), right, 3.0), "HytaleWolf");
+            // [E] ally NPC for support / heal / buff-ally testing
+            addNpc(targets, world, com.motm.util.MotmVectors.addScaled(basePosition, right, 5.0), "MOTM_Scarak_Fighter_Ally");
         } else {
             addNpc(targets, world, groundPosition, "Test_Dummy_Stationary");
             if (!"stationary".equals(normalizedMode)) {
@@ -216,6 +233,145 @@ public final class StyleTestMobActions {
             log.log(Level.WARNING, "[MOTM] Style review arena scrub failed safely.", e);
             return "failed " + e.getClass().getSimpleName() + ": " + e.getMessage();
         }
+    }
+
+    private String buildArenaTerrain(World world, Vector3d base, Vector3d forward, Vector3d right) {
+        if (world == null || base == null || forward == null || right == null) {
+            return "skipped missing world/base";
+        }
+        int brickId = resolveArenaBlockId("Rock_Stone_Brick_Pillar_Middle", "Rock_Stone_Brick");
+        if (brickId == BlockType.UNKNOWN_ID || brickId == BlockType.EMPTY_ID) {
+            return "skipped no brick block";
+        }
+        int lavaLookId = resolveArenaBlockId("Rock_Volcanic_Cracked_Lava", "Rock_Magma_Cooled",
+                "Rock_Volcanic_Cracked_Incandescent", "Rock_Stone_Brick_Pillar_Middle");
+
+        int floorY = (int) Math.floor(base.y) - 1;
+        int anchorX = (int) Math.floor(base.x);
+        int anchorZ = (int) Math.floor(base.z);
+        // Solid blocks (walls, ledge, lava-look pad) share one selection; fluids are NEVER mixed in
+        // (BlockSelection.addFluidAtWorldPos throws when the selection already holds block placements).
+        BlockSelection solids = new BlockSelection();
+        solids.setPosition(anchorX, floorY, anchorZ);
+        solids.setAnchorAtWorldPos(anchorX, floorY, anchorZ);
+        int walls = 0;
+        int ledge = 0;
+        int lava = 0;
+
+        // [C] Wall: 5 wide x 4 high, 12m ahead, perpendicular to forward (knockback-into-wall, LoS)
+        Vector3d wallCenter = com.motm.util.MotmVectors.addScaled(base, forward, 12.0);
+        for (int i = -2; i <= 2; i++) {
+            int wx = (int) Math.floor(wallCenter.x + right.x * i);
+            int wz = (int) Math.floor(wallCenter.z + right.z * i);
+            for (int h = 1; h <= 4; h++) {
+                solids.addBlockAtWorldPos(wx, floorY + h, wz, brickId, 0, 0, 0);
+                walls++;
+            }
+        }
+        // [C] Ledge: 3x3 raised platform 3 high, 8m ahead + right 7m (airborne launch / knock-off)
+        Vector3d ledgeCenter = com.motm.util.MotmVectors.addScaled(
+                com.motm.util.MotmVectors.addScaled(base, forward, 8.0), right, 7.0);
+        int ledgeX = (int) Math.floor(ledgeCenter.x);
+        int ledgeZ = (int) Math.floor(ledgeCenter.z);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int h = 1; h <= 3; h++) {
+                    solids.addBlockAtWorldPos(ledgeX + dx, floorY + h, ledgeZ + dz, brickId, 0, 0, 0);
+                    ledge++;
+                }
+            }
+        }
+        // [D] Lava-look pad (solid molten blocks; real lava fluid crashes the client), 6m ahead + left 12m
+        Vector3d lavaCenter = com.motm.util.MotmVectors.addScaled(
+                com.motm.util.MotmVectors.addScaled(base, forward, 6.0), right, -12.0);
+        int lx = (int) Math.floor(lavaCenter.x);
+        int lz = (int) Math.floor(lavaCenter.z);
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                solids.addBlockAtWorldPos(lx + dx, floorY + 1, lz + dz, lavaLookId, 0, 0, 0);
+                lava++;
+            }
+        }
+
+        // [D] Water pool: shallow disc radius 2, 6m ahead + left 7m (wet / terrain fields / reactions).
+        // Fluid-only selection, mirroring the proven tempfluid-water-field proof.
+        int water = 0;
+        BlockSelection fluids = null;
+        int waterFluidId = resolveArenaFluidId("Fluid_Water", "Water", "water");
+        if (waterFluidId != Fluid.UNKNOWN_ID && waterFluidId != Fluid.EMPTY_ID) {
+            byte waterLevel = resolveArenaFluidLevel(waterFluidId);
+            Vector3d waterCenter = com.motm.util.MotmVectors.addScaled(
+                    com.motm.util.MotmVectors.addScaled(base, forward, 6.0), right, -7.0);
+            int cx = (int) Math.floor(waterCenter.x);
+            int cz = (int) Math.floor(waterCenter.z);
+            fluids = new BlockSelection();
+            fluids.setPosition(cx, floorY + 1, cz);
+            fluids.setAnchorAtWorldPos(cx, floorY + 1, cz);
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    if (Math.sqrt((dx * dx) + (dz * dz)) > 2.2) {
+                        continue;
+                    }
+                    fluids.addFluidAtWorldPos(cx + dx, floorY + 1, cz + dz, waterFluidId, waterLevel);
+                    water++;
+                }
+            }
+        }
+
+        int placedWater = 0;
+        try {
+            solids.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
+        } catch (Throwable e) {
+            log.log(Level.WARNING, "[MOTM] Dev arena solid terrain place failed safely.", e);
+        }
+        if (fluids != null) {
+            try {
+                fluids.place(null, world, new Vector3i(0, 0, 0), BlockMask.EMPTY);
+                placedWater = water;
+            } catch (Throwable e) {
+                log.log(Level.WARNING, "[MOTM] Dev arena water place failed safely.", e);
+            }
+        }
+        String summary = "wall=" + walls + " ledge=" + ledge + " lavaLook=" + lava + " water=" + placedWater;
+        log.info("[MOTM] Dev arena terrain built: " + summary);
+        return summary;
+    }
+
+    private int resolveArenaBlockId(String... names) {
+        for (String name : names) {
+            int id = BlockType.getBlockIdOrUnknown(name, "MOTM dev arena");
+            if (id != BlockType.UNKNOWN_ID && id != BlockType.EMPTY_ID) {
+                return id;
+            }
+        }
+        return BlockType.UNKNOWN_ID;
+    }
+
+    private int resolveArenaFluidId(String... names) {
+        for (String name : names) {
+            int id = Fluid.getAssetMap().getIndexOrDefault(name, Fluid.UNKNOWN_ID);
+            if (id != Fluid.UNKNOWN_ID && id != Fluid.EMPTY_ID) {
+                return id;
+            }
+        }
+        for (String name : names) {
+            int id = Fluid.getFluidIdOrUnknown(name, "MOTM dev arena");
+            if (id != Fluid.UNKNOWN_ID && id != Fluid.EMPTY_ID) {
+                return id;
+            }
+        }
+        return Fluid.UNKNOWN_ID;
+    }
+
+    private byte resolveArenaFluidLevel(int fluidTypeId) {
+        if (fluidTypeId == Fluid.UNKNOWN_ID || fluidTypeId == Fluid.EMPTY_ID) {
+            return (byte) 1;
+        }
+        Fluid fluid = Fluid.getAssetMap().getAsset(fluidTypeId);
+        if (fluid == null || fluid.isUnknown()) {
+            return (byte) 1;
+        }
+        return (byte) Math.max(1, fluid.getMaxFluidLevel());
     }
 
     public int countTracked(String playerId) {

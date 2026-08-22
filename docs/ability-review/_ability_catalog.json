@@ -1,0 +1,1090 @@
+{
+ "terra": [
+  {
+   "style": "quake",
+   "id": "stomp",
+   "name": "Stomp",
+   "ct": "ground_burst",
+   "observe_vis": "field/zone on ground + terrain 'seismic_shockwave' + overlay ground_cracks",
+   "observe_mech": "dmg 6%, effect:knockback, knockback 4.5, terrain seismic_shockwave, AoE r3, 4 charges",
+   "test": "live enemy, MULTIPLE enemies (AoE)"
+  },
+  {
+   "style": "quake",
+   "id": "aftershock",
+   "name": "Aftershock",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'lingering_tremor' + overlay ground_cracks",
+   "observe_mech": "dmg 5%, effect:slow+knockback, terrain lingering_tremor, AoE r8, dur 2s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "quake",
+   "id": "sinkhole",
+   "name": "Sinkhole",
+   "ct": "ground_target",
+   "observe_vis": "field/zone on ground + terrain 'sinkhole' + overlay ground_cracks",
+   "observe_mech": "dmg 15%, DoT 2%/s, effect:root+dot, terrain sinkhole, AoE r3, dur 3s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "metal",
+   "id": "iron_wall",
+   "name": "Iron Wall",
+   "ct": "barrier",
+   "observe_vis": "field/zone on ground + terrain 'iron_wall'",
+   "observe_mech": "heal 10%, effect:heal, terrain iron_wall, dur 4s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "metal",
+   "id": "metal_coat",
+   "name": "Metal Coat",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'metal_plating'",
+   "observe_mech": "effect:defense_buff, terrain metal_plating, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "metal",
+   "id": "alloy_enhancement",
+   "name": "Alloy Enhancement",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "effect:damage_buff, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "magma",
+   "id": "lava_pool",
+   "name": "Lava Pool",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'lava_pool'",
+   "observe_mech": "dmg 2%, effect:burn, terrain lava_pool, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), terrain space, REACTION partner mark, observe over duration/toggle"
+  },
+  {
+   "style": "magma",
+   "id": "obsidian_skin",
+   "name": "Obsidian Skin",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'obsidian_plates'",
+   "observe_mech": "shield 20%, effect:shield+damage_reduction, terrain obsidian_plates, dur 6s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "magma",
+   "id": "magma_sling",
+   "name": "Magma Sling",
+   "ct": "projectile",
+   "observe_vis": "projectile flying out/arcing_shot",
+   "observe_mech": "dmg 8%, effect:burn+slow",
+   "test": "live enemy"
+  },
+  {
+   "style": "stone",
+   "id": "rubble_rouser",
+   "name": "Rubble Rouser",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "dmg 10%, effect:knockback, knockback 3.5, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "stone",
+   "id": "pillar_strike",
+   "name": "Pillar Strike",
+   "ct": "ground_strike",
+   "observe_vis": "field/zone on ground + terrain 'stone_pillar'",
+   "observe_mech": "dmg 8%, effect:stun+knockback, knockup, terrain stone_pillar, AoE r2.5",
+   "test": "live enemy, MULTIPLE enemies (AoE), AIRBORNE/height"
+  },
+  {
+   "style": "stone",
+   "id": "rockslide",
+   "name": "Rockslide",
+   "ct": "dash",
+   "observe_vis": "dash movement of caster + terrain 'ruptured_earth'",
+   "observe_mech": "dmg 4%, effect:knockback+grounded, terrain ruptured_earth, dash 5m, AoE r2.4, dur 1.2s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "arbor",
+   "id": "rooted",
+   "name": "Rooted",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'root_circle'",
+   "observe_mech": "heal 10%, effect:heal, terrain root_circle, dur 5s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "arbor",
+   "id": "vines",
+   "name": "Vines",
+   "ct": "line_control",
+   "observe_vis": "line_control flying out/thorn_whip",
+   "observe_mech": "dmg 1.5%, effect:root+dot, dur 5s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "arbor",
+   "id": "sapling",
+   "name": "Sapling",
+   "ct": "projectile_line",
+   "observe_vis": "projectile_line flying out + terrain 'sprouting_grove'",
+   "observe_mech": "effect:lure, terrain sprouting_grove, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "bloom",
+   "id": "nightshade",
+   "name": "Nightshade",
+   "ct": "projectile_line",
+   "observe_vis": "projectile_line flying out/nightshade_seed + terrain 'toxic_spores'",
+   "observe_mech": "dmg 8%, effect:dot+slow, terrain toxic_spores, AoE r5, dur 5s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "bloom",
+   "id": "frolick",
+   "name": "Frolick",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "heal 5%, effect:heal+attack_buff+speed, dur 10s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "bloom",
+   "id": "cacti_cluster",
+   "name": "Cacti Cluster",
+   "ct": "projectile",
+   "observe_vis": "projectile flying out/cactus_cluster",
+   "observe_mech": "dmg 5%, effect:dot+slow, AoE r4, dur 4s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "self_petrification",
+   "id": "gargoyle",
+   "name": "Gargoyle",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'stone_shell'",
+   "observe_mech": "heal 35%, effect:heal+damage_reduction+untargetable, terrain stone_shell, dur 5s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "self_petrification",
+   "id": "glare",
+   "name": "Glare",
+   "ct": "gaze",
+   "observe_vis": "gaze cast fx",
+   "observe_mech": "effect:stun, dur 2.5s, 2 charges",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "self_petrification",
+   "id": "tunnel",
+   "name": "Tunnel",
+   "ct": "dash",
+   "observe_vis": "dash movement of caster + terrain 'tunnel_path'",
+   "observe_mech": "dmg 12%, effect:evasion, knockup, terrain tunnel_path, dash 5m, dur 5s",
+   "test": "live enemy, AIRBORNE/height, observe over duration/toggle"
+  },
+  {
+   "style": "soil",
+   "id": "burrow",
+   "name": "Burrow",
+   "ct": "dash",
+   "observe_vis": "dash movement of caster + terrain 'ruptured_earth'",
+   "observe_mech": "dmg 7%, effect:knockback, knockback 4.5, knockup, terrain ruptured_earth, dash 4m, AoE r3, 2 charges",
+   "test": "live enemy, MULTIPLE enemies (AoE), AIRBORNE/height"
+  },
+  {
+   "style": "soil",
+   "id": "mudpit",
+   "name": "Mudpit",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'mudpit'",
+   "observe_mech": "dmg 1%, effect:slow+vulnerability, terrain mudpit, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), terrain space, observe over duration/toggle"
+  },
+  {
+   "style": "soil",
+   "id": "debris",
+   "name": "Debris",
+   "ct": "projectile_volley",
+   "observe_vis": "projectile_volley flying out/debris_spray",
+   "observe_mech": "dmg 1%, effect:vulnerability+blind",
+   "test": "live enemy"
+  },
+  {
+   "style": "sand",
+   "id": "sandstorm",
+   "name": "Sandstorm",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'sandstorm'",
+   "observe_mech": "dmg 1%, effect:dot+slow, terrain sandstorm, AoE r5, dur 10s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "sand",
+   "id": "dust_devil",
+   "name": "Dust Devil",
+   "ct": "dash",
+   "observe_vis": "dash movement of caster + terrain 'dust_devil'",
+   "observe_mech": "dmg 5%, effect:knockback, knockback 4, terrain dust_devil, dash 5m, AoE r5, dur 2s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "sand",
+   "id": "vitrification",
+   "name": "Vitrification",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "effect:sand_empower, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "gem",
+   "id": "lapidary",
+   "name": "Lapidary",
+   "ct": "ground_target",
+   "observe_vis": "field/zone on ground + terrain 'crystal_gem'",
+   "observe_mech": "effect:persistent_object, terrain crystal_gem, dur 30s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "gem",
+   "id": "fracture",
+   "name": "Fracture",
+   "ct": "ground_burst",
+   "observe_vis": "field/zone on ground + terrain 'crystal_fracture'",
+   "observe_mech": "dmg 40%, effect:burst, terrain crystal_fracture, AoE r20",
+   "test": "live enemy, MULTIPLE enemies (AoE)"
+  },
+  {
+   "style": "gem",
+   "id": "refraction",
+   "name": "Refraction",
+   "ct": "support_zone",
+   "observe_vis": "field/zone on ground + terrain 'crystal_refraction'",
+   "observe_mech": "effect:damage_reduction+heal+damage_buff, terrain crystal_refraction, AoE r20",
+   "test": "live enemy, MULTIPLE enemies (AoE), ALLY present, observe over duration/toggle"
+  }
+ ],
+ "hydro": [
+  {
+   "style": "icicle",
+   "id": "frozen_needles",
+   "name": "Frozen Needles",
+   "ct": "projectile_volley",
+   "observe_vis": "projectile_volley flying out/ice_shard_volley",
+   "observe_mech": "dmg 12%, effect:slow_stack",
+   "test": "live enemy"
+  },
+  {
+   "style": "icicle",
+   "id": "stalactite_crash",
+   "name": "Stalactite Crash",
+   "ct": "ground_strike",
+   "observe_vis": "field/zone on ground + terrain 'stalactite_crash'",
+   "observe_mech": "dmg 20%, effect:slow, terrain stalactite_crash, AoE r3",
+   "test": "live enemy, MULTIPLE enemies (AoE)"
+  },
+  {
+   "style": "icicle",
+   "id": "skate",
+   "name": "Skate",
+   "ct": "dash_buff",
+   "observe_vis": "terrain 'ice_skate_trail'",
+   "observe_mech": "effect:evasion_buff, terrain ice_skate_trail, dash 8m, dur 4s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "snow",
+   "id": "snow_imp",
+   "name": "Snow Imp",
+   "ct": "summon",
+   "observe_vis": "SUMMON spawns: snow_imp + terrain 'snow_imp_summon'",
+   "observe_mech": "dmg 5%, effect:summon, summon snow_imp, terrain snow_imp_summon, dur 120s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "snow",
+   "id": "snowstorm",
+   "name": "Snowstorm",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'snowstorm'",
+   "observe_mech": "dmg 3%, effect:attack_slow, terrain snowstorm, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "snow",
+   "id": "frosty",
+   "name": "Frosty",
+   "ct": "summon",
+   "observe_vis": "SUMMON spawns: frosty_golem + terrain 'frozen_guardian'",
+   "observe_mech": "effect:summon_tank, summon frosty_golem, terrain frozen_guardian, dur 60s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "surf",
+   "id": "high_tide",
+   "name": "High Tide",
+   "ct": "wave_line",
+   "observe_vis": "wave_line flying out/tidal_surge",
+   "observe_mech": "dmg 8%, effect:knockback+speed, knockback 4.5",
+   "test": "live enemy"
+  },
+  {
+   "style": "surf",
+   "id": "waverider",
+   "name": "Waverider",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "shield 20%, effect:shield+speed, dash 10m, dur 5s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "surf",
+   "id": "riptide",
+   "name": "Riptide",
+   "ct": "line_control",
+   "observe_vis": "line_control flying out/rip_current",
+   "observe_mech": "dmg 5%, effect:vulnerability",
+   "test": "live enemy"
+  },
+  {
+   "style": "rain",
+   "id": "piercing_rain",
+   "name": "Piercing Rain",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'piercing_rain'",
+   "observe_mech": "dmg 8%, effect:dot+attack_buff, terrain piercing_rain, AoE r6, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "rain",
+   "id": "rainbow",
+   "name": "Rainbow",
+   "ct": "support_zone",
+   "observe_vis": "field/zone on ground + terrain 'healing_rainbow'",
+   "observe_mech": "heal 10%, effect:heal, terrain healing_rainbow, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "rain",
+   "id": "splash",
+   "name": "Splash",
+   "ct": "projectile_burst",
+   "observe_vis": "projectile_burst flying out/splash_burst",
+   "observe_mech": "dmg 5%, shield 20%, effect:shield, AoE r3",
+   "test": "live enemy, MULTIPLE enemies (AoE), ALLY present"
+  },
+  {
+   "style": "boiling",
+   "id": "scald",
+   "name": "Scald",
+   "ct": "projectile",
+   "observe_vis": "projectile flying out/boiling_jet",
+   "observe_mech": "dmg 10%, effect:burn+knockback, knockback 3",
+   "test": "live enemy"
+  },
+  {
+   "style": "boiling",
+   "id": "geyser",
+   "name": "Geyser",
+   "ct": "ground_strike",
+   "observe_vis": "field/zone on ground + terrain 'geyser'",
+   "observe_mech": "dmg 15%, effect:burn+knockback, knockup, terrain geyser, AoE r3",
+   "test": "live enemy, MULTIPLE enemies (AoE), AIRBORNE/height"
+  },
+  {
+   "style": "boiling",
+   "id": "overheat",
+   "name": "Overheat",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'steam_pressure'",
+   "observe_mech": "effect:attack_buff+self_burn, terrain steam_pressure, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "vapor",
+   "id": "vapor_vanish",
+   "name": "Vapor Vanish",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'mist_shroud'",
+   "observe_mech": "effect:evasion, terrain mist_shroud, dur 5s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "vapor",
+   "id": "dispersion",
+   "name": "Dispersion",
+   "ct": "dash",
+   "observe_vis": "dash movement of caster",
+   "observe_mech": "dmg 10%, dash 11m, 3 charges",
+   "test": "live enemy"
+  },
+  {
+   "style": "vapor",
+   "id": "hidrosis",
+   "name": "Hidrosis",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'condensation_veil'",
+   "observe_mech": "effect:evasion, terrain condensation_veil, dur 7s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "iceberg",
+   "id": "ice_cap",
+   "name": "Ice Cap",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'ice_shell'",
+   "observe_mech": "shield 25%, effect:shield+stun, terrain ice_shell, dur 6s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "iceberg",
+   "id": "glacier",
+   "name": "Glacier",
+   "ct": "barrier",
+   "observe_vis": "field/zone on ground + terrain 'glacier_wall'",
+   "observe_mech": "effect:defense_buff, terrain glacier_wall, dur 7s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "iceberg",
+   "id": "ice_shelf",
+   "name": "Ice Shelf",
+   "ct": "ground_strike",
+   "observe_vis": "field/zone on ground + terrain 'ice_shelf_collapse'",
+   "observe_mech": "dmg 20%, effect:stun+slow, terrain ice_shelf_collapse",
+   "test": "live enemy"
+  },
+  {
+   "style": "saltwater",
+   "id": "tide_pool",
+   "name": "Tide Pool",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'tide_pool'",
+   "observe_mech": "effect:slow+attack_buff, terrain tide_pool, AoE r4, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), terrain space, observe over duration/toggle"
+  },
+  {
+   "style": "saltwater",
+   "id": "abyssal_assist",
+   "name": "Abyssal Assist",
+   "ct": "ground_burst",
+   "observe_vis": "field/zone on ground + terrain 'abyssal_pressure'",
+   "observe_mech": "dmg 12%, effect:stun+vulnerability, terrain abyssal_pressure, AoE r3, dur 2.5s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "saltwater",
+   "id": "rip_current",
+   "name": "Rip Current",
+   "ct": "line_control",
+   "observe_vis": "line_control flying out/undertow_stream",
+   "observe_mech": "dmg 8%, effect:slow, dur 2s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "freshwater",
+   "id": "leap_frog",
+   "name": "Leap Frog",
+   "ct": "dash",
+   "observe_vis": "dash movement of caster",
+   "observe_mech": "dmg 10%, effect:vulnerability, dash 9m, 2 charges",
+   "test": "live enemy, AIRBORNE/height"
+  },
+  {
+   "style": "freshwater",
+   "id": "river_rapids",
+   "name": "River Rapids",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "effect:attack_buff+speed, dash 12m, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "freshwater",
+   "id": "swamp_monster",
+   "name": "Swamp Monster",
+   "ct": "summon",
+   "observe_vis": "SUMMON spawns: swamp_monster + terrain 'swamp_spawn'",
+   "observe_mech": "effect:summon, summon swamp_monster, terrain swamp_spawn, dur 20s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "bilgewater",
+   "id": "bilge_dump",
+   "name": "Bilge Dump",
+   "ct": "cone",
+   "observe_vis": "terrain 'bilge_spray'",
+   "observe_mech": "dmg 5%, effect:dot+slow, terrain bilge_spray, dur 5s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "bilgewater",
+   "id": "anchor_haul",
+   "name": "Anchor Haul",
+   "ct": "projectile_line",
+   "observe_vis": "projectile_line flying out/anchor_drag",
+   "observe_mech": "dmg 15%, effect:knockback, knockback 4",
+   "test": "live enemy"
+  },
+  {
+   "style": "bilgewater",
+   "id": "oil_spill",
+   "name": "Oil Spill",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'oily_sheen'",
+   "observe_mech": "effect:defense_buff+attack_buff, terrain oily_sheen, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  }
+ ],
+ "aero": [
+  {
+   "style": "scream",
+   "id": "shriek",
+   "name": "Shriek",
+   "ct": "cone",
+   "observe_vis": "cone cast fx",
+   "observe_mech": "effect:deafen, dur 4s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "scream",
+   "id": "sonic_boom",
+   "name": "Sonic Boom",
+   "ct": "wave_line",
+   "observe_vis": "wave_line flying out/sonic_wave",
+   "observe_mech": "dmg 12%, effect:stun+knockback, knockback 3.5",
+   "test": "live enemy"
+  },
+  {
+   "style": "scream",
+   "id": "battle_cry",
+   "name": "Battle Cry",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'resonant_aura'",
+   "observe_mech": "effect:attack_buff+speed, terrain resonant_aura, AoE r8, dur 10s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "jet",
+   "id": "jet_burst",
+   "name": "Jet Burst",
+   "ct": "dash",
+   "observe_vis": "dash movement of caster",
+   "observe_mech": "effect:knockback, knockup, dash 10m, 3 charges",
+   "test": "live enemy, AIRBORNE/height"
+  },
+  {
+   "style": "jet",
+   "id": "afterburner",
+   "name": "Afterburner",
+   "ct": "dash",
+   "observe_vis": "dash movement of caster + terrain 'ember_trail'",
+   "observe_mech": "dmg 15%, effect:burn, terrain ember_trail, dash 14m, dur 8s",
+   "test": "live enemy, REACTION partner mark, observe over duration/toggle"
+  },
+  {
+   "style": "jet",
+   "id": "mach_punch",
+   "name": "Mach Punch",
+   "ct": "dash_strike",
+   "observe_vis": "dash_strike movement of caster",
+   "observe_mech": "dmg 20%, effect:stun_if_wall, knockback 4.5, dash 8m",
+   "test": "live enemy"
+  },
+  {
+   "style": "thunder",
+   "id": "thunderclap",
+   "name": "Thunderclap",
+   "ct": "self_burst",
+   "observe_vis": "terrain 'thunderclap'",
+   "observe_mech": "effect:stun+shocked, terrain thunderclap, AoE r5, dur 3.5s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "thunder",
+   "id": "smite",
+   "name": "Smite",
+   "ct": "projectile",
+   "observe_vis": "projectile flying out/lightning_bolt",
+   "observe_mech": "dmg 20%, effect:lightning, AoE r1.5, 2 charges",
+   "test": "live enemy, MULTIPLE enemies (AoE)"
+  },
+  {
+   "style": "thunder",
+   "id": "chain_lightning",
+   "name": "Chain Lightning",
+   "ct": "chain",
+   "observe_vis": "chain flying out/chain_lightning",
+   "observe_mech": "dmg 10%, effect:dot, AoE r3, dur 4s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "tornado",
+   "id": "twister",
+   "name": "Twister",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground",
+   "observe_mech": "dmg 10%, effect:knockback, knockback 4, AoE r3, dur 4s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "tornado",
+   "id": "funnel_cloud",
+   "name": "Funnel Cloud",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'funnel_cloud'",
+   "observe_mech": "dmg 8%, effect:dot, terrain funnel_cloud, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "tornado",
+   "id": "eye_of_the_storm",
+   "name": "Eye of the Storm",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'eye_of_the_storm'",
+   "observe_mech": "heal 10%, shield 15%, effect:heal+shield, terrain eye_of_the_storm, dur 6s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "jump",
+   "id": "leap",
+   "name": "Leap",
+   "ct": "leap",
+   "observe_vis": "leap movement of caster",
+   "observe_mech": "dash 10m, AoE r3, dur 5s, 2 charges",
+   "test": "MULTIPLE enemies (AoE), AIRBORNE/height, observe over duration/toggle"
+  },
+  {
+   "style": "jump",
+   "id": "divebomb",
+   "name": "Divebomb",
+   "ct": "dive_strike",
+   "observe_vis": "dive_strike movement of caster",
+   "observe_mech": "dmg 20%, effect:slow, knockback 4.5, AoE r4",
+   "test": "live enemy, MULTIPLE enemies (AoE), AIRBORNE/height"
+  },
+  {
+   "style": "jump",
+   "id": "hang_time",
+   "name": "Hang Time",
+   "ct": "air_stall",
+   "observe_vis": "air_stall movement of caster",
+   "observe_mech": "effect:evasion, dur 3s, 2 charges",
+   "test": "live enemy, AIRBORNE/height, observe over duration/toggle"
+  },
+  {
+   "style": "wind_blade",
+   "id": "air_slash",
+   "name": "Air Slash",
+   "ct": "projectile_line",
+   "observe_vis": "projectile_line flying out/wind_blade",
+   "observe_mech": "dmg 8%",
+   "test": "live enemy"
+  },
+  {
+   "style": "wind_blade",
+   "id": "gale_cutter",
+   "name": "Gale Cutter",
+   "ct": "projectile_line",
+   "observe_vis": "projectile_line flying out/gale_cutter",
+   "observe_mech": "dmg 12%, effect:knockback, knockback 4",
+   "test": "live enemy"
+  },
+  {
+   "style": "wind_blade",
+   "id": "razor_wind",
+   "name": "Razor Wind",
+   "ct": "projectile_volley",
+   "observe_vis": "projectile_volley flying out/razor_wind",
+   "observe_mech": "dmg 5%",
+   "test": "live enemy"
+  },
+  {
+   "style": "smoke",
+   "id": "smoke_bomb",
+   "name": "Smoke Bomb",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'smoke_bomb'",
+   "observe_mech": "effect:blind+slow, terrain smoke_bomb, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "smoke",
+   "id": "vanish",
+   "name": "Vanish",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'vanish'",
+   "observe_mech": "effect:stealth, terrain vanish, dur 3s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "smoke",
+   "id": "smoke_form",
+   "name": "Smoke Form",
+   "ct": "transformation",
+   "observe_vis": "caster MODEL swaps to creature",
+   "observe_mech": "effect:evasion, dur 5s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "gale_wizard",
+   "id": "gust",
+   "name": "Gust",
+   "ct": "projectile",
+   "observe_vis": "projectile flying out/gust_blast",
+   "observe_mech": "dmg 12%, effect:knockback, knockback 4",
+   "test": "live enemy"
+  },
+  {
+   "style": "gale_wizard",
+   "id": "cyclone_shield",
+   "name": "Cyclone Shield",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'cyclone_shield'",
+   "observe_mech": "shield 15%, effect:defense_buff+shield, terrain cyclone_shield, dur 6s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "gale_wizard",
+   "id": "tempest",
+   "name": "Tempest",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'tempest'",
+   "observe_mech": "dmg 15%, effect:stun, terrain tempest, AoE r6, dur 4s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "pressure",
+   "id": "air_shot",
+   "name": "Air Shot",
+   "ct": "projectile",
+   "observe_vis": "projectile flying out/compressed_air_shot",
+   "observe_mech": "dmg 15%",
+   "test": "live enemy"
+  },
+  {
+   "style": "pressure",
+   "id": "bullet_storm",
+   "name": "Bullet Storm",
+   "ct": "projectile_volley",
+   "observe_vis": "projectile_volley flying out/air_bullets",
+   "observe_mech": "dmg 12%, effect:slow",
+   "test": "live enemy"
+  },
+  {
+   "style": "pressure",
+   "id": "pressure_burst",
+   "name": "Pressure Burst",
+   "ct": "projectile",
+   "observe_vis": "projectile flying out/pressure_burst",
+   "observe_mech": "dmg 20%, effect:knockback, knockback 5, dur 4s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "pollution",
+   "id": "smog",
+   "name": "Smog",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'smog_cloud'",
+   "observe_mech": "dmg 5%, effect:dot+slow, terrain smog_cloud, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "pollution",
+   "id": "toxic_breath",
+   "name": "Toxic Breath",
+   "ct": "cone",
+   "observe_vis": "terrain 'toxic_breath'",
+   "observe_mech": "dmg 8%, effect:dot+vulnerability, terrain toxic_breath, dur 5s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "pollution",
+   "id": "acid_rain",
+   "name": "Acid Rain",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'acid_rain'",
+   "observe_mech": "dmg 10%, effect:dot+vulnerability, terrain acid_rain, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  }
+ ],
+ "corruptus": [
+  {
+   "style": "flame",
+   "id": "fireball",
+   "name": "Fireball",
+   "ct": "projectile",
+   "observe_vis": "projectile flying out/explosive_fireball",
+   "observe_mech": "dmg 8%, effect:burn, AoE r3, 3 charges",
+   "test": "live enemy, MULTIPLE enemies (AoE), REACTION partner mark"
+  },
+  {
+   "style": "flame",
+   "id": "ignite",
+   "name": "Ignite",
+   "ct": "self_burst",
+   "observe_vis": "terrain 'living_flame'",
+   "observe_mech": "dmg 12%, effect:self_burn+aoe, terrain living_flame, AoE r4, dur 4s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "flame",
+   "id": "combust",
+   "name": "Combust",
+   "ct": "execute",
+   "observe_vis": "execute cast fx",
+   "observe_mech": "dmg 25%, effect:consume_burn",
+   "test": "live enemy"
+  },
+  {
+   "style": "necro",
+   "id": "raise_dead",
+   "name": "Raise Dead",
+   "ct": "summon",
+   "observe_vis": "SUMMON spawns: skeleton_minion + terrain 'grave_rise'",
+   "observe_mech": "dmg 5%, effect:summon, summon skeleton_minion, terrain grave_rise, dur 20s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "necro",
+   "id": "life_drain",
+   "name": "Life Drain",
+   "ct": "channel",
+   "observe_vis": "channel cast fx",
+   "observe_mech": "dmg 10%, effect:lifesteal, dur 4s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "necro",
+   "id": "death_mark",
+   "name": "Death Mark",
+   "ct": "curse",
+   "observe_vis": "curse cast fx",
+   "observe_mech": "effect:vulnerability, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "shadow",
+   "id": "shadow_step",
+   "name": "Shadow Step",
+   "ct": "teleport",
+   "observe_vis": "teleport movement of caster + SUMMON spawns: shadow_clone",
+   "observe_mech": "effect:stealth, summon shadow_clone, dash 12m, dur 4s, 2 charges",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "shadow",
+   "id": "umbral_veil",
+   "name": "Umbral Veil",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'umbral_shroud'",
+   "observe_mech": "effect:stealth, terrain umbral_shroud, dur 5s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "shadow",
+   "id": "dark_embrace",
+   "name": "Dark Embrace",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'shadow_zone'",
+   "observe_mech": "effect:defense_buff+heal, terrain shadow_zone, dur 6s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "hell_flame",
+   "id": "hellfire",
+   "name": "Hellfire",
+   "ct": "cone",
+   "observe_vis": "terrain 'blue_hellfire_breath'",
+   "observe_mech": "dmg 8%, effect:burn+slow, terrain blue_hellfire_breath, dur 5s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "hell_flame",
+   "id": "infernal_ground",
+   "name": "Infernal Ground",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'infernal_ground'",
+   "observe_mech": "dmg 5%, effect:burn+attack_buff, terrain infernal_ground, AoE r5, dur 7s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "hell_flame",
+   "id": "soul_scorch",
+   "name": "Soul Scorch",
+   "ct": "curse",
+   "observe_vis": "curse cast fx",
+   "observe_mech": "dmg 8%, effect:dot+vulnerability, dur 6s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "mentokinesis",
+   "id": "dominate",
+   "name": "Dominate",
+   "ct": "gaze",
+   "observe_vis": "gaze cast fx",
+   "observe_mech": "effect:root+disoriented, dur 999s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "mentokinesis",
+   "id": "mind_shatter",
+   "name": "Mind Shatter",
+   "ct": "self_burst",
+   "observe_vis": "terrain 'psychic_shatter'",
+   "observe_mech": "dmg 25%, effect:stun, terrain psychic_shatter, AoE r6",
+   "test": "live enemy, MULTIPLE enemies (AoE)"
+  },
+  {
+   "style": "mentokinesis",
+   "id": "hivemind",
+   "name": "Hivemind",
+   "ct": "self_burst",
+   "observe_vis": "terrain 'psychic_link'",
+   "observe_mech": "effect:root+disoriented, terrain psychic_link, AoE r7, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "imbuement",
+   "id": "imbue_power",
+   "name": "Imbue: Power",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "effect:attack_buff, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "imbuement",
+   "id": "imbue_fortitude",
+   "name": "Imbue: Fortitude",
+   "ct": "self_buff",
+   "observe_vis": "terrain 'abyssal_armor'",
+   "observe_mech": "heal 10%, effect:defense_buff+heal, terrain abyssal_armor, dur 8s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "imbuement",
+   "id": "imbue_swiftness",
+   "name": "Imbue: Swiftness",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "effect:evasion+attack_buff, dash 9m, dur 8s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "attonement",
+   "id": "sanctuary",
+   "name": "Sanctuary",
+   "ct": "support_zone",
+   "observe_vis": "field/zone on ground + terrain 'sanctuary'",
+   "observe_mech": "heal 15%, effect:heal, terrain sanctuary, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "attonement",
+   "id": "absorb",
+   "name": "Absorb",
+   "ct": "self_buff",
+   "observe_vis": "self aura on caster",
+   "observe_mech": "heal 10%, effect:defense_buff+heal, dur 5s",
+   "test": "live enemy, ALLY present, observe over duration/toggle"
+  },
+  {
+   "style": "attonement",
+   "id": "purify",
+   "name": "Purify",
+   "ct": "self_burst",
+   "observe_vis": "terrain 'purifying_aura'",
+   "observe_mech": "effect:burn+vulnerability, terrain purifying_aura, AoE r6, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "void",
+   "id": "rift",
+   "name": "Rift",
+   "ct": "ground_zone",
+   "observe_vis": "field/zone on ground + terrain 'void_rift'",
+   "observe_mech": "dmg 8%, effect:dot+slow, terrain void_rift, AoE r5, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "void",
+   "id": "void_spawn",
+   "name": "Void Spawn",
+   "ct": "summon",
+   "observe_vis": "SUMMON spawns: crawler_void + terrain 'void_gate'",
+   "observe_mech": "effect:summon, summon crawler_void, terrain void_gate, dur 10s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "void",
+   "id": "consume",
+   "name": "Consume",
+   "ct": "execute",
+   "observe_vis": "execute cast fx",
+   "observe_mech": "dmg 30%, effect:lifesteal, dur 2.5s",
+   "test": "live enemy, observe over duration/toggle"
+  },
+  {
+   "style": "scarak",
+   "id": "scarak_egg",
+   "name": "Scarak Egg",
+   "ct": "summon",
+   "observe_vis": "SUMMON spawns: scarak_egg + terrain 'brood_nest'",
+   "observe_mech": "effect:summon, summon scarak_egg, terrain brood_nest, dur 30s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "scarak",
+   "id": "brood_surge",
+   "name": "Brood Surge",
+   "ct": "summon_buff",
+   "observe_vis": "summon_buff cast fx",
+   "observe_mech": "effect:attack_buff, AoE r12, dur 6s",
+   "test": "live enemy, MULTIPLE enemies (AoE), observe over duration/toggle"
+  },
+  {
+   "style": "scarak",
+   "id": "locust_queen",
+   "name": "Locust Queen",
+   "ct": "summon",
+   "observe_vis": "SUMMON spawns: locust_queen + terrain 'swarm_gate'",
+   "observe_mech": "effect:summon, summon locust_queen, terrain swarm_gate, dur 20s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "primordial",
+   "id": "pterodactyl_form",
+   "name": "Pterodactyl Form",
+   "ct": "transformation",
+   "observe_vis": "caster MODEL swaps to creature",
+   "observe_mech": "dmg 10%, effect:evasion+attack_buff, dur 30s",
+   "test": "live enemy, AIRBORNE/height, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "primordial",
+   "id": "triceratops_form",
+   "name": "Triceratops Form",
+   "ct": "transformation",
+   "observe_vis": "caster MODEL swaps to creature",
+   "observe_mech": "dmg 12%, effect:defense_buff, knockback 5, dash 10m, dur 30s",
+   "test": "live enemy, space for summon/transform, observe over duration/toggle"
+  },
+  {
+   "style": "primordial",
+   "id": "t_rex_form",
+   "name": "T-Rex Form",
+   "ct": "transformation",
+   "observe_vis": "caster MODEL swaps to creature + terrain 'primal_roar'",
+   "observe_mech": "dmg 20%, effect:attack_buff+stun, terrain primal_roar, AoE r4, dur 30s",
+   "test": "live enemy, MULTIPLE enemies (AoE), space for summon/transform, observe over duration/toggle"
+  }
+ ]
+}

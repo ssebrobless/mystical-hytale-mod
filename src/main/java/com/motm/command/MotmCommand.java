@@ -880,6 +880,20 @@ public class MotmCommand {
         };
     }
 
+    String handleDevArena(PlayerData player, String[] args, Player runtimePlayer) {
+        if (args.length < 3) {
+            return "[MOTM] Usage: /motm dev arena <build|clear>";
+        }
+        if (runtimePlayer == null && mod.getRuntimePlayer(player.getPlayerId()) == null) {
+            return "[MOTM] Join a world and run this in-game to manage the dev arena.";
+        }
+        return switch (args[2].toLowerCase()) {
+            case "build", "spawn" -> mod.spawnStyleTestMobs(player.getPlayerId(), "arena");
+            case "clear", "reset" -> mod.resetStyleReviewArena(player.getPlayerId());
+            default -> "[MOTM] Usage: /motm dev arena <build|clear>";
+        };
+    }
+
     String handleDevProof(PlayerData player, String[] args, Player runtimePlayer) {
         if (args.length < 3) {
             return MotmProofCatalog.usage();
@@ -1937,6 +1951,7 @@ public class MotmCommand {
                 + "  /motm dev test reset\n"
                 + "  /motm dev test status\n"
                 + "  /motm dev test stop\n"
+                + "  /motm dev arena <build|clear>\n"
                 + "  /motm dev proof <proofId> (" + String.join(", ", MotmProofCatalog.ids()) + ")\n"
                 + "  /motm dev passive <status|health|incoming-damage|outgoing-damage|corruptus-stack|knockback>\n"
                 + "  /motm dev entities [radius]\n"

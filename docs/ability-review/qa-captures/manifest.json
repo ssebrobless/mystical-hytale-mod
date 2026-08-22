@@ -1,0 +1,1082 @@
+[
+  {
+    "cls": "aero",
+    "style": "scream",
+    "id": "shriek",
+    "name": "Shriek",
+    "ct": "cone",
+    "dur": 4,
+    "eff": "deafen"
+  },
+  {
+    "cls": "aero",
+    "style": "scream",
+    "id": "sonic_boom",
+    "name": "Sonic Boom",
+    "ct": "wave_line",
+    "dur": 0,
+    "eff": "stun+knockback"
+  },
+  {
+    "cls": "aero",
+    "style": "scream",
+    "id": "battle_cry",
+    "name": "Battle Cry",
+    "ct": "self_buff",
+    "dur": 10,
+    "eff": "attack_buff+speed"
+  },
+  {
+    "cls": "aero",
+    "style": "jet",
+    "id": "jet_burst",
+    "name": "Jet Burst",
+    "ct": "dash",
+    "dur": 0,
+    "eff": "knockback"
+  },
+  {
+    "cls": "aero",
+    "style": "jet",
+    "id": "afterburner",
+    "name": "Afterburner",
+    "ct": "dash",
+    "dur": 8,
+    "eff": "burn"
+  },
+  {
+    "cls": "aero",
+    "style": "jet",
+    "id": "mach_punch",
+    "name": "Mach Punch",
+    "ct": "dash_strike",
+    "dur": 0,
+    "eff": "stun_if_wall"
+  },
+  {
+    "cls": "aero",
+    "style": "thunder",
+    "id": "thunderclap",
+    "name": "Thunderclap",
+    "ct": "self_burst",
+    "dur": 3.5,
+    "eff": "stun+shocked"
+  },
+  {
+    "cls": "aero",
+    "style": "thunder",
+    "id": "smite",
+    "name": "Smite",
+    "ct": "projectile",
+    "dur": 0,
+    "eff": "lightning"
+  },
+  {
+    "cls": "aero",
+    "style": "thunder",
+    "id": "chain_lightning",
+    "name": "Chain Lightning",
+    "ct": "chain",
+    "dur": 4,
+    "eff": "dot"
+  },
+  {
+    "cls": "aero",
+    "style": "tornado",
+    "id": "twister",
+    "name": "Twister",
+    "ct": "ground_zone",
+    "dur": 4,
+    "eff": "knockback"
+  },
+  {
+    "cls": "aero",
+    "style": "tornado",
+    "id": "funnel_cloud",
+    "name": "Funnel Cloud",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "dot"
+  },
+  {
+    "cls": "aero",
+    "style": "tornado",
+    "id": "eye_of_the_storm",
+    "name": "Eye of the Storm",
+    "ct": "self_buff",
+    "dur": 6,
+    "eff": "heal+shield"
+  },
+  {
+    "cls": "aero",
+    "style": "jump",
+    "id": "leap",
+    "name": "Leap",
+    "ct": "leap",
+    "dur": 5,
+    "eff": ""
+  },
+  {
+    "cls": "aero",
+    "style": "jump",
+    "id": "divebomb",
+    "name": "Divebomb",
+    "ct": "dive_strike",
+    "dur": 0,
+    "eff": "slow"
+  },
+  {
+    "cls": "aero",
+    "style": "jump",
+    "id": "hang_time",
+    "name": "Hang Time",
+    "ct": "air_stall",
+    "dur": 3,
+    "eff": "evasion"
+  },
+  {
+    "cls": "aero",
+    "style": "wind_blade",
+    "id": "air_slash",
+    "name": "Air Slash",
+    "ct": "projectile_line",
+    "dur": 0,
+    "eff": ""
+  },
+  {
+    "cls": "aero",
+    "style": "wind_blade",
+    "id": "gale_cutter",
+    "name": "Gale Cutter",
+    "ct": "projectile_line",
+    "dur": 0,
+    "eff": "knockback"
+  },
+  {
+    "cls": "aero",
+    "style": "wind_blade",
+    "id": "razor_wind",
+    "name": "Razor Wind",
+    "ct": "projectile_volley",
+    "dur": 0,
+    "eff": ""
+  },
+  {
+    "cls": "aero",
+    "style": "smoke",
+    "id": "smoke_bomb",
+    "name": "Smoke Bomb",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "blind+slow"
+  },
+  {
+    "cls": "aero",
+    "style": "smoke",
+    "id": "vanish",
+    "name": "Vanish",
+    "ct": "self_buff",
+    "dur": 3,
+    "eff": "stealth"
+  },
+  {
+    "cls": "aero",
+    "style": "smoke",
+    "id": "smoke_form",
+    "name": "Smoke Form",
+    "ct": "transformation",
+    "dur": 5,
+    "eff": "evasion"
+  },
+  {
+    "cls": "aero",
+    "style": "gale_wizard",
+    "id": "gust",
+    "name": "Gust",
+    "ct": "projectile",
+    "dur": 0,
+    "eff": "knockback"
+  },
+  {
+    "cls": "aero",
+    "style": "gale_wizard",
+    "id": "cyclone_shield",
+    "name": "Cyclone Shield",
+    "ct": "self_buff",
+    "dur": 6,
+    "eff": "defense_buff+shield"
+  },
+  {
+    "cls": "aero",
+    "style": "gale_wizard",
+    "id": "tempest",
+    "name": "Tempest",
+    "ct": "ground_zone",
+    "dur": 4,
+    "eff": "stun"
+  },
+  {
+    "cls": "aero",
+    "style": "pressure",
+    "id": "air_shot",
+    "name": "Air Shot",
+    "ct": "projectile",
+    "dur": 0,
+    "eff": ""
+  },
+  {
+    "cls": "aero",
+    "style": "pressure",
+    "id": "bullet_storm",
+    "name": "Bullet Storm",
+    "ct": "projectile_volley",
+    "dur": 0,
+    "eff": "slow"
+  },
+  {
+    "cls": "aero",
+    "style": "pressure",
+    "id": "pressure_burst",
+    "name": "Pressure Burst",
+    "ct": "projectile",
+    "dur": 4,
+    "eff": "knockback"
+  },
+  {
+    "cls": "aero",
+    "style": "pollution",
+    "id": "smog",
+    "name": "Smog",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "dot+slow"
+  },
+  {
+    "cls": "aero",
+    "style": "pollution",
+    "id": "toxic_breath",
+    "name": "Toxic Breath",
+    "ct": "cone",
+    "dur": 5,
+    "eff": "dot+vulnerability"
+  },
+  {
+    "cls": "aero",
+    "style": "pollution",
+    "id": "acid_rain",
+    "name": "Acid Rain",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "dot+vulnerability"
+  },
+  {
+    "cls": "corruptus",
+    "style": "flame",
+    "id": "fireball",
+    "name": "Fireball",
+    "ct": "projectile",
+    "dur": 0,
+    "eff": "burn"
+  },
+  {
+    "cls": "corruptus",
+    "style": "flame",
+    "id": "ignite",
+    "name": "Ignite",
+    "ct": "self_burst",
+    "dur": 4,
+    "eff": "self_burn+aoe"
+  },
+  {
+    "cls": "corruptus",
+    "style": "flame",
+    "id": "combust",
+    "name": "Combust",
+    "ct": "execute",
+    "dur": 0,
+    "eff": "consume_burn"
+  },
+  {
+    "cls": "corruptus",
+    "style": "necro",
+    "id": "raise_dead",
+    "name": "Raise Dead",
+    "ct": "summon",
+    "dur": 20,
+    "eff": "summon"
+  },
+  {
+    "cls": "corruptus",
+    "style": "necro",
+    "id": "life_drain",
+    "name": "Life Drain",
+    "ct": "channel",
+    "dur": 4,
+    "eff": "lifesteal"
+  },
+  {
+    "cls": "corruptus",
+    "style": "necro",
+    "id": "death_mark",
+    "name": "Death Mark",
+    "ct": "curse",
+    "dur": 8,
+    "eff": "vulnerability"
+  },
+  {
+    "cls": "corruptus",
+    "style": "shadow",
+    "id": "shadow_step",
+    "name": "Shadow Step",
+    "ct": "teleport",
+    "dur": 4,
+    "eff": "stealth"
+  },
+  {
+    "cls": "corruptus",
+    "style": "shadow",
+    "id": "umbral_veil",
+    "name": "Umbral Veil",
+    "ct": "self_buff",
+    "dur": 5,
+    "eff": "stealth"
+  },
+  {
+    "cls": "corruptus",
+    "style": "shadow",
+    "id": "dark_embrace",
+    "name": "Dark Embrace",
+    "ct": "self_buff",
+    "dur": 6,
+    "eff": "defense_buff+heal"
+  },
+  {
+    "cls": "corruptus",
+    "style": "hell_flame",
+    "id": "hellfire",
+    "name": "Hellfire",
+    "ct": "cone",
+    "dur": 5,
+    "eff": "burn+slow"
+  },
+  {
+    "cls": "corruptus",
+    "style": "hell_flame",
+    "id": "infernal_ground",
+    "name": "Infernal Ground",
+    "ct": "ground_zone",
+    "dur": 7,
+    "eff": "burn+attack_buff"
+  },
+  {
+    "cls": "corruptus",
+    "style": "hell_flame",
+    "id": "soul_scorch",
+    "name": "Soul Scorch",
+    "ct": "curse",
+    "dur": 6,
+    "eff": "dot+vulnerability"
+  },
+  {
+    "cls": "corruptus",
+    "style": "mentokinesis",
+    "id": "dominate",
+    "name": "Dominate",
+    "ct": "gaze",
+    "dur": 999,
+    "eff": "root+disoriented"
+  },
+  {
+    "cls": "corruptus",
+    "style": "mentokinesis",
+    "id": "mind_shatter",
+    "name": "Mind Shatter",
+    "ct": "self_burst",
+    "dur": 0,
+    "eff": "stun"
+  },
+  {
+    "cls": "corruptus",
+    "style": "mentokinesis",
+    "id": "hivemind",
+    "name": "Hivemind",
+    "ct": "self_burst",
+    "dur": 6,
+    "eff": "root+disoriented"
+  },
+  {
+    "cls": "corruptus",
+    "style": "imbuement",
+    "id": "imbue_power",
+    "name": "Imbue: Power",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "attack_buff"
+  },
+  {
+    "cls": "corruptus",
+    "style": "imbuement",
+    "id": "imbue_fortitude",
+    "name": "Imbue: Fortitude",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "defense_buff+heal"
+  },
+  {
+    "cls": "corruptus",
+    "style": "imbuement",
+    "id": "imbue_swiftness",
+    "name": "Imbue: Swiftness",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "evasion+attack_buff"
+  },
+  {
+    "cls": "corruptus",
+    "style": "attonement",
+    "id": "sanctuary",
+    "name": "Sanctuary",
+    "ct": "support_zone",
+    "dur": 6,
+    "eff": "heal"
+  },
+  {
+    "cls": "corruptus",
+    "style": "attonement",
+    "id": "absorb",
+    "name": "Absorb",
+    "ct": "self_buff",
+    "dur": 5,
+    "eff": "defense_buff+heal"
+  },
+  {
+    "cls": "corruptus",
+    "style": "attonement",
+    "id": "purify",
+    "name": "Purify",
+    "ct": "self_burst",
+    "dur": 6,
+    "eff": "burn+vulnerability"
+  },
+  {
+    "cls": "corruptus",
+    "style": "void",
+    "id": "rift",
+    "name": "Rift",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "dot+slow"
+  },
+  {
+    "cls": "corruptus",
+    "style": "void",
+    "id": "void_spawn",
+    "name": "Void Spawn",
+    "ct": "summon",
+    "dur": 10,
+    "eff": "summon"
+  },
+  {
+    "cls": "corruptus",
+    "style": "void",
+    "id": "consume",
+    "name": "Consume",
+    "ct": "execute",
+    "dur": 2.5,
+    "eff": "lifesteal"
+  },
+  {
+    "cls": "corruptus",
+    "style": "scarak",
+    "id": "scarak_egg",
+    "name": "Scarak Egg",
+    "ct": "summon",
+    "dur": 30,
+    "eff": "summon"
+  },
+  {
+    "cls": "corruptus",
+    "style": "scarak",
+    "id": "brood_surge",
+    "name": "Brood Surge",
+    "ct": "summon_buff",
+    "dur": 6,
+    "eff": "attack_buff"
+  },
+  {
+    "cls": "corruptus",
+    "style": "scarak",
+    "id": "locust_queen",
+    "name": "Locust Queen",
+    "ct": "summon",
+    "dur": 20,
+    "eff": "summon"
+  },
+  {
+    "cls": "corruptus",
+    "style": "primordial",
+    "id": "pterodactyl_form",
+    "name": "Pterodactyl Form",
+    "ct": "transformation",
+    "dur": 30,
+    "eff": "evasion+attack_buff"
+  },
+  {
+    "cls": "corruptus",
+    "style": "primordial",
+    "id": "triceratops_form",
+    "name": "Triceratops Form",
+    "ct": "transformation",
+    "dur": 30,
+    "eff": "defense_buff"
+  },
+  {
+    "cls": "corruptus",
+    "style": "primordial",
+    "id": "t_rex_form",
+    "name": "T-Rex Form",
+    "ct": "transformation",
+    "dur": 30,
+    "eff": "attack_buff+stun"
+  },
+  {
+    "cls": "hydro",
+    "style": "icicle",
+    "id": "frozen_needles",
+    "name": "Frozen Needles",
+    "ct": "projectile_volley",
+    "dur": 0,
+    "eff": "slow_stack"
+  },
+  {
+    "cls": "hydro",
+    "style": "icicle",
+    "id": "stalactite_crash",
+    "name": "Stalactite Crash",
+    "ct": "ground_strike",
+    "dur": 0,
+    "eff": "slow"
+  },
+  {
+    "cls": "hydro",
+    "style": "icicle",
+    "id": "skate",
+    "name": "Skate",
+    "ct": "dash_buff",
+    "dur": 4,
+    "eff": "evasion_buff"
+  },
+  {
+    "cls": "hydro",
+    "style": "snow",
+    "id": "snow_imp",
+    "name": "Snow Imp",
+    "ct": "summon",
+    "dur": 120,
+    "eff": "summon"
+  },
+  {
+    "cls": "hydro",
+    "style": "snow",
+    "id": "snowstorm",
+    "name": "Snowstorm",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "attack_slow"
+  },
+  {
+    "cls": "hydro",
+    "style": "snow",
+    "id": "frosty",
+    "name": "Frosty",
+    "ct": "summon",
+    "dur": 60,
+    "eff": "summon_tank"
+  },
+  {
+    "cls": "hydro",
+    "style": "surf",
+    "id": "high_tide",
+    "name": "High Tide",
+    "ct": "wave_line",
+    "dur": 0,
+    "eff": "knockback+speed"
+  },
+  {
+    "cls": "hydro",
+    "style": "surf",
+    "id": "waverider",
+    "name": "Waverider",
+    "ct": "self_buff",
+    "dur": 5,
+    "eff": "shield+speed"
+  },
+  {
+    "cls": "hydro",
+    "style": "surf",
+    "id": "riptide",
+    "name": "Riptide",
+    "ct": "line_control",
+    "dur": 0,
+    "eff": "vulnerability"
+  },
+  {
+    "cls": "hydro",
+    "style": "rain",
+    "id": "piercing_rain",
+    "name": "Piercing Rain",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "dot+attack_buff"
+  },
+  {
+    "cls": "hydro",
+    "style": "rain",
+    "id": "rainbow",
+    "name": "Rainbow",
+    "ct": "support_zone",
+    "dur": 6,
+    "eff": "heal"
+  },
+  {
+    "cls": "hydro",
+    "style": "rain",
+    "id": "splash",
+    "name": "Splash",
+    "ct": "projectile_burst",
+    "dur": 0,
+    "eff": "shield"
+  },
+  {
+    "cls": "hydro",
+    "style": "boiling",
+    "id": "scald",
+    "name": "Scald",
+    "ct": "projectile",
+    "dur": 0,
+    "eff": "burn+knockback"
+  },
+  {
+    "cls": "hydro",
+    "style": "boiling",
+    "id": "geyser",
+    "name": "Geyser",
+    "ct": "ground_strike",
+    "dur": 0,
+    "eff": "burn+knockback"
+  },
+  {
+    "cls": "hydro",
+    "style": "boiling",
+    "id": "overheat",
+    "name": "Overheat",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "attack_buff+self_burn"
+  },
+  {
+    "cls": "hydro",
+    "style": "vapor",
+    "id": "vapor_vanish",
+    "name": "Vapor Vanish",
+    "ct": "self_buff",
+    "dur": 5,
+    "eff": "evasion"
+  },
+  {
+    "cls": "hydro",
+    "style": "vapor",
+    "id": "dispersion",
+    "name": "Dispersion",
+    "ct": "dash",
+    "dur": 0,
+    "eff": ""
+  },
+  {
+    "cls": "hydro",
+    "style": "vapor",
+    "id": "hidrosis",
+    "name": "Hidrosis",
+    "ct": "self_buff",
+    "dur": 7,
+    "eff": "evasion"
+  },
+  {
+    "cls": "hydro",
+    "style": "iceberg",
+    "id": "ice_cap",
+    "name": "Ice Cap",
+    "ct": "self_buff",
+    "dur": 6,
+    "eff": "shield+stun"
+  },
+  {
+    "cls": "hydro",
+    "style": "iceberg",
+    "id": "glacier",
+    "name": "Glacier",
+    "ct": "barrier",
+    "dur": 7,
+    "eff": "defense_buff"
+  },
+  {
+    "cls": "hydro",
+    "style": "iceberg",
+    "id": "ice_shelf",
+    "name": "Ice Shelf",
+    "ct": "ground_strike",
+    "dur": 0,
+    "eff": "stun+slow"
+  },
+  {
+    "cls": "hydro",
+    "style": "saltwater",
+    "id": "tide_pool",
+    "name": "Tide Pool",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "slow+attack_buff"
+  },
+  {
+    "cls": "hydro",
+    "style": "saltwater",
+    "id": "abyssal_assist",
+    "name": "Abyssal Assist",
+    "ct": "ground_burst",
+    "dur": 2.5,
+    "eff": "stun+vulnerability"
+  },
+  {
+    "cls": "hydro",
+    "style": "saltwater",
+    "id": "rip_current",
+    "name": "Rip Current",
+    "ct": "line_control",
+    "dur": 2,
+    "eff": "slow"
+  },
+  {
+    "cls": "hydro",
+    "style": "freshwater",
+    "id": "leap_frog",
+    "name": "Leap Frog",
+    "ct": "dash",
+    "dur": 0,
+    "eff": "vulnerability"
+  },
+  {
+    "cls": "hydro",
+    "style": "freshwater",
+    "id": "river_rapids",
+    "name": "River Rapids",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "attack_buff+speed"
+  },
+  {
+    "cls": "hydro",
+    "style": "freshwater",
+    "id": "swamp_monster",
+    "name": "Swamp Monster",
+    "ct": "summon",
+    "dur": 20,
+    "eff": "summon"
+  },
+  {
+    "cls": "hydro",
+    "style": "bilgewater",
+    "id": "bilge_dump",
+    "name": "Bilge Dump",
+    "ct": "cone",
+    "dur": 5,
+    "eff": "dot+slow"
+  },
+  {
+    "cls": "hydro",
+    "style": "bilgewater",
+    "id": "anchor_haul",
+    "name": "Anchor Haul",
+    "ct": "projectile_line",
+    "dur": 0,
+    "eff": "knockback"
+  },
+  {
+    "cls": "hydro",
+    "style": "bilgewater",
+    "id": "oil_spill",
+    "name": "Oil Spill",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "defense_buff+attack_buff"
+  },
+  {
+    "cls": "terra",
+    "style": "quake",
+    "id": "stomp",
+    "name": "Stomp",
+    "ct": "ground_burst",
+    "dur": 0,
+    "eff": "knockback"
+  },
+  {
+    "cls": "terra",
+    "style": "quake",
+    "id": "aftershock",
+    "name": "Aftershock",
+    "ct": "ground_zone",
+    "dur": 2,
+    "eff": "slow+knockback"
+  },
+  {
+    "cls": "terra",
+    "style": "quake",
+    "id": "sinkhole",
+    "name": "Sinkhole",
+    "ct": "ground_target",
+    "dur": 3,
+    "eff": "root+dot"
+  },
+  {
+    "cls": "terra",
+    "style": "metal",
+    "id": "iron_wall",
+    "name": "Iron Wall",
+    "ct": "barrier",
+    "dur": 4,
+    "eff": "heal"
+  },
+  {
+    "cls": "terra",
+    "style": "metal",
+    "id": "metal_coat",
+    "name": "Metal Coat",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "defense_buff"
+  },
+  {
+    "cls": "terra",
+    "style": "metal",
+    "id": "alloy_enhancement",
+    "name": "Alloy Enhancement",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "damage_buff"
+  },
+  {
+    "cls": "terra",
+    "style": "magma",
+    "id": "lava_pool",
+    "name": "Lava Pool",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "burn"
+  },
+  {
+    "cls": "terra",
+    "style": "magma",
+    "id": "obsidian_skin",
+    "name": "Obsidian Skin",
+    "ct": "self_buff",
+    "dur": 6,
+    "eff": "shield+damage_reduction"
+  },
+  {
+    "cls": "terra",
+    "style": "magma",
+    "id": "magma_sling",
+    "name": "Magma Sling",
+    "ct": "projectile",
+    "dur": 0,
+    "eff": "burn+slow"
+  },
+  {
+    "cls": "terra",
+    "style": "stone",
+    "id": "rubble_rouser",
+    "name": "Rubble Rouser",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "knockback"
+  },
+  {
+    "cls": "terra",
+    "style": "stone",
+    "id": "pillar_strike",
+    "name": "Pillar Strike",
+    "ct": "ground_strike",
+    "dur": 0,
+    "eff": "stun+knockback"
+  },
+  {
+    "cls": "terra",
+    "style": "stone",
+    "id": "rockslide",
+    "name": "Rockslide",
+    "ct": "dash",
+    "dur": 1.2,
+    "eff": "knockback+grounded"
+  },
+  {
+    "cls": "terra",
+    "style": "arbor",
+    "id": "rooted",
+    "name": "Rooted",
+    "ct": "self_buff",
+    "dur": 5,
+    "eff": "heal"
+  },
+  {
+    "cls": "terra",
+    "style": "arbor",
+    "id": "vines",
+    "name": "Vines",
+    "ct": "line_control",
+    "dur": 5,
+    "eff": "root+dot"
+  },
+  {
+    "cls": "terra",
+    "style": "arbor",
+    "id": "sapling",
+    "name": "Sapling",
+    "ct": "projectile_line",
+    "dur": 8,
+    "eff": "lure"
+  },
+  {
+    "cls": "terra",
+    "style": "bloom",
+    "id": "nightshade",
+    "name": "Nightshade",
+    "ct": "projectile_line",
+    "dur": 5,
+    "eff": "dot+slow"
+  },
+  {
+    "cls": "terra",
+    "style": "bloom",
+    "id": "frolick",
+    "name": "Frolick",
+    "ct": "self_buff",
+    "dur": 10,
+    "eff": "heal+attack_buff+speed"
+  },
+  {
+    "cls": "terra",
+    "style": "bloom",
+    "id": "cacti_cluster",
+    "name": "Cacti Cluster",
+    "ct": "projectile",
+    "dur": 4,
+    "eff": "dot+slow"
+  },
+  {
+    "cls": "terra",
+    "style": "self_petrification",
+    "id": "gargoyle",
+    "name": "Gargoyle",
+    "ct": "self_buff",
+    "dur": 5,
+    "eff": "heal+damage_reduction+untargetable"
+  },
+  {
+    "cls": "terra",
+    "style": "self_petrification",
+    "id": "glare",
+    "name": "Glare",
+    "ct": "gaze",
+    "dur": 2.5,
+    "eff": "stun"
+  },
+  {
+    "cls": "terra",
+    "style": "self_petrification",
+    "id": "tunnel",
+    "name": "Tunnel",
+    "ct": "dash",
+    "dur": 5,
+    "eff": "evasion"
+  },
+  {
+    "cls": "terra",
+    "style": "soil",
+    "id": "burrow",
+    "name": "Burrow",
+    "ct": "dash",
+    "dur": 0,
+    "eff": "knockback"
+  },
+  {
+    "cls": "terra",
+    "style": "soil",
+    "id": "mudpit",
+    "name": "Mudpit",
+    "ct": "ground_zone",
+    "dur": 6,
+    "eff": "slow+vulnerability"
+  },
+  {
+    "cls": "terra",
+    "style": "soil",
+    "id": "debris",
+    "name": "Debris",
+    "ct": "projectile_volley",
+    "dur": 0,
+    "eff": "vulnerability+blind"
+  },
+  {
+    "cls": "terra",
+    "style": "sand",
+    "id": "sandstorm",
+    "name": "Sandstorm",
+    "ct": "self_buff",
+    "dur": 10,
+    "eff": "dot+slow"
+  },
+  {
+    "cls": "terra",
+    "style": "sand",
+    "id": "dust_devil",
+    "name": "Dust Devil",
+    "ct": "dash",
+    "dur": 2,
+    "eff": "knockback"
+  },
+  {
+    "cls": "terra",
+    "style": "sand",
+    "id": "vitrification",
+    "name": "Vitrification",
+    "ct": "self_buff",
+    "dur": 8,
+    "eff": "sand_empower"
+  },
+  {
+    "cls": "terra",
+    "style": "gem",
+    "id": "lapidary",
+    "name": "Lapidary",
+    "ct": "ground_target",
+    "dur": 30,
+    "eff": "persistent_object"
+  },
+  {
+    "cls": "terra",
+    "style": "gem",
+    "id": "fracture",
+    "name": "Fracture",
+    "ct": "ground_burst",
+    "dur": 0,
+    "eff": "burst"
+  },
+  {
+    "cls": "terra",
+    "style": "gem",
+    "id": "refraction",
+    "name": "Refraction",
+    "ct": "support_zone",
+    "dur": 0,
+    "eff": "damage_reduction+heal+damage_buff"
+  }
+]

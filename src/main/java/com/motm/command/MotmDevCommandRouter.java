@@ -30,6 +30,7 @@ final class MotmDevCommandRouter {
             case "observe", "observability" -> command.handleDevObserve(player, args, runtimePlayer);
             case "audit" -> command.handleDevAudit(player, args);
             case "test" -> command.handleDevTest(player, args, runtimePlayer);
+            case "arena" -> command.handleDevArena(player, args, runtimePlayer);
             case "proof" -> command.handleDevProof(player, args, runtimePlayer);
             case "passive", "passives" -> command.handleDevPassive(player, args, runtimePlayer);
             case "entities", "entity", "npcs" -> command.handleDevEntities(player, args, runtimePlayer);

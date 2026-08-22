@@ -95,7 +95,9 @@ public final class FieldRuntimeSpecs {
         }
         String abilityId = lower(ability.getId());
         String terrainEffect = lower(ability.getTerrainEffect());
-        return !"lava_pool".equals(abilityId) && !terrainEffect.contains("lava_pool");
+        return !"lava_pool".equals(abilityId) && !terrainEffect.contains("lava_pool")
+                && !"tide_pool".equals(abilityId) && !terrainEffect.contains("tide_pool")
+                && !"oil_spill".equals(abilityId) && !terrainEffect.contains("oil_spill");
     }
 
     public static boolean shouldApplyRepeatingTargetTokens(AbilityData ability) {
