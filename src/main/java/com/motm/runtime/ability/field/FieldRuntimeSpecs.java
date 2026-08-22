@@ -127,16 +127,8 @@ public final class FieldRuntimeSpecs {
             );
         }
         if (terrainEffect.contains("lava_pool")) {
-            return new FieldTerrainRuntimeSpec(
-                    FieldTerrainRuntimeKind.LAVA_POOL,
-                    "lava_pool",
-                    true,
-                    false,
-                    false,
-                    0,
-                    List.of("Fluid_Lava", "Lava", "lava"),
-                    List.of()
-            );
+            return blockDisc("lava_pool",
+                    "Rock_Volcanic_Cracked_Incandescent", "Rock_Volcanic_Cracked_Lava", "Rock_Volcanic");
         }
         if (terrainEffect.contains("mudpit")) {
             return new FieldTerrainRuntimeSpec(
@@ -222,7 +214,59 @@ public final class FieldRuntimeSpecs {
                     List.of()
             );
         }
+        if (terrainEffect.contains("infernal_ground")) {
+            return blockDisc("infernal_ground",
+                    "Rock_Volcanic_Cracked_Incandescent", "Rock_Volcanic_Cracked_Lava", "Rock_Volcanic");
+        }
+        if (terrainEffect.contains("void_rift") || terrainEffect.contains("rift")) {
+            return blockDisc("void_rift", "Ore_Onyxium_Basalt", "Rock_Basalt", "Rock_Bedrock");
+        }
+        if (terrainEffect.contains("sanctuary")) {
+            return blockDisc("sanctuary", "Rock_Marble", "Rock_Chalk", "Rock_Calcite");
+        }
+        if (terrainEffect.contains("snowstorm")) {
+            return blockDisc("snowstorm", "Soil_Snow", "Soil_Snow_Half", "Rock_Aqua");
+        }
+        if (terrainEffect.contains("healing_rainbow") || terrainEffect.contains("rainbow")) {
+            return blockDisc("healing_rainbow", "Rock_Marble", "Rock_Quartzite", "Rock_Calcite");
+        }
+        if (terrainEffect.contains("lingering_tremor") || terrainEffect.contains("seismic")) {
+            return blockDisc("lingering_tremor", "Rock_Slate", "Rock_Shale", "Rock_Stone");
+        }
+        if (terrainEffect.contains("sinkhole")) {
+            return blockDisc("sinkhole", "Soil_Dirt_Dry", "Soil_Dirt", "Rock_Slate");
+        }
+        if (terrainEffect.contains("crystal")) {
+            return blockDisc("crystal_gem", "Ore_Onyxium_Stone", "Ore_Cobalt_Stone", "Rock_Quartzite");
+        }
+        if (terrainEffect.contains("acid_rain")) {
+            return fluidDisc("acid_rain", "Fluid_Poison", "Fluid_Slime");
+        }
+        if (terrainEffect.contains("smog")) {
+            return blockDisc("smog_cloud", "Soil_Dirt_Poisoned", "Soil_Dirt_Dry", "Soil_Dirt");
+        }
+        if (terrainEffect.contains("smoke_bomb")) {
+            return blockDisc("smoke_bomb", "Soil_Dirt_Burnt", "Soil_Dirt", "Rock_Slate");
+        }
+        if (terrainEffect.contains("funnel_cloud") || terrainEffect.contains("tempest")) {
+            return blockDisc("wind_scour", "Soil_Dirt_Dry", "Soil_Sand", "Soil_Dirt");
+        }
+        if (terrainEffect.contains("piercing_rain")) {
+            return fluidDisc("piercing_rain", "Fluid_Water");
+        }
         return FieldTerrainRuntimeSpec.none();
+    }
+
+    private static FieldTerrainRuntimeSpec blockDisc(String reason, String... blocks) {
+        return new FieldTerrainRuntimeSpec(
+                FieldTerrainRuntimeKind.GROUNDED_BLOCK_DISC,
+                reason, true, false, false, 0, List.of(blocks), List.of());
+    }
+
+    private static FieldTerrainRuntimeSpec fluidDisc(String reason, String... fluids) {
+        return new FieldTerrainRuntimeSpec(
+                FieldTerrainRuntimeKind.GROUNDED_FLUID_DISC,
+                reason, true, true, false, 0, List.of(fluids), List.of());
     }
 
     public static List<String> terrainRestoreReasons(AbilityData ability) {

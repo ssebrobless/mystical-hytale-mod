@@ -63,15 +63,20 @@ public final class TerrainPlacementHytaleAdapter {
                     terrain.primaryAssetIdArray(),
                     terrain.secondaryAssetIdArray(),
                     restoreAdapter);
-            case LAVA_POOL -> placeGroundedBlockDiscSelection(
+            case GROUNDED_BLOCK_DISC -> placeGroundedBlockDiscSelection(
                     runtimePlayer.getWorld(),
                     terrain.reason(),
                     center,
-                    ability.getRadius(),
+                    FieldRuntimeSpecs.radius(ability),
                     expireAtMillis,
-                    "Rock_Volcanic_Cracked_Incandescent",
-                    "Rock_Volcanic_Cracked_Lava",
-                    "Rock_Magma_Cooled");
+                    terrain.primaryAssetIdArray());
+            case GROUNDED_FLUID_DISC -> placeGroundedFluidDiscSelection(
+                    runtimePlayer.getWorld(),
+                    terrain.reason(),
+                    center,
+                    FieldRuntimeSpecs.radius(ability),
+                    expireAtMillis,
+                    terrain.primaryAssetIdArray());
             case MUDPIT -> {
                 String fluid = placeGroundedFluidDiscSelection(
                         runtimePlayer.getWorld(),
@@ -648,29 +653,26 @@ public final class TerrainPlacementHytaleAdapter {
     }
 
     public int resolveRuntimeBlockTypeId(String... blockIds) {
+        // NON-LOADING lookup only. BlockType.getBlockIdOrUnknown triggers AssetStore.loadAssets
+        // for not-yet-loaded ids, which needs the asset-store write lock while world tick threads
+        // hold the read lock -> hard deadlock (observed: rift/Ore_Onyxium_Basalt). getIndexOrDefault
+        // resolves only already-loaded blocks and returns UNKNOWN otherwise (no load, no lock).
+        var map = BlockType.getAssetMap();
         for (String blockId : blockIds) {
-            try {
-                int id = BlockType.getBlockIdOrUnknown(blockId, "MOTM Terra runtime terrain");
-                if (id != BlockType.UNKNOWN_ID && id != BlockType.EMPTY_ID) {
-                    return id;
-                }
-            } catch (Throwable e) {
-                logWarning("[MOTM] Terra runtime block candidate skipped: id=" + blockId
-                        + " error=" + e.getMessage());
+            int id = map.getIndexOrDefault(blockId, BlockType.UNKNOWN_ID);
+            if (id != BlockType.UNKNOWN_ID && id != BlockType.EMPTY_ID) {
+                return id;
             }
         }
         return BlockType.UNKNOWN_ID;
     }
 
     public int resolveRuntimeFluidTypeId(String... fluidIds) {
+        // NON-LOADING lookup only (see resolveRuntimeBlockTypeId). getFluidIdOrUnknown would load
+        // and deadlock the tick thread for not-yet-loaded fluids.
+        var map = Fluid.getAssetMap();
         for (String fluidId : fluidIds) {
-            int id = Fluid.getAssetMap().getIndexOrDefault(fluidId, Fluid.UNKNOWN_ID);
-            if (id != Fluid.UNKNOWN_ID && id != Fluid.EMPTY_ID) {
-                return id;
-            }
-        }
-        for (String fluidId : fluidIds) {
-            int id = Fluid.getFluidIdOrUnknown(fluidId, "MOTM Terra runtime fluid");
+            int id = map.getIndexOrDefault(fluidId, Fluid.UNKNOWN_ID);
             if (id != Fluid.UNKNOWN_ID && id != Fluid.EMPTY_ID) {
                 return id;
             }

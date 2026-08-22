@@ -3,7 +3,8 @@ package com.motm.runtime.ability.field;
 public enum FieldTerrainRuntimeKind {
     NONE,
     IRON_WALL,
-    LAVA_POOL,
+    GROUNDED_BLOCK_DISC,
+    GROUNDED_FLUID_DISC,
     MUDPIT,
     STONE_PILLAR,
     TIDE_POOL,
