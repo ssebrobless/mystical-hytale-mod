@@ -528,6 +528,62 @@ public final class TerrainPlacementHytaleAdapter {
                 selection.getBlockCount() + " offset obsidian shell blocks");
     }
 
+    private static final int MAX_DISC_RADIUS = 8;
+
+    private static int clampDiscRadius(double radius) {
+        return Math.max(1, Math.min(MAX_DISC_RADIUS, (int) Math.round(radius)));
+    }
+
+    // Palette of themed terrain assets used by field footprints (FieldRuntimeSpecs.terrainSpec).
+    // Warmed once off-tick at startup so the tick-thread non-loading lookups resolve them.
+    private static final String[] PREWARM_BLOCKS = {
+            "Rock_Volcanic_Cracked_Incandescent", "Rock_Volcanic_Cracked_Lava", "Rock_Volcanic",
+            "Rock_Basalt", "Rock_Bedrock",
+            "Rock_Marble", "Rock_Chalk", "Rock_Calcite", "Rock_Quartzite",
+            "Soil_Snow", "Soil_Snow_Half", "Rock_Aqua",
+            "Rock_Slate", "Rock_Shale", "Rock_Stone",
+            "Soil_Dirt_Dry", "Soil_Dirt", "Soil_Dirt_Poisoned", "Soil_Dirt_Burnt", "Soil_Grass_Burnt", "Soil_Sand",
+            "Metal_Iron", "Ice_Block"
+    };
+    private static final String[] PREWARM_FLUIDS = {
+            "Fluid_Water", "Fluid_Poison", "Fluid_Slime", "Fluid_Lava", "Fluid_Tar"
+    };
+
+    /**
+     * Force-loads the themed terrain palette into the asset store. MUST run off the world tick
+     * (loadAssets takes the asset-store write lock) and only after the block/fluid registry is
+     * loaded (running during BlockSetModule init corrupts block-set creation). Called once from
+     * onPlayerReady so runtime placement's non-loading lookups find every themed block/fluid.
+     */
+    public static void prewarmTerrainAssets(java.util.logging.Logger log) {
+        int blocks = 0;
+        for (String id : PREWARM_BLOCKS) {
+            try {
+                int i = BlockType.getBlockIdOrUnknown(id, "MOTM terrain prewarm");
+                if (i != BlockType.UNKNOWN_ID && i != BlockType.EMPTY_ID) {
+                    blocks++;
+                }
+            } catch (Throwable ignored) {
+                // asset system not ready / unknown id -> leave unwarmed, runtime falls back safely
+            }
+        }
+        int fluids = 0;
+        for (String id : PREWARM_FLUIDS) {
+            try {
+                int i = Fluid.getFluidIdOrUnknown(id, "MOTM terrain prewarm");
+                if (i != Fluid.UNKNOWN_ID && i != Fluid.EMPTY_ID) {
+                    fluids++;
+                }
+            } catch (Throwable ignored) {
+                // ignore
+            }
+        }
+        if (log != null) {
+            log.info("[MOTM] Terrain asset prewarm: blocks=" + blocks + "/" + PREWARM_BLOCKS.length
+                    + " fluids=" + fluids + "/" + PREWARM_FLUIDS.length);
+        }
+    }
+
     public String placeFluidDiscSelection(World world,
                                           String reason,
                                           Vector3d center,
@@ -544,7 +600,7 @@ public final class TerrainPlacementHytaleAdapter {
 
         Vector3i anchor = blockAnchor(center);
         BlockSelection selection = baseSelection(anchor);
-        int r = Math.max(1, (int) Math.round(radius));
+        int r = clampDiscRadius(radius);
         byte fluidLevel = (byte) Math.max(1, fluid.getMaxFluidLevel());
         for (int x = -r; x <= r; x++) {
             for (int z = -r; z <= r; z++) {
@@ -585,7 +641,7 @@ public final class TerrainPlacementHytaleAdapter {
         }
         Vector3i anchor = blockAnchor(center);
         BlockSelection selection = baseSelection(anchor);
-        int r = Math.max(1, (int) Math.round(radius));
+        int r = clampDiscRadius(radius);
         for (int x = -r; x <= r; x++) {
             for (int z = -r; z <= r; z++) {
                 double dist = Math.sqrt((x * x) + (z * z));

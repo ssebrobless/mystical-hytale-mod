@@ -75,9 +75,9 @@ class FieldRuntimeSpecsTest {
         assertEquals(List.of("Metal_Iron"), ironWall.primaryAssetIds());
         assertEquals(List.of("iron_wall"), FieldRuntimeSpecs.terrainRestoreReasons(ironWallAbility()));
 
-        assertEquals(FieldTerrainRuntimeKind.LAVA_POOL, lavaPool.kind());
+        assertEquals(FieldTerrainRuntimeKind.GROUNDED_BLOCK_DISC, lavaPool.kind());
         assertTrue(lavaPool.restoreBeforePlace());
-        assertEquals(List.of("Fluid_Lava", "Lava", "lava"), lavaPool.primaryAssetIds());
+        assertEquals(List.of("Rock_Volcanic_Cracked_Incandescent", "Rock_Volcanic_Cracked_Lava", "Rock_Volcanic"), lavaPool.primaryAssetIds());
         assertEquals(List.of("lava_pool"), FieldRuntimeSpecs.terrainRestoreReasons(lavaPoolAbility()));
 
         assertEquals(FieldTerrainRuntimeKind.MUDPIT, mudpit.kind());

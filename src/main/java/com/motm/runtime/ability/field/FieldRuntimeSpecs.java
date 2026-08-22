@@ -219,7 +219,9 @@ public final class FieldRuntimeSpecs {
                     "Rock_Volcanic_Cracked_Incandescent", "Rock_Volcanic_Cracked_Lava", "Rock_Volcanic");
         }
         if (terrainEffect.contains("void_rift") || terrainEffect.contains("rift")) {
-            return blockDisc("void_rift", "Ore_Onyxium_Basalt", "Rock_Basalt", "Rock_Bedrock");
+            // Ore_Onyxium_Basalt has no client texture (renders missing-texture checkerboard);
+            // Rock_Slate is client-proven dark and reads as a void scar.
+            return blockDisc("void_rift", "Rock_Slate", "Rock_Basalt", "Rock_Stone");
         }
         if (terrainEffect.contains("sanctuary")) {
             return blockDisc("sanctuary", "Rock_Marble", "Rock_Chalk", "Rock_Calcite");
@@ -237,10 +239,11 @@ public final class FieldRuntimeSpecs {
             return blockDisc("sinkhole", "Soil_Dirt_Dry", "Soil_Dirt", "Rock_Slate");
         }
         if (terrainEffect.contains("crystal")) {
-            return blockDisc("crystal_gem", "Ore_Onyxium_Stone", "Ore_Cobalt_Stone", "Rock_Quartzite");
+            // Ore_Onyxium_Stone / Ore_Cobalt_Stone checkerboard client-side; Rock_Slate is the proven catch.
+            return blockDisc("crystal_gem", "Rock_Quartzite", "Rock_Calcite", "Rock_Slate");
         }
         if (terrainEffect.contains("acid_rain")) {
-            return fluidDisc("acid_rain", "Fluid_Poison", "Fluid_Slime");
+            return blockDisc("acid_rain", "Soil_Dirt_Poisoned", "Soil_Grass_Burnt", "Soil_Dirt_Dry");
         }
         if (terrainEffect.contains("smog")) {
             return blockDisc("smog_cloud", "Soil_Dirt_Poisoned", "Soil_Dirt_Dry", "Soil_Dirt");

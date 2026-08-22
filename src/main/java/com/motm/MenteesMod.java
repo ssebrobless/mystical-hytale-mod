@@ -1242,6 +1242,8 @@ public class MenteesMod extends JavaPlugin {
     private volatile MotmPreflightAudit.AuditReport lastPreflightAudit;
     private final java.util.concurrent.atomic.AtomicBoolean preflightWorldRerunPending =
             new java.util.concurrent.atomic.AtomicBoolean(true);
+    private final java.util.concurrent.atomic.AtomicBoolean terrainPrewarmPending =
+            new java.util.concurrent.atomic.AtomicBoolean(true);
 
     // Plugin data directory
     private Path pluginDirectory;
@@ -2120,6 +2122,17 @@ public class MenteesMod extends JavaPlugin {
             // Setup-time preflight cannot see world asset maps; re-audit once
             // now that the registry is loaded so manifest validation is real.
             runPreflightAudit();
+        }
+        if (terrainPrewarmPending.compareAndSet(true, false)) {
+            // Force-load the themed terrain palette once, off-tick, now that the block/fluid
+            // registry is fully loaded (running this at enable races BlockSetModule init and
+            // corrupts block-set creation -> dead world). Field footprints then resolve themed
+            // blocks/fluids without a synchronous tick-thread asset load.
+            Thread terrainPrewarm = new Thread(
+                    () -> com.motm.runtime.ability.terrain.TerrainPlacementHytaleAdapter.prewarmTerrainAssets(LOG),
+                    "motm-terrain-prewarm");
+            terrainPrewarm.setDaemon(true);
+            terrainPrewarm.start();
         }
         playerSessionLifecycleActions.onPlayerReady(runtimePlayer);
     }
