@@ -1,14 +1,10 @@
 ﻿Group #Root {
-  Anchor: (
-    Bottom: 32,
-    Width: 420,
-    Height: 248
-  );
 
   Group #StatusRoot {
     Anchor: (
-      Bottom: 96,
-      Width: 420,
+      Left: 24,
+      Top: 118,
+      Width: 320,
       Height: 34
     );
 
@@ -1000,10 +996,10 @@
 
   Group #XpRoot {
     Anchor: (
-      Left: -700,
-      Top: -775,
+      Left: 24,
+      Top: 18,
       Width: 270,
-      Height: 34
+      Height: 46
     );
 
     ProgressBar #XpBar {
@@ -1043,13 +1039,28 @@
         TextColor: #c7c8d2
       );
     }
+    Label #IdentityLine {
+      Anchor: (
+        Left: 0,
+        Top: 28,
+        Width: 270,
+        Height: 14
+      );
+      Style: (
+        Alignment: Start,
+        FontSize: 11,
+        RenderBold: true,
+        RenderUppercase: true,
+        TextColor: #cdd6e6
+      );
+    }
   }
 
   Group #PassiveTrackerRoot {
     Anchor: (
-      Left: 330,
-      Top: -738,
-      Width: 300,
+      Right: 24,
+      Top: 18,
+      Width: 320,
       Height: 230
     );
     Visible: false;
@@ -1202,9 +1213,10 @@
 
   Group #ResourceRoot {
     Anchor: (
-      Bottom: 88,
-      Width: 420,
-      Height: 30
+      Left: 24,
+      Bottom: 64,
+      Width: 300,
+      Height: 38
     );
     Visible: false;
 
@@ -1269,8 +1281,8 @@
     Label #ResourceLabel {
       Anchor: (
         Left: 0,
-        Top: 18,
-        Width: 420,
+        Top: 24,
+        Width: 300,
         Height: 12
       );
       Style: (
@@ -1282,8 +1294,8 @@
 
   Group #AbilitySlotsRoot {
     Anchor: (
-      Right: -660,
-      Bottom: 32,
+      Right: 24,
+      Bottom: 36,
       Width: 246,
       Height: 64
     );
@@ -1397,6 +1409,21 @@
           TextColor: #f2f3f8
         );
       }
+      Label #Ability1Key {
+        Anchor: (
+          Left: 0,
+          Top: 0,
+          Width: 74,
+          Height: 12
+        );
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          RenderUppercase: true,
+          TextColor: #ffd98a
+        );
+      }
     }
 
     Group #Ability2Root {
@@ -1507,6 +1534,21 @@
           TextColor: #f2f3f8
         );
       }
+      Label #Ability2Key {
+        Anchor: (
+          Left: 0,
+          Top: 0,
+          Width: 74,
+          Height: 12
+        );
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          RenderUppercase: true,
+          TextColor: #ffd98a
+        );
+      }
     }
 
     Group #Ability3Root {
@@ -1615,6 +1657,21 @@
           FontSize: 8,
           RenderBold: true,
           TextColor: #f2f3f8
+        );
+      }
+      Label #Ability3Key {
+        Anchor: (
+          Left: 0,
+          Top: 0,
+          Width: 74,
+          Height: 12
+        );
+        Style: (
+          Alignment: Center,
+          FontSize: 10,
+          RenderBold: true,
+          RenderUppercase: true,
+          TextColor: #ffd98a
         );
       }
     }

@@ -34,6 +34,7 @@ public class MotmStatusHud extends CustomUIHud {
     private static final String MOVEMENT_ICON = "Common/UI/StatusEffects/Stamina.png";
     private static final String CORRUPTUS_ICON = "Common/UI/StatusEffects/Poison.png";
     private static final String HYDRO_BARRIER_ICON = "Assets/StatusEffects/Icons/ShieldAbility@2x.png";
+    private static final String[] ABILITY_SLOT_KEYS = {"LMB", "RMB", "USE"};
 
     private final MenteesMod mod;
 
@@ -68,9 +69,13 @@ public class MotmStatusHud extends CustomUIHud {
         boolean visible = !primaryLine.isBlank();
 
         commands.set("#StatusRoot.Visible", visible);
-        setText(commands, "#StatusLine1.Text", primaryLine);
+        // Identity now lives in the top-left rail beneath XP; StatusLine1 stays hidden so it
+        // no longer collides with Hytale's centered held-item name popup above the hotbar.
+        setText(commands, "#IdentityLine.Text", primaryLine);
+        commands.set("#IdentityLine.Visible", visible);
+        setText(commands, "#StatusLine1.Text", "");
         setText(commands, "#StatusLine2.Text", "");
-        commands.set("#StatusLine1.Visible", !primaryLine.isBlank());
+        commands.set("#StatusLine1.Visible", false);
         commands.set("#StatusLine2.Visible", false);
 
         // Live buff/debuff strip: read active StatusEffects and populate the pre-declared slots.
@@ -539,7 +544,9 @@ public class MotmStatusHud extends CustomUIHud {
         if (!slotStatus.available()) {
             setText(commands, prefix + "Name.Text", "");
             setText(commands, prefix + "Timer.Text", "");
+            setText(commands, prefix + "Key.Text", "");
             commands.set(prefix + "Timer.Visible", false);
+            commands.set(prefix + "Key.Visible", false);
             commands.set(prefix + "ReadyBg.Visible", false);
             commands.set(prefix + "CooldownBg.Visible", false);
             renderAbilityIcon(commands, prefix, null);
@@ -549,6 +556,9 @@ public class MotmStatusHud extends CustomUIHud {
         boolean ready = slotStatus.phase() == com.motm.manager.StyleManager.AbilityPhase.READY && !slotStatus.toggleActive();
         String timerText = buildAbilityTimerText(slotStatus);
 
+        String keyLabel = slot >= 1 && slot <= ABILITY_SLOT_KEYS.length ? ABILITY_SLOT_KEYS[slot - 1] : "";
+        setText(commands, prefix + "Key.Text", keyLabel);
+        commands.set(prefix + "Key.Visible", !keyLabel.isBlank());
         setText(commands, prefix + "Name.Text", abbreviateAbilityName(slotStatus.abilityName()));
         setText(commands, prefix + "Timer.Text", timerText);
         commands.set(prefix + "Timer.Visible", !timerText.isBlank());
@@ -585,7 +595,7 @@ public class MotmStatusHud extends CustomUIHud {
 
         if (slotStatus.toggleActive()) {
             return slotStatus.remainingSeconds() > 0
-                    ? formatCompactSeconds(slotStatus.remainingSeconds())
+                    ? "ON " + formatCompactSeconds(slotStatus.remainingSeconds())
                     : "ON";
         }
 
@@ -593,20 +603,24 @@ public class MotmStatusHud extends CustomUIHud {
             return switch (slotStatus.phase()) {
                 case READY -> slotStatus.maxCharges() > 1
                         ? slotStatus.currentCharges() + "/" + slotStatus.maxCharges()
-                        : "";
+                        : "READY";
                 case ACTIVE -> slotStatus.remainingSeconds() > 0
-                        ? formatCompactSeconds(slotStatus.remainingSeconds())
+                        ? "ON " + formatCompactSeconds(slotStatus.remainingSeconds())
                         : "ON";
-                case CASTING, RECOVERY, COOLDOWN -> formatCompactSeconds(slotStatus.remainingSeconds());
+                case CASTING -> "CAST";
+                case RECOVERY -> "REC";
+                case COOLDOWN -> "CD " + formatCompactSeconds(slotStatus.remainingSeconds());
             };
         }
 
         return switch (slotStatus.phase()) {
-            case READY -> "";
+            case READY -> "READY";
             case ACTIVE -> slotStatus.remainingSeconds() > 0
-                    ? formatCompactSeconds(slotStatus.remainingSeconds())
+                    ? "ON " + formatCompactSeconds(slotStatus.remainingSeconds())
                     : "ON";
-            case CASTING, RECOVERY, COOLDOWN -> formatCompactSeconds(slotStatus.remainingSeconds());
+            case CASTING -> "CAST";
+            case RECOVERY -> "REC";
+            case COOLDOWN -> "CD " + formatCompactSeconds(slotStatus.remainingSeconds());
         };
     }
 
