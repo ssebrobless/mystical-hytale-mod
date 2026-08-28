@@ -79,9 +79,10 @@ public final class TerrainAbilityHytaleAdapter {
                         "Rock_Crystal_Green_Block", "Rock_Crystal_Green_Large", "Plant_Bush_Crystal");
                 support.applyEffectById(playerRef, store, "MOTM_Proof_Gem_Green");
                 String hpProxy = support.spawnLapidaryGemProxy(world, player, ability, center, expireAt);
-                yield placed.isBlank()
-                        ? "green gem aura" + hpProxy
-                        : placed + " + green aura" + hpProxy;
+                double glowRadius = ability.getRadius() > 0 ? ability.getRadius() : 3.5;
+                int glow = support.spawnGemGlowRing(world, center, glowRadius, expireAt);
+                String glowNote = glow > 0 ? " + green radius glow" : "";
+                yield (placed.isBlank() ? "green gem aura" : placed + " + green aura") + hpProxy + glowNote;
             }
             case "fracture" -> {
                 Vector3d gemCenter = support.resolveActiveLapidaryGemCenter(player, ability, store);
@@ -99,7 +100,12 @@ public final class TerrainAbilityHytaleAdapter {
             case "refraction" -> {
                 Vector3d gemCenter = support.resolveActiveLapidaryGemCenter(player, ability, store);
                 Vector3d auraCenter = gemCenter != null ? gemCenter : center;
-                yield "green refraction aura at " + formatVector(auraCenter);
+                double glowRadius = ability.getRadius() > 0 ? ability.getRadius() : 6.0;
+                long glowExpire = System.currentTimeMillis() + 6000L;
+                int glow = support.spawnGemGlowRing(world, auraCenter, glowRadius, glowExpire);
+                yield glow > 0
+                        ? "green refraction aura glows at radius " + (int) glowRadius + "m"
+                        : "green refraction aura at " + formatVector(auraCenter);
             }
             case "glare" -> {
                 if (explicitTargetRef != null) {
@@ -141,5 +147,7 @@ public final class TerrainAbilityHytaleAdapter {
         Vector3d resolveActiveLapidaryGemCenter(PlayerData player, AbilityData ability, Store<EntityStore> store);
 
         int shatterActiveLapidaryGem(World world, PlayerData player);
+
+        int spawnGemGlowRing(World world, Vector3d center, double radius, long expireAtMillis);
     }
 }

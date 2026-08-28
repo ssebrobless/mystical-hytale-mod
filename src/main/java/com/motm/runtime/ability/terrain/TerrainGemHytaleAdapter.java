@@ -106,6 +106,54 @@ public final class TerrainGemHytaleAdapter {
         return " + HP nameplate";
     }
 
+    /**
+     * Spawns a bounded ring + raised dome of visible green glow motes (Spark_Living model carrying
+     * the green gem effect) so the gem's AoE reads as a spherical green glow at its true radius.
+     * Uses visible proxies (not the renderless field path) because 0.6.1 renders the glow model;
+     * bounded count keeps it cheap and avoids the old mass-spawn client stalls.
+     */
+    public int spawnGemGlowRing(World world, Vector3d center, double radius, long expireAtMillis) {
+        if (world == null || center == null || visualProxyState == null) {
+            return 0;
+        }
+        double r = Math.max(1.5, radius);
+        int ringPoints = (int) Math.min(18L, Math.max(8L, Math.round(r)));
+        float despawn = (float) Math.max(1.0, ((expireAtMillis - System.currentTimeMillis()) / 1000.0) + 0.5);
+        java.util.List<Vector3d> points = new java.util.ArrayList<>();
+        for (int i = 0; i < ringPoints; i++) {
+            double a = (2.0 * Math.PI * i) / ringPoints;
+            points.add(new Vector3d(center.x + r * Math.cos(a), center.y + 0.4, center.z + r * Math.sin(a)));
+        }
+        int domePoints = Math.max(4, ringPoints / 2);
+        double domeR = r * 0.6;
+        double domeH = r * 0.55;
+        for (int i = 0; i < domePoints; i++) {
+            double a = (2.0 * Math.PI * i) / domePoints + 0.3;
+            points.add(new Vector3d(center.x + domeR * Math.cos(a), center.y + domeH, center.z + domeR * Math.sin(a)));
+        }
+        points.add(new Vector3d(center.x, center.y + r * 0.85, center.z));
+        int spawned = 0;
+        for (Vector3d p : points) {
+            NPCEntity proxy = new NPCEntity(world);
+            MotmNpcRoles.applyRole(proxy, "Spark_Living",
+                    HytaleAssetResolver.resolveRenderlessVisualProxyRoleId(), LOG);
+            proxy.setDespawnTime(despawn);
+            world.spawnEntity(proxy, new Vector3d(p), new com.hypixel.hytale.math.vector.Rotation3f(0f, 0f, 0f));
+            Ref<EntityStore> ref = proxy.getReference();
+            if (ref == null || !ref.isValid() || ref.getStore() == null) {
+                continue;
+            }
+            Store<EntityStore> store = ref.getStore();
+            // Keep the glow model (visible); drop nameplate/label so motes stay inert decoration.
+            store.removeComponentIfExists(ref, Nameplate.getComponentType());
+            store.removeComponentIfExists(ref, DisplayNameComponent.getComponentType());
+            support.applyEffectById(ref, store, "MOTM_Terra_Gem_Field");
+            visualProxyState.add(ref);
+            spawned++;
+        }
+        return spawned;
+    }
+
     public Vector3d resolveActiveLapidaryGemCenter(PlayerData player, AbilityData ability, Store<EntityStore> store) {
         return player == null ? null : resolveActiveLapidaryGemCenter(player.getPlayerId(), ability, store);
     }

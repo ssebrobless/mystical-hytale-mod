@@ -1098,6 +1098,11 @@ public class GameplayPlaybackManager {
                         }
                         return gems;
                     }
+
+                    @Override
+                    public int spawnGemGlowRing(World world, Vector3d center, double radius, long expireAtMillis) {
+                        return terrainGemAdapter.spawnGemGlowRing(world, center, radius, expireAtMillis);
+                    }
                 }
         );
         this.terrainHytaleAdapter = new TerrainHytaleAdapter(
