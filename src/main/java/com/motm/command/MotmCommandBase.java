@@ -21,11 +21,8 @@ public class MotmCommandBase extends CommandBase {
         super("motm", "Mentees of the Mystical main command");
         this.mod = mod;
         setAllowsExtraArguments(true);
-    }
-
-    @Override
-    protected boolean canGeneratePermission() {
-        return false;
+        // 0.6.1: CommandBase.canGeneratePermission() was removed; declare no-permission here.
+        requireNoPermission();
     }
 
     @Override

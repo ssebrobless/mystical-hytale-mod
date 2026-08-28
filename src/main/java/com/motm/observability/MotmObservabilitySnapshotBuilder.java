@@ -228,7 +228,8 @@ public final class MotmObservabilitySnapshotBuilder {
                     "minSpeedMultiplier", settings.minSpeedMultiplier,
                     "maxSpeedMultiplier", settings.maxSpeedMultiplier,
                     "acceleration", settings.acceleration,
-                    "canFly", settings.canFly
+                    "horizontalFlySpeed", settings.horizontalFlySpeed,
+                    "verticalFlySpeed", settings.verticalFlySpeed
             ));
         }
         return snapshot;

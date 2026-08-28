@@ -72,7 +72,8 @@ public final class MotmHydroRecipeRegistrar {
                 BenchType.Crafting,
                 CraftingRecipe.FIELDCRAFT_REQUIREMENT,
                 null,
-                0
+                0,
+                null
         );
 
         CraftingRecipe recipe = new CraftingRecipe(

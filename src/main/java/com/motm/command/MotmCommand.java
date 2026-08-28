@@ -1654,7 +1654,8 @@ public class MotmCommand {
                 + ",minMult=" + formatOneDecimal(settings.minSpeedMultiplier)
                 + ",maxMult=" + formatOneDecimal(settings.maxSpeedMultiplier)
                 + ",accel=" + formatOneDecimal(settings.acceleration)
-                + ",canFly=" + settings.canFly
+                + ",flyH=" + formatOneDecimal(settings.horizontalFlySpeed)
+                + ",flyV=" + formatOneDecimal(settings.verticalFlySpeed)
                 + "}";
     }
 
