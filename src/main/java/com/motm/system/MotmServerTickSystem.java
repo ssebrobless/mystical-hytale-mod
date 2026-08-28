@@ -34,6 +34,9 @@ public class MotmServerTickSystem extends TickingSystem<EntityStore> {
             lastProcessedTicks.put(store, worldTick);
         }
 
-        mod.onServerTick(store, tick);
+        // 0.6.1: the ECS `tick` param is no longer globally monotonic, which stalled the
+        // runtime loop's per-frame guard (cooldowns/action windows froze). Pass the monotonic
+        // world tick instead — it is the value claimGlobalFrame() actually needs.
+        mod.onServerTick(store, worldTick);
     }
 }

@@ -2196,7 +2196,7 @@ public class MenteesMod extends JavaPlugin {
      * This keeps the runtime systems advancing even before we wire the actual
      * Hytale damage/entity APIs.
      */
-    public void onServerTick(Store<EntityStore> currentStore, int serverTick) {
+    public void onServerTick(Store<EntityStore> currentStore, long serverTick) {
         runtimeLoop.tick(currentStore, serverTick);
     }
 
