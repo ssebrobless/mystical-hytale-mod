@@ -239,8 +239,9 @@ public final class FieldRuntimeSpecs {
             return blockDisc("sinkhole", "Soil_Dirt_Dry", "Soil_Dirt", "Rock_Slate");
         }
         if (terrainEffect.contains("crystal")) {
-            // Ore_Onyxium_Stone / Ore_Cobalt_Stone checkerboard client-side; Rock_Slate is the proven catch.
-            return blockDisc("crystal_gem", "Rock_Quartzite", "Rock_Calcite", "Rock_Slate");
+            // Green crystal (same client-proven blocks as the floating gem cube) so the gem field
+            // reads as a green gem AoE, not a tan stone patch. Ore_Onyxium/Cobalt checkerboarded.
+            return blockDisc("crystal_gem", "Rock_Crystal_Green_Block", "Rock_Crystal_Green_Large", "Rock_Crystal_Green_Block");
         }
         if (terrainEffect.contains("acid_rain")) {
             return blockDisc("acid_rain", "Soil_Dirt_Poisoned", "Soil_Grass_Burnt", "Soil_Dirt_Dry");

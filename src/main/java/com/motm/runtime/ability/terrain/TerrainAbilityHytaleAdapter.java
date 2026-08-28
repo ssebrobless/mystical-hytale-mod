@@ -86,7 +86,15 @@ public final class TerrainAbilityHytaleAdapter {
             case "fracture" -> {
                 Vector3d gemCenter = support.resolveActiveLapidaryGemCenter(player, ability, store);
                 Vector3d burstCenter = gemCenter != null ? gemCenter : center;
-                yield "green fracture burst at " + formatVector(burstCenter);
+                // Fast green-crystal shatter burst (short-lived debris) at the gem.
+                long burstExpire = System.currentTimeMillis() + 1800L;
+                placementAdapter.placeFloatingClusterSelection(world, "fracture", burstCenter,
+                        3, 2, 3, burstExpire,
+                        "Rock_Crystal_Green_Block", "Rock_Crystal_Green_Large", "Plant_Bush_Crystal");
+                int shattered = gemCenter != null ? support.shatterActiveLapidaryGem(world, player) : 0;
+                yield shattered > 0
+                        ? "green fracture burst shatters the active gem"
+                        : "green fracture burst at " + formatVector(burstCenter);
             }
             case "refraction" -> {
                 Vector3d gemCenter = support.resolveActiveLapidaryGemCenter(player, ability, store);
@@ -131,5 +139,7 @@ public final class TerrainAbilityHytaleAdapter {
                                      long expireAtMillis);
 
         Vector3d resolveActiveLapidaryGemCenter(PlayerData player, AbilityData ability, Store<EntityStore> store);
+
+        int shatterActiveLapidaryGem(World world, PlayerData player);
     }
 }

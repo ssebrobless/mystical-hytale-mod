@@ -543,7 +543,8 @@ public final class TerrainPlacementHytaleAdapter {
             "Soil_Snow", "Soil_Snow_Half", "Rock_Aqua",
             "Rock_Slate", "Rock_Shale", "Rock_Stone",
             "Soil_Dirt_Dry", "Soil_Dirt", "Soil_Dirt_Poisoned", "Soil_Dirt_Burnt", "Soil_Grass_Burnt", "Soil_Sand",
-            "Metal_Iron", "Ice_Block"
+            "Metal_Iron", "Ice_Block",
+            "Rock_Crystal_Green_Block", "Rock_Crystal_Green_Large"
     };
     private static final String[] PREWARM_FLUIDS = {
             "Fluid_Water", "Fluid_Poison", "Fluid_Slime", "Fluid_Lava", "Fluid_Tar"

@@ -1085,6 +1085,19 @@ public class GameplayPlaybackManager {
                     public Vector3d resolveActiveLapidaryGemCenter(PlayerData player, AbilityData ability, Store<EntityStore> store) {
                         return terrainGemAdapter.resolveActiveLapidaryGemCenter(player, ability, store);
                     }
+
+                    @Override
+                    public int shatterActiveLapidaryGem(World world, PlayerData player) {
+                        if (player == null) {
+                            return 0;
+                        }
+                        int gems = terrainGemAdapter.removeGemsForPlayer(player.getPlayerId());
+                        if (world != null) {
+                            // Restore the floating gem-cube blocks immediately so the gem "shatters".
+                            terrainHytaleAdapter.restoreActiveTemporarySelections(terrainState, world, "lapidary");
+                        }
+                        return gems;
+                    }
                 }
         );
         this.terrainHytaleAdapter = new TerrainHytaleAdapter(
